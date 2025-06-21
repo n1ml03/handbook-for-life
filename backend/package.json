@@ -1,0 +1,38 @@
+{
+  "name": "handbook-api",
+  "version": "1.0.0",
+  "description": "Handbook Backend API Server",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "bun dist/server.js",
+    "dev": "bun --watch src/server.ts",
+    "build": "bun run build:clean && bun run build:compile",
+    "build:clean": "rm -rf dist",
+    "build:compile": "bun build src/server.ts --outdir dist --target node",
+    "build:tsc": "tsc",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "db:migrate": "bun run src/database/migrations/run-migrations.ts",
+    "db:seed": "bun run src/database/seeds/run-seeds.ts",
+    "db:reset": "bun run db:migrate && bun run db:seed",
+    "health": "curl -f http://localhost:3001/api/health || exit 1",
+    "setup": "bun install && bun run build",
+    "deploy:local": "bun run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.1",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.1",
+    "@types/express": "^5.0.3",
+    "@types/cors": "^2.8.19",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "typescript": "^5.8.3",
+    "eslint": "^9.29.0"
+  }
+}
