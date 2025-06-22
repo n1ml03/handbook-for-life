@@ -25,15 +25,16 @@ export class CharacterModel extends BaseModel {
       voice_actor_jp: row.voice_actor_jp,
       profile_image_url: row.profile_image_url,
       is_active: Boolean(row.is_active),
+      game_version: row.game_version,
     };
   }
 
   async create(character: NewCharacter): Promise<Character> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO characters (unique_key, name_jp, name_en, name_cn, name_tw, name_kr, 
-         birthday, height, measurements, blood_type, voice_actor_jp, profile_image_url, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO characters (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
+         birthday, height, measurements, blood_type, voice_actor_jp, profile_image_url, is_active, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           character.unique_key,
           character.name_jp,
@@ -48,6 +49,7 @@ export class CharacterModel extends BaseModel {
           character.voice_actor_jp,
           character.profile_image_url,
           character.is_active ?? true,
+          character.game_version,
         ]
       ) as [any, any];
 
@@ -145,6 +147,10 @@ export class CharacterModel extends BaseModel {
       setClause.push(`is_active = ?`);
       params.push(updates.is_active);
     }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
+    }
 
     if (setClause.length === 0) {
       return this.findById(id);
@@ -179,13 +185,92 @@ export class CharacterModel extends BaseModel {
 
   async findUpcomingBirthdays(days: number = 7): Promise<Character[]> {
     const [rows] = await executeQuery(
-      `SELECT * FROM characters 
-       WHERE is_active = TRUE AND birthday IS NOT NULL 
+      `SELECT * FROM characters
+       WHERE is_active = TRUE AND birthday IS NOT NULL
        AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(NOW()) AND DAYOFYEAR(DATE_ADD(NOW(), INTERVAL ? DAY))
        ORDER BY DAYOFYEAR(birthday)`,
       [days]
     ) as [any[], any];
-    
+
     return rows.map(this.mapCharacterRow);
   }
-} 
+
+  async getCharacterSkills(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    // Get skills through swimsuits that belong to this character
+    const query = `
+      SELECT DISTINCT s.*, sk.skill_category, sk.effect_type
+      FROM swimsuits sw
+      JOIN swimsuit_skills ss ON sw.id = ss.swimsuit_id
+      JOIN skills s ON ss.skill_id = s.id
+      LEFT JOIN skills sk ON s.id = sk.id
+      WHERE sw.character_id = ?
+    `;
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT s.id) as count
+      FROM swimsuits sw
+      JOIN swimsuit_skills ss ON sw.id = ss.swimsuit_id
+      JOIN skills s ON ss.skill_id = s.id
+      WHERE sw.character_id = ?
+    `;
+
+    return this.getPaginatedResults(
+      query,
+      countQuery,
+      options,
+      (row: any) => ({
+        id: row.id,
+        unique_key: row.unique_key,
+        name_jp: row.name_jp,
+        name_en: row.name_en,
+        name_cn: row.name_cn,
+        name_tw: row.name_tw,
+        name_kr: row.name_kr,
+        description_en: row.description_en,
+        skill_category: row.skill_category,
+        effect_type: row.effect_type
+      }),
+      [characterId]
+    );
+  }
+
+  async getCharacterSwimsuits(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    const query = `
+      SELECT s.*, c.name_en as character_name
+      FROM swimsuits s
+      LEFT JOIN characters c ON s.character_id = c.id
+      WHERE s.character_id = ?
+    `;
+
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM swimsuits s
+      WHERE s.character_id = ?
+    `;
+
+    return this.getPaginatedResults(
+      query,
+      countQuery,
+      options,
+      (row: any) => ({
+        id: row.id,
+        character_id: row.character_id,
+        unique_key: row.unique_key,
+        name_jp: row.name_jp,
+        name_en: row.name_en,
+        name_cn: row.name_cn,
+        name_tw: row.name_tw,
+        name_kr: row.name_kr,
+        description_en: row.description_en,
+        rarity: row.rarity,
+        suit_type: row.suit_type,
+        total_stats_awakened: row.total_stats_awakened,
+        has_malfunction: Boolean(row.has_malfunction),
+        is_limited: Boolean(row.is_limited),
+        release_date_gl: row.release_date_gl,
+        character_name: row.character_name
+      }),
+      [characterId]
+    );
+  }
+}

@@ -34,7 +34,7 @@ interface ColumnMapping {
   dataType: 'string' | 'number' | 'boolean' | 'date' | 'array';
 }
 
-interface CSVPreviewModalProps {
+export interface CSVPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   csvPreview: CSVPreviewData | null;

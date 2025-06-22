@@ -35,7 +35,12 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
         sortOrder: 'desc',
         limit: 100
       });
-      setDocuments(response.data);
+      // Ensure isPublished property is synchronized with is_published for UI compatibility
+      const documentsWithSyncedProps = response.data.map(doc => ({
+        ...doc,
+        isPublished: doc.is_published
+      }));
+      setDocuments(documentsWithSyncedProps);
     } catch (error) {
       console.error('Error loading documents:', error);
       setError(error instanceof ApiError ? error.message : 'Failed to load documents');
@@ -48,8 +53,13 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const addDocument = useCallback(async (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<Document> => {
     try {
       const newDocument = await documentsApi.createDocument(document);
-      setDocuments(prev => [newDocument, ...prev]);
-      return newDocument;
+      // Ensure isPublished property is synchronized with is_published for UI compatibility
+      const documentWithSyncedProps = {
+        ...newDocument,
+        isPublished: newDocument.is_published
+      };
+      setDocuments(prev => [documentWithSyncedProps, ...prev]);
+      return documentWithSyncedProps;
     } catch (error) {
       console.error('Error adding document:', error);
       throw error;
@@ -59,10 +69,15 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const updateDocument = useCallback(async (id: string, updates: Partial<Document>): Promise<Document> => {
     try {
       const updatedDocument = await documentsApi.updateDocument(id, updates);
-      setDocuments(prev => prev.map(doc => 
-        doc.id === id ? updatedDocument : doc
+      // Ensure isPublished property is synchronized with is_published for UI compatibility
+      const documentWithSyncedProps = {
+        ...updatedDocument,
+        isPublished: updatedDocument.is_published
+      };
+      setDocuments(prev => prev.map(doc =>
+        doc.id === id ? documentWithSyncedProps : doc
       ));
-      return updatedDocument;
+      return documentWithSyncedProps;
     } catch (error) {
       console.error('Error updating document:', error);
       throw error;

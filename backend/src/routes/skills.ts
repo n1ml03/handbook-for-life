@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
+import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { SkillModel } from '../models/SkillModel';
 import logger from '../config/logger';
@@ -8,7 +8,7 @@ const router = Router();
 const skillModel = new SkillModel();
 
 // GET /api/skills - Get all skills with pagination and filters
-router.get('/', 
+router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder, category, effectType } = req.query;
@@ -50,11 +50,12 @@ router.get('/',
 
 // GET /api/skills/key/:unique_key - Get skill by unique key
 router.get('/key/:unique_key',
+  validateParams(schemas.uniqueKeyParam),
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
-    
+
     const skill = await skillModel.findByUniqueKey(unique_key);
-    
+
     logger.info(`Retrieved skill: ${skill.name_en}`);
 
     res.json({
@@ -69,12 +70,13 @@ router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await skillModel.search(q as string, {
@@ -96,18 +98,12 @@ router.get('/search',
 
 // GET /api/skills/:id - Get skill by ID
 router.get('/:id',
+  validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid skill ID'
-      });
-    }
-    
+
     const skill = await skillModel.findById(id);
-    
+
     logger.info(`Retrieved skill: ${skill.name_en}`);
 
     res.json({
@@ -135,19 +131,13 @@ router.post('/',
 
 // PUT /api/skills/:id - Update skill
 router.put('/:id',
+  validateParams(schemas.idParam),
   validate(schemas.updateSkill),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid skill ID'
-      });
-    }
-    
+
     const skill = await skillModel.update(id, req.body);
-    
+
     logger.info(`Updated skill: ${skill.name_en}`);
 
     res.json({
@@ -160,18 +150,12 @@ router.put('/:id',
 
 // DELETE /api/skills/:id - Delete skill
 router.delete('/:id',
+  validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid skill ID'
-      });
-    }
-    
+
     await skillModel.delete(id);
-    
+
     logger.info(`Deleted skill with ID: ${id}`);
 
     res.json({

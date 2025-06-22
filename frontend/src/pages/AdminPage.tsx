@@ -122,23 +122,45 @@ const AdminPage = () => {
 
   // Document handlers
   const handleCreateNewDocument = useCallback(() => {
-    setEditingDocument({
-      id: 0,
+    // Create a new document object with proper structure for UI compatibility
+    // Use null for id to indicate this is a new document (not yet saved)
+    const newDocument: Document = {
+      id: null as any, // Will be assigned by backend on creation
       unique_key: '',
       title_en: '',
       summary_en: '',
       content_json_en: null,
       is_published: false,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+      updated_at: new Date().toISOString(),
+      // Extended properties required for UI compatibility
+      title: '', // Maps to title_en
+      content: '', // Maps to content_json_en converted to HTML
+      category: 'game-mechanics', // Default category
+      tags: [], // Empty tags array
+      author: 'Admin', // Default author
+      // Additional UI compatibility property
+      isPublished: false // Maps to is_published for DocumentEditor compatibility
+    };
+    setEditingDocument(newDocument);
     setIsEditMode(true);
   }, []);
 
-  const handleSaveDocument = useCallback((document: Document) => {
+  const handleSaveDocument = useCallback(async (document: Document) => {
     try {
-      if (editingDocument?.id) {
-        updateDocument(editingDocument.id.toString(), document);
+      // Check if this is an existing document (has a valid ID) or a new one
+      const isExistingDocument = editingDocument?.id && editingDocument.id !== null;
+
+      // Ensure both is_published and isPublished are synchronized
+      const documentToSave = {
+        ...document,
+        is_published: document.isPublished,
+        isPublished: document.isPublished
+      };
+
+      if (isExistingDocument) {
+        // Update existing document
+        await updateDocument(editingDocument.id.toString(), documentToSave);
         addNotification({
           type: 'success',
           title: 'Document Updated',
@@ -146,8 +168,8 @@ const AdminPage = () => {
           duration: 3000
         });
       } else {
-        const newDocument = { ...document, id: Date.now().toString() };
-        addDocument(newDocument);
+        // Create new document - pass the full document object as addDocument handles API conversion
+        await addDocument(documentToSave);
         addNotification({
           type: 'success',
           title: 'Document Created',

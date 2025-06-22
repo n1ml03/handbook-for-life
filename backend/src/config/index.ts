@@ -149,7 +149,6 @@ export const config = {
   
   // Common settings for easy access
   pagination: appConfig.pagination,
-  rateLimit: appConfig.rateLimit,
   cors: appConfig.cors,
   security: appConfig.security,
   upload: appConfig.upload,

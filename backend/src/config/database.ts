@@ -49,22 +49,20 @@ export interface DatabaseHealthCheck {
 // CONFIGURATION
 // ============================================================================
 
+// Simplified database configuration for local development
 const config: DatabaseConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),
   database: process.env.DB_NAME || 'doaxvv_handbook',
-  user: process.env.DB_USER || 'doaxvv_user',
-  password: process.env.DB_PASSWORD || 'doaxvv_password',
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
-  } : undefined,
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '20'),
-  acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '15000'),
-  timeout: parseInt(process.env.DB_TIMEOUT || '30000'),
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  connectionLimit: 10, // Reduced for local development
+  acquireTimeout: 10000,
+  timeout: 20000,
   reconnect: true,
   charset: 'utf8mb4',
-  timezone: process.env.DB_TIMEZONE || '+00:00',
-  multipleStatements: false, // Security: Prevent SQL injection
+  timezone: '+00:00',
+  multipleStatements: false,
   supportBigNumbers: true,
   bigNumberStrings: true
 };

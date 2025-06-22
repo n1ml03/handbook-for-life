@@ -292,8 +292,8 @@ export default function DocumentPage() {
             >
               <FileText className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No documents found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-2xl font-bold text-foreground mb-3">No documents found</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               We couldn't find any documents for {documentSections.find(s => s.id === activeSection)?.title}. Try adjusting your search criteria or switch to another section.
             </p>
             <motion.button
@@ -328,7 +328,7 @@ export default function DocumentPage() {
                         variant="outline" 
                         className={cn(
                           "text-xs",
-                          documentCategoriesData.find(cat => cat.id === document.category)?.color || 'text-gray-400 border-gray-400/30 bg-gray-400/10'
+                          documentCategoriesData.find(cat => cat.id === document.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
                         )}
                       >
                         {documentCategoriesData.find(cat => cat.id === document.category)?.name || document.category}
@@ -443,7 +443,7 @@ export default function DocumentPage() {
               <Badge
                 variant="outline"
                 className={cn(
-                  documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.color || 'text-gray-400 border-gray-400/30 bg-gray-400/10'
+                  documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
                 )}
               >
                 {documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.name || selectedDocument?.category}

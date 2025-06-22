@@ -1,12 +1,12 @@
 import { cn } from '@/services/utils';
 import type { ReactNode } from 'react';
 
-interface SpacingProps {
+export interface SpacingProps {
   children?: ReactNode;
   className?: string;
 }
 
-interface SectionProps extends SpacingProps {
+export interface SectionProps extends SpacingProps {
   title?: string;
   description?: string;
   action?: ReactNode;

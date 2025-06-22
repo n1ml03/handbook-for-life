@@ -57,7 +57,7 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
 
   return (
     <div
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl overflow-hidden"
+      className="relative modern-card overflow-hidden"
     >
 
       
@@ -354,18 +354,18 @@ export default function GachaPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Gacha Gallery
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="modern-page-subtitle">
             Showing {filteredAndSortedGachas.length} gacha events
           </p>
         </motion.div>

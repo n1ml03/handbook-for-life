@@ -1,25 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
+import { Document, NewDocument } from '../types/database';
 import { executeQuery } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
-
-export interface Document {
-  id: number;
-  unique_key: string;
-  title_en: string;
-  summary_en?: string;
-  content_json_en?: any; // JSON from Tiptap
-  is_published: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface NewDocument {
-  unique_key: string;
-  title_en: string;
-  summary_en?: string;
-  content_json_en?: any;
-  is_published?: boolean;
-}
 
 export interface UpdateDocument {
   unique_key?: string;
@@ -83,13 +65,13 @@ export class DocumentModel extends BaseModel {
   // Overload signatures
   async findById(id: number): Promise<Document>;
   async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
+
   // Implementation
   async findById<T = Document>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Document> {
     if (mapFunction) {
       return super.findById<T>(id, mapFunction);
     }
-    return super.findById<Document>(id as number, this.mapDocumentRow);
+    return super.findById<Document>(id, this.mapDocumentRow);
   }
 
   async findByKey(unique_key: string): Promise<Document> {

@@ -31,25 +31,25 @@ export interface UnifiedFilterProps {
   // Filter state
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  
+
   // Filter configuration
   filterFields: FilterField[];
   sortOptions: SortOption[];
-  
+
   // Filter values and handlers
-  filterValues: Record<string, any>;
-  onFilterChange: (key: string, value: any) => void;
+  filterValues: Record<string, string | number | boolean>;
+  onFilterChange: (key: string, value: string | number | boolean) => void;
   onClearFilters: () => void;
-  
+
   // Sort configuration
   sortBy: string;
   sortDirection: SortDirection;
   onSortChange: (sortBy: string, direction: SortDirection) => void;
-  
+
   // Display configuration
   resultCount: number;
   itemLabel?: string; // e.g., "accessories", "swimsuits"
-  
+
   // Theme and styling
   accentColor?: string;
   secondaryColor?: string;
@@ -57,11 +57,11 @@ export interface UnifiedFilterProps {
   expandableStats?: boolean;
   isFilterExpanded?: boolean;
   setIsFilterExpanded?: (expanded: boolean) => void;
-  
+
   // Custom content
   additionalFilters?: React.ReactNode;
   headerIcon?: React.ReactNode;
-  
+
   // Layout options
   className?: string;
 }
@@ -111,7 +111,7 @@ export const UnifiedFilter = ({
         sortButton: (active: boolean) => active
           ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-md border border-gray-700'
           : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-900/50 border border-gray-700/50',
-        inputClasses: 'w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white',
+        inputClasses: 'filter-dropdown-select black-theme',
         checkboxClasses: 'rounded-sm border-gray-700 text-gray-900 focus:ring-gray-500/20',
         filterContainer: 'bg-gray-900/80 backdrop-blur-xl rounded-3xl border border-gray-700/50',
         accentText: 'text-gray-300',
@@ -120,13 +120,13 @@ export const UnifiedFilter = ({
     } else {
       return {
         filterButton: showFilters
-          ? `bg-gradient-to-r from-${accentColor} to-${secondaryColor} text-white shadow-lg`
-          : `bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-${accentColor}/20`,
+          ? `btn-modern-primary`
+          : `btn-modern-ghost`,
         sortButton: (active: boolean) => active
-          ? `bg-gradient-to-r from-${accentColor} to-${secondaryColor} text-white shadow-md`
-          : `bg-dark-card/50 text-gray-400 hover:text-white hover:bg-${accentColor}/20 border border-dark-border/50`,
-        inputClasses: `w-full bg-dark-primary/50 border border-dark-border rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-${accentColor} transition-all`,
-        checkboxClasses: `rounded-sm border-dark-border text-${accentColor} focus:ring-${accentColor}/20`,
+          ? `btn-modern-primary`
+          : `btn-modern-ghost`,
+        inputClasses: `filter-dropdown-select`,
+        checkboxClasses: `rounded-sm border-border text-accent-pink focus:ring-accent-pink/20`,
         filterContainer: 'bg-dark-card/80 backdrop-blur-xl rounded-3xl border border-dark-border/50',
         accentText: `text-${accentColor}`,
         headerIcon: `text-${accentColor}`
@@ -161,7 +161,7 @@ export const UnifiedFilter = ({
         return (
           <input
             type="text"
-            value={filterValues[field.key] || ''}
+            value={String(filterValues[field.key] || '')}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
             className={colorScheme.inputClasses}
             placeholder={field.placeholder}
@@ -171,7 +171,7 @@ export const UnifiedFilter = ({
       case 'select':
         return (
           <select
-            value={filterValues[field.key] || ''}
+            value={String(filterValues[field.key] || '')}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
             className={colorScheme.inputClasses}
           >
@@ -186,7 +186,7 @@ export const UnifiedFilter = ({
         return (
           <input
             type="number"
-            value={filterValues[field.key] || ''}
+            value={String(filterValues[field.key] || '')}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
             className={colorScheme.inputClasses}
             placeholder={field.placeholder || '0'}
@@ -200,7 +200,7 @@ export const UnifiedFilter = ({
           <label className={`flex items-center space-x-3 p-3 ${blackTheme ? 'bg-gray-900/30' : 'bg-dark-primary/30'} rounded-xl border ${blackTheme ? 'border-gray-700/50 hover:border-gray-600/50' : 'border-dark-border/50 hover:border-accent-cyan/50'} transition-all cursor-pointer`}>
             <input
               type="checkbox"
-              checked={filterValues[field.key] || false}
+              checked={Boolean(filterValues[field.key]) || false}
               onChange={(e) => onFilterChange(field.key, e.target.checked)}
               className={colorScheme.checkboxClasses}
             />
@@ -213,7 +213,7 @@ export const UnifiedFilter = ({
           <div className="flex items-center space-x-2">
             <input
               type="number"
-              value={filterValues[`${field.key}Min`] || ''}
+              value={String(filterValues[`${field.key}Min`] || '')}
               onChange={(e) => onFilterChange(`${field.key}Min`, e.target.value)}
               className={colorScheme.inputClasses}
               placeholder="Min"
@@ -222,7 +222,7 @@ export const UnifiedFilter = ({
             <span className="text-gray-400">-</span>
             <input
               type="number"
-              value={filterValues[`${field.key}Max`] || ''}
+              value={String(filterValues[`${field.key}Max`] || '')}
               onChange={(e) => onFilterChange(`${field.key}Max`, e.target.value)}
               className={colorScheme.inputClasses}
               placeholder="Max"
@@ -254,9 +254,9 @@ export const UnifiedFilter = ({
             {filterFields.find(f => f.key === 'search') && (
               <input
                 type="text"
-                value={filterValues.search || ''}
+                value={String(filterValues.search || '')}
                 onChange={(e) => onFilterChange('search', e.target.value)}
-                className={`w-full ${blackTheme ? 'bg-gray-900/70 border-gray-700/50 focus:border-gray-500' : 'bg-dark-card/70 border-dark-border/50 focus:border-accent-cyan'} backdrop-blur-sm border rounded-xl pl-10 pr-4 py-3 focus:outline-hidden focus:ring-2 ${blackTheme ? 'focus:ring-gray-500/20' : 'focus:ring-accent-cyan/20'} transition-all placeholder-gray-500 text-white`}
+                className={`filter-dropdown-select pl-10 pr-4 py-3 ${blackTheme ? 'black-theme' : ''}`}
                 placeholder={filterFields.find(f => f.key === 'search')?.placeholder || `Search ${itemLabel}...`}
               />
             )}

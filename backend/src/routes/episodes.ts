@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
+import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { EpisodeModel } from '../models/EpisodeModel';
 import logger from '../config/logger';
@@ -50,11 +50,12 @@ router.get('/',
 
 // GET /api/episodes/key/:unique_key - Get episode by unique key
 router.get('/key/:unique_key',
+  validateParams(schemas.uniqueKeyParam),
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
-    
+
     const episode = await episodeModel.findByUniqueKey(unique_key);
-    
+
     logger.info(`Retrieved episode: ${episode.title_en}`);
 
     res.json({
@@ -87,28 +88,22 @@ router.get('/main-story',
   })
 );
 
-// GET /api/episodes/character/:character_id - Get episodes for specific character
-router.get('/character/:character_id',
+// GET /api/episodes/character/:id - Get episodes for specific character
+router.get('/character/:id',
+  validateParams(schemas.idParam),
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const character_id = Number(req.params.character_id);
+    const id = Number(req.params.id);
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
-    if (isNaN(character_id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid character ID'
-      });
-    }
-    
-    const result = await episodeModel.getCharacterEpisodes(character_id, {
+
+    const result = await episodeModel.getCharacterEpisodes(id, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
       sortOrder: sortOrder as 'asc' | 'desc'
     });
 
-    logger.info(`Retrieved ${result.data.length} episodes for character ${character_id}`);
+    logger.info(`Retrieved ${result.data.length} episodes for character ${id}`);
 
     res.json({
       success: true,
@@ -125,10 +120,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await episodeModel.search(q as string, {
@@ -148,20 +144,16 @@ router.get('/search',
   })
 );
 
+
+
 // GET /api/episodes/:id - Get episode by ID
 router.get('/:id',
+  validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid episode ID'
-      });
-    }
-    
+
     const episode = await episodeModel.findById(id);
-    
+
     logger.info(`Retrieved episode: ${episode.title_en}`);
 
     res.json({
@@ -189,19 +181,13 @@ router.post('/',
 
 // PUT /api/episodes/:id - Update episode
 router.put('/:id',
+  validateParams(schemas.idParam),
   validate(schemas.updateEpisode),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid episode ID'
-      });
-    }
-    
+
     const episode = await episodeModel.update(id, req.body);
-    
+
     logger.info(`Updated episode: ${episode.title_en}`);
 
     res.json({
@@ -214,18 +200,12 @@ router.put('/:id',
 
 // DELETE /api/episodes/:id - Delete episode
 router.delete('/:id',
+  validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid episode ID'
-      });
-    }
-    
+
     await episodeModel.delete(id);
-    
+
     logger.info(`Deleted episode with ID: ${id}`);
 
     res.json({

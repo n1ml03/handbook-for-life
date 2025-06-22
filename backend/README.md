@@ -1,254 +1,403 @@
-# PHÂN TÍCH VÀ HƯỚNG DẪN BACKEND - DOAXVV HANDBOOK
+# DOAXVV Handbook Backend API
 
-## 📊 PHÂN TÍCH TÍNH HOÀN CHỈNH BACKEND
+A comprehensive Node.js backend API server for the DOAXVV (Dead or Alive Xtreme Venus Vacation) Handbook application, providing complete game data management and RESTful API endpoints.
 
-### ✅ **ĐÁNH GIÁ TỔNG QUAN: HOÀN CHỈNH 95%**
+## 🚀 Quick Start
 
-Backend của dự án DOAXVV Handbook đã được phát triển với kiến trúc chuyên nghiệp và gần như hoàn chỉnh. Đây là một API server sử dụng **Node.js + Express + TypeScript + MySQL**.
+```bash
+# Install dependencies
+cd backend
+bun install
 
----
+# Set up database (see Database Setup section)
+# Copy .env.example to .env and configure
 
-## 🏗️ CẤU TRÚC TỔNG QUAN
+# Run development server
+bun run dev
+
+# Server will be available at http://localhost:3001
+```
+
+## 📋 Table of Contents
+
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Installation & Setup](#installation--setup)
+- [Database Setup](#database-setup)
+- [API Documentation](#api-documentation)
+- [Development Workflow](#development-workflow)
+- [Environment Configuration](#environment-configuration)
+- [Integration with Frontend](#integration-with-frontend)
+
+## 🛠️ Technology Stack
+
+- **Runtime**: Node.js with Bun
+- **Framework**: Express.js 5.1.0
+- **Language**: TypeScript 5.8.3
+- **Database**: MySQL 8.0+ with mysql2 driver
+- **Validation**: Zod for schema validation
+- **CORS**: Configured for local development
+- **Logging**: Custom logger with structured output
+- **Build Tool**: Bun for fast builds and package management
+
+## 🏗️ Project Structure
 
 ```
 backend/
 ├── src/
-│   ├── config/           # ✅ Cấu hình hệ thống (app, database, logger)
-│   ├── database/         # ✅ Schema MySQL, migrations, sample data
-│   ├── middleware/       # ✅ Error handling, validation, request processing
-│   ├── models/           # ✅ 9 models chính (Character, Swimsuit, Skill, etc.)
-│   ├── routes/           # ✅ 10 route handlers
-│   ├── services/         # ✅ 8 service classes
-│   ├── types/            # ✅ TypeScript definitions (database, api)
-│   ├── utils/            # ✅ Utilities (ID generation, etc.)
-│   └── server.ts         # ✅ Entry point chính
-├── package.json          # ✅ Dependencies và scripts
-├── tsconfig.json         # ✅ TypeScript configuration
-├── .env                  # ✅ Environment variables
-└── .gitignore           # ✅ Git ignore rules
+│   ├── config/           # System configuration (app, database, logger)
+│   ├── database/         # MySQL schema, migrations, sample data
+│   ├── middleware/       # Error handling, validation, request processing
+│   ├── models/           # 9 data models (Character, Swimsuit, Skill, etc.)
+│   ├── routes/           # 12 API route handlers
+│   ├── services/         # 8 business logic service classes
+│   ├── types/            # TypeScript type definitions
+│   ├── utils/            # Utility functions and helpers
+│   └── server.ts         # Main application entry point
+├── dist/                 # Compiled JavaScript output
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+├── .env.example          # Environment variables template
+└── README.md            # This file
 ```
 
----
+## 💾 Database Schema
 
-## ✅ CÁC THÀNH PHẦN ĐÃ HOÀN THIỆN
+The backend uses MySQL with a comprehensive schema designed for DOAXVV game data:
 
-### 1. **Cơ sở dữ liệu (Database)**
-- ✅ Schema MySQL chi tiết với 8 bảng chính
-- ✅ Các quan hệ Foreign Key đầy đủ
-- ✅ Index tối ưu hiệu suất
-- ✅ Views cho timeline
-- ✅ Sample data có sẵn
+### Core Tables
+- **characters** (16 columns) - Character information with multi-language support
+- **swimsuits** (17 columns) - Swimsuit library with stats and attributes
+- **skills** (10 columns) - Active/passive/potential skills system
+- **items** (12 columns) - Game items and accessories
+- **bromides** (10 columns) - Deco-Bromide card collection
+- **episodes** (12 columns) - Story episodes and narratives
+- **events** (10 columns) - Game events and campaigns
+- **documents** (8 columns) - Documentation and guides
 
-**Các bảng chính:**
-- `characters` - Thông tin nhân vật
-- `swimsuits` - Thư viện đồ bơi  
-- `skills` - Kỹ năng
-- `items` - Vật phẩm
-- `bromides` - Deco-Bromide
-- `episodes` - Cốt truyện
-- `events` - Sự kiện
-- `documents` - Tài liệu hướng dẫn
+### Linking Tables
+- **swimsuit_skills** - Many-to-many relationship between swimsuits and skills
+- **gacha_pools** - Gacha pool items and rates
 
-### 2. **API Routes**
-✅ **10 route handlers đầy đủ:**
-- `/api/health` - Health check
-- `/api/characters` - Quản lý nhân vật
-- `/api/skills` - Quản lý kỹ năng
-- `/api/swimsuits` - Quản lý đồ bơi
-- `/api/items` - Quản lý vật phẩm
-- `/api/episodes` - Quản lý cốt truyện
-- `/api/documents` - Quản lý tài liệu
-- `/api/update-logs` - Nhật ký cập nhật
-- `/api/events` - Quản lý sự kiện
-- `/api/bromides` - Quản lý bromide
+### Key Features
+- Multi-language support (JP, EN, CN, TW, KR)
+- Optimized indexes for performance
+- UTF8MB4 character set for emoji support
+- Generated columns for computed values
+- Foreign key constraints for data integrity
 
-### 3. **Business Logic (Services)**
-✅ **8 service classes** với đầy đủ CRUD operations:
-- `CharacterService`
-- `SwimsuitService` 
-- `SkillService`
-- `ItemService`
-- `EventService`
-- `EpisodeService`
-- `DocumentService`
-- `BromideService`
+## 🔌 API Endpoints
 
-### 4. **Data Models**
-✅ **9 model classes** kế thừa từ BaseModel:
-- Validation đầy đủ
-- Type safety với TypeScript
-- Mapping database ↔ object
+### Core Resources
+All endpoints follow RESTful conventions with consistent response formats:
 
-### 5. **Type Definitions**
-✅ **Hệ thống type mạnh mẽ:**
-- `database.ts` - 542 lines, định nghĩa đầy đủ các entity
-- `api.ts` - 372 lines, định nghĩa request/response patterns
-- Type guards và validation helpers
-
-### 6. **Configuration**
-✅ **Cấu hình chuyên nghiệp:**
-- `app.ts` - 311 lines cấu hình ứng dụng
-- `database.ts` - 395 lines quản lý connection pool
-- `logger.ts` - Logging system
-- `.env` - 161 biến môi trường đầy đủ
-
-### 7. **Middleware**
-✅ **Middleware đầy đủ:**
-- Error handling with stack trace
-- Request validation với Zod
-- CORS configuration
-- Request ID tracking
-
----
-
-## 🚀 HƯỚNG DẪN SETUP VÀ CHẠY
-
-### **Bước 1: Cài đặt Dependencies**
-```bash
-cd backend
-bun install
-# hoặc npm install
+```
+GET    /api/health              # Health check and system status
+GET    /api/characters          # List all characters with pagination
+GET    /api/characters/:id      # Get specific character details
+GET    /api/swimsuits           # List swimsuits with filtering
+GET    /api/swimsuits/:id       # Get specific swimsuit details
+GET    /api/skills              # List skills with categorization
+GET    /api/skills/:id          # Get specific skill details
+GET    /api/items               # List items with category filtering
+GET    /api/items/:id           # Get specific item details
+GET    /api/bromides            # List bromides with sorting
+GET    /api/bromides/:id        # Get specific bromide details
+GET    /api/episodes            # List story episodes
+GET    /api/episodes/:id        # Get specific episode details
+GET    /api/events              # List events with date filtering
+GET    /api/events/:id          # Get specific event details
+GET    /api/documents           # List documentation
+GET    /api/documents/:id       # Get specific document
+GET    /api/update-logs         # List update logs
+GET    /api/gachas              # List gacha information
+GET    /api/shop-listings       # List shop items
 ```
 
-### **Bước 2: Cấu hình Database**
-```bash
-# Tạo database MySQL
-mysql -u root -p
-CREATE DATABASE doaxvv_handbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'doaxvv_user'@'localhost' IDENTIFIED BY 'doaxvv_password';
-GRANT ALL PRIVILEGES ON doaxvv_handbook.* TO 'doaxvv_user'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### **Bước 3: Chạy Migration**
-```bash
-# Import schema
-mysql -u doaxvv_user -p doaxvv_handbook < src/database/migrations/001_enhanced_schema_mysql.sql
-
-# Import sample data
-mysql -u doaxvv_user -p doaxvv_handbook < src/database/002_sample_data.sql
-```
-
-### **Bước 4: Cấu hình Environment**
-```bash
-# File .env đã có sẵn, chỉ cần chỉnh sửa nếu cần:
-# - DB_PASSWORD=your_password
-# - FRONTEND_URL=your_frontend_url
-```
-
-### **Bước 5: Chạy Development Server**
-```bash
-# Development mode với hot reload
-bun run dev
-
-# Production build
-bun run build
-bun run start
-```
-
-### **Bước 6: Kiểm tra Health**
-```bash
-curl http://localhost:3001/api/health
-```
-
----
-
-## 🔧 SCRIPTS PACKAGE.JSON
+### Response Format
+All API responses follow a consistent structure:
 
 ```json
 {
-  "dev": "bun --watch src/server.ts",           // Development với hot reload
-  "build": "bun run build:clean && bun run build:compile",
-  "start": "bun dist/server.js",               // Production start
-  "health": "curl -f http://localhost:3001/api/health",
-  "db:migrate": "bun run src/database/migrations/run-migrations.ts",
-  "db:seed": "bun run src/database/seeds/run-seeds.ts",
-  "lint": "eslint src/**/*.ts",
-  "lint:fix": "eslint src/**/*.ts --fix"
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "totalPages": 10
+  }
 }
 ```
 
----
+### Query Parameters
+- `page` - Page number for pagination (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `sortBy` - Field to sort by
+- `sortOrder` - Sort direction ('asc' or 'desc')
+- Additional filters specific to each endpoint
 
-## 📡 API ENDPOINTS CHÍNH
+## 🚀 Installation & Setup
 
-### **Health Check**
-```
-GET /api/health
-```
+### Prerequisites
+- Node.js 18+ (recommended: use Bun for faster performance)
+- MySQL 8.0+
+- Git
 
-### **Characters API**
-```
-GET    /api/characters          # Lấy danh sách nhân vật
-GET    /api/characters/:id      # Lấy thông tin nhân vật
-POST   /api/characters          # Tạo nhân vật mới
-PUT    /api/characters/:id      # Cập nhật nhân vật
-DELETE /api/characters/:id      # Xóa nhân vật
-```
+### Step 1: Clone and Install Dependencies
+```bash
+# Clone the repository (if not already done)
+git clone <repository-url>
+cd handbook-for-life/backend
 
-### **Swimsuits API**
-```
-GET    /api/swimsuits           # Lấy danh sách đồ bơi
-GET    /api/swimsuits/:id       # Lấy thông tin đồ bơi
-POST   /api/swimsuits           # Tạo đồ bơi mới
-PUT    /api/swimsuits/:id       # Cập nhật đồ bơi
-DELETE /api/swimsuits/:id       # Xóa đồ bơi
-```
+# Install dependencies using Bun (recommended)
+bun install
 
-### **Skills API**
-```
-GET    /api/skills              # Lấy danh sách kỹ năng
-GET    /api/skills/:id          # Lấy thông tin kỹ năng
-POST   /api/skills              # Tạo kỹ năng mới
-PUT    /api/skills/:id          # Cập nhật kỹ năng
-DELETE /api/skills/:id          # Xóa kỹ năng
+# Or use npm/yarn
+npm install
+# yarn install
 ```
 
-*...tương tự cho Items, Events, Episodes, Documents, Bromides*
+### Step 2: Environment Configuration
+```bash
+# Copy the environment template
+cp .env.example .env
 
----
+# Edit .env file with your configuration
+nano .env
+```
 
-## 🗄️ DATABASE SCHEMA OVERVIEW
+Required environment variables:
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=3001
+HOST=0.0.0.0
 
-### **Core Tables:**
-- **characters** (16 columns) - Thông tin cơ bản nhân vật
-- **swimsuits** (17 columns) - Thư viện đồ bơi với stats
-- **skills** (10 columns) - Kỹ năng active/passive/potential  
-- **items** (12 columns) - Vật phẩm game
-- **bromides** (10 columns) - Deco-Bromide cards
-- **episodes** (12 columns) - Cốt truyện
-- **events** (10 columns) - Sự kiện game
-- **documents** (8 columns) - Tài liệu hướng dẫn
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=doaxvv_handbook
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
 
-### **Linking Tables:**
-- **swimsuit_skills** - Liên kết swimsuit ↔ skill
-- **gacha_pools** - Pool items của gacha
+# CORS Configuration (for frontend integration)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+```
 
-### **Special Features:**
-- ✅ Multi-language support (JP, EN, CN, TW, KR)
-- ✅ Generated columns (is_active cho events)
-- ✅ Optimized indexes
-- ✅ UTF8MB4 character set
+### Step 3: Database Setup
+```bash
+# Create MySQL database
+mysql -u root -p
+```
 
----
+```sql
+CREATE DATABASE doaxvv_handbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'doaxvv_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON doaxvv_handbook.* TO 'doaxvv_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
 
-## 🛠️ CÔNG NGHỆ STACK
+```bash
+# Import database schema
+mysql -u doaxvv_user -p doaxvv_handbook < src/database/migrations/001_enhanced_schema_mysql.sql
 
-### **Runtime & Framework:**
-- ⚡ **Bun** - JavaScript runtime (faster than Node.js)
-- 🚀 **Express.js** - Web framework
-- 📘 **TypeScript** - Type safety
+# Import sample data (optional)
+mysql -u doaxvv_user -p doaxvv_handbook < src/database/002_sample_data.sql
+```
 
-### **Database:**
-- 🗄️ **MySQL 8.0+** - Relational database
-- 🔗 **mysql2** - Database driver với promise support
+### Step 4: Start Development Server
+```bash
+# Start development server with auto-reload
+bun run dev
 
-### **Validation & Security:**
-- ✅ **Zod** - Runtime type validation
-- 🛡️ **CORS** - Cross-origin resource sharing
-- 🚨 **Error handling** - Comprehensive error middleware
+# Or using npm
+npm run dev
 
-### **Development Tools:**
-- 🔧 **ESLint** - Code linting
-- 📝 **Hot reload** - Development efficiency
-- 🐛 **Debugging** - Source maps support
+# Server will be available at:
+# - API: http://localhost:3001
+# - Health Check: http://localhost:3001/api/health
+# - API Documentation: http://localhost:3001 (root endpoint lists all available endpoints)
+```
+
+## 📋 Available Scripts
+
+```bash
+# Development
+bun run dev          # Start development server with auto-reload
+bun run build        # Build for production
+bun run start        # Start production server
+
+# Database
+bun run db:migrate   # Run database migrations
+bun run db:seed      # Seed database with sample data
+bun run db:reset     # Reset database (migrate + seed)
+
+# Code Quality
+bun run lint         # Run ESLint
+bun run lint:fix     # Fix ESLint issues automatically
+
+# Testing
+bun run health       # Test API health endpoint
+```
+
+## � Development Workflow
+
+### Local Development
+1. Start the backend server: `bun run dev`
+2. Server runs on `http://localhost:3001`
+3. API endpoints available at `http://localhost:3001/api/*`
+4. Auto-reload on file changes
+
+### Testing API Endpoints
+```bash
+# Health check
+curl http://localhost:3001/api/health
+
+# List characters
+curl http://localhost:3001/api/characters
+
+# Get specific character
+curl http://localhost:3001/api/characters/1
+
+# Test with pagination
+curl "http://localhost:3001/api/characters?page=1&limit=5"
+```
+
+### Database Management
+```bash
+# Check database connection
+mysql -u doaxvv_user -p doaxvv_handbook
+
+# View tables
+SHOW TABLES;
+
+# Check character data
+SELECT * FROM characters LIMIT 5;
+```
+
+## 🌍 Environment Configuration
+
+### Required Environment Variables
+
+Create a `.env` file in the backend directory with the following variables:
+
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=3001
+HOST=0.0.0.0
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=doaxvv_handbook
+DB_USER=doaxvv_user
+DB_PASSWORD=your_secure_password
+
+# CORS Configuration (for frontend integration)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Logging Configuration
+LOG_LEVEL=info
+LOG_FORMAT=combined
+
+# File Upload Configuration
+MAX_FILE_SIZE=10mb
+UPLOAD_PATH=uploads
+```
+
+### Environment-Specific Settings
+
+**Development:**
+- CORS allows all origins
+- Detailed error messages
+- Hot reload enabled
+- Database connection pooling: 10 connections
+
+**Production:**
+- Restricted CORS origins
+- Error messages sanitized
+- Optimized connection pooling
+- HTTPS enforcement (when configured)
+
+## 🔗 Integration with Frontend
+
+The backend is designed to work seamlessly with the React frontend:
+
+### API Communication
+- **Base URL**: `http://localhost:3001/api`
+- **CORS**: Configured to allow frontend origins (`localhost:3000`, `localhost:5173`)
+- **Response Format**: Consistent JSON structure with `success`, `data`, and `pagination` fields
+
+### Frontend Integration Points
+1. **Vite Proxy**: Frontend uses Vite proxy to route `/api/*` requests to backend
+2. **Environment Variables**: Frontend uses `VITE_API_URL` to configure API base URL
+3. **Type Safety**: Shared TypeScript types ensure consistency between frontend and backend
+
+### Full-Stack Development Setup
+```bash
+# Terminal 1: Start backend
+cd backend
+bun run dev
+
+# Terminal 2: Start frontend
+cd frontend
+bun run dev
+
+# Access application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:3001
+# API Health: http://localhost:3001/api/health
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Database Connection Failed:**
+```bash
+# Check MySQL service
+sudo systemctl status mysql
+
+# Test connection
+mysql -u doaxvv_user -p doaxvv_handbook
+
+# Verify environment variables
+cat .env | grep DB_
+```
+
+**Port Already in Use:**
+```bash
+# Find process using port 3001
+lsof -i :3001
+
+# Kill process
+kill -9 <PID>
+
+# Or change port in .env
+PORT=3002
+```
+
+**CORS Issues:**
+```bash
+# Check CORS configuration in .env
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Verify frontend URL matches CORS origins
+```
+
+### Performance Optimization
+- Database connection pooling (configurable via environment)
+- Optimized database indexes
+- Request ID tracking for debugging
+- Structured logging for monitoring
+
+## 📚 Additional Resources
+
+- [Express.js Documentation](https://expressjs.com/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Zod Documentation](https://zod.dev/)
+- [Bun Documentation](https://bun.sh/docs)

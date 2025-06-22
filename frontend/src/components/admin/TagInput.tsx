@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { FormGroup } from '@/components/ui/spacing';
 import { cn } from '@/services/utils';
 
-interface TagInputProps {
+export interface TagInputProps {
   tags: string[];
   onTagsChange: (tags: string[]) => void;
   suggestions?: string[];

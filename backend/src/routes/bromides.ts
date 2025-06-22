@@ -71,10 +71,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await bromideModel.search(q as string, {
@@ -100,10 +101,11 @@ router.get('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid bromide ID'
       });
+      return;
     }
     
     const bromide = await bromideModel.findById(id);
@@ -140,10 +142,11 @@ router.put('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid bromide ID'
       });
+      return;
     }
     
     const bromide = await bromideModel.update(id, req.body);
@@ -164,10 +167,11 @@ router.delete('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid bromide ID'
       });
+      return;
     }
     
     await bromideModel.delete(id);

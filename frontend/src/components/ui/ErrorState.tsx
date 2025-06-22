@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/services/utils';
 
-interface ErrorStateProps {
+export interface ErrorStateProps {
   title?: string;
   description?: string;
   error?: string;

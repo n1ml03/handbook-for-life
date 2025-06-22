@@ -40,7 +40,7 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
+      className="relative modern-card p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
     >
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -68,8 +68,8 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
 
         {/* Description */}
         {skill.description_en && (
-          <div className="mb-4 p-3 bg-dark-primary/50 rounded-xl border border-dark-border/30">
-            <p className="text-sm text-gray-300 leading-relaxed">{skill.description_en}</p>
+          <div className="mb-4 p-3 modern-glass rounded-xl border border-border/30">
+            <p className="text-sm text-muted-foreground leading-relaxed">{skill.description_en}</p>
           </div>
         )}
 
@@ -80,16 +80,16 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
               <Sparkles className="w-3 h-3 mr-1" />
               Effect Type
             </p>
-            <div className="p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <p className="text-xs text-gray-300">{skill.effect_type}</p>
+            <div className="p-2 modern-glass rounded-lg border border-border/30">
+              <p className="text-xs text-muted-foreground">{skill.effect_type}</p>
             </div>
           </div>
         )}
 
         {/* ID */}
-        <div className="pt-3 border-t border-dark-border/30">
+        <div className="pt-3 border-t border-border/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
+            <span className="text-xs text-muted-foreground font-mono modern-glass px-2 py-1 rounded-sm">
               #{skill.id}
             </span>
             <motion.div
@@ -227,30 +227,23 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-primary">
-      {/* Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/20 via-accent-cyan/10 to-accent-purple/20" />
-        <div className="relative px-6 py-12 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple mb-4">
-                Skills
-              </h1>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Discover and learn about the diverse range of skills available in DOAXVV. Master the game mechanics and enhance your gameplay.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </div>
+    <div className="modern-page">
+      <div className="modern-container-lg">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="modern-page-header"
+        >
+          <h1 className="modern-page-title">
+            Skills
+          </h1>
+          <p className="modern-page-subtitle">
+            Discover and learn about the diverse range of skills available in DOAXVV. Master the game mechanics and enhance your gameplay.
+          </p>
+        </motion.div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 lg:px-8">
+        {/* Content */}
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -271,6 +264,7 @@ export default function SkillsPage() {
             onSortChange={handleSortChange}
             resultCount={totalItems}
             itemLabel="skills"
+            blackTheme={true}
           />
         </motion.div>
 
@@ -281,11 +275,11 @@ export default function SkillsPage() {
           transition={{ delay: 0.2 }}
           className="flex items-center justify-between mb-6"
         >
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             Showing {skills.length} of {totalItems} skills
           </p>
           {loading && (
-            <div className="flex items-center space-x-2 text-gray-400">
+            <div className="flex items-center space-x-2 text-muted-foreground">
               <LoadingSpinner size="sm" />
               <span>Loading...</span>
             </div>
@@ -318,9 +312,9 @@ export default function SkillsPage() {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <Zap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No skills found</h3>
-            <p className="text-gray-400 mb-4">
+            <Zap className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-foreground mb-2">No skills found</h3>
+            <p className="text-muted-foreground mb-4">
               Try adjusting your filters or search criteria.
             </p>
             <button
@@ -343,7 +337,7 @@ export default function SkillsPage() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="flex items-center space-x-2 px-4 py-2 bg-dark-card border border-dark-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-accent-cyan/50 transition-colors"
+              className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
@@ -359,7 +353,7 @@ export default function SkillsPage() {
                     className={`w-10 h-10 rounded-lg font-bold transition-colors ${
                       currentPage === pageNum
                         ? 'bg-accent-cyan text-dark-primary'
-                        : 'bg-dark-card border border-dark-border hover:border-accent-cyan/50 text-white'
+                        : 'btn-modern-ghost text-foreground'
                     }`}
                   >
                     {pageNum}
@@ -371,7 +365,7 @@ export default function SkillsPage() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="flex items-center space-x-2 px-4 py-2 bg-dark-card border border-dark-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-accent-cyan/50 transition-colors"
+              className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span>Next</span>
               <ChevronRight className="w-4 h-4" />

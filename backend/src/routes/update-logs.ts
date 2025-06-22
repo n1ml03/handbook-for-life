@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { validate, validateQuery, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import databaseService from '../services/DatabaseService';
+import { UpdateLogService } from '../services/UpdateLogService';
 import logger from '../config/logger';
 
 const router = Router();
+const updateLogService = new UpdateLogService();
 
 // GET /api/update-logs - Get all update logs with optional pagination and filtering
 router.get('/', 
@@ -27,9 +28,9 @@ router.get('/',
 
     let result;
     if (published === 'true') {
-      result = await databaseService.getPublishedUpdateLogs(options);
+      result = await updateLogService.getPublishedUpdateLogs(options);
     } else {
-      result = await databaseService.getUpdateLogs(options);
+      result = await updateLogService.getUpdateLogs(options);
     }
 
     logger.info(`Retrieved ${result.data.length} update logs for page ${page}`);
@@ -60,7 +61,7 @@ router.get('/published',
       sortOrder: sortOrder as 'asc' | 'desc'
     };
 
-    const result = await databaseService.getPublishedUpdateLogs(options);
+    const result = await updateLogService.getPublishedUpdateLogs(options);
     
     logger.info(`Retrieved ${result.data.length} published update logs`);
 
@@ -76,7 +77,7 @@ router.get('/published',
 router.get('/:id', 
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updateLog = await databaseService.getUpdateLogById(id);
+    const updateLog = await updateLogService.getUpdateLogById(id);
     
     logger.info(`Retrieved update log: ${updateLog.title}`);
 
@@ -98,18 +99,19 @@ router.post('/',
       description,
       date,
       tags,
-      isPublished,
-      technicalDetails,
-      bugFixes,
+      is_published,
+      technical_details,
+      bug_fixes,
       screenshots,
       metrics
     } = req.body;
 
     if (!version || !title || !content || !date) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Version, title, content, and date are required'
       });
+      return;
     }
 
     const newUpdateLog = {
@@ -119,9 +121,9 @@ router.post('/',
       description: description || '',
       date: new Date(date),
       tags: tags || [],
-      isPublished: isPublished !== undefined ? isPublished : true,
-      technicalDetails: technicalDetails || [],
-      bugFixes: bugFixes || [],
+      is_published: is_published !== undefined ? is_published : true,
+      technical_details: technical_details || [],
+      bug_fixes: bug_fixes || [],
       screenshots: screenshots || [],
       metrics: metrics || {
         performanceImprovement: '0%',
@@ -130,7 +132,7 @@ router.post('/',
       }
     };
 
-    const updateLog = await databaseService.createUpdateLog(newUpdateLog);
+    const updateLog = await updateLogService.createUpdateLog(newUpdateLog);
     
     logger.info(`Created update log: ${updateLog.title}`);
 
@@ -154,7 +156,7 @@ router.put('/:id',
       updates.date = new Date(updates.date);
     }
 
-    const updateLog = await databaseService.updateUpdateLog(id, updates);
+    const updateLog = await updateLogService.updateUpdateLog(id, updates);
     
     logger.info(`Updated update log: ${updateLog.title}`);
 
@@ -167,11 +169,12 @@ router.put('/:id',
 );
 
 // DELETE /api/update-logs/:id - Delete an update log
-router.delete('/:id', 
+router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await databaseService.deleteUpdateLog(id);
-    
+
+    await updateLogService.deleteUpdateLog(id);
+
     logger.info(`Deleted update log with ID: ${id}`);
 
     res.json({
@@ -181,4 +184,4 @@ router.delete('/:id',
   })
 );
 
-export default router; 
+export default router;

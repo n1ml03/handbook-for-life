@@ -23,6 +23,7 @@ export class ItemModel extends BaseModel {
       item_category: row.item_category as ItemCategory,
       rarity: row.rarity as ItemRarity,
       icon_url: row.icon_url,
+      game_version: row.game_version,
     };
   }
 
@@ -30,8 +31,8 @@ export class ItemModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO items (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, source_description_en, item_category, rarity, icon_url)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description_en, source_description_en, item_category, rarity, icon_url, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           item.unique_key,
           item.name_jp,
@@ -44,6 +45,7 @@ export class ItemModel extends BaseModel {
           item.item_category,
           item.rarity,
           item.icon_url,
+          item.game_version,
         ]
       ) as [any, any];
 
@@ -150,6 +152,10 @@ export class ItemModel extends BaseModel {
     if (updates.icon_url !== undefined) {
       setClause.push(`icon_url = ?`);
       params.push(updates.icon_url);
+    }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
     }
 
     if (setClause.length === 0) {

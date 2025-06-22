@@ -22,6 +22,7 @@ export class EpisodeModel extends BaseModel {
       episode_type: row.episode_type as EpisodeType,
       related_entity_type: row.related_entity_type,
       related_entity_id: row.related_entity_id,
+      game_version: row.game_version,
     };
   }
 
@@ -29,8 +30,8 @@ export class EpisodeModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO episodes (unique_key, title_jp, title_en, title_cn, title_tw, title_kr,
-         unlock_condition_en, episode_type, related_entity_type, related_entity_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         unlock_condition_en, episode_type, related_entity_type, related_entity_id, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           episode.unique_key,
           episode.title_jp,
@@ -42,6 +43,7 @@ export class EpisodeModel extends BaseModel {
           episode.episode_type,
           episode.related_entity_type,
           episode.related_entity_id,
+          episode.game_version,
         ]
       ) as [any, any];
 
@@ -145,6 +147,10 @@ export class EpisodeModel extends BaseModel {
       setClause.push(`related_entity_id = ?`);
       params.push(updates.related_entity_id);
     }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
+    }
 
     if (setClause.length === 0) {
       return this.findById(id);
@@ -184,4 +190,14 @@ export class EpisodeModel extends BaseModel {
   async getCharacterEpisodes(character_id: number, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
     return this.findByRelatedEntity('characters', character_id, options);
   }
-} 
+
+  async findByCharacter(character_id: number, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM episodes WHERE episode_type = ? AND related_entity_id = ?',
+      'SELECT COUNT(*) FROM episodes WHERE episode_type = ? AND related_entity_id = ?',
+      options,
+      this.mapEpisodeRow,
+      ['CHARACTER', character_id]
+    );
+  }
+}

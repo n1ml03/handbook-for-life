@@ -140,7 +140,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.02 }}
-        className="group relative bg-dark-card/90 backdrop-blur-sm rounded-xl border border-dark-border/50 overflow-hidden cursor-pointer"
+        className="group relative modern-card overflow-hidden cursor-pointer"
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
       >
@@ -185,12 +185,12 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -8 }}
-        className="group relative bg-gradient-to-br from-dark-card/95 to-dark-primary/80 rounded-2xl border border-dark-border/50 overflow-hidden backdrop-blur-sm cursor-pointer"
+        className="group relative modern-card overflow-hidden cursor-pointer"
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
       >
         {/* Header */}
-        <div className="p-4 border-b border-dark-border/30">
+        <div className="p-4 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-white group-hover:text-accent-cyan transition-colors">
@@ -307,7 +307,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.02, y: -4 }}
-      className="group relative bg-gradient-to-br from-dark-card/95 to-dark-primary/80 rounded-xl border border-dark-border/50 overflow-hidden backdrop-blur-sm cursor-pointer"
+      className="group relative modern-card overflow-hidden cursor-pointer"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
@@ -664,18 +664,18 @@ export default function SwimsuitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Swimsuit Gallery
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="modern-page-subtitle">
             Showing {filteredAndSortedSwimsuits.length} of {swimsuits.length} swimsuits
           </p>
         </motion.div>

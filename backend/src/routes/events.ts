@@ -124,10 +124,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await eventModel.search(q as string, {
@@ -151,16 +152,17 @@ router.get('/search',
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid event ID'
       });
+      return;
     }
-    
+
     const event = await eventModel.findById(id);
-    
+
     logger.info(`Retrieved event: ${event.name_en}`);
 
     res.json({
@@ -191,16 +193,17 @@ router.put('/:id',
   validate(schemas.updateEvent),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid event ID'
       });
+      return;
     }
-    
+
     const event = await eventModel.update(id, req.body);
-    
+
     logger.info(`Updated event: ${event.name_en}`);
 
     res.json({
@@ -215,16 +218,17 @@ router.put('/:id',
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid event ID'
       });
+      return;
     }
-    
+
     await eventModel.delete(id);
-    
+
     logger.info(`Deleted event with ID: ${id}`);
 
     res.json({

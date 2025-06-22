@@ -5,13 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Document, DocumentCategory } from '@/types';
 import { DocumentSectionCards } from './DocumentSectionCards';
 
-interface DocumentManagementProps {
+export interface DocumentManagementProps {
   documents: Document[];
   documentCategories: DocumentCategory[];
   activeDocumentSection: 'checklist-creation' | 'checking-guide' | 'all';
   onSectionChange: (section: 'checklist-creation' | 'checking-guide' | 'all') => void;
   onEditDocument: (document: Document) => void;
-  onDeleteDocument: (documentId: string) => void;
+  onDeleteDocument: (documentId: number) => void;
   onCreateNew: () => void;
   isEditMode: boolean;
 }
@@ -108,7 +108,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
                       )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Last updated: {document.updatedAt} by {document.author}
+                      Last updated: {document.updated_at} by {document.author}
                     </div>
                   </div>
                   <div className="flex gap-2 ml-4">

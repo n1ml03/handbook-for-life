@@ -8,7 +8,7 @@ import { Document, DocumentCategory } from '@/types';
 import { TagInput } from './TagInput';
 import TiptapEditor from '@/components/features/TiptapEditor';
 
-interface DocumentEditorProps {
+export interface DocumentEditorProps {
   document: Document;
   onDocumentChange: (document: Document) => void;
   onSave: (document: Document) => void;
@@ -85,7 +85,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onFocusModeChange?.(false)}
+              onClick={() => onFocusModeChange && onFocusModeChange(false)}
             >
               <Settings className="w-4 h-4" />
             </Button>
@@ -172,7 +172,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onFocusModeChange?.(true)}
+              onClick={() => onFocusModeChange && onFocusModeChange(true)}
               title="Focus Mode (F10)"
             >
               <Focus className="w-4 h-4 mr-2" />
@@ -380,7 +380,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
                 <span className="text-muted-foreground">
                   {document.id ? (
-                    <>Last saved: <span className="font-medium text-foreground">{document.updatedAt}</span></>
+                    <>Last saved: <span className="font-medium text-foreground">{document.updated_at}</span></>
                   ) : (
                     <span className="text-yellow-600 font-medium">New document - not saved yet</span>
                   )}

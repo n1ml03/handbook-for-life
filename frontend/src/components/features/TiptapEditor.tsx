@@ -49,7 +49,7 @@ import { cn } from '@/services/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface TiptapEditorProps {
+export interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
   editable?: boolean;

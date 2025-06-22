@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
+import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { CharacterModel } from '../models/CharacterModel';
 import logger from '../config/logger';
@@ -8,7 +8,7 @@ const router = Router();
 const characterModel = new CharacterModel();
 
 // GET /api/characters - Get all characters with pagination
-router.get('/', 
+router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -32,6 +32,7 @@ router.get('/',
 
 // GET /api/characters/key/:unique_key - Get character by unique key
 router.get('/key/:unique_key',
+  validateParams(schemas.uniqueKeyParam),
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
     
@@ -69,10 +70,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await characterModel.search(q as string, {
@@ -94,15 +96,9 @@ router.get('/search',
 
 // GET /api/characters/:id - Get character by ID
 router.get('/:id',
+  validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid character ID'
-      });
-    }
     
     const character = await characterModel.findById(id);
     
@@ -133,16 +129,10 @@ router.post('/',
 
 // PUT /api/characters/:id - Update character
 router.put('/:id',
+  validateParams(schemas.idParam),
   validate(schemas.updateCharacter),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid character ID'
-      });
-    }
     
     const character = await characterModel.update(id, req.body);
     
@@ -156,20 +146,70 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/characters/:id - Delete character
-router.delete('/:id',
+// GET /api/characters/:id/skills - Get character skills
+router.get('/:id/skills',
+  validateParams(schemas.idParam),
+  validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid character ID'
-      });
-    }
-    
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    // First verify character exists
+    await characterModel.findById(id);
+
+    const result = await characterModel.getCharacterSkills(id, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    });
+
+    logger.info(`Retrieved ${result.data.length} skills for character ${id}`);
+
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  })
+);
+
+// GET /api/characters/:id/swimsuits - Get character swimsuits
+router.get('/:id/swimsuits',
+  validateParams(schemas.idParam),
+  validateQuery(schemas.pagination),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    // First verify character exists
+    await characterModel.findById(id);
+
+    const result = await characterModel.getCharacterSwimsuits(id, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    });
+
+    logger.info(`Retrieved ${result.data.length} swimsuits for character ${id}`);
+
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  })
+);
+
+// DELETE /api/characters/:id - Delete character
+router.delete('/:id',
+  validateParams(schemas.idParam),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+
     await characterModel.delete(id);
-    
+
     logger.info(`Deleted character with ID: ${id}`);
 
     res.json({
@@ -179,4 +219,4 @@ router.delete('/:id',
   })
 );
 
-export default router; 
+export default router;

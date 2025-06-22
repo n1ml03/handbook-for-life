@@ -26,6 +26,7 @@ export class SwimsuitModel extends BaseModel {
       has_malfunction: Boolean(row.has_malfunction),
       is_limited: Boolean(row.is_limited),
       release_date_gl: row.release_date_gl,
+      game_version: row.game_version,
     };
   }
 
@@ -33,8 +34,8 @@ export class SwimsuitModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO swimsuits (character_id, unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, rarity, suit_type, total_stats_awakened, has_malfunction, is_limited, release_date_gl)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description_en, rarity, suit_type, total_stats_awakened, has_malfunction, is_limited, release_date_gl, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           swimsuit.character_id,
           swimsuit.unique_key,
@@ -50,6 +51,7 @@ export class SwimsuitModel extends BaseModel {
           swimsuit.has_malfunction ?? false,
           swimsuit.is_limited ?? true,
           swimsuit.release_date_gl,
+          swimsuit.game_version,
         ]
       ) as [any, any];
 
@@ -199,6 +201,10 @@ export class SwimsuitModel extends BaseModel {
     if (updates.release_date_gl !== undefined) {
       setClause.push(`release_date_gl = ?`);
       params.push(updates.release_date_gl);
+    }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
     }
 
     if (setClause.length === 0) {

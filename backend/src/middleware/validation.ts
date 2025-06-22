@@ -53,10 +53,96 @@ export const validateQuery = (schema: ZodSchema<any>) => {
   };
 };
 
+/**
+ * Global input sanitization middleware
+ */
+export const sanitizeInput = (req: Request, _res: Response, next: NextFunction): void => {
+  // Sanitize common dangerous patterns
+  const sanitizeString = (str: string): string => {
+    return str
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .trim();
+  };
+
+  const sanitizeObject = (obj: any): any => {
+    if (typeof obj === 'string') {
+      return sanitizeString(obj);
+    } else if (Array.isArray(obj)) {
+      return obj.map(sanitizeObject);
+    } else if (obj && typeof obj === 'object') {
+      const sanitized: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        sanitized[key] = sanitizeObject(value);
+      }
+      return sanitized;
+    }
+    return obj;
+  };
+
+  // Sanitize request body
+  if (req.body) {
+    req.body = sanitizeObject(req.body);
+  }
+
+  // Sanitize query parameters
+  if (req.query) {
+    req.query = sanitizeObject(req.query);
+  }
+
+  next();
+};
+
+/**
+ * Request size validation middleware
+ */
+export const validateRequestSize = (req: Request, res: Response, next: NextFunction): void => {
+  const maxBodySize = 10 * 1024 * 1024; // 10MB
+  const maxQueryLength = 2048; // 2KB for query string
+
+  // Check body size (already handled by express.json limit, but double-check)
+  if (req.headers['content-length']) {
+    const contentLength = parseInt(req.headers['content-length']);
+    if (contentLength > maxBodySize) {
+      res.status(413).json({
+        success: false,
+        error: 'Request body too large',
+        message: 'Request body exceeds maximum allowed size'
+      });
+      return;
+    }
+  }
+
+  // Check query string length
+  const queryString = req.url.split('?')[1] || '';
+  if (queryString.length > maxQueryLength) {
+    res.status(414).json({
+      success: false,
+      error: 'Query string too long',
+      message: 'Query string exceeds maximum allowed length'
+    });
+    return;
+  }
+
+  next();
+};
+
 // Common validation schemas (Zod)
 export const schemas = {
+  // Parameter validation schemas
   id: z.object({
     id: z.string().min(1)
+  }),
+  idParam: z.object({
+    id: z.string().regex(/^\d+$/, 'ID must be a valid number')
+  }),
+  uniqueKeyParam: z.object({
+    unique_key: z.string().min(1).max(150)
+  }),
+  skillSlotParam: z.object({
+    id: z.string().regex(/^\d+$/, 'ID must be a valid number'),
+    slot: z.enum(['ACTIVE', 'PASSIVE_1', 'PASSIVE_2', 'POTENTIAL_1', 'POTENTIAL_2', 'POTENTIAL_3', 'POTENTIAL_4'])
   }),
   createCharacter: z.object({
     unique_key: z.string().min(1).max(100),
@@ -91,42 +177,62 @@ export const schemas = {
     game_version: z.string().max(30).optional()
   }),
   createSkill: z.object({
-    id: z.string(),
-    name: z.string().min(1).max(255),
-    type: z.string(),
-    description: z.string().optional(),
-    icon: z.string().optional()
+    unique_key: z.string().min(1).max(120),
+    name_jp: z.string().min(1).max(150),
+    name_en: z.string().min(1).max(150),
+    name_cn: z.string().min(1).max(150),
+    name_tw: z.string().min(1).max(150),
+    name_kr: z.string().min(1).max(150),
+    description_en: z.string().optional(),
+    skill_category: z.enum(['ACTIVE', 'PASSIVE', 'POTENTIAL']),
+    effect_type: z.string().max(50).optional(),
+    game_version: z.string().max(30).optional()
   }),
   updateSkill: z.object({
-    name: z.string().min(1).max(255).optional(),
-    type: z.string().optional(),
-    description: z.string().optional(),
-    icon: z.string().optional()
+    unique_key: z.string().min(1).max(120).optional(),
+    name_jp: z.string().min(1).max(150).optional(),
+    name_en: z.string().min(1).max(150).optional(),
+    name_cn: z.string().min(1).max(150).optional(),
+    name_tw: z.string().min(1).max(150).optional(),
+    name_kr: z.string().min(1).max(150).optional(),
+    description_en: z.string().optional(),
+    skill_category: z.enum(['ACTIVE', 'PASSIVE', 'POTENTIAL']).optional(),
+    effect_type: z.string().max(50).optional(),
+    game_version: z.string().max(30).optional()
   }),
   createSwimsuit: z.object({
-    id: z.string(),
-    name: z.string().min(1).max(255),
-    characterId: z.string(),
-    rarity: z.enum(['SSR', 'SR', 'R']),
-    pow: z.number().int().min(0),
-    tec: z.number().int().min(0),
-    stm: z.number().int().min(0),
-    apl: z.number().int().min(0),
-    releaseDate: z.coerce.date(),
-    reappearDate: z.coerce.date().optional(),
-    image: z.string().optional()
+    character_id: z.number().int().positive(),
+    unique_key: z.string().min(1).max(150),
+    name_jp: z.string().min(1).max(255),
+    name_en: z.string().min(1).max(255),
+    name_cn: z.string().min(1).max(255),
+    name_tw: z.string().min(1).max(255),
+    name_kr: z.string().min(1).max(255),
+    description_en: z.string().optional(),
+    rarity: z.enum(['N', 'R', 'SR', 'SSR', 'SSR+']),
+    suit_type: z.enum(['POW', 'TEC', 'STM', 'APL', 'N/A']),
+    total_stats_awakened: z.number().int().min(0).optional(),
+    has_malfunction: z.boolean().optional(),
+    is_limited: z.boolean().optional(),
+    release_date_gl: z.coerce.date().optional(),
+    game_version: z.string().max(30).optional()
   }),
   updateSwimsuit: z.object({
-    name: z.string().min(1).max(255).optional(),
-    characterId: z.string().optional(),
-    rarity: z.enum(['SSR', 'SR', 'R']).optional(),
-    pow: z.number().int().min(0).optional(),
-    tec: z.number().int().min(0).optional(),
-    stm: z.number().int().min(0).optional(),
-    apl: z.number().int().min(0).optional(),
-    releaseDate: z.coerce.date().optional(),
-    reappearDate: z.coerce.date().optional(),
-    image: z.string().optional()
+    character_id: z.number().int().positive().optional(),
+    unique_key: z.string().min(1).max(150).optional(),
+    name_jp: z.string().min(1).max(255).optional(),
+    name_en: z.string().min(1).max(255).optional(),
+    name_cn: z.string().min(1).max(255).optional(),
+    name_tw: z.string().min(1).max(255).optional(),
+    name_kr: z.string().min(1).max(255).optional(),
+    description_en: z.string().optional(),
+    rarity: z.enum(['N', 'R', 'SR', 'SSR', 'SSR+']).optional(),
+    suit_type: z.enum(['POW', 'TEC', 'STM', 'APL', 'N/A']).optional(),
+    total_stats_awakened: z.number().int().min(0).optional(),
+    has_malfunction: z.boolean().optional(),
+    is_limited: z.boolean().optional(),
+    release_date_gl: z.coerce.date().optional(),
+    game_version: z.string().max(30).optional()
   }),
   createGirl: z.object({
     id: z.string(),
@@ -346,9 +452,9 @@ export const schemas = {
     description: z.string().optional(),
     date: z.coerce.date(),
     tags: z.array(z.string()).optional(),
-    isPublished: z.boolean().default(true),
-    technicalDetails: z.array(z.string()).optional(),
-    bugFixes: z.array(z.string()).optional(),
+    is_published: z.boolean().default(true),
+    technical_details: z.array(z.string()).optional(),
+    bug_fixes: z.array(z.string()).optional(),
     screenshots: z.array(z.string()).optional(),
     metrics: z.object({
       performanceImprovement: z.string().default('0%'),
@@ -365,9 +471,9 @@ export const schemas = {
     description: z.string().optional(),
     date: z.coerce.date().optional(),
     tags: z.array(z.string()).optional(),
-    isPublished: z.boolean().optional(),
-    technicalDetails: z.array(z.string()).optional(),
-    bugFixes: z.array(z.string()).optional(),
+    is_published: z.boolean().optional(),
+    technical_details: z.array(z.string()).optional(),
+    bug_fixes: z.array(z.string()).optional(),
     screenshots: z.array(z.string()).optional(),
     metrics: z.object({
       performanceImprovement: z.string(),
@@ -408,7 +514,8 @@ export const schemas = {
     unlock_condition_en: z.string().optional(),
     episode_type: z.enum(['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM']),
     related_entity_type: z.string().max(64).optional(),
-    related_entity_id: z.number().int().positive().optional()
+    related_entity_id: z.number().int().positive().optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   updateEpisode: z.object({
@@ -421,7 +528,8 @@ export const schemas = {
     unlock_condition_en: z.string().optional(),
     episode_type: z.enum(['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM']).optional(),
     related_entity_type: z.string().max(64).optional(),
-    related_entity_id: z.number().int().positive().optional()
+    related_entity_id: z.number().int().positive().optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   // ============================================================================
@@ -436,7 +544,8 @@ export const schemas = {
     name_kr: z.string().min(1).max(255),
     type: z.enum(['FESTIVAL_RANKING', 'FESTIVAL_CUMULATIVE', 'TOWER', 'ROCK_CLIMBING', 'BUTT_BATTLE', 'LOGIN_BONUS', 'STORY']),
     start_date: z.coerce.date(),
-    end_date: z.coerce.date()
+    end_date: z.coerce.date(),
+    game_version: z.string().max(30).optional()
   }).refine(data => data.start_date < data.end_date, {
     message: "Start date must be before end date",
     path: ["start_date"]
@@ -451,7 +560,8 @@ export const schemas = {
     name_kr: z.string().min(1).max(255).optional(),
     type: z.enum(['FESTIVAL_RANKING', 'FESTIVAL_CUMULATIVE', 'TOWER', 'ROCK_CLIMBING', 'BUTT_BATTLE', 'LOGIN_BONUS', 'STORY']).optional(),
     start_date: z.coerce.date().optional(),
-    end_date: z.coerce.date().optional()
+    end_date: z.coerce.date().optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   // ============================================================================
@@ -468,7 +578,8 @@ export const schemas = {
     source_description_en: z.string().optional(),
     item_category: z.enum(['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL']),
     rarity: z.enum(['N', 'R', 'SR', 'SSR']),
-    icon_url: z.string().max(255).optional()
+    icon_url: z.string().max(255).optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   updateItem: z.object({
@@ -482,7 +593,8 @@ export const schemas = {
     source_description_en: z.string().optional(),
     item_category: z.enum(['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL']).optional(),
     rarity: z.enum(['N', 'R', 'SR', 'SSR']).optional(),
-    icon_url: z.string().max(255).optional()
+    icon_url: z.string().max(255).optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   // ============================================================================
@@ -498,7 +610,8 @@ export const schemas = {
     bromide_type: z.enum(['DECO', 'OWNER']).default('DECO'),
     rarity: z.enum(['R', 'SR', 'SSR']),
     skill_id: z.number().int().positive().optional(),
-    art_url: z.string().max(255).optional()
+    art_url: z.string().max(255).optional(),
+    game_version: z.string().max(30).optional()
   }),
 
   updateBromide: z.object({
@@ -511,6 +624,7 @@ export const schemas = {
     bromide_type: z.enum(['DECO', 'OWNER']).optional(),
     rarity: z.enum(['R', 'SR', 'SSR']).optional(),
     skill_id: z.number().int().positive().optional(),
-    art_url: z.string().max(255).optional()
+    art_url: z.string().max(255).optional(),
+    game_version: z.string().max(30).optional()
   })
 };

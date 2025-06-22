@@ -26,12 +26,12 @@ import shopListingsRoutes from '@routes/shop-listings';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration
+// CORS configuration (simplified for local development)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: true, // Allow all origins for local development
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Body parsing middleware
@@ -39,28 +39,32 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request ID middleware for tracking
-app.use((req, res, next) => {
-  req.id = Math.random().toString(36).substr(2, 9);
+app.use((req: any, res, next) => {
+  req.id = Math.random().toString(36).substring(2, 11);
   res.setHeader('X-Request-ID', req.id);
   next();
 });
 
-// API routes
+// API routes (health check has no additional rate limiting)
 app.use('/api/health', healthRoutes);
+
+// Authentication routes removed for local development
+
+// API routes (no rate limiting for local development)
 app.use('/api/characters', charactersRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/swimsuits', swimsuitsRoutes);
 app.use('/api/items', itemsRoutes);
 app.use('/api/episodes', episodesRoutes);
-app.use('/api/documents', documentsRoutes);
-app.use('/api/update-logs', updateLogsRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/bromides', bromidesRoutes);
 app.use('/api/gachas', gachasRoutes);
 app.use('/api/shop-listings', shopListingsRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/update-logs', updateLogsRoutes);
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     success: true,
     message: 'DOAXVV Handbook API Server',

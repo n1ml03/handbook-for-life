@@ -221,6 +221,7 @@ export interface Document {
   category: string; // Category based on tags or type
   tags: string[]; // Generated from category and type
   author: string; // Default or computed author
+  isPublished: boolean; // Maps to is_published for DocumentEditor compatibility
 }
 
 // Timeline view (for HomePage)

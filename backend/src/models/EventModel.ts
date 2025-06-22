@@ -22,6 +22,7 @@ export class EventModel extends BaseModel {
       start_date: row.start_date,
       end_date: row.end_date,
       is_active: Boolean(row.is_active),
+      game_version: row.game_version,
     };
   }
 
@@ -29,8 +30,8 @@ export class EventModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO events (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         type, start_date, end_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         type, start_date, end_date, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           event.unique_key,
           event.name_jp,
@@ -41,6 +42,7 @@ export class EventModel extends BaseModel {
           event.type,
           event.start_date,
           event.end_date,
+          event.game_version,
         ]
       ) as [any, any];
 
@@ -147,6 +149,10 @@ export class EventModel extends BaseModel {
     if (updates.end_date !== undefined) {
       setClause.push(`end_date = ?`);
       params.push(updates.end_date);
+    }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
     }
 
     if (setClause.length === 0) {

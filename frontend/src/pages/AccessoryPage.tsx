@@ -62,7 +62,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl p-6 overflow-hidden group"
+      className="relative modern-card p-6 overflow-hidden group"
     >
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -292,18 +292,18 @@ export default function AccessoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Accessory Gallery
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="modern-page-subtitle">
             Showing {filteredAndSortedAccessories.length} of {accessories.length} accessories
           </p>
         </motion.div>

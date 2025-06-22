@@ -100,10 +100,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await gachaService.searchGachas(q as string, {
@@ -127,16 +128,17 @@ router.get('/search',
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
-    
+
     const gacha = await gachaService.getGachaById(id);
-    
+
     logger.info(`Retrieved gacha: ${gacha.name_en}`);
 
     res.json({
@@ -154,10 +156,11 @@ router.get('/:id/pool',
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
     
     const result = await gachaService.getGachaPool(id, {
@@ -185,12 +188,13 @@ router.get('/:id/featured',
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
-    
+
     const result = await gachaService.getFeaturedItems(id, {
       page: Number(page),
       limit: Number(limit),
@@ -212,12 +216,13 @@ router.get('/:id/featured',
 router.get('/:id/statistics',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
     
     const statistics = await gachaService.getGachaStatistics(id);
@@ -233,7 +238,7 @@ router.get('/:id/statistics',
 
 // POST /api/gachas - Create new gacha
 router.post('/',
-  // validate(schemas.createGacha), // TODO: Add validation schema
+  validate(schemas.createGacha),
   asyncHandler(async (req, res) => {
     const gacha = await gachaService.createGacha(req.body);
     
@@ -249,20 +254,21 @@ router.post('/',
 
 // POST /api/gachas/:id/pool - Add item to gacha pool
 router.post('/:id/pool',
-  // validate(schemas.createGachaPool), // TODO: Add validation schema
+  validate(schemas.createGachaPool),
   asyncHandler(async (req, res) => {
     const gachaId = Number(req.params.id);
     
     if (isNaN(gachaId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
 
     const poolData = { ...req.body, gacha_id: gachaId };
     const poolItem = await gachaService.addPoolItem(poolData);
-    
+
     logger.info(`Added pool item to gacha ${gachaId}`);
 
     res.status(201).json({
@@ -275,23 +281,25 @@ router.post('/:id/pool',
 
 // POST /api/gachas/:id/pool/bulk - Bulk add items to gacha pool
 router.post('/:id/pool/bulk',
-  // validate(schemas.bulkCreateGachaPool), // TODO: Add validation schema
+  validate(schemas.bulkCreateGachaPool),
   asyncHandler(async (req, res) => {
     const gachaId = Number(req.params.id);
-    
+
     if (isNaN(gachaId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
 
     const { items } = req.body;
     if (!Array.isArray(items)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Items must be an array'
       });
+      return;
     }
 
     const poolItems = await gachaService.bulkAddPoolItems(gachaId, items);
@@ -308,15 +316,16 @@ router.post('/:id/pool/bulk',
 
 // PUT /api/gachas/:id - Update gacha
 router.put('/:id',
-  // validate(schemas.updateGacha), // TODO: Add validation schema
+  validate(schemas.updateGacha),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
 
     const gacha = await gachaService.updateGacha(id, req.body);
@@ -333,15 +342,16 @@ router.put('/:id',
 
 // PUT /api/gachas/:id/pool/:poolId - Update pool item
 router.put('/:id/pool/:poolId',
-  // validate(schemas.updateGachaPool), // TODO: Add validation schema
+  validate(schemas.updateGachaPool),
   asyncHandler(async (req, res) => {
     const poolId = Number(req.params.poolId);
 
     if (isNaN(poolId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid pool item ID'
       });
+      return;
     }
 
     const poolItem = await gachaService.updatePoolItem(poolId, req.body);
@@ -362,10 +372,11 @@ router.delete('/:id',
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid gacha ID'
       });
+      return;
     }
 
     await gachaService.deleteGacha(id);
@@ -385,10 +396,11 @@ router.delete('/:id/pool/:poolId',
     const poolId = Number(req.params.poolId);
 
     if (isNaN(poolId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid pool item ID'
       });
+      return;
     }
 
     await gachaService.removePoolItem(poolId);

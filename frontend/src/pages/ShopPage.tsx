@@ -381,17 +381,18 @@ export default function ShopPage() {
   ];
 
   return (
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Shop
           </h1>
-          <p className="text-gray-400">
+          <p className="modern-page-subtitle">
             Showing {totalItems} items
           </p>
         </motion.div>
@@ -533,5 +534,6 @@ export default function ShopPage() {
           </motion.div>
         )}
       </div>
+    </div>
   );
-} 
+}

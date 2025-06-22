@@ -43,8 +43,8 @@
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 
   /* Layout Variables */
-  --header-height: 64px;
-  --content-padding: 32px;
+  --header-height: 48px;
+  --content-padding: 24px;
 
   /* Accessibility Variables */
   --min-touch-target: 44px;
@@ -189,18 +189,66 @@
 }
 
 @layer utilities {
-  .doax-card {
-    background-color: color-mix(in oklch, hsl(var(--color-card)) 90%, transparent);
+  /* Modern Card System */
+  .modern-card {
+    background-color: color-mix(in oklch, hsl(var(--color-card)) 95%, transparent);
     backdrop-filter: blur(8px);
-    border: 1px solid color-mix(in oklch, hsl(var(--color-border)) 50%, transparent);
+    border: 1px solid color-mix(in oklch, hsl(var(--color-border)) 40%, transparent);
     border-radius: var(--radius-lg);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
     transition: all 0.2s ease-in-out;
   }
 
-  .doax-card:hover {
-    background-color: color-mix(in oklch, hsl(var(--color-card)) 95%, transparent);
-    border-color: color-mix(in oklch, hsl(var(--color-border)) 70%, transparent);
+  .modern-card:hover {
+    background-color: color-mix(in oklch, hsl(var(--color-card)) 98%, transparent);
+    border-color: color-mix(in oklch, hsl(var(--color-border)) 60%, transparent);
+    box-shadow: 0 8px 12px -2px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Legacy card support */
+  .doax-card {
+    @apply modern-card;
+  }
+
+  /* Modern Glass Effect */
+  .modern-glass {
+    background-color: color-mix(in oklch, hsl(var(--color-background)) 85%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in oklch, hsl(var(--color-border)) 30%, transparent);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--color-accent-pink)), hsl(var(--color-accent-cyan)), hsl(var(--color-accent-purple)));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease-in-out infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Modern Button Variants */
+  .btn-modern {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply bg-accent/10 text-accent-pink border border-accent-pink/20;
+    @apply hover:bg-accent-pink/10 hover:border-accent-pink/40 hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1;
+  }
+
+  .btn-modern-primary {
+    @apply btn-modern bg-accent-pink text-white border-accent-pink;
+    @apply hover:bg-accent-pink/90 hover:border-accent-pink;
+  }
+
+  .btn-modern-ghost {
+    @apply btn-modern bg-transparent border-transparent;
+    @apply hover:bg-accent/10 hover:border-accent/20;
   }
 }
 
@@ -269,18 +317,19 @@
   }
 
   .header-nav {
-    @apply sticky top-0 z-50 transition-all duration-200;
-    background-color: color-mix(in oklch, hsl(var(--color-card)) 95%, transparent);
-    backdrop-filter: blur(12px);
+    @apply sticky top-0 z-50 transition-all duration-300;
+    background-color: color-mix(in oklch, hsl(var(--color-background)) 80%, transparent);
+    backdrop-filter: blur(8px);
     border-bottom: 1px solid color-mix(in oklch, hsl(var(--color-border)) 50%, transparent);
     height: var(--header-height);
     contain: layout style;
   }
 
   .light .header-nav {
-    background-color: color-mix(in oklch, hsl(var(--color-card)) 90%, transparent);
+    background-color: color-mix(in oklch, hsl(var(--color-background)) 85%, transparent);
   }
 
+  /* Unified Header Dropdown Styling */
   .header-dropdown-content {
     @apply rounded-lg border shadow-lg;
     background-color: color-mix(in oklch, hsl(var(--color-popover)) 95%, transparent);
@@ -288,6 +337,7 @@
     border-color: color-mix(in oklch, hsl(var(--color-border)) 50%, transparent);
     animation: var(--animate-tooltip-fade-in);
     contain: layout style;
+    min-width: 14rem; /* w-56 equivalent - 224px */
   }
 
   .light .header-dropdown-content {
@@ -298,17 +348,60 @@
     @apply block w-full text-left;
     position: relative;
     overflow: hidden;
+    min-height: var(--min-touch-target); /* Ensure WCAG AA compliance */
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    margin: 0 0.375rem; /* mx-1.5 */
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease-in-out;
   }
 
   .header-dropdown-content [role="menuitem"]:focus {
     @apply text-accent-foreground;
     background-color: color-mix(in oklch, hsl(var(--color-accent)) 10%, transparent);
+    outline: 2px solid hsl(var(--color-accent-pink));
+    outline-offset: 2px;
+  }
+
+  .header-dropdown-content [role="menuitem"]:hover {
+    background-color: color-mix(in oklch, hsl(var(--color-accent)) 10%, transparent);
+    color: hsl(var(--color-accent-pink));
   }
 
   .header-dropdown-content [role="menuitem"] svg {
     @apply flex-shrink-0;
     min-width: var(--min-icon-size);
     min-height: var(--min-icon-size);
+  }
+
+  /* Unified Filter Dropdown Styling */
+  .filter-dropdown-select {
+    @apply w-full border rounded-lg text-sm transition-all;
+    min-height: var(--min-touch-target);
+    padding: 0.5rem 0.75rem;
+    background-color: color-mix(in oklch, hsl(var(--color-background)) 95%, transparent);
+    backdrop-filter: blur(8px);
+    border-color: color-mix(in oklch, hsl(var(--color-border)) 50%, transparent);
+  }
+
+  .filter-dropdown-select:focus {
+    outline: none;
+    border-color: hsl(var(--color-accent-pink));
+    box-shadow: 0 0 0 2px color-mix(in oklch, hsl(var(--color-accent-pink)) 20%, transparent);
+  }
+
+  .filter-dropdown-select:hover {
+    border-color: color-mix(in oklch, hsl(var(--color-border)) 70%, transparent);
+  }
+
+  /* Black theme overrides for filter dropdowns */
+  .black-theme .filter-dropdown-select {
+    background-color: color-mix(in oklch, hsl(220 26% 8%) 50%, transparent);
+    border-color: color-mix(in oklch, hsl(217.2 32.6% 15.5%) 70%, transparent);
+    color: hsl(var(--color-foreground));
+  }
+
+  .black-theme .filter-dropdown-select:focus {
+    border-color: color-mix(in oklch, hsl(217.2 32.6% 15.5%) 50%, transparent);
   }
 
   .ripple {
@@ -368,27 +461,90 @@
     @apply bg-border/80;
   }
 
-  /* Responsive containers */
-  .container-responsive {
+  /* Modern Layout System */
+  .modern-container {
     @apply mx-auto px-4;
     max-width: min(100%, 1200px);
   }
 
-  .compact-container {
-    @apply mx-auto px-3;
-    max-width: min(100%, 900px);
+  .modern-container-sm {
+    @apply mx-auto px-4;
+    max-width: min(100%, 800px);
   }
 
-  /* Performance optimized grid */
-  .performance-grid {
-    @apply grid gap-4;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  .modern-container-lg {
+    @apply mx-auto px-6;
+    max-width: min(100%, 1400px);
+  }
+
+  /* Legacy container support */
+  .container-responsive {
+    @apply modern-container;
+  }
+
+  .compact-container {
+    @apply modern-container-sm px-3;
+  }
+
+  /* Modern Page Layout */
+  .modern-page {
+    @apply min-h-screen space-y-6;
+    padding-top: calc(var(--header-height) + 1rem);
+  }
+
+  .modern-page-header {
+    @apply text-center space-y-4 mb-8;
+  }
+
+  .modern-page-title {
+    @apply text-4xl md:text-5xl font-bold gradient-text leading-tight;
+  }
+
+  .modern-page-subtitle {
+    @apply text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed;
+  }
+
+  /* Modern Grid System */
+  .modern-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     contain: layout style;
   }
 
+  .modern-grid-sm {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .modern-grid-lg {
+    @apply grid gap-8;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+
+  /* Legacy grid support */
+  .performance-grid {
+    @apply modern-grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
   .compact-grid {
-    @apply grid gap-3;
+    @apply modern-grid-sm gap-3;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  /* Modern Component States */
+  .modern-interactive {
+    @apply transition-all duration-200 ease-in-out;
+    @apply hover:scale-105 hover:shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1;
+  }
+
+  .modern-loading {
+    @apply animate-pulse bg-muted/50 rounded-lg;
+  }
+
+  .modern-skeleton {
+    @apply modern-loading h-4 w-full;
   }
 
   /* ProseMirror editor styles */
@@ -508,11 +664,13 @@
   .header-dropdown-portal {
     z-index: 100;
     position: absolute;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 10px 10px -5px rgb(0 0 0 / 0.1);
-    border-radius: 0.75rem;
-    background: rgba(17, 24, 39, 0.95);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    border-radius: var(--radius-lg);
+    background: color-mix(in oklch, hsl(var(--color-background)) 95%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid color-mix(in oklch, hsl(var(--color-border)) 50%, transparent);
+    min-width: 14rem; /* Consistent w-56 equivalent */
+    width: 14rem;
   }
 
   .header-dropdown-content {

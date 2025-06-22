@@ -15,9 +15,7 @@
     "db:migrate": "bun run src/database/migrations/run-migrations.ts",
     "db:seed": "bun run src/database/seeds/run-seeds.ts",
     "db:reset": "bun run db:migrate && bun run db:seed",
-    "health": "curl -f http://localhost:3001/api/health || exit 1",
-    "setup": "bun install && bun run build",
-    "deploy:local": "bun run build"
+    "health": "curl -f http://localhost:3001/api/health || exit 1"
   },
   "dependencies": {
     "cors": "^2.8.5",

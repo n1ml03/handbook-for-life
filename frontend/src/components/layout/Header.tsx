@@ -37,7 +37,7 @@ interface MenuItem {
   category?: string;
 }
 
-interface HeaderProps {
+export interface HeaderProps {
   className?: string;
 }
 
@@ -108,9 +108,9 @@ function Dropdown({
     <div
       ref={dropdownRef}
       className={cn(
-        'header-dropdown-portal w-64',
-        'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
-        'duration-200'
+        'header-dropdown-portal',
+        'animate-in fade-in-0 zoom-in-95 slide-in-from-top-1',
+        'duration-150'
       )}
       style={{
         top: dropdownPosition.top,
@@ -120,8 +120,8 @@ function Dropdown({
       aria-orientation="vertical"
       aria-labelledby="dropdown-trigger"
     >
-      <div className="header-dropdown-content overflow-hidden">
-        <div className="py-1" role="none">
+      <div className="header-dropdown-content overflow-hidden rounded-lg border border-border/50 bg-background/95 backdrop-blur-md shadow-lg">
+        <div className="py-1.5" role="none">
           {children}
         </div>
       </div>
@@ -152,25 +152,25 @@ function DropdownItem({
     <Link
       to={item.path!}
       className={cn(
-        'flex items-center gap-2 px-4 py-2.5 mx-2 text-sm font-medium rounded-md',
+        'flex items-center gap-3 px-3 py-2 mx-1.5 text-sm font-medium rounded-md',
         'transition-all duration-150 ease-in-out',
-        'hover:bg-accent/10 focus:bg-accent/10',
-        'focus:outline-hidden focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-2',
-        'min-h-[44px]',
-        isActive ? 'bg-accent-pink/20 text-accent-pink' : ''
+        'hover:bg-accent/10 hover:text-accent-pink focus:bg-accent/10',
+        'focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1',
+        'min-h-[44px]', // Updated to WCAG AA compliance
+        isActive ? 'bg-accent-pink/10 text-accent-pink border border-accent-pink/20' : 'text-muted-foreground'
       )}
       onClick={onClick}
       role="menuitem"
       aria-current={isActive ? 'page' : undefined}
     >
-      <div className="flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200" aria-hidden="true">
+      <div className="flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200" aria-hidden="true">
         <ItemIcon className={cn('w-4 h-4', item.color, isActive ? 'text-accent-pink' : '')} />
       </div>
       <span className="flex-1">{item.label}</span>
       {item.badge && (
         <Badge
           variant="secondary"
-          className="text-xs"
+          className="text-xs h-5 px-1.5"
           aria-label={`${item.badge} items`}
         >
           {item.badge}
@@ -451,24 +451,31 @@ export function Header({ className }: HeaderProps) {
         key={item.id}
         to={item.path!}
         className={cn(
-          "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-          "hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 hover:scale-105",
-          "focus:outline-hidden focus:ring-2 focus:ring-accent-pink/30",
-          isActive ? "bg-gradient-to-r from-accent-pink/20 via-accent-purple/15 to-accent-ocean/20 text-white border border-accent-pink/30 shadow-lg" : "",
-          isMobile ? "w-full justify-start" : ""
+          "flex items-center gap-2 text-sm font-medium rounded-lg transition-all duration-200",
+          "hover:bg-accent/10 hover:text-accent-pink",
+          "focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1",
+          isMobile
+            ? "w-full justify-start px-3 py-2 mx-1"
+            : "px-3 py-1.5",
+          isActive
+            ? "bg-accent-pink/10 text-accent-pink border border-accent-pink/20 shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
         )}
         onClick={() => setMobileMenuOpen(false)}
       >
         <div className={cn(
-          "flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200",
-          "hover:bg-white/10 hover:scale-110",
-          isActive ? "bg-white/10" : ""
+          "flex items-center justify-center rounded-md transition-all duration-200",
+          isMobile ? "w-5 h-5" : "w-4 h-4"
         )}>
-          <ItemIcon className={cn("w-4 h-4", item.color)} />
+          <ItemIcon className={cn(
+            isMobile ? "w-4 h-4" : "w-3.5 h-3.5",
+            item.color,
+            isActive ? "text-accent-pink" : ""
+          )} />
         </div>
-        <span>{item.label}</span>
+        <span className={isMobile ? "text-sm" : "text-xs font-medium"}>{item.label}</span>
         {item.badge && (
-          <Badge variant="secondary" className="ml-2 text-xs">
+          <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5">
             {item.badge}
           </Badge>
         )}
@@ -480,45 +487,53 @@ export function Header({ className }: HeaderProps) {
     <header
       id="header-nav"
       className={cn(
-        "sticky top-0 z-[1000] w-full bg-background/95 backdrop-blur-xl border-b border-border",
-        "shadow-lg shadow-black/5",
+        "sticky top-0 z-[1000] w-full",
+        "bg-background/80 backdrop-blur-md border-b border-border/50",
+        "shadow-sm shadow-black/5",
+        "transition-all duration-300 ease-in-out",
         className || ""
       )}
       role="banner"
     >
       <div className="container mx-auto px-4" style={{ overflow: 'visible' }}>
-        <div className="flex items-center justify-between h-16" style={{ overflow: 'visible' }}>
+        <div className="flex items-center justify-between h-12" style={{ overflow: 'visible' }}>
           {/* Logo */}
-          <Link to="/home" className="flex items-center space-x-3">
+          <Link
+            to="/home"
+            className="flex items-center space-x-2 group transition-all duration-200 hover:scale-105"
+          >
             <div className="relative">
-              <Star className="w-8 h-8 text-accent-pink" />
-              <div className="absolute inset-0 w-8 h-8 text-accent-pink animate-pulse opacity-50" />
+              <Star className="w-6 h-6 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
+              <div className="absolute inset-0 w-6 h-6 text-accent-pink/30 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </div>
             <div className="hidden sm:block">
-              <span className="font-bold text-lg text-foreground">Handbook</span>
+              <span className="font-semibold text-base text-foreground group-hover:text-accent-pink transition-colors duration-200">
+                Handbook
+              </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1" style={{ position: 'static' }}>
+          <nav className="hidden md:flex items-center space-x-0.5" style={{ position: 'static' }}>
             {menuItems.map(item => renderMenuItem(item))}
           </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <ThemeToggle />
-            
+
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
+              className="md:hidden h-8 w-8 p-0 hover:bg-accent/10 transition-colors duration-200"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-4 h-4" />
               )}
             </Button>
           </div>
@@ -526,8 +541,8 @@ export function Header({ className }: HeaderProps) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
-            <nav className="py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="md:hidden border-t border-border/30 bg-background/90 backdrop-blur-md">
+            <nav className="py-3 space-y-1 max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar">
               {menuItems.map(item => renderMenuItem(item, true))}
             </nav>
           </div>

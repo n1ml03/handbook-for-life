@@ -273,18 +273,18 @@ export default function FestivalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Festival Gallery
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="modern-page-subtitle">
             Showing {filteredAndSortedFestivals.length} festivals
           </p>
         </motion.div>

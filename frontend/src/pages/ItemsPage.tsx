@@ -289,7 +289,7 @@ export default function ItemsPage() {
       case 'accessory': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
       case 'skill': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
       case 'bromide': return 'text-pink-400 bg-pink-400/10 border-pink-400/20';
-      default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+      default: return 'text-muted-foreground bg-muted/10 border-border/20';
     }
   };
 
@@ -503,10 +503,10 @@ export default function ItemsPage() {
 
   return (
     <Container>
-      {/* Header */}
+      {/* Modern Page Header */}
       <Section
         title="Items Collection"
-        description={`Browse and search through ${unifiedItems.length} items with multi-language support`}
+        description={`Browse and search through ${unifiedItems.length} items with comprehensive multi-language support`}
         action={
           <StatusBadge status="info">
             {filteredAndSortedItems.length} found
@@ -514,7 +514,7 @@ export default function ItemsPage() {
         }
       />
 
-      {/* Search and Filter Controls */}
+      {/* Unified Filter Component */}
       <UnifiedFilter
         showFilters={showFilters}
         setShowFilters={setShowFilters}
@@ -549,8 +549,8 @@ export default function ItemsPage() {
             >
               <Package className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No items found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-2xl font-bold text-foreground mb-3">No items found</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               We couldn't find any items matching your current filters. Try adjusting your search criteria.
             </p>
             <motion.button

@@ -46,7 +46,7 @@ router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
     
-    const document = await documentModel.findByUniqueKey(unique_key);
+    const document = await documentModel.findByKey(unique_key);
     
     logger.info(`Retrieved document: ${document.title_en}`);
 
@@ -87,10 +87,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await documentModel.search(q as string, {
@@ -116,10 +117,11 @@ router.get('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid document ID'
       });
+      return;
     }
     
     const document = await documentModel.findById(id);
@@ -156,10 +158,11 @@ router.put('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid document ID'
       });
+      return;
     }
     
     const document = await documentModel.update(id, req.body);
@@ -180,10 +183,11 @@ router.put('/:id/toggle-publish',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid document ID'
       });
+      return;
     }
     
     const document = await documentModel.togglePublishStatus(id);
@@ -204,10 +208,11 @@ router.delete('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid document ID'
       });
+      return;
     }
     
     await documentModel.delete(id);

@@ -62,7 +62,7 @@ function UpdateLog() {
   return (
     <div className="space-y-8">
       {/* Enhanced Search */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/40 pb-6">
+      <div className="sticky top-12 z-10 modern-glass border-b border-border/30 pb-4 mb-6">
         <div className="flex justify-center">
           <div className="relative w-full max-w-2xl">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -71,7 +71,7 @@ function UpdateLog() {
               placeholder="Search updates, features, tags..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 text-lg doax-glass border-2 border-accent-cyan/20 hover:border-accent-cyan/40 focus:border-accent-cyan transition-all duration-300"
+              className="pl-12 pr-4 py-3 text-lg modern-glass border-2 border-accent-cyan/20 hover:border-accent-cyan/40 focus:border-accent-cyan transition-all duration-300"
             />
           </div>
         </div>
@@ -95,7 +95,7 @@ function UpdateLog() {
                 
                 {/* Main Card */}
                 <div className="ml-12 md:ml-24">
-                  <Card className="doax-card border-0 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-accent-cyan/20 transition-all duration-700 ease-out overflow-hidden">
+                  <Card className="modern-card border-0 group modern-interactive hover:shadow-2xl hover:shadow-accent-cyan/20 transition-all duration-700 ease-out overflow-hidden">
                     <CardContent className="p-0">
                       {/* Header */}
                       <div 
@@ -245,28 +245,27 @@ function UpdateLog() {
 export default function HomePage() {
 
   return (
-    <div className="min-h-screen space-y-8">
+    <div className="modern-page">
       {/* Header */}
-      <div className="compact-container pt-6">
-        
-        <div className="text-center space-y-4 mb-8">
+      <div className="modern-container">
+        <div className="modern-page-header">
           <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl doax-glass">
+            <div className="p-4 rounded-2xl modern-glass">
               <Database className="w-12 h-12 text-accent-pink" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold doax-gradient-text leading-tight">
+          <h1 className="modern-page-title">
             Update Log
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="modern-page-subtitle">
             Latest improvements and feature releases for the Handbook
           </p>
         </div>
       </div>
 
       {/* Update Log */}
-      <section className="viewport-optimized pb-8">
-        <div className="compact-container">
+      <section className="pb-8">
+        <div className="modern-container">
           <div className="max-w-6xl mx-auto">
             <UpdateLog />
           </div>
@@ -274,4 +273,4 @@ export default function HomePage() {
       </section>
     </div>
   );
-} 
+}

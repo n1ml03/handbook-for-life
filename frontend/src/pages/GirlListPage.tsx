@@ -41,7 +41,7 @@ const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) 
       whileHover={{ scale: 1.02, y: -5 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
+      className="relative modern-card p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
     >
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -393,18 +393,18 @@ export default function GirlListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="modern-page">
+      <div className="modern-container-lg">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="modern-page-header"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
+          <h1 className="modern-page-title">
             Girl Collection
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="modern-page-subtitle">
             Showing {filteredAndSortedGirls.length} of {girls.length} girls
           </p>
         </motion.div>
@@ -467,7 +467,7 @@ export default function GirlListPage() {
               disabled={currentPage === 1}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-3 rounded-xl bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20 disabled:opacity-50 disabled:hover:bg-dark-card/70 disabled:hover:text-gray-400 transition-all"
+              className="btn-modern-ghost p-3 rounded-xl text-muted-foreground hover:text-foreground disabled:opacity-50 transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
             </motion.button>
@@ -484,7 +484,7 @@ export default function GirlListPage() {
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                       currentPage === page
                         ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg'
-                        : 'bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20'
+                        : 'btn-modern-ghost text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {page}
@@ -497,7 +497,7 @@ export default function GirlListPage() {
               disabled={currentPage === totalPages}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-3 rounded-xl bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20 disabled:opacity-50 disabled:hover:bg-dark-card/70 disabled:hover:text-gray-400 transition-all"
+              className="btn-modern-ghost p-3 rounded-xl text-muted-foreground hover:text-foreground disabled:opacity-50 transition-all"
             >
               <ChevronRight className="w-5 h-5" />
             </motion.button>

@@ -11,6 +11,7 @@ import { bromidesApi } from '@/services/api';
 import { type Bromide, type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
+import { Container, Section, Grid, StatusBadge } from '@/components/ui/spacing';
 
 const bromideTypes = ['Character', 'Scene', 'Event', 'Special'] as const;
 const decorationTypes = ['Frame', 'Background', 'Sticker', 'Effect'] as const;
@@ -45,7 +46,7 @@ function BromideCard({ bromide }: { bromide: any }) {
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl overflow-hidden group"
+      className="relative modern-card overflow-hidden group"
     >
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -291,61 +292,51 @@ export default function DecorateBromidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Page Title */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
-            Bromide & Decoration Collection
-          </h1>
-          <p className="text-gray-400 mt-1">
-            Showing {filteredAndSortedBromides.length} of {bromides.length} items
-          </p>
-        </motion.div>
+    <Container>
+      {/* Modern Page Header */}
+      <Section
+        title="Bromide & Decoration Collection"
+        description={`Browse and customize your collection of ${bromides.length} bromides and decorations`}
+        action={
+          <StatusBadge status="info">
+            {filteredAndSortedBromides.length} found
+          </StatusBadge>
+        }
+      />
 
-        {/* Search and Filter Controls */}
-        <UnifiedFilter
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          filterFields={filterFields}
-          sortOptions={bromideSortOptions}
-          filterValues={filter}
-          onFilterChange={handleFilterChange}
-          onClearFilters={clearFilters}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          resultCount={filteredAndSortedBromides.length}
-          itemLabel="bromides & decorations"
-          accentColor="accent-cyan"
-          secondaryColor="accent-purple"
-          blackTheme={true}
-          headerIcon={<Search className="w-4 h-4" />}
-        />
-        
+      {/* Unified Filter Component */}
+      <UnifiedFilter
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        filterFields={filterFields}
+        sortOptions={bromideSortOptions}
+        filterValues={filter}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
+        resultCount={filteredAndSortedBromides.length}
+        itemLabel="bromides & decorations"
+        accentColor="accent-cyan"
+        secondaryColor="accent-purple"
+        blackTheme={true}
+        headerIcon={<Search className="w-4 h-4" />}
+      />
+
         {/* Bromides Display */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-            {paginatedBromides.map((bromide, index) => (
-              <motion.div
-                key={bromide.id}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <BromideCard bromide={bromide} />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        <Grid cols={3} gap="lg" className="mb-8">
+          {paginatedBromides.map((bromide, index) => (
+            <motion.div
+              key={bromide.id}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index }}
+            >
+              <BromideCard bromide={bromide} />
+            </motion.div>
+          ))}
+        </Grid>
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -425,7 +416,6 @@ export default function DecorateBromidePage() {
             </motion.button>
           </motion.div>
         )}
-      </div>
-    </div>
+    </Container>
   );
-} 
+}

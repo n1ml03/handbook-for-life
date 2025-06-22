@@ -21,6 +21,7 @@ export class SkillModel extends BaseModel {
       description_en: row.description_en,
       skill_category: row.skill_category as SkillCategory,
       effect_type: row.effect_type,
+      game_version: row.game_version,
     };
   }
 
@@ -28,8 +29,8 @@ export class SkillModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO skills (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, skill_category, effect_type)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description_en, skill_category, effect_type, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           skill.unique_key,
           skill.name_jp,
@@ -40,6 +41,7 @@ export class SkillModel extends BaseModel {
           skill.description_en,
           skill.skill_category,
           skill.effect_type,
+          skill.game_version,
         ]
       ) as [any, any];
 
@@ -138,6 +140,10 @@ export class SkillModel extends BaseModel {
     if (updates.effect_type !== undefined) {
       setClause.push(`effect_type = ?`);
       params.push(updates.effect_type);
+    }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
     }
 
     if (setClause.length === 0) {

@@ -66,7 +66,7 @@ router.get('/key/:unique_key',
 
 // GET /api/items/currency - Get currency items
 router.get('/currency',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (_req, res) => {
     const items = await itemModel.getCurrencyItems();
     
     logger.info(`Retrieved ${items.length} currency items`);
@@ -85,10 +85,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
+      return;
     }
 
     const result = await itemModel.search(q as string, {
@@ -114,10 +115,11 @@ router.get('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid item ID'
       });
+      return;
     }
     
     const item = await itemModel.findById(id);
@@ -154,10 +156,11 @@ router.put('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid item ID'
       });
+      return;
     }
     
     const item = await itemModel.update(id, req.body);
@@ -178,10 +181,11 @@ router.delete('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid item ID'
       });
+      return;
     }
     
     await itemModel.delete(id);

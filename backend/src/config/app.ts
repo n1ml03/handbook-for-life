@@ -14,12 +14,8 @@ export interface AppConfig {
   apiPrefix: string;
   apiVersion: string;
   
-  // Security settings
+  // Security settings (simplified for local development)
   security: {
-    jwtSecret: string;
-    jwtExpiresIn: string;
-    bcryptRounds: number;
-    sessionSecret: string;
     enableHttps: boolean;
     trustProxy: boolean;
   };
@@ -32,13 +28,7 @@ export interface AppConfig {
     credentials: boolean;
   };
   
-  // Rate limiting
-  rateLimit: {
-    windowMs: number;
-    maxRequests: number;
-    skipSuccessfulRequests: boolean;
-    skipFailedRequests: boolean;
-  };
+  // Rate limiting (disabled for local development)
   
   // File upload settings
   upload: {
@@ -69,12 +59,9 @@ export interface AppConfig {
     healthPath: string;
   };
   
-  // Cache settings
+  // Cache settings (disabled for local development)
   cache: {
     enabled: boolean;
-    defaultTtl: number;
-    maxKeys: number;
-    checkPeriod: number;
   };
   
   // Pagination defaults
@@ -136,14 +123,10 @@ export const appConfig: AppConfig = {
   apiPrefix: process.env.API_PREFIX || '/api',
   apiVersion: process.env.API_VERSION || 'v1',
   
-  // Security settings
+  // Security settings (simplified for local development)
   security: {
-    jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key',
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
-    bcryptRounds: parseNumber(process.env.BCRYPT_ROUNDS, 12),
-    sessionSecret: process.env.SESSION_SECRET || 'your-session-secret',
-    enableHttps: parseBoolean(process.env.ENABLE_HTTPS, false),
-    trustProxy: parseBoolean(process.env.TRUST_PROXY, true),
+    enableHttps: false,
+    trustProxy: false,
   },
   
   // CORS settings
@@ -156,13 +139,7 @@ export const appConfig: AppConfig = {
     credentials: parseBoolean(process.env.CORS_CREDENTIALS, true),
   },
   
-  // Rate limiting
-  rateLimit: {
-    windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000), // 15 minutes
-    maxRequests: parseNumber(process.env.RATE_LIMIT_MAX_REQUESTS, 100),
-    skipSuccessfulRequests: parseBoolean(process.env.RATE_LIMIT_SKIP_SUCCESSFUL, false),
-    skipFailedRequests: parseBoolean(process.env.RATE_LIMIT_SKIP_FAILED, false),
-  },
+  // Rate limiting (disabled for local development)
   
   // File upload settings
   upload: {
@@ -196,12 +173,9 @@ export const appConfig: AppConfig = {
     healthPath: process.env.HEALTH_PATH || '/health',
   },
   
-  // Cache settings
+  // Cache settings (disabled for local development)
   cache: {
-    enabled: parseBoolean(process.env.CACHE_ENABLED, true),
-    defaultTtl: parseNumber(process.env.CACHE_DEFAULT_TTL, 3600), // 1 hour
-    maxKeys: parseNumber(process.env.CACHE_MAX_KEYS, 1000),
-    checkPeriod: parseNumber(process.env.CACHE_CHECK_PERIOD, 600), // 10 minutes
+    enabled: false,
   },
   
   // Pagination defaults
@@ -226,18 +200,7 @@ export const appConfig: AppConfig = {
 export function validateConfig(): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  // Validate required fields
-  if (!appConfig.security.jwtSecret || appConfig.security.jwtSecret === 'your-super-secret-jwt-key') {
-    if (appConfig.environment === 'production') {
-      errors.push('JWT_SECRET must be set in production environment');
-    }
-  }
-  
-  if (!appConfig.security.sessionSecret || appConfig.security.sessionSecret === 'your-session-secret') {
-    if (appConfig.environment === 'production') {
-      errors.push('SESSION_SECRET must be set in production environment');
-    }
-  }
+  // Basic validation for local development
   
   // Validate port range
   if (appConfig.port < 1 || appConfig.port > 65535) {
@@ -249,14 +212,7 @@ export function validateConfig(): { isValid: boolean; errors: string[] } {
     errors.push('PAGINATION_MAX_LIMIT must be greater than or equal to PAGINATION_DEFAULT_LIMIT');
   }
   
-  // Validate rate limit settings
-  if (appConfig.rateLimit.windowMs <= 0) {
-    errors.push('RATE_LIMIT_WINDOW_MS must be greater than 0');
-  }
-  
-  if (appConfig.rateLimit.maxRequests <= 0) {
-    errors.push('RATE_LIMIT_MAX_REQUESTS must be greater than 0');
-  }
+  // Rate limiting validation removed for local development
   
   // Validate file upload settings
   if (appConfig.upload.maxFileSize <= 0) {

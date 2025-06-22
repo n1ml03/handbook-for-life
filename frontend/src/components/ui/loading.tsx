@@ -2,19 +2,19 @@ import { ReactNode } from "react"
 import { cn } from "@/services/utils"
 import { Loader2, FileText, Save, Upload, Download } from 'lucide-react';
 
-interface LoadingSpinnerProps {
+export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
-interface LoadingStateProps {
+export interface LoadingStateProps {
   isLoading: boolean;
   children: ReactNode;
   fallback?: ReactNode;
   className?: string;
 }
 
-interface LoadingOverlayProps {
+export interface LoadingOverlayProps {
   isVisible: boolean;
   message?: string;
   progress?: number;
@@ -110,7 +110,12 @@ export function LoadingOverlay({
 }
 
 // Skeleton loading components
-export const SkeletonText = ({ lines = 1, className }: { lines?: number; className?: string }) => (
+export interface SkeletonTextProps {
+  lines?: number;
+  className?: string;
+}
+
+export const SkeletonText = ({ lines = 1, className }: SkeletonTextProps) => (
   <div className={cn('space-y-2', className)}>
     {Array.from({ length: lines }).map((_, i) => (
       <div
@@ -124,7 +129,11 @@ export const SkeletonText = ({ lines = 1, className }: { lines?: number; classNa
   </div>
 );
 
-export const SkeletonCard = ({ className }: { className?: string }) => (
+export interface SkeletonCardProps {
+  className?: string;
+}
+
+export const SkeletonCard = ({ className }: SkeletonCardProps) => (
   <div className={cn('doax-card p-6 space-y-4', className)}>
     <div className="flex items-center gap-3">
       <div className="w-12 h-12 bg-muted/50 rounded-lg animate-pulse" />
@@ -138,7 +147,15 @@ export const SkeletonCard = ({ className }: { className?: string }) => (
 );
 
 // Action-specific loading buttons
-export const SaveButton = ({ isSaving, onClick, disabled, children, className }: { isSaving: boolean; onClick: () => void; disabled?: boolean; children?: ReactNode; className?: string }) => (
+export interface SaveButtonProps {
+  isSaving: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  children?: ReactNode;
+  className?: string;
+}
+
+export const SaveButton = ({ isSaving, onClick, disabled, children, className }: SaveButtonProps) => (
   <button
     onClick={onClick}
     disabled={disabled || isSaving}

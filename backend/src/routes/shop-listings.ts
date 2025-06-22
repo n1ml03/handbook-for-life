@@ -85,12 +85,13 @@ router.get('/item/:itemId',
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (isNaN(itemId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid item ID'
       });
+      return;
     }
-    
+
     const result = await shopService.getShopListingsByItem(itemId, {
       page: Number(page),
       limit: Number(limit),
@@ -114,12 +115,13 @@ router.get('/currency/:currencyId',
   asyncHandler(async (req, res) => {
     const currencyId = Number(req.params.currencyId);
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (isNaN(currencyId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid currency ID'
       });
+      return;
     }
     
     const result = await shopService.getShopListingsByCurrency(currencyId, {
@@ -173,10 +175,11 @@ router.get('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid shop listing ID'
       });
+      return;
     }
     
     const listing = await shopService.getShopListingById(id);
@@ -192,10 +195,10 @@ router.get('/:id',
 
 // POST /api/shop-listings - Create new shop listing
 router.post('/',
-  // validate(schemas.createShopListing), // TODO: Add validation schema
+  validate(schemas.createShopListing),
   asyncHandler(async (req, res) => {
     const listing = await shopService.createShopListing(req.body);
-    
+
     logger.info(`Created shop listing: ${listing.id}`);
 
     res.status(201).json({
@@ -208,19 +211,12 @@ router.post('/',
 
 // POST /api/shop-listings/bulk - Bulk create shop listings
 router.post('/bulk',
-  // validate(schemas.bulkCreateShopListings), // TODO: Add validation schema
+  validate(schemas.bulkCreateShopListings),
   asyncHandler(async (req, res) => {
     const { listings } = req.body;
-    
-    if (!Array.isArray(listings)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Listings must be an array'
-      });
-    }
 
     const results = await shopService.bulkCreateShopListings(listings);
-    
+
     logger.info(`Bulk created ${results.length} shop listings`);
 
     res.status(201).json({
@@ -233,10 +229,10 @@ router.post('/bulk',
 
 // POST /api/shop-listings/validate - Validate shop listing data
 router.post('/validate',
-  // validate(schemas.createShopListing), // TODO: Add validation schema
+  validate(schemas.createShopListing),
   asyncHandler(async (req, res) => {
     const validation = await shopService.validateShopListing(req.body);
-    
+
     logger.info(`Validated shop listing data: ${validation.isValid ? 'valid' : 'invalid'}`);
 
     res.json({
@@ -248,19 +244,20 @@ router.post('/validate',
 
 // PUT /api/shop-listings/:id - Update shop listing
 router.put('/:id',
-  // validate(schemas.updateShopListing), // TODO: Add validation schema
+  validate(schemas.updateShopListing),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    
+
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid shop listing ID'
       });
+      return;
     }
-    
+
     const listing = await shopService.updateShopListing(id, req.body);
-    
+
     logger.info(`Updated shop listing: ${listing.id}`);
 
     res.json({
@@ -277,10 +274,11 @@ router.delete('/:id',
     const id = Number(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid shop listing ID'
       });
+      return;
     }
     
     await shopService.deleteShopListing(id);

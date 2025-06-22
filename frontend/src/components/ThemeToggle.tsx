@@ -6,7 +6,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/services/useTheme';
 
-export default function ThemeToggle() {
+export interface ThemeToggleProps {
+  className?: string;
+}
+
+export default function ThemeToggle({ className }: ThemeToggleProps = {}) {
   const { theme, setTheme } = useTheme();
 
   // Create derived values from the theme state
@@ -31,7 +35,7 @@ export default function ThemeToggle() {
           variant="outline"
           size="icon"
           onClick={handleQuickToggle}
-          className="relative overflow-hidden theme-sync min-w-[40px] min-h-[40px] w-9 h-9 sm:min-w-[44px] sm:min-h-[44px] sm:w-11 sm:h-11 hover:bg-accent/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 doax-glass"
+          className={`relative overflow-hidden theme-sync min-w-[40px] min-h-[40px] w-9 h-9 sm:min-w-[44px] sm:min-h-[44px] sm:w-11 sm:h-11 hover:bg-accent/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 doax-glass ${className || ''}`}
           aria-label={`Current theme: ${theme}. Click to toggle or right-click for options`}
         >
           <div className="relative w-full h-full flex items-center justify-center">

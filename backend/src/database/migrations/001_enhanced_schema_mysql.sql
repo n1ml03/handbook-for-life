@@ -190,14 +190,14 @@ CREATE TABLE update_logs (
     description TEXT COMMENT 'Additional description',
     date DATETIME NOT NULL COMMENT 'Update release date',
     tags JSON COMMENT 'Tags array for categorization',
-    isPublished BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether the update log is published',
-    technicalDetails JSON COMMENT 'Technical details array',
-    bugFixes JSON COMMENT 'Bug fixes array',
+    is_published BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether the update log is published',
+    technical_details JSON COMMENT 'Technical details array',
+    bug_fixes JSON COMMENT 'Bug fixes array',
     screenshots JSON COMMENT 'Screenshots array',
     metrics JSON COMMENT 'Performance metrics object',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
-    INDEX idx_published_date (isPublished, date DESC) COMMENT 'Optimized for fetching published updates by date',
+    INDEX idx_published_date (is_published, date DESC) COMMENT 'Optimized for fetching published updates by date',
     INDEX idx_version (version) COMMENT 'Index for version lookups'
 ) ENGINE=InnoDB COMMENT='Manages application update logs and release notes.';
 

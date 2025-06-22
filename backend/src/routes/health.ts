@@ -8,18 +8,18 @@ const router = Router();
 
 // GET /api/health - Health check endpoint
 router.get('/',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     const startTime = Date.now();
-    
+
     // Check database connectivity
     const dbConnected = await testConnection();
-    
+
     // Check all services
     const servicesHealth = await serviceRegistry.performHealthCheck();
-    
+
     const responseTime = Date.now() - startTime;
     const isSystemHealthy = dbConnected && servicesHealth.isHealthy;
-    
+
     const healthStatus = {
       status: isSystemHealthy ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -41,10 +41,11 @@ router.get('/',
     if (!isSystemHealthy) {
       const allErrors = servicesHealth.services.flatMap(s => s.errors);
       logger.warn('Health check failed', { errors: allErrors, dbConnected });
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         ...healthStatus
       });
+      return;
     }
 
     logger.info('Health check successful', { responseTime });

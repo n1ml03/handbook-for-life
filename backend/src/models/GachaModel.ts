@@ -19,17 +19,17 @@ export class GachaModel extends BaseModel {
       name_tw: row.name_tw,
       name_kr: row.name_kr,
       gacha_subtype: row.gacha_subtype as GachaSubtype,
-      game_version: row.game_version,
       start_date: row.start_date,
       end_date: row.end_date,
+      game_version: row.game_version,
     };
   }
 
   async create(gacha: NewGacha): Promise<Gacha> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO gachas (unique_key, name_jp, name_en, name_cn, name_tw, name_kr, 
-         gacha_subtype, game_version, start_date, end_date)
+        `INSERT INTO gachas (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
+         gacha_subtype, start_date, end_date, game_version)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           gacha.unique_key,
@@ -39,9 +39,9 @@ export class GachaModel extends BaseModel {
           gacha.name_tw,
           gacha.name_kr,
           gacha.gacha_subtype,
-          gacha.game_version,
           gacha.start_date,
           gacha.end_date,
+          gacha.game_version,
         ]
       ) as [any, any];
 

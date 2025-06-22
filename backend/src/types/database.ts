@@ -19,6 +19,7 @@ export interface Character {
   voice_actor_jp?: string; // VARCHAR(100)
   profile_image_url?: string; // VARCHAR(255)
   is_active: boolean; // BOOLEAN DEFAULT TRUE
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewCharacter {
@@ -35,6 +36,7 @@ export interface NewCharacter {
   voice_actor_jp?: string;
   profile_image_url?: string;
   is_active?: boolean;
+  game_version?: string;
 }
 
 // Utility types for character operations
@@ -64,6 +66,7 @@ export interface Swimsuit {
   has_malfunction: boolean; // BOOLEAN DEFAULT FALSE
   is_limited: boolean; // BOOLEAN DEFAULT TRUE
   release_date_gl?: Date; // DATE
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewSwimsuit {
@@ -81,6 +84,7 @@ export interface NewSwimsuit {
   has_malfunction?: boolean;
   is_limited?: boolean;
   release_date_gl?: Date;
+  game_version?: string;
 }
 
 // Utility types for swimsuit filtering
@@ -107,6 +111,7 @@ export interface Skill {
   description_en?: string; // TEXT
   skill_category: SkillCategory; // ENUM
   effect_type?: string; // VARCHAR(50)
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewSkill {
@@ -119,6 +124,7 @@ export interface NewSkill {
   description_en?: string;
   skill_category: SkillCategory;
   effect_type?: string;
+  game_version?: string;
 }
 
 export type ItemCategory = 'CURRENCY' | 'UPGRADE_MATERIAL' | 'CONSUMABLE' | 'GIFT' | 'ACCESSORY' | 'FURNITURE' | 'SPECIAL';
@@ -137,6 +143,7 @@ export interface Item {
   item_category: ItemCategory; // ENUM
   rarity: ItemRarity; // ENUM
   icon_url?: string; // VARCHAR(255)
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewItem {
@@ -151,6 +158,7 @@ export interface NewItem {
   item_category: ItemCategory;
   rarity: ItemRarity;
   icon_url?: string;
+  game_version?: string;
 }
 
 export type BromideType = 'DECO' | 'OWNER';
@@ -168,6 +176,7 @@ export interface Bromide {
   rarity: BromideRarity; // ENUM
   skill_id?: number; // INT UNSIGNED NULL
   art_url?: string; // VARCHAR(255)
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewBromide {
@@ -181,6 +190,7 @@ export interface NewBromide {
   rarity: BromideRarity;
   skill_id?: number;
   art_url?: string;
+  game_version?: string;
 }
 
 export type EpisodeType = 'MAIN' | 'CHARACTER' | 'EVENT' | 'SWIMSUIT' | 'ITEM';
@@ -197,6 +207,7 @@ export interface Episode {
   episode_type: EpisodeType; // ENUM
   related_entity_type?: string; // VARCHAR(64)
   related_entity_id?: number; // INT UNSIGNED
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewEpisode {
@@ -210,6 +221,7 @@ export interface NewEpisode {
   episode_type: EpisodeType;
   related_entity_type?: string;
   related_entity_id?: number;
+  game_version?: string;
 }
 
 // ============================================================================
@@ -230,6 +242,7 @@ export interface Event {
   start_date: Date; // DATETIME
   end_date: Date; // DATETIME
   is_active?: boolean; // BOOLEAN GENERATED ALWAYS (computed field)
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewEvent {
@@ -242,6 +255,7 @@ export interface NewEvent {
   type: EventType;
   start_date: Date;
   end_date: Date;
+  game_version?: string;
 }
 
 // Utility types for event filtering
@@ -267,6 +281,7 @@ export interface Gacha {
   gacha_subtype: GachaSubtype; // ENUM
   start_date: Date; // DATETIME
   end_date: Date; // DATETIME
+  game_version?: string; // VARCHAR(30)
 }
 
 export interface NewGacha {
@@ -279,6 +294,7 @@ export interface NewGacha {
   gacha_subtype: GachaSubtype;
   start_date: Date;
   end_date: Date;
+  game_version?: string;
 }
 
 export type ShopType = 'EVENT' | 'VIP' | 'GENERAL' | 'CURRENCY';
@@ -330,9 +346,9 @@ export interface UpdateLog {
   description?: string; // TEXT
   date: Date; // DATETIME
   tags: string[]; // JSON
-  isPublished: boolean; // BOOLEAN DEFAULT TRUE
-  technicalDetails: string[]; // JSON
-  bugFixes: string[]; // JSON
+  is_published: boolean; // BOOLEAN DEFAULT TRUE
+  technical_details: string[]; // JSON
+  bug_fixes: string[]; // JSON
   screenshots: string[]; // JSON
   metrics: {
     performanceImprovement: string;
@@ -351,9 +367,9 @@ export interface NewUpdateLog {
   description?: string;
   date: Date;
   tags?: string[];
-  isPublished?: boolean;
-  technicalDetails?: string[];
-  bugFixes?: string[];
+  is_published?: boolean;
+  technical_details?: string[];
+  bug_fixes?: string[];
   screenshots?: string[];
   metrics?: {
     performanceImprovement: string;

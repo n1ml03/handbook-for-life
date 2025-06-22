@@ -10,6 +10,7 @@ import { GachaService, gachaService } from './GachaService';
 import { ShopService, shopService } from './ShopService';
 import { SwimsuitSkillService, swimsuitSkillService } from './SwimsuitSkillService';
 import { DatabaseService, databaseService } from './DatabaseService';
+import { UpdateLogService, updateLogService } from './UpdateLogService';
 import { logger } from '../config';
 
 export interface ServiceHealthStatus {
@@ -44,6 +45,7 @@ class ServiceRegistry {
     this.services.set('shop', shopService);
     this.services.set('swimsuitSkill', swimsuitSkillService);
     this.services.set('database', databaseService);
+    this.services.set('updateLog', updateLogService);
   }
 
   getService<T>(serviceName: string): T {
@@ -153,7 +155,8 @@ export {
   gachaService,
   shopService,
   swimsuitSkillService,
-  databaseService
+  databaseService,
+  updateLogService
 };
 
 export type {
@@ -168,7 +171,8 @@ export type {
   GachaService,
   ShopService,
   SwimsuitSkillService,
-  DatabaseService
+  DatabaseService,
+  UpdateLogService
 };
 
 // Export the service registry as default

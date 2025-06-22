@@ -22,6 +22,7 @@ export class BromideModel extends BaseModel {
       rarity: row.rarity as BromideRarity,
       skill_id: row.skill_id,
       art_url: row.art_url,
+      game_version: row.game_version,
     };
   }
 
@@ -29,8 +30,8 @@ export class BromideModel extends BaseModel {
     try {
       const [result] = await executeQuery(
         `INSERT INTO bromides (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         bromide_type, rarity, skill_id, art_url)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         bromide_type, rarity, skill_id, art_url, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           bromide.unique_key,
           bromide.name_jp,
@@ -42,6 +43,7 @@ export class BromideModel extends BaseModel {
           bromide.rarity,
           bromide.skill_id,
           bromide.art_url,
+          bromide.game_version,
         ]
       ) as [any, any];
 
@@ -147,6 +149,10 @@ export class BromideModel extends BaseModel {
     if (updates.art_url !== undefined) {
       setClause.push(`art_url = ?`);
       params.push(updates.art_url);
+    }
+    if (updates.game_version !== undefined) {
+      setClause.push(`game_version = ?`);
+      params.push(updates.game_version);
     }
 
     if (setClause.length === 0) {
