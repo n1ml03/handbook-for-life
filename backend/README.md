@@ -153,9 +153,6 @@ cd handbook-for-life/backend
 # Install dependencies using Bun (recommended)
 bun install
 
-# Or use npm/yarn
-npm install
-# yarn install
 ```
 
 ### Step 2: Environment Configuration

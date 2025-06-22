@@ -408,7 +408,7 @@ async function main() {
 }
 
 // Run if called directly
-if (import.meta.main) {
+if (require.main === module) {
   main();
 }
 
