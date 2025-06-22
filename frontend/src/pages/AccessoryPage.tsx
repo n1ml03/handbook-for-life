@@ -6,11 +6,34 @@ import {
   Sparkles,
   Search} from 'lucide-react';
 import { itemsApi } from '@/services/api';
-import { type AccessoryCardProps, type SortDirection, type Item } from '@/types';
+import { type SortDirection, type Item } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createAccessoryFilterConfig, accessorySortOptions } from '@/components/features/FilterConfigs';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import React from 'react';
+
+// Extended accessory interface for display purposes
+interface ExtendedAccessory {
+  id: string;
+  name: string;
+  name_en?: string;
+  rarity: 'SSR' | 'SR' | 'R';
+  type: string;
+  category?: string;
+  description?: string;
+  skill?: string;
+  stats?: {
+    pow: number;
+    tec: number;
+    stm: number;
+    apl: number;
+  };
+}
+
+interface AccessoryCardProps {
+  accessory: ExtendedAccessory;
+  onClick?: () => void;
+}
 
 const accessoryTypes = ['Necklace', 'Earrings', 'Bracelet', 'Ring', 'Hair', 'Other'] as const;
 const rarities = ['SSR', 'SR', 'R'] as const;
@@ -50,7 +73,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-white text-lg truncate">{accessory.name || accessory.name_en}</h3>
+              <h3 className="font-bold text-white text-lg truncate">{accessory.name}</h3>
               <motion.div
                 className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${getRarityColor(accessory.rarity)} shadow-lg`}
                 whileHover={{ scale: 1.1 }}
@@ -58,7 +81,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
                 {accessory.rarity}
               </motion.div>
             </div>
-            <p className="text-sm text-gray-400 mb-2">{accessory.type || accessory.category}</p>
+            <p className="text-sm text-gray-400 mb-2">{accessory.type}</p>
           </div>
           <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20">
             <span className="text-2xl">💎</span>
@@ -120,7 +143,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
 });
 
 export default function AccessoryPage() {
-  const [accessories, setAccessories] = useState<any[]>([]);
+  const [accessories, setAccessories] = useState<ExtendedAccessory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,23 +163,18 @@ export default function AccessoryPage() {
         // Use itemsApi with category filter for accessories
         const response = await itemsApi.getItems({ 
           limit: 1000, 
-          category: 'accessory'
+          category: 'ACCESSORY'
         });
         
         // Transform the data to match expected accessory format
-        const transformedData = response.data.data.map((item: any) => ({
-          id: item.id || item.unique_key,
-          name: item.name_en || item.name,
-          type: item.category || item.type || 'Other',
-          rarity: item.rarity || 'R',
-          stats: {
-            pow: item.stat_pow || item.stats?.pow || 0,
-            tec: item.stat_tec || item.stats?.tec || 0,
-            stm: item.stat_stm || item.stats?.stm || 0,
-            apl: item.stat_apl || item.stats?.apl || 0
-          },
-          skill: item.skill_description || item.skill || item.description,
-          description: item.description_en || item.description
+        const transformedData: ExtendedAccessory[] = response.data.map((item: Item) => ({
+          id: item.id.toString(),
+          name: item.name_en || item.name_jp,
+          name_en: item.name_en,
+          type: item.item_category || 'Other',
+          rarity: (item.rarity === 'N' ? 'R' : item.rarity) as 'SSR' | 'SR' | 'R',
+          skill: item.source_description_en,
+          description: item.description_en
         }));
         
         setAccessories(transformedData);

@@ -10,11 +10,11 @@ import {
   Calendar,
   Camera,
   Loader2} from 'lucide-react';
-import { type Memory, type MemoryCardProps, type SortDirection } from '@/types';
-import { memoriesApi } from '@/services/api';
+import { type Memory, type MemoryCardProps, type SortDirection, type Episode, episodeToMemory } from '@/types';
+import { episodesApi } from '@/services/api';
 import React from 'react';
 
-type SortOption = 'name' | 'date' | 'type';
+type SortOption = 'title' | 'episode_type' | 'related_entity_type';
 
 const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 
@@ -109,27 +109,27 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 });
 
 export default function MemoriesPage() {
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [sortBy, setSortBy] = useState<SortOption>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filter, setFilter] = useState({
     search: '',
     type: '',
-    character: '',
-    favorite: false,
-    tag: '',
-    version: ''
+    entityType: '',
+    entityId: '',
+    unlocked: false
   });
 
   const itemsPerPage = 8;
 
-  // Fetch memories from API
-  const fetchMemories = async () => {
+  // Fetch episodes from API and convert to memories
+  const fetchEpisodes = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -140,43 +140,46 @@ export default function MemoriesPage() {
         sortBy: sortBy,
         sortOrder: sortDirection,
         ...(filter.type && { type: filter.type }),
-        ...(filter.favorite && { favorite: filter.favorite }),
+        ...(filter.entityType && { entityType: filter.entityType }),
+        ...(filter.entityId && { entityId: Number(filter.entityId) }),
         ...(filter.search && { search: filter.search }),
       };
 
-      const response = await memoriesApi.getMemories(params);
-      setMemories(response.data);
+      const response = await episodesApi.getEpisodes(params);
+      const episodeData = response.data || [];
+      
+      setEpisodes(episodeData);
+      
+      // Convert episodes to memories
+      const memoryData = episodeData.map((episode: Episode) => episodeToMemory(episode));
+      setMemories(memoryData);
+      
       setTotalPages(response.pagination?.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching memories:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch memories');
+      console.error('Error fetching episodes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch episodes');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch memories on component mount and when dependencies change
+  // Fetch episodes on component mount and when dependencies change
   useEffect(() => {
-    fetchMemories();
-  }, [currentPage, sortBy, sortDirection, filter.type, filter.favorite, filter.search]);
+    fetchEpisodes();
+  }, [currentPage, sortBy, sortDirection, filter.type, filter.entityType, filter.entityId, filter.search]);
 
-  // Filter memories locally for character and tag filters (since these aren't supported by API yet)
+  // Filter memories locally for unlocked filter (since this isn't supported by API yet)
   const filteredMemories = useMemo(() => {
     return memories.filter(memory => {
-      // Character filter 
-      if (filter.character && !memory.characters.some((char: string) => 
-          char.toLowerCase().includes(filter.character.toLowerCase()))) return false;
-      
-      // Tag filter
-      if (filter.tag && !memory.tags.some((tag: string) => 
-          tag.toLowerCase().includes(filter.tag.toLowerCase()))) return false;
+      // Unlocked filter
+      if (filter.unlocked && !memory.unlocked) return false;
       
       return true;
     });
-  }, [memories, filter.character, filter.tag]);
+  }, [memories, filter.unlocked]);
 
-  const characters = [...new Set(memories.flatMap(m => m.characters))].sort();
-  const types = ['photo', 'video', 'story', 'scene'];
+  const episodeTypes = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
+  const entityTypes = ['characters', 'events', 'swimsuits', 'items'];
 
   const handleToggleFavorite = async (id: string) => {
     try {
@@ -190,8 +193,8 @@ export default function MemoriesPage() {
         m.id === id ? { ...m, favorite: newFavoriteStatus } : m
       ));
 
-      // Update via API
-      await memoriesApi.toggleMemoryFavorite(id, newFavoriteStatus);
+      // Note: No backend support for favorite yet, so this is just local state
+      // await episodesApi.toggleEpisodeFavorite(id, newFavoriteStatus);
     } catch (err) {
       console.error('Error toggling favorite:', err);
       // Revert the optimistic update on error
@@ -215,16 +218,15 @@ export default function MemoriesPage() {
     setFilter({
       search: '',
       type: '',
-      character: '',
-      favorite: false,
-      tag: '',
-      version: ''
+      entityType: '',
+      entityId: '',
+      unlocked: false
     });
     setCurrentPage(1);
   };
 
-  const refreshMemories = () => {
-    fetchMemories();
+  const refreshEpisodes = () => {
+    fetchEpisodes();
   };
 
   const SortButton = ({ sortKey, children }: { sortKey: SortOption; children: React.ReactNode }) => (
@@ -261,10 +263,10 @@ export default function MemoriesPage() {
           className="mb-6"
         >
           <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink via-accent-cyan to-accent-purple bg-clip-text text-transparent">
-            Memory Gallery
+            Episodes Gallery
           </h1>
           <p className="text-gray-400 mt-1">
-            {loading ? 'Loading memories...' : `Showing ${filteredMemories.length} of ${memories.length} memories`}
+            {loading ? 'Loading episodes...' : `Showing ${filteredMemories.length} of ${memories.length} episodes`}
           </p>
         </motion.div>
 
@@ -284,7 +286,7 @@ export default function MemoriesPage() {
                 value={filter.search}
                 onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
                 className="w-full bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl pl-10 pr-4 py-3 focus:outline-hidden focus:border-gray-500 focus:ring-2 focus:ring-gray-500/20 transition-all placeholder-gray-500 text-white"
-                placeholder="Search memories in all languages..."
+                placeholder="Search episodes in all languages..."
               />
               {filter.search && (
                 <motion.button
@@ -314,9 +316,9 @@ export default function MemoriesPage() {
                 <span className="text-sm font-medium">Filters</span>
               </motion.button>
 
-                                <div className="text-sm text-gray-500 bg-gray-900/50 px-3 py-3 rounded-xl border border-gray-700/50">
-                    <span className="text-gray-300 font-medium">{filteredMemories.length}</span> found
-                  </div>
+              <div className="text-sm text-gray-500 bg-gray-900/50 px-3 py-3 rounded-xl border border-gray-700/50">
+                <span className="text-gray-300 font-medium">{filteredMemories.length}</span> found
+              </div>
             </div>
           </div>
         </motion.div>
@@ -340,72 +342,56 @@ export default function MemoriesPage() {
                 </div>
 
                 {/* Filter Options */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Episode Type</label>
                     <select
                       value={filter.type}
                       onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))}
                       className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
                     >
                       <option value="">All Types</option>
-                      {types.map(type => (
-                        <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                      {episodeTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Character</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Entity Type</label>
                     <select
-                      value={filter.character}
-                      onChange={(e) => setFilter(prev => ({ ...prev, character: e.target.value }))}
+                      value={filter.entityType}
+                      onChange={(e) => setFilter(prev => ({ ...prev, entityType: e.target.value }))}
                       className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
                     >
-                      <option value="">All Characters</option>
-                      {characters.map(character => (
-                        <option key={character} value={character}>{character}</option>
+                      <option value="">All Entities</option>
+                      {entityTypes.map(entityType => (
+                        <option key={entityType} value={entityType}>{entityType.charAt(0).toUpperCase() + entityType.slice(1)}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Tag</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Entity ID</label>
                     <input
                       type="text"
-                      value={filter.tag}
-                      onChange={(e) => setFilter(prev => ({ ...prev, tag: e.target.value }))}
+                      value={filter.entityId}
+                      onChange={(e) => setFilter(prev => ({ ...prev, entityId: e.target.value }))}
                       className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
-                      placeholder="Search tags..."
+                      placeholder="Enter entity ID..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Version</label>
-                    <select
-                      value={filter.version}
-                      onChange={(e) => setFilter(prev => ({ ...prev, version: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Versions</option>
-                      <option value="1.0">1.0</option>
-                      <option value="1.5">1.5</option>
-                      <option value="2.0">2.0</option>
-                      <option value="2.5">2.5</option>
-                      <option value="3.0">3.0</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Favorites</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                     <label className="flex items-center space-x-2 mt-3">
                       <input
                         type="checkbox"
-                        checked={filter.favorite}
-                        onChange={(e) => setFilter(prev => ({ ...prev, favorite: e.target.checked }))}
+                        checked={filter.unlocked}
+                        onChange={(e) => setFilter(prev => ({ ...prev, unlocked: e.target.checked }))}
                         className="rounded-sm border-gray-700 text-gray-900 focus:ring-gray-500/20"
                       />
-                      <span className="text-sm text-gray-300">Show Only Favorites</span>
+                      <span className="text-sm text-gray-300">Unlocked Only</span>
                     </label>
                   </div>
                 </div>
@@ -416,9 +402,9 @@ export default function MemoriesPage() {
                     <SortAsc className="w-4 h-4 mr-1" />
                     Sort by:
                   </span>
-                  <SortButton sortKey="name">Name</SortButton>
-                  <SortButton sortKey="date">Date</SortButton>
-                  <SortButton sortKey="type">Type</SortButton>
+                  <SortButton sortKey="title">Title</SortButton>
+                  <SortButton sortKey="episode_type">Type</SortButton>
+                  <SortButton sortKey="related_entity_type">Entity</SortButton>
                 </div>
 
                 {/* Filter Actions */}
@@ -432,7 +418,7 @@ export default function MemoriesPage() {
                     Clear All Filters
                   </motion.button>
                   <div className="text-sm text-gray-500">
-                    <span className="text-accent-cyan font-medium">{filteredMemories.length}</span> of {memories.length} memories
+                    <span className="text-accent-cyan font-medium">{filteredMemories.length}</span> of {memories.length} episodes
                   </div>
                 </div>
               </div>
@@ -440,7 +426,7 @@ export default function MemoriesPage() {
           )}
         </AnimatePresence>
 
-        {/* Memory Display */}
+        {/* Episode Display */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -450,7 +436,7 @@ export default function MemoriesPage() {
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
                 <Loader2 className="w-12 h-12 text-accent-cyan animate-spin mx-auto mb-4" />
-                <p className="text-gray-400">Loading memories...</p>
+                <p className="text-gray-400">Loading episodes...</p>
               </div>
             </div>
           ) : (
@@ -533,9 +519,9 @@ export default function MemoriesPage() {
             >
               <Camera className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No memories found</h3>
+            <h3 className="text-2xl font-bold text-gray-300 mb-3">No episodes found</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any memories matching your current filters. Try adjusting your search criteria.
+              We couldn't find any episodes matching your current filters. Try adjusting your search criteria.
             </p>
             <motion.button
               onClick={clearFilters}

@@ -6,6 +6,10 @@ import { ItemService, itemService } from './ItemService';
 import { EventService, eventService } from './EventService';
 import { EpisodeService, episodeService } from './EpisodeService';
 import { DocumentService, documentService } from './DocumentService';
+import { GachaService, gachaService } from './GachaService';
+import { ShopService, shopService } from './ShopService';
+import { SwimsuitSkillService, swimsuitSkillService } from './SwimsuitSkillService';
+import { DatabaseService, databaseService } from './DatabaseService';
 import { logger } from '../config';
 
 export interface ServiceHealthStatus {
@@ -36,6 +40,10 @@ class ServiceRegistry {
     this.services.set('event', eventService);
     this.services.set('episode', episodeService);
     this.services.set('document', documentService);
+    this.services.set('gacha', gachaService);
+    this.services.set('shop', shopService);
+    this.services.set('swimsuitSkill', swimsuitSkillService);
+    this.services.set('database', databaseService);
   }
 
   getService<T>(serviceName: string): T {
@@ -133,7 +141,7 @@ class ServiceRegistry {
 export const serviceRegistry = new ServiceRegistry();
 
 // Export individual services for direct access
-export { 
+export {
   characterService,
   bromideService,
   swimsuitService,
@@ -141,10 +149,14 @@ export {
   itemService,
   eventService,
   episodeService,
-  documentService
+  documentService,
+  gachaService,
+  shopService,
+  swimsuitSkillService,
+  databaseService
 };
 
-export type { 
+export type {
   CharacterService,
   BromideService,
   SwimsuitService,
@@ -152,7 +164,11 @@ export type {
   ItemService,
   EventService,
   EpisodeService,
-  DocumentService
+  DocumentService,
+  GachaService,
+  ShopService,
+  SwimsuitSkillService,
+  DatabaseService
 };
 
 // Export the service registry as default

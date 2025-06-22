@@ -17,7 +17,21 @@ import { eventsApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 
-function GachaCard({ gacha }: { gacha: any }) {
+// Define reward interface for gacha rewards
+interface GachaReward {
+  icon?: string;
+  name: string;
+}
+
+// Extend Event interface for gacha-specific properties
+interface GachaEvent extends Event {
+  eventType: string;
+  bannerImage?: string;
+  description?: string;
+  rewards?: GachaReward[];
+}
+
+function GachaCard({ gacha }: { gacha: GachaEvent }) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -31,8 +45,8 @@ function GachaCard({ gacha }: { gacha: any }) {
 
   const getEventStatus = () => {
     const now = new Date();
-    const start = gacha.startDate ? new Date(gacha.startDate) : null;
-    const end = gacha.endDate ? new Date(gacha.endDate) : null;
+    const start = gacha.start_date ? new Date(gacha.start_date) : null;
+    const end = gacha.end_date ? new Date(gacha.end_date) : null;
     if (!start || !end) return 'upcoming';
     if (now < start) return 'upcoming';
     if (now > end) return 'ended';
@@ -52,7 +66,7 @@ function GachaCard({ gacha }: { gacha: any }) {
         {gacha.bannerImage && gacha.bannerImage !== '⭐' && gacha.bannerImage !== '🌙' && gacha.bannerImage !== '💎' ? (
           <img 
             src={gacha.bannerImage} 
-            alt={gacha.name}
+            alt={gacha.name_en}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -89,7 +103,7 @@ function GachaCard({ gacha }: { gacha: any }) {
 
         {/* Title overlay on banner */}
         <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="font-bold text-white text-xl mb-1 drop-shadow-lg">{gacha.name}</h3>
+          <h3 className="font-bold text-white text-xl mb-1 drop-shadow-lg">{gacha.name_en || gacha.name_jp}</h3>
         </div>
       </div>
 
@@ -111,7 +125,7 @@ function GachaCard({ gacha }: { gacha: any }) {
               <Calendar className="w-4 h-4 text-green-400" />
               <span className="text-xs font-medium text-gray-300">Start</span>
             </div>
-            <span className="text-xs font-bold text-white text-center">{formatDate(gacha.startDate)}</span>
+            <span className="text-xs font-bold text-white text-center">{formatDate(gacha.start_date)}</span>
           </div>
           
           <div 
@@ -121,7 +135,7 @@ function GachaCard({ gacha }: { gacha: any }) {
               <Calendar className="w-4 h-4 text-red-400" />
               <span className="text-xs font-medium text-gray-300">End</span>
             </div>
-            <span className="text-xs font-bold text-white text-center">{formatDate(gacha.endDate)}</span>
+            <span className="text-xs font-bold text-white text-center">{formatDate(gacha.end_date)}</span>
           </div>
         </div>
 
@@ -152,7 +166,7 @@ function GachaCard({ gacha }: { gacha: any }) {
                 Featured Items ({gacha.rewards.length})
               </p>
               <div className="flex flex-wrap gap-1">
-                {gacha.rewards.slice(0, 3).map((reward, index) => (
+                {gacha.rewards?.slice(0, 3).map((reward: GachaReward, index: number) => (
                   <span 
                     key={index}
                     className="text-xs bg-dark-primary/50 px-2 py-1 rounded-sm border border-dark-border/30 text-gray-300"
@@ -160,7 +174,7 @@ function GachaCard({ gacha }: { gacha: any }) {
                     {reward.icon || '💎'} {reward.name}
                   </span>
                 ))}
-                {gacha.rewards.length > 3 && (
+                {gacha.rewards && gacha.rewards.length > 3 && (
                   <span className="text-xs text-gray-400 px-2 py-1">
                     +{gacha.rewards.length - 3} more
                   </span>
@@ -175,7 +189,7 @@ function GachaCard({ gacha }: { gacha: any }) {
 }
 
 export default function GachaPage() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<GachaEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -194,7 +208,7 @@ export default function GachaPage() {
       try {
         setLoading(true);
         const response = await eventsApi.getEvents({ limit: 1000 });
-        setEvents((response.data.data as any[]).filter(e => e.eventType === 'gacha'));
+        setEvents((response.data as GachaEvent[]).filter(e => e.eventType === 'gacha'));
       } catch (err) {
         console.error('Failed to fetch events:', err);
         setError('Failed to load events');
@@ -257,13 +271,13 @@ export default function GachaPage() {
     const filtered = events.filter(event => {
       if (event.eventType !== 'gacha') return false;
       
-      if (filterValues.search && !event.name.toLowerCase().includes(filterValues.search.toLowerCase()) && 
+      if (filterValues.search && !(event.name_en || event.name_jp).toLowerCase().includes(filterValues.search.toLowerCase()) && 
           !(event.description ?? '').toLowerCase().includes(filterValues.search.toLowerCase())) return false;
       
       if (filterValues.status) {
         const now = new Date();
-        const start = event.startDate ? new Date(event.startDate) : null;
-        const end = event.endDate ? new Date(event.endDate) : null;
+        const start = event.start_date ? new Date(event.start_date) : null;
+        const end = event.end_date ? new Date(event.end_date) : null;
         const status = (!start || !end) ? 'upcoming' : (now < start ? 'upcoming' : now > end ? 'ended' : 'active');
         if (filterValues.status !== status) return false;
       }
@@ -276,22 +290,25 @@ export default function GachaPage() {
       
       switch (sortBy) {
         case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+          aValue = (a.name_en || a.name_jp).toLowerCase();
+          bValue = (b.name_en || b.name_jp).toLowerCase();
           break;
         case 'startDate':
+          aValue = a.start_date ? new Date(a.start_date).getTime() : 0;
+          bValue = b.start_date ? new Date(b.start_date).getTime() : 0;
+          break;
         case 'endDate':
-          aValue = a[sortBy] ? new Date(a[sortBy]!).getTime() : 0;
-          bValue = b[sortBy] ? new Date(b[sortBy]!).getTime() : 0;
+          aValue = a.end_date ? new Date(a.end_date).getTime() : 0;
+          bValue = b.end_date ? new Date(b.end_date).getTime() : 0;
           break;
         case 'isActive':
           const now = new Date();
-          aValue = a.startDate && a.endDate && new Date(a.startDate) <= now && now <= new Date(a.endDate) ? 1 : 0;
-          bValue = b.startDate && b.endDate && new Date(b.startDate) <= now && now <= new Date(b.endDate) ? 1 : 0;
+          aValue = a.start_date && a.end_date && new Date(a.start_date) <= now && now <= new Date(a.end_date) ? 1 : 0;
+          bValue = b.start_date && b.end_date && new Date(b.start_date) <= now && now <= new Date(b.end_date) ? 1 : 0;
           break;
         default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+          aValue = (a.name_en || a.name_jp).toLowerCase();
+          bValue = (b.name_en || b.name_jp).toLowerCase();
       }
       
       if (typeof aValue === 'string') {

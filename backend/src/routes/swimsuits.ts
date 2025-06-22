@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { validate, validateQuery, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { SwimsuitModel } from '../models/SwimsuitModel';
+import { SwimsuitSkillService } from '../services/SwimsuitSkillService';
 import logger from '../config/logger';
 
 const router = Router();
 const swimsuitModel = new SwimsuitModel();
+const swimsuitSkillService = new SwimsuitSkillService();
 
 // GET /api/swimsuits - Get all swimsuits with pagination and filters
 router.get('/', 
@@ -218,4 +220,179 @@ router.delete('/:id',
   })
 );
 
-export default router; 
+// ============================================================================
+// SWIMSUIT SKILL ROUTES
+// ============================================================================
+
+// GET /api/swimsuits/:id/skills - Get skills for a swimsuit
+router.get('/:id/skills',
+  validateQuery(schemas.pagination),
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    const result = await swimsuitSkillService.getSkillsBySwimsuitId(id, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    });
+
+    logger.info(`Retrieved ${result.data.length} skills for swimsuit ${id}`);
+
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  })
+);
+
+// GET /api/swimsuits/:id/skills/summary - Get skill summary for a swimsuit
+router.get('/:id/skills/summary',
+  asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    const summary = await swimsuitSkillService.getSwimsuitSkillSummary(id);
+
+    logger.info(`Retrieved skill summary for swimsuit ${id}`);
+
+    res.json({
+      success: true,
+      data: summary
+    });
+  })
+);
+
+// POST /api/swimsuits/:id/skills - Add skill to swimsuit
+router.post('/:id/skills',
+  // validate(schemas.addSwimsuitSkill), // TODO: Add validation schema
+  asyncHandler(async (req, res) => {
+    const swimsuitId = Number(req.params.id);
+
+    if (isNaN(swimsuitId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    const skillData = { ...req.body, swimsuit_id: swimsuitId };
+    const swimsuitSkill = await swimsuitSkillService.addSkillToSwimsuit(skillData);
+
+    logger.info(`Added skill to swimsuit ${swimsuitId}`);
+
+    res.status(201).json({
+      success: true,
+      data: swimsuitSkill,
+      message: 'Skill added to swimsuit successfully'
+    });
+  })
+);
+
+// PUT /api/swimsuits/:id/skills - Set all skills for swimsuit
+router.put('/:id/skills',
+  // validate(schemas.setSwimsuitSkills), // TODO: Add validation schema
+  asyncHandler(async (req, res) => {
+    const swimsuitId = Number(req.params.id);
+
+    if (isNaN(swimsuitId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    const { skills } = req.body;
+    if (!Array.isArray(skills)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Skills must be an array'
+      });
+    }
+
+    const result = await swimsuitSkillService.setSwimsuitSkills(swimsuitId, skills);
+
+    logger.info(`Set ${result.length} skills for swimsuit ${swimsuitId}`);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'Swimsuit skills updated successfully'
+    });
+  })
+);
+
+// PUT /api/swimsuits/:id/skills/:slot - Update specific skill slot
+router.put('/:id/skills/:slot',
+  // validate(schemas.updateSwimsuitSkill), // TODO: Add validation schema
+  asyncHandler(async (req, res) => {
+    const swimsuitId = Number(req.params.id);
+    const skillSlot = req.params.slot as any;
+
+    if (isNaN(swimsuitId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    const { skill_id } = req.body;
+    if (!skill_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'skill_id is required'
+      });
+    }
+
+    const swimsuitSkill = await swimsuitSkillService.updateSwimsuitSkill(swimsuitId, skillSlot, skill_id);
+
+    logger.info(`Updated skill slot ${skillSlot} for swimsuit ${swimsuitId}`);
+
+    res.json({
+      success: true,
+      data: swimsuitSkill,
+      message: 'Swimsuit skill updated successfully'
+    });
+  })
+);
+
+// DELETE /api/swimsuits/:id/skills/:slot - Remove skill from specific slot
+router.delete('/:id/skills/:slot',
+  asyncHandler(async (req, res) => {
+    const swimsuitId = Number(req.params.id);
+    const skillSlot = req.params.slot as any;
+
+    if (isNaN(swimsuitId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid swimsuit ID'
+      });
+    }
+
+    await swimsuitSkillService.removeSkillFromSwimsuit(swimsuitId, skillSlot);
+
+    logger.info(`Removed skill from slot ${skillSlot} for swimsuit ${swimsuitId}`);
+
+    res.json({
+      success: true,
+      message: 'Skill removed from swimsuit successfully'
+    });
+  })
+);
+
+export default router;

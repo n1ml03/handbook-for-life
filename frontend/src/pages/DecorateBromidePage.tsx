@@ -156,7 +156,7 @@ export default function DecorateBromidePage() {
       try {
         setLoading(true);
         const response = await bromidesApi.getBromides({ limit: 1000 });
-        setBromides(response.data.data as any[]);
+        setBromides(response.data as any[]);
       } catch (err) {
         console.error('Failed to fetch bromides:', err);
         setError('Failed to load bromides');

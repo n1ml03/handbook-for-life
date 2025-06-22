@@ -1,25 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight,
   Zap,
   Shield,
-  Heart,
-  Target,
-  Sparkles,
-  Wand2,
-  Search,
-  Filter
-} from 'lucide-react';
+  Sparkles} from 'lucide-react';
 import { skillsApi } from '@/services/api';
 import { 
   type Skill,
-  type SkillQueryParams,
   type SortDirection,
   type SkillCategory,
-  getLocalizedName,
-  isApiSuccess
+  getLocalizedName
 } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { LoadingSpinner } from '@/components/ui/loading';
@@ -29,24 +21,18 @@ import React from 'react';
 const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
   const getCategoryColor = (category: SkillCategory) => {
     switch (category) {
-      case 'POWER': return 'from-red-400 to-pink-500';
-      case 'TECHNIQUE': return 'from-cyan-400 to-blue-500';
-      case 'STAMINA': return 'from-yellow-400 to-orange-500';
-      case 'APPEAL': return 'from-purple-400 to-pink-500';
-      case 'SUPPORT': return 'from-green-400 to-emerald-500';
-      case 'SPECIAL': return 'from-pink-400 to-purple-500';
+      case 'ACTIVE': return 'from-red-400 to-pink-500';
+      case 'PASSIVE': return 'from-cyan-400 to-blue-500';
+      case 'POTENTIAL': return 'from-purple-400 to-pink-500';
       default: return 'from-gray-400 to-gray-600';
     }
   };
 
   const getCategoryIcon = (category: SkillCategory) => {
     switch (category) {
-      case 'POWER': return <Zap className="w-4 h-4" />;
-      case 'TECHNIQUE': return <Target className="w-4 h-4" />;
-      case 'STAMINA': return <Shield className="w-4 h-4" />;
-      case 'APPEAL': return <Sparkles className="w-4 h-4" />;
-      case 'SUPPORT': return <Heart className="w-4 h-4" />;
-      case 'SPECIAL': return <Wand2 className="w-4 h-4" />;
+      case 'ACTIVE': return <Zap className="w-4 h-4" />;
+      case 'PASSIVE': return <Shield className="w-4 h-4" />;
+      case 'POTENTIAL': return <Sparkles className="w-4 h-4" />;
       default: return <Sparkles className="w-4 h-4" />;
     }
   };
@@ -76,11 +62,7 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
             </div>
           </div>
           <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20 overflow-hidden">
-            {skill.icon_url ? (
-              <img src={skill.icon_url} alt={skill.name_en} className="w-full h-full object-cover" />
-            ) : (
-              getCategoryIcon(skill.skill_category)
-            )}
+            {getCategoryIcon(skill.skill_category)}
           </div>
         </div>
 
@@ -91,25 +73,15 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
           </div>
         )}
 
-        {/* Effect */}
-        {skill.effect_description_en && (
+        {/* Effect Type */}
+        {skill.effect_type && (
           <div className="mb-4">
             <p className="text-xs font-bold text-accent-cyan mb-2 flex items-center">
               <Sparkles className="w-3 h-3 mr-1" />
-              Effect
+              Effect Type
             </p>
             <div className="p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <p className="text-xs text-gray-300">{skill.effect_description_en}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Trigger Condition */}
-        {skill.trigger_condition_en && (
-          <div className="mb-4">
-            <p className="text-xs font-bold text-accent-purple mb-2">Trigger</p>
-            <div className="p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <p className="text-xs text-gray-300">{skill.trigger_condition_en}</p>
+              <p className="text-xs text-gray-300">{skill.effect_type}</p>
             </div>
           </div>
         )}
@@ -153,9 +125,9 @@ export default function SkillsPage() {
       setLoading(true);
       setError(null);
       
-      const params: SkillQueryParams = {
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage,
         sortBy,
         sortOrder: sortDirection,
         ...(searchQuery && { search: searchQuery }),
@@ -164,13 +136,9 @@ export default function SkillsPage() {
 
       const response = await skillsApi.getSkills(params);
       
-      if (isApiSuccess(response)) {
-        setSkills(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
-        setTotalItems(response.data.pagination.total);
-      } else {
-        setError(response.error);
-      }
+      setSkills(response.data);
+      setTotalPages(response.pagination.totalPages);
+      setTotalItems(response.pagination.total);
     } catch (err) {
       console.error('Failed to fetch skills:', err);
       setError('Failed to load skills');
@@ -197,12 +165,9 @@ export default function SkillsPage() {
       type: 'select' as const,
       options: [
         { value: '', label: 'All Categories' },
-        { value: 'POWER', label: 'Power' },
-        { value: 'TECHNIQUE', label: 'Technique' },
-        { value: 'STAMINA', label: 'Stamina' },
-        { value: 'APPEAL', label: 'Appeal' },
-        { value: 'SUPPORT', label: 'Support' },
-        { value: 'SPECIAL', label: 'Special' },
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'PASSIVE', label: 'Passive' },
+        { value: 'POTENTIAL', label: 'Potential' },
       ],
     },
   ];
@@ -254,7 +219,7 @@ export default function SkillsPage() {
     return (
       <div className="min-h-screen bg-dark-primary flex items-center justify-center">
         <ErrorState 
-          message={error}
+          description={error}
           onRetry={fetchSkills}
         />
       </div>

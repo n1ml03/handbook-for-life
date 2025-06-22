@@ -195,6 +195,17 @@ export interface ShopListing {
 }
 
 // Document types
+export type DocumentViewMode = 'list' | 'document';
+export type DocumentSection = 'checklist-creation' | 'checking-guide';
+
+export interface DocumentSectionInfo {
+  id: DocumentSection;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  status: 'active' | 'inactive' | 'draft';
+}
+
 export interface Document {
   id: number;
   unique_key: string;
@@ -204,6 +215,12 @@ export interface Document {
   is_published: boolean;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
+  // Extended properties for UI compatibility
+  title: string; // Maps to title_en
+  content: string; // Maps to content_json_en converted to HTML
+  category: string; // Category based on tags or type
+  tags: string[]; // Generated from category and type
+  author: string; // Default or computed author
 }
 
 // Timeline view (for HomePage)

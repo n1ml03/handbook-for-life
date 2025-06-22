@@ -20,6 +20,8 @@ import documentsRoutes from '@routes/documents';
 import updateLogsRoutes from '@routes/update-logs';
 import eventsRoutes from '@routes/events';
 import bromidesRoutes from '@routes/bromides';
+import gachasRoutes from '@routes/gachas';
+import shopListingsRoutes from '@routes/shop-listings';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -54,6 +56,8 @@ app.use('/api/documents', documentsRoutes);
 app.use('/api/update-logs', updateLogsRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/bromides', bromidesRoutes);
+app.use('/api/gachas', gachasRoutes);
+app.use('/api/shop-listings', shopListingsRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -72,7 +76,9 @@ app.get('/', (req, res) => {
       documents: '/api/documents',
       updateLogs: '/api/update-logs',
       events: '/api/events',
-      bromides: '/api/bromides'
+      bromides: '/api/bromides',
+      gachas: '/api/gachas',
+      shopListings: '/api/shop-listings'
     }
   });
 });

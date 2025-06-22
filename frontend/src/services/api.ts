@@ -672,7 +672,7 @@ export const accessoriesApi = {
     return itemsApi.getItem(id);
   },
 
-  async getAccessoryGirls(id: string): Promise<Character[]> {
+  async getAccessoryGirls(_id: string): Promise<Character[]> {
     // This might need special handling or removal
     return [];
   },
@@ -711,28 +711,28 @@ export const girlsApi = {
 
 // Memories API - deprecated, no backend support
 export const memoriesApi = {
-  async getMemories(params?: any): Promise<{ data: Memory[]; pagination: any }> {
+  async getMemories(_params?: any): Promise<{ data: Memory[]; pagination: any }> {
     console.warn('Memories API is deprecated - no backend support');
     return { data: [], pagination: { total: 0, totalPages: 0, currentPage: 1, limit: 10 } };
   },
 
-  async getMemory(id: string): Promise<Memory> {
+  async getMemory(_id: string): Promise<Memory> {
     throw new Error('Memories API is deprecated - no backend support');
   },
 
-  async createMemory(memory: any): Promise<Memory> {
+  async createMemory(_memory: any): Promise<Memory> {
     throw new Error('Memories API is deprecated - no backend support');
   },
 
-  async updateMemory(id: string, updates: any): Promise<Memory> {
+  async updateMemory(_id: string, _updates: any): Promise<Memory> {
     throw new Error('Memories API is deprecated - no backend support');
   },
 
-  async toggleMemoryFavorite(id: string, favorite: boolean): Promise<Memory> {
+  async toggleMemoryFavorite(_id: string, _favorite: boolean): Promise<Memory> {
     throw new Error('Memories API is deprecated - no backend support');
   },
 
-  async deleteMemory(id: string): Promise<void> {
+  async deleteMemory(_id: string): Promise<void> {
     throw new Error('Memories API is deprecated - no backend support');
   },
 };

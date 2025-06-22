@@ -321,6 +321,47 @@ export interface NewDocument {
   is_published?: boolean;
 }
 
+export interface UpdateLog {
+  id: number; // INT UNSIGNED
+  unique_key: string; // VARCHAR(150) UNIQUE
+  version: string; // VARCHAR(50)
+  title: string; // VARCHAR(255)
+  content: string; // TEXT
+  description?: string; // TEXT
+  date: Date; // DATETIME
+  tags: string[]; // JSON
+  isPublished: boolean; // BOOLEAN DEFAULT TRUE
+  technicalDetails: string[]; // JSON
+  bugFixes: string[]; // JSON
+  screenshots: string[]; // JSON
+  metrics: {
+    performanceImprovement: string;
+    userSatisfaction: string;
+    bugReports: number;
+  }; // JSON
+  created_at: Date; // TIMESTAMP
+  updated_at: Date; // TIMESTAMP
+}
+
+export interface NewUpdateLog {
+  unique_key?: string;
+  version: string;
+  title: string;
+  content: string;
+  description?: string;
+  date: Date;
+  tags?: string[];
+  isPublished?: boolean;
+  technicalDetails?: string[];
+  bugFixes?: string[];
+  screenshots?: string[];
+  metrics?: {
+    performanceImprovement: string;
+    userSatisfaction: string;
+    bugReports: number;
+  };
+}
+
 // ============================================================================
 // LINKING TABLES (Bảng liên kết)
 // ============================================================================

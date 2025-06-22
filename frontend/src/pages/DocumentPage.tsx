@@ -61,14 +61,14 @@ export default function DocumentPage() {
   const getSectionDocuments = () => {
     return documents.filter(doc => {
       if (activeSection === 'checklist-creation') {
-        return doc.tags.some(tag => 
+        return doc.tags.some((tag: string) => 
           tag.toLowerCase().includes('checklist') || 
           tag.toLowerCase().includes('creation') ||
           tag.toLowerCase().includes('guide') ||
           doc.category === 'checklist-creation'
         );
       } else if (activeSection === 'checking-guide') {
-        return doc.tags.some(tag => 
+        return doc.tags.some((tag: string) => 
           tag.toLowerCase().includes('checking') || 
           tag.toLowerCase().includes('verification') ||
           tag.toLowerCase().includes('validation') ||
@@ -86,12 +86,12 @@ export default function DocumentPage() {
       const matchesSearch = !searchTerm ||
         doc.title.toLowerCase().includes(searchTerm) ||
         doc.content.toLowerCase().includes(searchTerm) ||
-        doc.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+        doc.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm));
       
       const matchesCategory = !filterValues.category || filterValues.category === 'all' || doc.category === filterValues.category;
       const matchesStatus = !filterValues.status || filterValues.status === 'all' ||
-                           (filterValues.status === 'published' && doc.isPublished) ||
-                           (filterValues.status === 'draft' && !doc.isPublished);
+                           (filterValues.status === 'published' && doc.is_published) ||
+                           (filterValues.status === 'draft' && !doc.is_published);
       const matchesAuthor = !filterValues.author || doc.author.toLowerCase().includes(filterValues.author.toLowerCase());
       
       return matchesSearch && matchesCategory && matchesStatus && matchesAuthor;
@@ -103,7 +103,7 @@ export default function DocumentPage() {
       
       switch (sortBy) {
         case 'date':
-          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -154,7 +154,7 @@ export default function DocumentPage() {
     setIsSaving(true);
     try {
       // Update the document using the context
-      updateDocument(selectedDocument.id, { content: editedContent });
+      updateDocument(selectedDocument.id.toString(), { content: editedContent });
       
       // Update selected document
       setSelectedDocument(prev => prev ? { ...prev, content: editedContent } : null);
@@ -321,7 +321,7 @@ export default function DocumentPage() {
                       <h3 className="text-xl font-semibold text-foreground group-hover:text-accent-pink transition-colors">
                         {document.title}
                       </h3>
-                      {!document.isPublished && (
+                      {!document.is_published && (
                         <Badge variant="secondary" className="text-xs">Draft</Badge>
                       )}
                       <Badge 
@@ -343,7 +343,7 @@ export default function DocumentPage() {
                     </div>
                     
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {document.tags.slice(0, 5).map(tag => (
+                      {document.tags.slice(0, 5).map((tag: string) => (
                         <Badge key={tag} variant="outline" className="text-xs">
                           <Tags className="w-3 h-3 mr-1" />
                           {tag}
@@ -363,7 +363,7 @@ export default function DocumentPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>Updated {document.updatedAt}</span>
+                        <span>Updated {document.updated_at}</span>
                       </div>
                     </div>
                   </div>
@@ -431,7 +431,7 @@ export default function DocumentPage() {
               <h1 className="text-3xl font-bold text-foreground">
                 {selectedDocument?.title}
               </h1>
-              {!selectedDocument?.isPublished && (
+              {!selectedDocument?.is_published && (
                 <Badge variant="secondary">Draft</Badge>
               )}
               {isEditMode && (
@@ -451,7 +451,7 @@ export default function DocumentPage() {
             </Inline>
 
             <Inline spacing="sm" wrap className="mb-4">
-              {selectedDocument?.tags.map(tag => (
+              {selectedDocument?.tags.map((tag: string) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   <Tags className="w-3 h-3 mr-1" />
                   {tag}
@@ -466,11 +466,11 @@ export default function DocumentPage() {
               </Inline>
               <Inline spacing="sm">
                 <Calendar className="w-4 h-4" />
-                <span>Created {selectedDocument?.createdAt}</span>
+                <span>Created {selectedDocument?.created_at}</span>
               </Inline>
               <Inline spacing="sm">
                 <Calendar className="w-4 h-4" />
-                <span>Updated {selectedDocument?.updatedAt}</span>
+                <span>Updated {selectedDocument?.updated_at}</span>
               </Inline>
             </Inline>
           </div>

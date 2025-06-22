@@ -494,7 +494,7 @@ export default function GirlDetailPage() {
                 <div className="bg-gradient-to-r from-accent-ocean/10 to-accent-cyan/10 rounded-xl p-6 border border-accent-ocean/20">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-white mb-1">{girl.swimsuit.name}</h4>
+                      <h4 className="text-lg font-bold text-white mb-1">{girl.swimsuit.name_en}</h4>
                       <div className="flex items-center gap-3">
                         <Badge
                           className={cn(
@@ -508,7 +508,7 @@ export default function GirlDetailPage() {
                           {girl.swimsuit.rarity}
                         </Badge>
                         <span className="text-sm text-gray-400">
-                          Released: {girl.swimsuit.release ? new Date(girl.swimsuit.release).toLocaleDateString() : 'Unknown'}
+                          Released: {girl.swimsuit.release_date_gl ? new Date(girl.swimsuit.release_date_gl).toLocaleDateString() : 'Unknown'}
                         </span>
                       </div>
                     </div>
@@ -516,14 +516,12 @@ export default function GirlDetailPage() {
 
                   {/* Swimsuit Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    {Object.entries(girl.swimsuit.stats).map(([stat, value]) => (
-                      <div key={stat} className="bg-dark-primary/30 rounded-lg p-3 text-center">
-                        <div className={`text-xs font-bold ${getStatColor(stat)} uppercase mb-1`}>
-                          {stat}
-                        </div>
-                        <div className="text-white font-bold">+{value}</div>
+                    <div className="bg-dark-primary/30 rounded-lg p-3 text-center">
+                      <div className="text-xs font-bold text-accent-cyan uppercase mb-1">
+                        Total Stats
                       </div>
-                    ))}
+                      <div className="text-white font-bold">+{girl.swimsuit.total_stats_awakened}</div>
+                    </div>
                   </div>
 
                   {/* Skills */}
@@ -534,27 +532,27 @@ export default function GirlDetailPage() {
                         Skills
                       </h5>
                       <div className="space-y-2">
-                        {girl.swimsuit.skills.map((skill) => (
+                        {girl.swimsuit.skills.map((swimsuitSkill) => (
                           <div
-                            key={skill.id}
+                            key={`${swimsuitSkill.swimsuit_id}-${swimsuitSkill.skill_id}`}
                             className="bg-dark-primary/50 rounded-lg p-3 border border-dark-border/30"
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-white">{skill.name}</span>
+                              <span className="font-medium text-white">{swimsuitSkill.skill?.name_en || 'Unknown Skill'}</span>
                               <Badge
                                 variant="outline"
                                 className={cn(
                                   "text-xs",
-                                  skill.type === 'offensive' ? 'border-red-400 text-red-400' :
-                                  skill.type === 'technical' ? 'border-cyan-400 text-cyan-400' :
-                                  skill.type === 'defensive' ? 'border-yellow-400 text-yellow-400' :
+                                  swimsuitSkill.skill?.skill_category === 'ACTIVE' ? 'border-red-400 text-red-400' :
+                                  swimsuitSkill.skill?.skill_category === 'PASSIVE' ? 'border-cyan-400 text-cyan-400' :
+                                  swimsuitSkill.skill?.skill_category === 'POTENTIAL' ? 'border-yellow-400 text-yellow-400' :
                                   'border-purple-400 text-purple-400'
                                 )}
                               >
-                                {skill.type}
+                                {swimsuitSkill.skill?.skill_category || 'UNKNOWN'}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-400">{skill.description}</p>
+                            <p className="text-sm text-gray-400">{swimsuitSkill.skill?.description_en || 'No description available'}</p>
                           </div>
                         ))}
                       </div>
