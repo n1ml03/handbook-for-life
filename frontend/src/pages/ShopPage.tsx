@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
-import { type ShopItem, type ShopItemCardProps, type ShopItemType, type Currency, type ShopItemRarity, type ShopSection } from '@/types';
+import { type ShopItem, type ShopItemCardProps, type ShopItemType, type Currency, type ShopItemRarity } from '@/types';
 import { shopItemsApi } from '@/services/api';
 
 function ShopItemCard({ item }: ShopItemCardProps) {
@@ -163,7 +163,7 @@ export default function ShopPage() {
   const itemsPerPage = 8;
 
   // Load shop items from API
-  const loadShopItems = async () => {
+  const loadShopItems = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -180,8 +180,8 @@ export default function ShopPage() {
 
       const response = await shopItemsApi.getShopItems(params);
       
-      // Transform items to shop item format - response is already { data: any[], pagination: any }
-      const transformedItems = (response.data || []).map((item: any) => {
+      // Transform items to shop item format - response is already { data: unknown[], pagination: unknown }
+      const transformedItems = (response.data || []).map((item: Record<string, unknown>) => {
         // Map item category to shop item type
         let shopType: ShopItemType = 'currency';
         if (item.category === 'ACCESSORY' || item.item_category === 'ACCESSORY') {
@@ -196,7 +196,7 @@ export default function ShopPage() {
 
         // Map rarity to shop item rarity
         let shopRarity: ShopItemRarity = 'common';
-        const itemRarity = (item.rarity || '').toLowerCase();
+        const itemRarity = String(item.rarity || '').toLowerCase();
         if (itemRarity === 'rare' || itemRarity === 'r') {
           shopRarity = 'rare';
         } else if (itemRarity === 'epic' || itemRarity === 'sr') {
@@ -206,21 +206,21 @@ export default function ShopPage() {
         }
 
         return {
-          id: item.id || item.unique_key,
-          name: item.name_en || item.name,
-          description: item.description_en || item.description || '',
+          id: String(item.id || item.unique_key || ''),
+          name: String(item.name_en || item.name || ''),
+          description: String(item.description_en || item.description || ''),
           type: shopType,
-          category: item.category || item.item_category || 'general',
+          category: String(item.category || item.item_category || 'general'),
           section: activeSection,
           rarity: shopRarity,
-          price: item.price,
+          price: Number(item.price || 0),
           currency: (item.currency || 'coins') as Currency,
-          image: item.image || '📦',
+          image: String(item.image || '📦'),
           inStock: item.in_stock !== false,
-          isNew: item.is_new || false,
-          featured: item.featured || false,
-          discount: item.discount || 0,
-          limitedTime: item.limited_time || false
+          isNew: Boolean(item.is_new),
+          featured: Boolean(item.featured),
+          discount: Number(item.discount || 0),
+          limitedTime: Boolean(item.limited_time)
         };
       });
       
@@ -228,19 +228,19 @@ export default function ShopPage() {
       let filteredItems = transformedItems;
       
       if (filterValues.inStock) {
-        filteredItems = filteredItems.filter((item: any) => item.inStock);
+        filteredItems = filteredItems.filter((item) => item.inStock);
       }
       if (filterValues.featured) {
-        filteredItems = filteredItems.filter((item: any) => item.featured);
+        filteredItems = filteredItems.filter((item) => item.featured);
       }
       if (filterValues.isNew) {
-        filteredItems = filteredItems.filter((item: any) => item.isNew);
+        filteredItems = filteredItems.filter((item) => item.isNew);
       }
       if (filterValues.hasDiscount) {
-        filteredItems = filteredItems.filter((item: any) => item.discount > 0);
+        filteredItems = filteredItems.filter((item) => item.discount > 0);
       }
       if (filterValues.currency) {
-        filteredItems = filteredItems.filter((item: any) => item.currency === filterValues.currency);
+        filteredItems = filteredItems.filter((item) => item.currency === filterValues.currency);
       }
 
       setShopItems(filteredItems);
@@ -248,26 +248,27 @@ export default function ShopPage() {
 
       // Extract available types for filter options
       if (!availableTypes.length) {
-        const types = [...new Set(transformedItems.map((item: any) => item.type))].filter(Boolean) as string[];
+        const types = [...new Set(transformedItems.map((item) => item.type))].filter(Boolean) as string[];
         setAvailableTypes(types);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load shop items');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load shop items';
+      setError(errorMessage);
       console.error('Failed to load shop items:', err);
       
       // If it's a network error, show a more helpful message
-      if (err.message?.includes('Network error') || err.status === 0) {
+      if (errorMessage?.includes('Network error') || (err as Record<string, unknown>)?.status === 0) {
         setError('Unable to connect to the shop service. Please check your connection.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, sortBy, sortDirection, filterValues.search, filterValues.type, filterValues.rarity, filterValues.inStock, filterValues.featured, filterValues.isNew, filterValues.hasDiscount, filterValues.currency, availableTypes.length]);
 
   // Load items on component mount and when filters change
   useEffect(() => {
     loadShopItems();
-  }, [currentPage, sortBy, sortDirection, filterValues]);
+  }, [loadShopItems]);
 
   const totalPages = Math.ceil((totalItems || 0) / itemsPerPage);
 
@@ -346,7 +347,7 @@ export default function ShopPage() {
     { key: 'type', label: 'Type' }
   ];
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1); // Reset to first page when filter changes
   };
@@ -410,7 +411,6 @@ export default function ShopPage() {
           sortDirection={sortDirection}
           onSortChange={handleSortChange}
           resultCount={totalItems}
-          blackTheme={true}
           itemLabel="shop items"
           accentColor="accent-cyan"
           secondaryColor="accent-purple"

@@ -1,3 +1,5 @@
+import React from 'react'
+
 // ============================================================================
 // CORE ENTITY TYPES - Matching Backend Database Schema
 // ============================================================================
@@ -211,7 +213,7 @@ export interface Document {
   unique_key: string;
   title_en: string;
   summary_en?: string;
-  content_json_en?: any; // TipTap JSON content
+  content_json_en?: Record<string, unknown>; // TipTap JSON content
   is_published: boolean;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
@@ -236,7 +238,7 @@ export interface TimelineView {
 // API RESPONSE TYPES
 // ============================================================================
 
-export interface ApiSuccess<T = any> {
+export interface ApiSuccess<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -246,12 +248,12 @@ export interface ApiSuccess<T = any> {
 export interface ApiError {
   success: false;
   error: string;
-  details?: any;
+  details?: Record<string, unknown>;
   timestamp: string;
   statusCode?: number;
 }
 
-export type ApiResponse<T = any> = ApiSuccess<T> | ApiError;
+export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
 
 // Pagination types
 export interface PaginationInfo {
@@ -268,7 +270,7 @@ export interface PaginatedResult<T> {
   pagination: PaginationInfo;
 }
 
-export interface ListResponse<T> extends ApiSuccess<PaginatedResult<T>> {}
+export type ListResponse<T> = ApiSuccess<PaginatedResult<T>>
 
 // ============================================================================
 // QUERY PARAMETER TYPES
@@ -542,7 +544,7 @@ export interface GachaCardProps {
 export interface ErrorState {
   message: string;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface LoadingState {
@@ -553,7 +555,7 @@ export interface LoadingState {
 
 export interface SearchState {
   query: string;
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   sortBy: string;
   sortDirection: SortDirection;
   currentPage: number;
@@ -568,7 +570,7 @@ export interface FilterState {
     start: string;
     end: string;
   };
-  customFilters: Record<string, any>;
+  customFilters: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -673,7 +675,7 @@ export interface CSVValidationError {
 
 export interface CSVPreviewData {
   headers: string[];
-  rows: any[][];
+  rows: unknown[][];
   totalRows: number;
   validRows: number;
   invalidRows: number;

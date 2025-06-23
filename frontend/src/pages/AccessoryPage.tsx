@@ -145,20 +145,17 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
 export default function AccessoryPage() {
   const [accessories, setAccessories] = useState<ExtendedAccessory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
-  const [totalItems, setTotalItems] = useState(0);
+  const [filterValues, setFilterValues] = useState<Record<string, string | boolean | number>>({});
 
   useEffect(() => {
     const fetchAccessories = async () => {
       try {
         setLoading(true);
-        setError(null);
         
         // Use itemsApi with category filter for accessories
         const response = await itemsApi.getItems({ 
@@ -178,10 +175,8 @@ export default function AccessoryPage() {
         }));
         
         setAccessories(transformedData);
-        setTotalItems(transformedData.length);
       } catch (err) {
         console.error('Failed to fetch accessories:', err);
-        setError('Failed to load accessories. The accessories endpoint may not be available.');
       } finally {
         setLoading(false);
       }
@@ -208,17 +203,17 @@ export default function AccessoryPage() {
     const filtered = multiLanguageAccessories.filter(accessory => {
       if (filterValues.rarity && accessory.rarity !== filterValues.rarity) return false;
       if (filterValues.type && accessory.type !== filterValues.type) return false;
-      if (filterValues.version && !accessory.id.toString().includes(filterValues.version)) return false;
-      if (filterValues.search && !searchInAllLanguages(accessory, filterValues.search)) return false;
-      if (filterValues.minPow && (accessory.stats?.pow || 0) < parseInt(filterValues.minPow)) return false;
-      if (filterValues.minTec && (accessory.stats?.tec || 0) < parseInt(filterValues.minTec)) return false;
-      if (filterValues.minStm && (accessory.stats?.stm || 0) < parseInt(filterValues.minStm)) return false;
-      if (filterValues.minApl && (accessory.stats?.apl || 0) < parseInt(filterValues.minApl)) return false;
+      if (filterValues.version && typeof filterValues.version === 'string' && !accessory.id.toString().includes(filterValues.version)) return false;
+      if (filterValues.search && typeof filterValues.search === 'string' && !searchInAllLanguages(accessory, filterValues.search)) return false;
+      if (filterValues.minPow && (accessory.stats?.pow || 0) < Number(filterValues.minPow)) return false;
+      if (filterValues.minTec && (accessory.stats?.tec || 0) < Number(filterValues.minTec)) return false;
+      if (filterValues.minStm && (accessory.stats?.stm || 0) < Number(filterValues.minStm)) return false;
+      if (filterValues.minApl && (accessory.stats?.apl || 0) < Number(filterValues.minApl)) return false;
       return true;
     });
     
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       switch (sortBy) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -228,11 +223,12 @@ export default function AccessoryPage() {
           aValue = a.type.toLowerCase();
           bValue = b.type.toLowerCase();
           break;
-        case 'rarity':
+        case 'rarity': {
           const rarityOrder = { 'SSR': 4, 'SR': 3, 'R': 2 };
           aValue = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
           bValue = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
           break;
+        }
         case 'pow':
           aValue = a.stats?.pow || 0;
           bValue = b.stats?.pow || 0;
@@ -268,7 +264,7 @@ export default function AccessoryPage() {
     currentPage * itemsPerPage
   ), [filteredAndSortedAccessories, currentPage, itemsPerPage]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | boolean | number) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -322,7 +318,6 @@ export default function AccessoryPage() {
           onSortChange={handleSortChange}
           resultCount={filteredAndSortedAccessories.length}
           itemLabel="accessories"
-          blackTheme={true}
           expandableStats={true}
           isFilterExpanded={isFilterExpanded}
           setIsFilterExpanded={setIsFilterExpanded}

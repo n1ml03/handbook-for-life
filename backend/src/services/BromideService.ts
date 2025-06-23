@@ -2,6 +2,7 @@ import { BromideModel } from '../models/BromideModel';
 import { Bromide, NewBromide } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
 import { BaseService } from './BaseService';
+import { ValidationHelpers } from '../utils/validationHelpers';
 
 export class BromideService extends BaseService<BromideModel, Bromide, NewBromide> {
   constructor() {
@@ -10,8 +11,8 @@ export class BromideService extends BaseService<BromideModel, Bromide, NewBromid
 
   async createBromide(bromideData: NewBromide): Promise<Bromide> {
     return this.safeAsyncOperation(async () => {
-      this.validateRequiredString(bromideData.unique_key, 'Bromide unique key');
-      this.validateRequiredString(bromideData.name_en, 'Bromide name');
+      ValidationHelpers.validateRequiredString(bromideData.unique_key, 'Bromide unique key');
+      ValidationHelpers.validateRequiredString(bromideData.name_en, 'Bromide name');
 
       this.logOperationStart('Creating', bromideData.name_en, { key: bromideData.unique_key });
 
@@ -45,7 +46,7 @@ export class BromideService extends BaseService<BromideModel, Bromide, NewBromid
 
   async getBromidesByType(type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
     return this.safeAsyncOperation(async () => {
-      this.validateRequiredString(type, 'Bromide type');
+      ValidationHelpers.validateRequiredString(type, 'Bromide type');
       const validatedOptions = this.validatePaginationOptions(options);
       return await this.model.findByType(type, validatedOptions);
     }, 'fetch bromides by type', type);

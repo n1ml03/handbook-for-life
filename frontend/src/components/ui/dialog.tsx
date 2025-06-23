@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
-export interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type DialogHeaderProps = React.HTMLAttributes<HTMLDivElement>
 
 const DialogHeader = ({
   className,
@@ -66,7 +66,7 @@ const DialogHeader = ({
 )
 DialogHeader.displayName = "DialogHeader"
 
-export interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type DialogFooterProps = React.HTMLAttributes<HTMLDivElement>
 
 const DialogFooter = ({
   className,

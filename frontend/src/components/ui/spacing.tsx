@@ -137,3 +137,24 @@ export const StatusBadge = ({ status, children, className }: { status: 'success'
     <div className={cn('inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium', statusClasses[status], className)}>{children}</div>
   );
 };
+
+// Page components for layout
+export const PageSection = ({ children, className }: SpacingProps) => (
+  <div className={cn('space-y-6', className)}>{children}</div>
+);
+
+export const PageCard = ({ children, className, hover = true }: SpacingProps & { hover?: boolean }) => (
+  <div className={cn('doax-card p-6', hover && 'hover:shadow-lg transition-shadow', className)}>{children}</div>
+);
+
+// Standard page layout replacement
+export const StandardPageLayout = ({ children, className, title }: SpacingProps & { title?: string }) => (
+  <div className={cn('viewport-optimized space-y-8', className)}>
+    {title && (
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">{title}</h1>
+      </div>
+    )}
+    {children}
+  </div>
+);

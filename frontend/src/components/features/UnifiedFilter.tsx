@@ -1,3 +1,4 @@
+import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, ChevronRight, SortAsc, Zap, X, Search } from 'lucide-react';
 import { cn } from '@/services/utils';
@@ -89,7 +90,6 @@ export const UnifiedFilter = ({
   totalCount,
   itemLabel = "items",
   accentColor = "accent-cyan",
-  secondaryColor = "accent-purple",
   expandableStats = false,
   isFilterExpanded = false,
   setIsFilterExpanded,

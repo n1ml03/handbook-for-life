@@ -1,45 +1,22 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
-  Download, 
-  Upload, 
-  FileDown, 
-  FileUp, 
-  Settings2, 
-  X, 
-  CheckCircle2,
-  BookOpen,
-  FileText
+  Download, Upload, FileDown, FileUp, Settings2, X, 
+  CheckCircle2, BookOpen, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { LoadingOverlay, DownloadButton } from '@/components/ui/loading';
 import { Card } from '@/components/ui/card';
 import { FormGroup } from '@/components/ui/spacing';
 import { cn } from '@/services/utils';
-import { Document } from '@/types';
-import { UpdateLog } from '@/types';
+import { Document, UpdateLog } from '@/types';
 import { CSVPreviewModal, type CSVPreviewData, type CSVValidationError, type ColumnMapping } from './CSVPreviewModal';
 import { NotificationToast, type NotificationState } from './NotificationToast';
 
-interface ExportOptions {
-  format: 'csv' | 'excel' | 'json';
-  selectedColumns: string[];
-  filters: {
-    dateRange?: { start: string; end: string };
-    categories?: string[];
-    status?: string[];
-    searchText?: string;
-  };
-  includeHeaders: boolean;
-  customFilename?: string;
-}
+
 
 interface ImportProgress {
   stage: 'uploading' | 'parsing' | 'validating' | 'importing' | 'complete';
@@ -64,7 +41,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   onAddUpdateLog
 }) => {
   // State
-  const [csvData, setCsvData] = useState<string>('');
   const [csvImportType, setCsvImportType] = useState<'documents' | 'update-logs'>('documents');
   const [importPage, setImportPage] = useState<string>('all');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -74,16 +50,8 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
-  const [exportOptions, setExportOptions] = useState<ExportOptions>({
-    format: 'csv',
-    selectedColumns: [],
-    filters: {},
-    includeHeaders: true
-  });
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [notifications, setNotifications] = useState<NotificationState[]>([]);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
 
   // Available pages for import
   const availablePages = useMemo(() => ([
@@ -100,7 +68,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   ]), []);
 
   // Field mappings for different data types
-  const documentFields: ColumnMapping[] = [
+  const documentFields: ColumnMapping[] = useMemo(() => [
     { csvColumn: '', dbField: 'title', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'content', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'category', isRequired: true, dataType: 'string' },
@@ -109,9 +77,9 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     { csvColumn: '', dbField: 'isPublished', isRequired: false, dataType: 'boolean' },
     { csvColumn: '', dbField: 'createdAt', isRequired: false, dataType: 'date' },
     { csvColumn: '', dbField: 'updatedAt', isRequired: false, dataType: 'date' }
-  ];
+  ], []);
 
-  const updateLogFields: ColumnMapping[] = [
+  const updateLogFields: ColumnMapping[] = useMemo(() => [
     { csvColumn: '', dbField: 'version', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'title', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'description', isRequired: false, dataType: 'string' },
@@ -119,7 +87,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     { csvColumn: '', dbField: 'date', isRequired: true, dataType: 'date' },
     { csvColumn: '', dbField: 'tags', isRequired: false, dataType: 'array' },
     { csvColumn: '', dbField: 'isPublished', isRequired: false, dataType: 'boolean' }
-  ];
+  ], []);
 
   // Notification system
   const addNotification = useCallback((notification: Omit<NotificationState, 'id' | 'timestamp'>) => {
@@ -144,7 +112,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   }, []);
 
   // Export functionality
-  const exportToCSV = useCallback((data: any[], filename: string, selectedColumns?: string[]) => {
+  const exportToCSV = useCallback((data: Record<string, unknown>[], filename: string, selectedColumns?: string[]) => {
     if (data.length === 0) {
       addNotification({
         type: 'warning',
@@ -203,7 +171,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     }
 
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    const rows: any[][] = [];
+    const rows: string[][] = [];
     const errors: CSVValidationError[] = [];
     let validRows = 0;
 
@@ -338,7 +306,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
 
     try {
       const mappedData = csvPreview.rows.map((row) => {
-        const obj: any = {};
+        const obj: Record<string, unknown> = {};
         columnMappings.forEach(mapping => {
           if (mapping.csvColumn) {
             const columnIndex = csvPreview.headers.indexOf(mapping.csvColumn);
@@ -386,7 +354,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
 
             onAddDocument(doc as Document);
             successCount++;
-          } catch (error) {
+          } catch {
             errorCount++;
           }
         }
@@ -412,7 +380,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
 
             await onAddUpdateLog(log);
             successCount++;
-          } catch (error) {
+          } catch {
             errorCount++;
           }
         }
@@ -435,7 +403,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       });
 
       // Clear data
-      setCsvData('');
       setUploadedFile(null);
       setCsvPreview(null);
       setShowPreviewModal(false);
@@ -534,7 +501,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
         {/* Quick Export Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DownloadButton
-            isDownloading={isExporting}
+            isDownloading={false}
             onClick={() => exportToCSV(documents, 'documents.csv')}
             className="w-full justify-start"
           >
@@ -543,7 +510,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
           </DownloadButton>
 
           <DownloadButton
-            isDownloading={isExporting}
+            isDownloading={false}
             onClick={() => exportToCSV(updateLogs, 'update-logs.csv')}
             className="w-full justify-start"
           >

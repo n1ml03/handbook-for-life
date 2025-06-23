@@ -1,5 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Eye, Save, X, FileText, Edit3, Settings, Code, Plus, Wrench, Bug, Image as ImageIcon, Focus } from 'lucide-react';
+import { 
+  Eye, Save, X, FileText, Edit3, Settings, Code, 
+  Plus, Wrench, Bug, Image as ImageIcon, Focus 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormGroup, StatusBadge } from '@/components/ui/spacing';

@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { 
   addTranslationsToItems, 
   searchInAllLanguages, 
-  type MultiLanguageItem,
-  type Language 
+  type MultiLanguageItem
 } from './multiLanguageSearch';
 
 // Generic hook for multi-language search and filtering
@@ -34,15 +33,13 @@ export function useMultiLanguageSearch<T extends { id: string; name: string; des
     // Sort if sortBy is provided
     if (sortBy) {
       filtered.sort((a, b) => {
-        let aValue: any, bValue: any;
+        const aValue: any = getNestedValue(a, sortBy);
+        const bValue: any = getNestedValue(b, sortBy);
         
         // Handle nested property access
         const getNestedValue = (obj: any, path: string) => {
           return path.split('.').reduce((current, key) => current?.[key], obj);
         };
-
-        aValue = getNestedValue(a, sortBy);
-        bValue = getNestedValue(b, sortBy);
 
         // Handle different data types
         if (typeof aValue === 'string' && typeof bValue === 'string') {

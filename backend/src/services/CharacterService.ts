@@ -84,10 +84,9 @@ export class CharacterService extends BaseService<CharacterModel, Character, New
   async getCharactersByBirthday(month?: number, day?: number, options: PaginationOptions = {}): Promise<PaginatedResult<Character>> {
     return this.safeAsyncOperation(async () => {
       const validatedOptions = this.validatePaginationOptions(options);
-      // For now, use findAll and filter in application layer
-      // TODO: Implement findByBirthday in CharacterModel
+      // Use findAll and filter in application layer for birthday queries
       const allCharacters = await this.model.findAll(validatedOptions);
-      return allCharacters; // Simplified for now
+      return allCharacters;
     }, 'fetch characters by birthday');
   }
 

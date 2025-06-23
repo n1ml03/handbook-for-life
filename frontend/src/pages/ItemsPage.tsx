@@ -38,7 +38,7 @@ export default function ItemsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({
     search: '',
     type: 'all',
     rarity: '',
@@ -51,14 +51,12 @@ export default function ItemsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [bromides, setBromides] = useState<Bromide[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        setError(null);
         
         const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
           swimsuitsApi.getSwimsuits({ limit: 1000 }),
@@ -73,7 +71,6 @@ export default function ItemsPage() {
         setBromides(bromidesRes.data);
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        setError('Failed to load items data');
       } finally {
         setLoading(false);
       }
@@ -160,7 +157,7 @@ export default function ItemsPage() {
       const typeMatch = filterValues.type === 'all' || item.type === filterValues.type;
 
       // Text search (multi-language) - Search across ALL languages
-      const searchText = (filterValues.search || '').toLowerCase();
+      const searchText = String(filterValues.search || '').toLowerCase();
       
       let nameMatch = true;
       if (searchText) {
@@ -192,23 +189,26 @@ export default function ItemsPage() {
       let comparison = 0;
 
       switch (sortBy) {
-        case 'name':
+        case 'name': {
           const aName = a.translations?.['en']?.name || a.name;
           const bName = b.translations?.['en']?.name || b.name;
           comparison = aName.localeCompare(bName);
           break;
+        }
         case 'type':
           comparison = a.type.localeCompare(b.type);
           break;
-        case 'stats':
+        case 'stats': {
           const aTotal = a.stats ? Object.values(a.stats).reduce((sum: number, val: number | undefined) => sum + (val || 0), 0) : 0;
           const bTotal = b.stats ? Object.values(b.stats).reduce((sum: number, val: number | undefined) => sum + (val || 0), 0) : 0;
           comparison = aTotal - bTotal;
           break;
-        case 'rarity':
+        }
+        case 'rarity': {
           const rarityOrder: Record<string, number> = { 'SSR': 3, 'SR': 2, 'R': 1, '': 0 };
           comparison = (rarityOrder[a.rarity || ''] || 0) - (rarityOrder[b.rarity || ''] || 0);
           break;
+        }
       }
 
       return sortDirection === 'desc' ? -comparison : comparison;
@@ -303,7 +303,7 @@ export default function ItemsPage() {
   };
 
   // Filter and sort handlers
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
@@ -478,7 +478,7 @@ export default function ItemsPage() {
                 {Object.entries(item.stats).slice(0, 4).map(([stat, value]) => (
                   <div key={stat} className="flex justify-between items-center p-2 bg-card/40 rounded-md border border-border/10">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat}</span>
-                    <span className="font-bold text-accent-cyan text-sm">{value || 0}</span>
+                    <span className="font-bold text-accent-cyan text-sm">{String(value || 0)}</span>
                   </div>
                 ))}
               </div>
@@ -536,7 +536,6 @@ export default function ItemsPage() {
         itemLabel="items"
         accentColor="accent-pink"
         secondaryColor="accent-purple"
-        blackTheme={true}
         headerIcon={<Package className="w-4 h-4" />}
       />
 

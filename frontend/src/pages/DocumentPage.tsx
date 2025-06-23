@@ -1,5 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Search, FileText, Tags, Calendar, User, ArrowLeft, Edit3, X, Eye, CheckSquare, ListChecks } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  Search, FileText, Tags, Calendar, User, ArrowLeft, 
+  Edit3, X, Eye, CheckSquare, ListChecks 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +19,7 @@ import {
 import TiptapEditor from '@/components/features/TiptapEditor';
 import { Container, Section, Stack, Inline, StatusBadge } from '@/components/ui/spacing';
 import { SaveButton } from '@/components/ui/loading';
-import { useDocuments } from '@/contexts/DocumentsContext';
+import { useDocuments } from '@/hooks';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 
 type ViewMode = DocumentViewMode;
@@ -30,7 +33,7 @@ export default function DocumentPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+  const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({
     search: '',
     category: '',
     status: '',
@@ -58,7 +61,7 @@ export default function DocumentPage() {
   ];
 
   // Filter documents based on active section
-  const getSectionDocuments = () => {
+  const getSectionDocuments = useCallback(() => {
     return documents.filter(doc => {
       if (activeSection === 'checklist-creation') {
         return doc.tags.some((tag: string) => 
@@ -77,12 +80,12 @@ export default function DocumentPage() {
       }
       return false;
     });
-  };
+  }, [documents, activeSection]);
 
   const filteredDocuments = useMemo(() => {
     const sectionDocuments = getSectionDocuments();
     const filtered = sectionDocuments.filter(doc => {
-      const searchTerm = (filterValues.search || '').toLowerCase();
+      const searchTerm = String(filterValues.search || '').toLowerCase();
       const matchesSearch = !searchTerm ||
         doc.title.toLowerCase().includes(searchTerm) ||
         doc.content.toLowerCase().includes(searchTerm) ||
@@ -92,7 +95,8 @@ export default function DocumentPage() {
       const matchesStatus = !filterValues.status || filterValues.status === 'all' ||
                            (filterValues.status === 'published' && doc.is_published) ||
                            (filterValues.status === 'draft' && !doc.is_published);
-      const matchesAuthor = !filterValues.author || doc.author.toLowerCase().includes(filterValues.author.toLowerCase());
+      const authorValue = String(filterValues.author || '');
+      const matchesAuthor = !authorValue || doc.author.toLowerCase().includes(authorValue.toLowerCase());
       
       return matchesSearch && matchesCategory && matchesStatus && matchesAuthor;
     });
@@ -120,7 +124,7 @@ export default function DocumentPage() {
     });
 
     return filtered;
-  }, [documents, activeSection, filterValues, sortBy, sortDirection]);
+  }, [filterValues, sortBy, sortDirection, getSectionDocuments]);
 
   const handleDocumentClick = (document: Document) => {
     setSelectedDocument(document);
@@ -166,7 +170,7 @@ export default function DocumentPage() {
     }
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
@@ -175,14 +179,14 @@ export default function DocumentPage() {
     setSortDirection(newDirection);
   };
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilterValues({
       search: '',
       category: '',
       status: '',
       author: ''
     });
-  };
+  }, []);
 
   // Filter configuration for UnifiedFilter
   const filterFields: FilterField[] = useMemo(() => [
@@ -223,7 +227,7 @@ export default function DocumentPage() {
       placeholder: 'Filter by author...',
       icon: <User className="w-3 h-3 mr-1" />,
     }
-  ], [documentCategoriesData]);
+  ], []);
 
   // Sort options for UnifiedFilter
   const sortOptions: UnifiedSortOption[] = [
@@ -273,7 +277,6 @@ export default function DocumentPage() {
         resultCount={filteredDocuments.length}
         accentColor="accent-cyan"
         secondaryColor="accent-purple"
-        blackTheme={true}
         headerIcon={<FileText className="w-4 h-4" />}
       />
 

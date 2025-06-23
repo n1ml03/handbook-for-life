@@ -15,8 +15,8 @@ import { girlsApi } from '@/services/api';
 import { type Girl, type GirlCardProps, type SortDirection, type Swimsuit, getLocalizedName } from '@/types';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
-import { StandardPageLayout, PageSection, PageCard } from '@/components/layout/StandardPageLayout';
 import { Button } from '@/components/ui/button';
+import { StandardPageLayout, PageSection, PageCard } from '@/components/ui/spacing';
 import React from 'react';
 
 const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) {
@@ -168,7 +168,6 @@ export default function GirlListPage() {
   const navigate = useNavigate();
   const [girls, setGirls] = useState<Girl[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -179,7 +178,6 @@ export default function GirlListPage() {
         setGirls(response.data);
       } catch (err) {
         console.error('Failed to fetch girls:', err);
-        setError('Failed to load girls');
       } finally {
         setLoading(false);
       }
@@ -311,20 +309,20 @@ export default function GirlListPage() {
     const filtered = multiLanguageGirls.filter(girl => {
       if (filterValues.type && girl.type !== filterValues.type) return false;
       // Use multi-language search instead of simple string matching
-      if (filterValues.search && !searchInAllLanguages(girl, filterValues.search)) return false;
-      if (filterValues.minLevel && girl.level < parseInt(filterValues.minLevel)) return false;
-      if (filterValues.maxLevel && girl.level > parseInt(filterValues.maxLevel)) return false;
-      if (filterValues.minPow && girl.stats.pow < parseInt(filterValues.minPow)) return false;
-      if (filterValues.minTec && girl.stats.tec < parseInt(filterValues.minTec)) return false;
-      if (filterValues.minStm && girl.stats.stm < parseInt(filterValues.minStm)) return false;
-      if (filterValues.minApl && girl.stats.apl < parseInt(filterValues.minApl)) return false;
+              if (filterValues.search && typeof filterValues.search === 'string' && !searchInAllLanguages(girl, filterValues.search)) return false;
+      if (filterValues.minLevel && girl.level < Number(filterValues.minLevel)) return false;
+      if (filterValues.maxLevel && girl.level > Number(filterValues.maxLevel)) return false;
+      if (filterValues.minPow && girl.stats.pow < Number(filterValues.minPow)) return false;
+      if (filterValues.minTec && girl.stats.tec < Number(filterValues.minTec)) return false;
+      if (filterValues.minStm && girl.stats.stm < Number(filterValues.minStm)) return false;
+      if (filterValues.minApl && girl.stats.apl < Number(filterValues.minApl)) return false;
       if (filterValues.hasSwimsuit && !girl.swimsuit) return false;
       if (filterValues.hasAccessories && girl.accessories.length === 0) return false;
       return true;
     });
 
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       
       switch (sortBy) {
         case 'name':
@@ -348,10 +346,12 @@ export default function GirlListPage() {
           bValue = b.name.toLowerCase();
       }
       
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      const numA = Number(aValue);
+      const numB = Number(bValue);
+      return sortDirection === 'asc' ? numA - numB : numB - numA;
     });
   }, [multiLanguageGirls, filterValues, sortBy, sortDirection]);
 
@@ -361,7 +361,7 @@ export default function GirlListPage() {
     currentPage * itemsPerPage
   ), [filteredAndSortedGirls, currentPage, itemsPerPage]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -398,14 +398,26 @@ export default function GirlListPage() {
   return (
     <StandardPageLayout
       title="Girl Collection"
-      subtitle={`Discover and explore ${girls.length} unique characters`}
-      icon={<Users className="w-12 h-12 text-accent-pink" />}
-      containerSize="xl"
-      spacing="normal"
-      animateEntrance={true}
-      staggerChildren={true}
-      ariaLabel="Girl collection page"
+      className="min-h-screen"
     >
+      {/* Page Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-2xl flex items-center justify-center border border-accent-cyan/20">
+            <Users className="w-8 h-8 text-accent-pink" />
+          </div>
+          <div>
+            <p className="text-muted-foreground text-lg">
+              Discover and explore {girls.length} unique characters
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Search and Filter Controls */}
       <PageSection>
         <UnifiedFilter

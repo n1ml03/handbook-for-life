@@ -8,7 +8,7 @@ import {
   Search
 } from 'lucide-react';
 import { bromidesApi } from '@/services/api';
-import { type Bromide, type SortDirection } from '@/types';
+import { type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
 import { Grid } from '@/components/ui/spacing';
@@ -133,8 +133,6 @@ function BromideCard({ bromide }: { bromide: any }) {
 
 export default function DecorateBromidePage() {
   const [bromides, setBromides] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name');
@@ -155,14 +153,10 @@ export default function DecorateBromidePage() {
   useEffect(() => {
     const fetchBromides = async () => {
       try {
-        setLoading(true);
         const response = await bromidesApi.getBromides({ limit: 1000 });
         setBromides(response.data as any[]);
       } catch (err) {
         console.error('Failed to fetch bromides:', err);
-        setError('Failed to load bromides');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -221,7 +215,7 @@ export default function DecorateBromidePage() {
     });
 
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
 
       switch (sortBy) {
         case 'name':
@@ -232,11 +226,12 @@ export default function DecorateBromidePage() {
           aValue = a.category.toLowerCase();
           bValue = b.category.toLowerCase();
           break;
-        case 'rarity':
+        case 'rarity': {
           const rarityOrder = { 'UR': 5, 'SSR': 4, 'SR': 3, 'R': 2, 'N': 1 };
           aValue = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
           bValue = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
           break;
+        }
         case 'character':
           aValue = (a.character || '').toLowerCase();
           bValue = (b.character || '').toLowerCase();
@@ -254,10 +249,10 @@ export default function DecorateBromidePage() {
           bValue = b.name.toLowerCase();
       }
 
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      return sortDirection === 'asc' ? (aValue as number) - (bValue as number) : (bValue as number) - (aValue as number);
     });
   }, [bromides, filter, sortBy, sortDirection]);
 
@@ -272,7 +267,7 @@ export default function DecorateBromidePage() {
     setSortDirection(direction);
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilter(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -324,7 +319,6 @@ export default function DecorateBromidePage() {
         itemLabel="bromides & decorations"
         accentColor="accent-cyan"
         secondaryColor="accent-purple"
-        blackTheme={true}
         headerIcon={<Search className="w-4 h-4" />}
       />
 

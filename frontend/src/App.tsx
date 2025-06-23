@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useTheme } from '@/services/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { DocumentsProvider } from '@/contexts/DocumentsContext';
 
 // Layout Components - Optimized with performance improvements

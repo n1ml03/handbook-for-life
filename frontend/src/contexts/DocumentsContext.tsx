@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Document } from '@/types';
 import { documentsApi, ApiError } from '@/services/api';
 
@@ -13,7 +13,7 @@ interface DocumentsContextType {
   getDocumentsByCategory: (category: string) => Document[];
 }
 
-const DocumentsContext = createContext<DocumentsContextType | undefined>(undefined);
+export const DocumentsContext = createContext<DocumentsContextType | undefined>(undefined);
 
 export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -118,10 +118,5 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useDocuments = () => {
-  const context = useContext(DocumentsContext);
-  if (context === undefined) {
-    throw new Error('useDocuments must be used within a DocumentsProvider');
-  }
-  return context;
-}; 
+// Set displayName for better debugging and React DevTools
+DocumentsProvider.displayName = 'DocumentsProvider';

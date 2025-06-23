@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -109,10 +109,8 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 });
 
 export default function MemoriesPage() {
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
@@ -129,10 +127,9 @@ export default function MemoriesPage() {
   const itemsPerPage = 8;
 
   // Fetch episodes from API and convert to memories
-  const fetchEpisodes = async () => {
+  const fetchEpisodes = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       
       const params = {
         page: currentPage,
@@ -148,8 +145,6 @@ export default function MemoriesPage() {
       const response = await episodesApi.getEpisodes(params);
       const episodeData = response.data || [];
       
-      setEpisodes(episodeData);
-      
       // Convert episodes to memories
       const memoryData = episodeData.map((episode: Episode) => episodeToMemory(episode));
       setMemories(memoryData);
@@ -157,16 +152,15 @@ export default function MemoriesPage() {
       setTotalPages(response.pagination?.totalPages || 1);
     } catch (err) {
       console.error('Error fetching episodes:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch episodes');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, sortBy, sortDirection, filter.type, filter.entityType, filter.entityId, filter.search]);
 
   // Fetch episodes on component mount and when dependencies change
   useEffect(() => {
     fetchEpisodes();
-  }, [currentPage, sortBy, sortDirection, filter.type, filter.entityType, filter.entityId, filter.search]);
+  }, [fetchEpisodes]);
 
   // Filter memories locally for unlocked filter (since this isn't supported by API yet)
   const filteredMemories = useMemo(() => {
@@ -201,7 +195,7 @@ export default function MemoriesPage() {
       setMemories(prev => prev.map(m => 
         m.id === id ? { ...m, favorite: !m.favorite } : m
       ));
-      setError('Failed to update favorite status');
+      console.error('Failed to update favorite status');
     }
   };
 
@@ -225,9 +219,7 @@ export default function MemoriesPage() {
     setCurrentPage(1);
   };
 
-  const refreshEpisodes = () => {
-    fetchEpisodes();
-  };
+
 
   const SortButton = ({ sortKey, children }: { sortKey: SortOption; children: React.ReactNode }) => (
     <motion.button

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { UpdateLog } from '@/types';
 import { updateLogsApi, ApiError } from '@/services/api';
 
@@ -13,7 +13,7 @@ interface UpdateLogsContextType {
   refreshUpdateLogs: () => Promise<void>;
 }
 
-const UpdateLogsContext = createContext<UpdateLogsContextType | undefined>(undefined);
+export const UpdateLogsContext = createContext<UpdateLogsContextType | undefined>(undefined);
 
 interface UpdateLogsProviderProps {
   children: ReactNode;
@@ -108,12 +108,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   );
 }
 
-export const useUpdateLogs = (): UpdateLogsContextType => {
-  const context = useContext(UpdateLogsContext);
-  if (context === undefined) {
-    throw new Error('useUpdateLogs must be used within an UpdateLogsProvider');
-  }
-  return context;
-};
+// Set displayName for better debugging and React DevTools
+UpdateLogsProvider.displayName = 'UpdateLogsProvider';
 
 export default UpdateLogsContext; 

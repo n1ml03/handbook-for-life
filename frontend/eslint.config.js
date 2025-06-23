@@ -11,7 +11,13 @@ export default [
     ignores: ['dist', 'node_modules'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.es2020,
+        React: 'readonly',
+        RequestInit: 'readonly',
+        __dirname: 'readonly',
+      },
       parser: tsParser,
       parserOptions: {
         ecmaVersion: 'latest',
@@ -19,6 +25,8 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
@@ -39,8 +47,11 @@ export default [
         { argsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'warn',
       'prefer-const': 'error',
       'no-var': 'error',
+      'no-undef': 'off',
+      'no-case-declarations': 'error',
     },
   },
 ] 

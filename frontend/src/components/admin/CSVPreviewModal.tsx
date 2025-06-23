@@ -20,7 +20,7 @@ interface CSVValidationError {
 
 interface CSVPreviewData {
   headers: string[];
-  rows: any[][];
+  rows: string[][];
   totalRows: number;
   validRows: number;
   invalidRows: number;

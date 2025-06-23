@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useCallback, useMemo, useRef, useEffect, memo, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
@@ -17,9 +18,7 @@ import {
   Camera,
   ChevronDown,
   Music,
-  Diamond,
-  Menu,
-  X
+  Diamond
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -406,7 +405,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
           variant="ghost"
           className={cn(
             isMobile ? "mobile-menu-item" : "header-nav-item",
-            (isActive || hasActiveChildItem || isDropdownOpen) && "active",
+            (isActive || hasActiveChildItem || isDropdownOpen) ? "active" : undefined,
             isMobile ? "w-full justify-start" : ""
           )}
           onClick={() => toggleDropdown(item.id)}
@@ -446,7 +445,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
                     to={child.path!}
                     className={cn(
                       "mobile-menu-item text-sm",
-                      isActiveItem(child.path) && "active"
+                      isActiveItem(child.path) ? "active" : undefined
                     )}
                     onClick={() => {
                       setOpenDropdown(null);
@@ -500,7 +499,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
         to={item.path!}
         className={cn(
           isMobile ? "mobile-menu-item" : "header-nav-item",
-          isActive && "active"
+          isActive ? "active" : undefined
         )}
         onClick={isMobile ? () => setMobileMenuOpen(false) : undefined}
         role="menuitem"
@@ -545,7 +544,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
           <Link
             to="/home"
             className="header-logo"
-            aria-label="Handbook for Life - Home"
+            aria-label="Handbook"
           >
             <div className="relative">
               <Star className="w-7 h-7 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
@@ -554,9 +553,6 @@ export const Header = memo(function Header({ className }: HeaderProps) {
             <div className="hidden sm:block">
               <span className="font-bold text-lg text-foreground group-hover:text-accent-pink transition-colors duration-200">
                 Handbook
-              </span>
-              <span className="hidden md:inline text-sm text-muted-foreground ml-1 group-hover:text-accent-pink/70 transition-colors duration-200">
-                for Life
               </span>
             </div>
           </Link>
@@ -582,7 +578,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
               aria-controls="mobile-navigation"
               aria-haspopup="menu"
             >
-              <div className={cn("mobile-menu-toggle", mobileMenuOpen && "open")}>
+              <div className={cn("mobile-menu-toggle", mobileMenuOpen ? "open" : undefined)}>
                 <span></span>
                 <span></span>
                 <span></span>

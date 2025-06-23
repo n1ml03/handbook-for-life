@@ -25,10 +25,16 @@ interface GachaReward {
 
 // Extend Event interface for gacha-specific properties
 interface GachaEvent extends Event {
-  eventType: string;
+  eventType?: string; // Make optional since base Event doesn't have this
   bannerImage?: string;
   description?: string;
   rewards?: GachaReward[];
+  // Event interface already includes:
+  // id: number
+  // name_en: string
+  // name_jp: string 
+  // start_date: string
+  // end_date: string
 }
 
 function GachaCard({ gacha }: { gacha: GachaEvent }) {
@@ -191,7 +197,6 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
 export default function GachaPage() {
   const [events, setEvents] = useState<GachaEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<string>('startDate');
@@ -208,10 +213,17 @@ export default function GachaPage() {
       try {
         setLoading(true);
         const response = await eventsApi.getEvents({ limit: 1000 });
-        setEvents((response.data as GachaEvent[]).filter(e => e.eventType === 'gacha'));
+        // Convert Event[] to GachaEvent[] by adding missing properties
+        const gachaEvents: GachaEvent[] = (response.data as Event[]).map(event => ({
+          ...event,
+          eventType: 'gacha', // Add the missing eventType property
+          bannerImage: '💎', // Default banner image
+          description: `${event.name_en || event.name_jp} gacha event`, // Default description
+          rewards: [] // Default empty rewards
+        }));
+        setEvents(gachaEvents);
       } catch (err) {
         console.error('Failed to fetch events:', err);
-        setError('Failed to load events');
       } finally {
         setLoading(false);
       }
@@ -269,8 +281,6 @@ export default function GachaPage() {
 
   const filteredAndSortedGachas = useMemo(() => {
     const filtered = events.filter(event => {
-      if (event.eventType !== 'gacha') return false;
-      
       if (filterValues.search && !(event.name_en || event.name_jp).toLowerCase().includes(filterValues.search.toLowerCase()) && 
           !(event.description ?? '').toLowerCase().includes(filterValues.search.toLowerCase())) return false;
       
@@ -286,7 +296,7 @@ export default function GachaPage() {
     });
 
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date, bValue: string | number | Date;
       
       switch (sortBy) {
         case 'name':
@@ -301,20 +311,23 @@ export default function GachaPage() {
           aValue = a.end_date ? new Date(a.end_date).getTime() : 0;
           bValue = b.end_date ? new Date(b.end_date).getTime() : 0;
           break;
-        case 'isActive':
+        case 'isActive': {
           const now = new Date();
           aValue = a.start_date && a.end_date && new Date(a.start_date) <= now && now <= new Date(a.end_date) ? 1 : 0;
           bValue = b.start_date && b.end_date && new Date(b.start_date) <= now && now <= new Date(b.end_date) ? 1 : 0;
           break;
+        }
         default:
           aValue = (a.name_en || a.name_jp).toLowerCase();
           bValue = (b.name_en || b.name_jp).toLowerCase();
       }
       
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      const numA = Number(aValue);
+      const numB = Number(bValue);
+      return sortDirection === 'asc' ? numA - numB : numB - numA;
     });
   }, [filterValues, sortBy, sortDirection, events]);
 
@@ -324,7 +337,7 @@ export default function GachaPage() {
     currentPage * itemsPerPage
   );
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -386,7 +399,6 @@ export default function GachaPage() {
           itemLabel="gacha events"
           accentColor="purple"
           secondaryColor="pink"
-          blackTheme={true}
           headerIcon={<Diamond className="w-4 h-4" />}
         />
 

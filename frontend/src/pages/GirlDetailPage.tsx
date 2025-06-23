@@ -38,7 +38,6 @@ export default function GirlDetailPage() {
   const [loading, setLoading] = useState(true);
   const [skillsLoading, setSkillsLoading] = useState(false);
   const [swimsuitsLoading, setSwimsuitLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGirl = async () => {
@@ -46,7 +45,6 @@ export default function GirlDetailPage() {
 
       try {
         setLoading(true);
-        setError(null);
 
         // Fetch girl details directly by ID
         const girlData = await girlsApi.getGirl(id);
@@ -67,7 +65,6 @@ export default function GirlDetailPage() {
 
       } catch (err) {
         console.error('Failed to fetch girl:', err);
-        setError('Failed to load girl data');
       } finally {
         setLoading(false);
       }
@@ -295,7 +292,7 @@ export default function GirlDetailPage() {
                             </span>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-white">{value}</div>
+                            <div className="text-lg font-bold text-white">{String(value)}</div>
                             <div className="text-xs text-muted-foreground">/ {maxValue}</div>
                           </div>
                         </div>

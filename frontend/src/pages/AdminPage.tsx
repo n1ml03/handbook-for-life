@@ -1,12 +1,13 @@
+import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { Settings, FileText, FileDown, BookOpen } from 'lucide-react';
 import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
-import { useUpdateLogs } from '@/contexts/UpdateLogsContext';
+import { useUpdateLogs } from '@/hooks';
 import { UpdateLog } from '@/types';
 import { Container, Section, Inline } from '@/components/ui/spacing';
 import { Card } from '@/components/ui/card';
-import { useDocuments } from '@/contexts/DocumentsContext';
+import { useDocuments } from '@/hooks';
 import {
   CSVManagement,
   DocumentManagement,
@@ -100,6 +101,10 @@ const AdminPage = () => {
   ];
 
   // Notification management
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
   const addNotification = useCallback((notification: Omit<NotificationState, 'id' | 'timestamp'>) => {
     const newNotification: NotificationState = {
       ...notification,
@@ -114,22 +119,18 @@ const AdminPage = () => {
         removeNotification(newNotification.id);
       }, notification.duration);
     }
-  }, []);
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
+  }, [removeNotification]);
 
   // Document handlers
   const handleCreateNewDocument = useCallback(() => {
     // Create a new document object with proper structure for UI compatibility
-    // Use null for id to indicate this is a new document (not yet saved)
+    // Use 0 for id to indicate this is a new document (not yet saved)
     const newDocument: Document = {
-      id: null as any, // Will be assigned by backend on creation
+      id: 0, // Will be assigned by backend on creation
       unique_key: '',
       title_en: '',
       summary_en: '',
-      content_json_en: null,
+      content_json_en: undefined,
       is_published: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -149,7 +150,7 @@ const AdminPage = () => {
   const handleSaveDocument = useCallback(async (document: Document) => {
     try {
       // Check if this is an existing document (has a valid ID) or a new one
-      const isExistingDocument = editingDocument?.id && editingDocument.id !== null;
+      const isExistingDocument = editingDocument?.id && editingDocument.id > 0;
 
       // Ensure both is_published and isPublished are synchronized
       const documentToSave = {
@@ -190,10 +191,10 @@ const AdminPage = () => {
     }
   }, [editingDocument, addDocument, updateDocument, addNotification]);
 
-  const handleDeleteDocument = useCallback((documentId: string) => {
+  const handleDeleteDocument = useCallback((documentId: number) => {
     if (confirm('Are you sure you want to delete this document?')) {
       try {
-        deleteDocument(documentId);
+        deleteDocument(documentId.toString());
         addNotification({
           type: 'success',
           title: 'Document Deleted',

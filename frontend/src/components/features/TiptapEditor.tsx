@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -15,7 +16,6 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import TextAlign from '@tiptap/extension-text-align';
 import { motion, AnimatePresence } from 'framer-motion';
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import {
   Bold,
   Italic,
@@ -69,7 +69,7 @@ const TiptapEditor = ({
   onChange,
   editable = true,
   placeholder = 'Start writing...',
-  className,
+  className: _className,
   showToolbar = true,
   showCharacterCount = true,
   showWordCount = false,
@@ -203,13 +203,6 @@ const TiptapEditor = ({
       };
       reader.readAsDataURL(file);
     }
-  }, [editor]);
-
-  const handleEmojiClick = useCallback((emojiData: EmojiClickData) => {
-    if (editor) {
-      editor.chain().focus().insertContent(emojiData.emoji).run();
-    }
-    setShowEmojiPicker(false);
   }, [editor]);
 
   const addLink = useCallback(() => {
@@ -770,20 +763,6 @@ const TiptapEditor = ({
             (isToolbarSticky || toolbarPinned) ? "pt-16" : ""
           )}
         />
-
-        {/* Emoji Picker */}
-        <AnimatePresence>
-          {showEmojiPicker && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute top-full right-0 mt-2 z-50"
-            >
-              <EmojiPicker onEmojiClick={handleEmojiClick} />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Character limit warning */}
         {isAtLimit() && maxCharacters && (

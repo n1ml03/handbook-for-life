@@ -16,14 +16,14 @@ import {
   Sparkles, 
   User
 } from 'lucide-react';
-import { type Swimsuit, type SwimsuitRarity } from '@/types';
-import { addTranslationsToItems, searchInAllLanguages, type MultiLanguageItem } from '@/services/multiLanguageSearch';
+import { type Swimsuit } from '@/types';
+import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { swimsuitsApi } from '@/services/api';
 import React from 'react';
 
 // SwimsuitCard Component
 interface SwimsuitCardProps {
-  swimsuit: Swimsuit & { stats?: { pow: number; tec: number; stm: number; apl: number }; skills?: any[]; character?: string; name?: string; release?: string; reappear?: string };
+  swimsuit: Swimsuit & { stats?: { pow: number; tec: number; stm: number; apl: number }; skills?: any[]; character?: string; name?: string };
   viewMode?: 'gallery' | 'showcase' | 'minimal';
 }
 
@@ -91,7 +91,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
   const maxStat = Math.max(stats.pow, stats.tec, stats.stm, stats.apl);
   const swimsuitName = swimsuit.name || swimsuit.name_en;
   const characterName = swimsuit.character || (swimsuit.character as any)?.name_en || 'Unknown';
-  const releaseDate = swimsuit.release || swimsuit.release_date_gl || 'Unknown';
+  const releaseDate = swimsuit.release_date_gl || 'Unknown';
   
   // Character Avatar Generator with swimsuit-themed colors
   const generateAvatar = (character: string) => {
@@ -164,7 +164,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
                     key === 'stm' ? 'text-yellow-400' :
                     'text-purple-400'
                   }`}>
-                    {value}
+                    {String(value)}
                   </span>
                 </div>
               ))}
@@ -293,7 +293,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
         <div className="px-4 pb-4 text-xs text-gray-500 flex items-center justify-between">
           <div className="flex items-center space-x-1">
             <Calendar className="w-3 h-3" />
-            <span>{swimsuit.release}</span>
+            <span>{swimsuit.release_date_gl}</span>
           </div>
           <span className="text-accent-cyan">#{swimsuit.id}</span>
         </div>
@@ -374,7 +374,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
                   {key}
                 </div>
                 <div className={`${colors[key as keyof typeof colors]} text-white font-bold text-sm py-1 rounded-lg`}>
-                  {value}
+                  {String(value)}
                 </div>
               </div>
             );
@@ -422,10 +422,10 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
             <Calendar className="w-3 h-3" />
             <span>{releaseDate}</span>
           </div>
-          {swimsuit.reappear && (
+          {swimsuit.is_limited && (
             <div className="flex items-center space-x-1 text-accent-cyan">
               <RotateCcw className="w-3 h-3" />
-              <span>{swimsuit.reappear}</span>
+              <span>Limited</span>
             </div>
           )}
         </div>
@@ -443,7 +443,6 @@ type SortOption = 'name' | 'character' | 'rarity' | 'pow' | 'tec' | 'stm' | 'apl
 export default function SwimsuitPage() {
   const [swimsuits, setSwimsuits] = useState<Swimsuit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -471,10 +470,8 @@ export default function SwimsuitPage() {
         setLoading(true);
         const response = await swimsuitsApi.getSwimsuits({ limit: 1000 });
         setSwimsuits(response.data || []);
-        setError(null);
       } catch (err) {
         console.error('Error fetching swimsuits:', err);
-        setError('Failed to load swimsuits');
         setSwimsuits([]);
       } finally {
         setLoading(false);
@@ -496,26 +493,27 @@ export default function SwimsuitPage() {
   }, [swimsuits]);
 
   const filteredAndSortedSwimsuits = useMemo(() => {
-    let filtered = multiLanguageSwimsuits.filter((swimsuit: any) => {
+    const filtered = multiLanguageSwimsuits.filter((swimsuit: any) => {
       if (filter.rarity && swimsuit.rarity !== filter.rarity) return false;
       const characterName = swimsuit.character?.name_en || 'Unknown';
       if (filter.character && characterName !== filter.character) return false;
       // Use multi-language search instead of simple string matching
       if (filter.search && !searchInAllLanguages(swimsuit, filter.search)) return false;
-      const stats = swimsuit.stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
-      if (filter.minPow && stats.pow < parseInt(filter.minPow)) return false;
-      if (filter.minTec && stats.tec < parseInt(filter.minTec)) return false;
-      if (filter.minStm && stats.stm < parseInt(filter.minStm)) return false;
-      if (filter.minApl && stats.apl < parseInt(filter.minApl)) return false;
+      const stats = (swimsuit as any).stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
+      if (filter.minPow && stats.pow < Number(filter.minPow)) return false;
+      if (filter.minTec && stats.tec < Number(filter.minTec)) return false;
+      if (filter.minStm && stats.stm < Number(filter.minStm)) return false;
+      if (filter.minApl && stats.apl < Number(filter.minApl)) return false;
       if (filter.hasSkills && (!swimsuit.skills || swimsuit.skills.length === 0)) return false;
-      const releaseDate = swimsuit.release_date_gl || swimsuit.release || '';
+      const releaseDate = swimsuit.release_date_gl || '';
       if (filter.releaseYear && !releaseDate.includes(filter.releaseYear)) return false;
       if (filter.version && !String(swimsuit.id).includes(filter.version)) return false; // Simple version check
       return true;
     });
 
-    return filtered.sort((a: any, b: any) => {
-      let aValue: any, bValue: any;
+    return filtered.sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
       
       switch (sortBy) {
         case 'name':
@@ -526,46 +524,50 @@ export default function SwimsuitPage() {
           aValue = (a.character?.name_en || '').toLowerCase();
           bValue = (b.character?.name_en || '').toLowerCase();
           break;
-        case 'rarity':
+        case 'rarity': {
           const rarityOrder = { 'SSR+': 4, 'SSR': 3, 'SR': 2, 'R': 1, 'N': 0 };
           aValue = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
           bValue = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
           break;
+        }
         case 'pow':
-          aValue = a.stats?.pow || 0;
-          bValue = b.stats?.pow || 0;
+          aValue = (a as any).stats?.pow || 0;
+          bValue = (b as any).stats?.pow || 0;
           break;
         case 'tec':
-          aValue = a.stats?.tec || 0;
-          bValue = b.stats?.tec || 0;
+          aValue = (a as any).stats?.tec || 0;
+          bValue = (b as any).stats?.tec || 0;
           break;
         case 'stm':
-          aValue = a.stats?.stm || 0;
-          bValue = b.stats?.stm || 0;
+          aValue = (a as any).stats?.stm || 0;
+          bValue = (b as any).stats?.stm || 0;
           break;
         case 'apl':
-          aValue = a.stats?.apl || 0;
-          bValue = b.stats?.apl || 0;
+          aValue = (a as any).stats?.apl || 0;
+          bValue = (b as any).stats?.apl || 0;
           break;
-        case 'total':
-          const aStats = a.stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
-          const bStats = b.stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
+        case 'total': {
+          const aStats = (a as any).stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
+          const bStats = (b as any).stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
           aValue = aStats.pow + aStats.tec + aStats.stm + aStats.apl;
           bValue = bStats.pow + bStats.tec + bStats.stm + bStats.apl;
           break;
+        }
         case 'release':
-          aValue = new Date(a.release_date_gl || a.release || '2023-01-01');
-          bValue = new Date(b.release_date_gl || b.release || '2023-01-01');
+          aValue = new Date(a.release_date_gl || '2023-01-01');
+          bValue = new Date(b.release_date_gl || '2023-01-01');
           break;
         default:
           aValue = (a.name || a.name_en || '').toLowerCase();
           bValue = (b.name || b.name_en || '').toLowerCase();
       }
       
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      const numA = Number(aValue);
+      const numB = Number(bValue);
+      return sortDirection === 'asc' ? numA - numB : numB - numA;
     });
   }, [multiLanguageSwimsuits, filter, sortBy, sortDirection]);
 
@@ -575,9 +577,9 @@ export default function SwimsuitPage() {
     currentPage * itemsPerPage
   );
 
-  const characters = useMemo(() => [...new Set(swimsuits.map((s: any) => s.character?.name_en || 'Unknown'))].sort(), [swimsuits]);
+  const characters = useMemo(() => [...new Set(swimsuits.map(s => s.character?.name_en || 'Unknown'))].sort(), [swimsuits]);
   const rarities = useMemo(() => ['SSR+', 'SSR', 'SR', 'R', 'N'], []);
-  const releaseYears = useMemo(() => [...new Set(swimsuits.map((s: any) => (s.release_date_gl || s.release || '2023-01-01').split('-')[0]))].sort().reverse(), [swimsuits]);
+  const releaseYears = useMemo(() => [...new Set(swimsuits.map(s => (s.release_date_gl || '2023-01-01').toString().split('-')[0]))].sort().reverse(), [swimsuits]);
   const versions = useMemo(() => ['1.0', '1.5', '2.0', '2.5', '3.0'], []);
 
   const handleSortChange = (newSortBy: SortOption) => {

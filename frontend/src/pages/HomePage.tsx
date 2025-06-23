@@ -16,8 +16,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useUpdateLogs } from '@/contexts/UpdateLogsContext';
-import { StandardPageLayout, PageSection, PageCard } from '@/components/layout/StandardPageLayout';
+import { StandardPageLayout, PageSection } from '@/components/ui/spacing';
+import { useUpdateLogs } from '@/hooks';
 
 // Enhanced Update Log Component
 function UpdateLog() {
@@ -249,13 +249,22 @@ export default function HomePage() {
   return (
     <StandardPageLayout
       title="Update Log"
-      subtitle="Latest improvements and feature releases for the Handbook"
-      icon={<Database className="w-12 h-12 text-accent-pink" />}
-      containerSize="lg"
-      spacing="normal"
-      animateEntrance={true}
-      ariaLabel="Update log page"
+      className="min-h-screen"
     >
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-2xl flex items-center justify-center border border-accent-cyan/20">
+            <Database className="w-8 h-8 text-accent-pink" />
+          </div>
+          <div>
+            <p className="text-muted-foreground text-lg">
+              Latest improvements and feature releases for the Handbook
+            </p>
+          </div>
+        </div>
+      </div>
+
       <PageSection>
         <UpdateLog />
       </PageSection>

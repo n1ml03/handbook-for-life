@@ -132,7 +132,7 @@ function FestivalCard({ festival }: { festival: any }) {
 }
 
 export default function FestivalPage() {
-  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [allEvents] = useState<Event[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -209,7 +209,7 @@ export default function FestivalPage() {
     });
 
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date, bValue: string | number | Date;
       
       switch (sortBy) {
         case 'name':
@@ -224,20 +224,23 @@ export default function FestivalPage() {
           aValue = new Date(a.end_date ?? 0).getTime();
           bValue = new Date(b.end_date ?? 0).getTime();
           break;
-        case 'isActive':
+        case 'isActive': {
           const now = new Date();
           aValue = (a.start_date && a.end_date && new Date(a.start_date) <= now && now <= new Date(a.end_date)) ? 1 : 0;
           bValue = (b.start_date && b.end_date && new Date(b.start_date) <= now && now <= new Date(b.end_date)) ? 1 : 0;
           break;
+        }
         default:
           aValue = a.name_en.toLowerCase();
           bValue = b.name_en.toLowerCase();
       }
       
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      const numA = Number(aValue);
+      const numB = Number(bValue);
+      return sortDirection === 'asc' ? numA - numB : numB - numA;
     });
   }, [allEvents, filterValues, sortBy, sortDirection]);
 
@@ -252,7 +255,7 @@ export default function FestivalPage() {
     currentPage * itemsPerPage
   ), [filteredAndSortedFestivals, currentPage, itemsPerPage]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
@@ -305,7 +308,6 @@ export default function FestivalPage() {
           itemLabel="festivals"
           accentColor="yellow"
           secondaryColor="orange"
-          blackTheme={true}
           headerIcon={<Music className="w-4 h-4" />}
         />
 

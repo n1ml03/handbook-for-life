@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -115,17 +115,17 @@ export default function SkillsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name_en');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({});
   const [showFilters, setShowFilters] = useState(false);
 
   const itemsPerPage = 12;
 
-  const fetchSkills = async () => {
+  const fetchSkills = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         limit: itemsPerPage,
         sortBy,
@@ -145,11 +145,11 @@ export default function SkillsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, sortBy, sortDirection, filterValues.category]);
 
   useEffect(() => {
     fetchSkills();
-  }, [currentPage, searchQuery, sortBy, sortDirection, filterValues]);
+  }, [fetchSkills]);
 
   const filterFields = [
     {
@@ -179,9 +179,9 @@ export default function SkillsPage() {
     { key: 'id', label: 'ID' },
   ];
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | number | boolean) => {
     if (key === 'search') {
-      setSearchQuery(value);
+      setSearchQuery(String(value));
     } else {
       setFilterValues(prev => ({ ...prev, [key]: value }));
     }
@@ -202,10 +202,10 @@ export default function SkillsPage() {
     setCurrentPage(1);
   };
 
-  const handleSkillClick = (skill: Skill) => {
-    // Navigate to detail page when implemented
-    console.log('Clicked skill:', skill);
-  };
+  // const handleSkillClick = (skill: Skill) => {
+  //   // Navigate to detail page when implemented
+  //   console.log('Clicked skill:', skill);
+  // };
 
   if (loading && skills.length === 0) {
     return (
@@ -264,7 +264,6 @@ export default function SkillsPage() {
             onSortChange={handleSortChange}
             resultCount={totalItems}
             itemLabel="skills"
-            blackTheme={true}
           />
         </motion.div>
 

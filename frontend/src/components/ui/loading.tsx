@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
 import { cn } from "@/services/utils"
-import { Loader2, FileText, Save, Upload, Download } from 'lucide-react';
+import { FileText, Save, Upload, Download } from 'lucide-react';
 
 export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'

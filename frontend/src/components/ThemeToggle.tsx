@@ -1,10 +1,11 @@
+import React from 'react'
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useTheme } from '@/services/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 
 export interface ThemeToggleProps {
   className?: string;
