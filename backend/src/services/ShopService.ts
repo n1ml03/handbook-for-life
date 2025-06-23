@@ -2,7 +2,7 @@ import { ShopListingModel } from '../models/ShopListingModel';
 import { ItemModel } from '../models/ItemModel';
 import { ShopListing, NewShopListing, ShopType, PaginationOptions, PaginatedResult } from '../types/database';
 import { AppError } from '../middleware/errorHandler';
-import logger from '../config/logger';
+import { logger } from '../config';
 
 export class ShopService {
   private shopListingModel: ShopListingModel;

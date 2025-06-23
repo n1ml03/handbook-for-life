@@ -2,6 +2,7 @@ import mysql from 'mysql2/promise';
 import pool, { executeQuery } from '@config/database';
 import logger from '@config/logger';
 import { AppError } from '@middleware/errorHandler';
+import { QueryOptimizer } from '../services/QueryOptimizer';
 
 export interface PaginationOptions {
   page?: number;
@@ -74,6 +75,8 @@ export abstract class BaseModel {
     const { page = 1, limit = 10 } = options;
 
     try {
+      const startTime = Date.now();
+
       // Get total count
       const [countRows] = await executeQuery(countQuery, params) as [any[], any];
       const total = countRows[0]['COUNT(*)'] || countRows[0].count || 0;
@@ -82,6 +85,13 @@ export abstract class BaseModel {
       const paginatedQuery = this.buildPaginationQuery(baseQuery, options);
       const [dataRows] = await executeQuery(paginatedQuery, params) as [any[], any];
       const data = dataRows.map(mapFunction);
+
+      const executionTime = Date.now() - startTime;
+
+      // Log slow queries for optimization
+      if (executionTime > 1000) {
+        QueryOptimizer.logSlowQuery(paginatedQuery, params, executionTime);
+      }
 
       const totalPages = Math.ceil(total / limit);
 
@@ -123,6 +133,74 @@ export abstract class BaseModel {
     return rows.length > 0;
   }
 
+  /**
+   * Optimized search method using QueryOptimizer
+   */
+  protected async getOptimizedSearchResults<T>(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions,
+    mapFunction: (row: any) => T,
+    additionalWhere?: string
+  ): Promise<PaginatedResult<T>> {
+    const { searchQuery, countQuery, params } = QueryOptimizer.buildOptimizedSearchQuery(
+      this.tableName,
+      searchFields,
+      query,
+      additionalWhere
+    );
+
+    return this.getPaginatedResults(searchQuery, countQuery, options, mapFunction, params);
+  }
+
+  /**
+   * Optimized date range search
+   */
+  protected async getDateRangeResults<T>(
+    dateField: string,
+    startDate: Date | undefined,
+    endDate: Date | undefined,
+    options: PaginationOptions,
+    mapFunction: (row: any) => T,
+    additionalWhere?: string
+  ): Promise<PaginatedResult<T>> {
+    const { query, countQuery, params } = QueryOptimizer.buildDateRangeQuery(
+      this.tableName,
+      dateField,
+      startDate,
+      endDate,
+      additionalWhere
+    );
+
+    return this.getPaginatedResults(query, countQuery, options, mapFunction, params);
+  }
+
+  /**
+   * Batch operations for better performance
+   */
+  protected async batchInsert<T>(
+    records: T[],
+    fields: (keyof T)[],
+    batchSize: number = 100
+  ): Promise<void> {
+    if (records.length === 0) return;
+
+    const fieldNames = fields.map(f => String(f)).join(', ');
+    const placeholders = fields.map(() => '?').join(', ');
+
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      const values = batch.map(() => `(${placeholders})`).join(', ');
+      const query = `INSERT INTO ${this.tableName} (${fieldNames}) VALUES ${values}`;
+
+      const params = batch.flatMap(record =>
+        fields.map(field => record[field])
+      );
+
+      await executeQuery(query, params);
+    }
+  }
+
   // Health check for the model
   async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
@@ -137,4 +215,4 @@ export abstract class BaseModel {
 
     return { isHealthy, tableName: this.tableName, errors };
   }
-} 
+}

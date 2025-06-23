@@ -9,7 +9,9 @@ const Card = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground modern-shadow glass-effect theme-sync",
+      "rounded-lg border bg-card text-card-foreground modern-shadow glass-effect theme-sync transition-all duration-200",
+      // Light mode enhancements
+      "light:bg-card light:border-border light:shadow-sm light:hover:shadow-md light:hover:border-border/80",
       className
     )}
     {...props}
@@ -50,7 +52,12 @@ const CardDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs text-muted-foreground leading-relaxed", className)}
+    className={cn(
+      "text-xs text-muted-foreground leading-relaxed",
+      // Light mode enhancements for better contrast
+      "light:text-muted-foreground/90",
+      className
+    )}
     {...props}
   />
 ))

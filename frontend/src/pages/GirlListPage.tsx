@@ -1,19 +1,22 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
   Search,
   Zap,
   Heart,
   User,
   Filter,
+  Users,
 } from 'lucide-react';
 import { girlsApi } from '@/services/api';
 import { type Girl, type GirlCardProps, type SortDirection, type Swimsuit, getLocalizedName } from '@/types';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
+import { StandardPageLayout, PageSection, PageCard } from '@/components/layout/StandardPageLayout';
+import { Button } from '@/components/ui/button';
 import React from 'react';
 
 const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) {
@@ -393,23 +396,18 @@ export default function GirlListPage() {
   }
 
   return (
-    <div className="modern-page">
-      <div className="modern-container-lg">
-        {/* Page Title */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="modern-page-header"
-        >
-          <h1 className="modern-page-title">
-            Girl Collection
-          </h1>
-          <p className="modern-page-subtitle">
-            Showing {filteredAndSortedGirls.length} of {girls.length} girls
-          </p>
-        </motion.div>
-
-        {/* Search and Filter Controls */}
+    <StandardPageLayout
+      title="Girl Collection"
+      subtitle={`Discover and explore ${girls.length} unique characters`}
+      icon={<Users className="w-12 h-12 text-accent-pink" />}
+      containerSize="xl"
+      spacing="normal"
+      animateEntrance={true}
+      staggerChildren={true}
+      ariaLabel="Girl collection page"
+    >
+      {/* Search and Filter Controls */}
+      <PageSection>
         <UnifiedFilter
           showFilters={showFilters}
           setShowFilters={setShowFilters}
@@ -422,95 +420,88 @@ export default function GirlListPage() {
           sortDirection={sortDirection}
           onSortChange={handleSortChange}
           resultCount={filteredAndSortedGirls.length}
+          totalCount={girls.length}
           itemLabel="girls"
           accentColor="accent-pink"
           secondaryColor="accent-purple"
-          blackTheme={true}
           expandableStats={true}
           isFilterExpanded={isFilterExpanded}
           setIsFilterExpanded={setIsFilterExpanded}
           headerIcon={<User className="w-4 h-4" />}
+          searchAriaLabel="Search girls by name, type, or attributes"
+          filterAriaLabel="Show or hide advanced filters"
         />
+      </PageSection>
 
-        {/* Girl Display */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-            {paginatedGirls.map((girl, index) => (
-              <motion.div
-                key={girl.id}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <GirlCard 
-                  girl={girl} 
-                  onClick={() => navigate(`/girls/${girl.id}`)}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+      {/* Girl Display */}
+      <PageSection>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {paginatedGirls.map((girl, index) => (
+            <motion.div
+              key={girl.id}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index }}
+            >
+              <GirlCard
+                girl={girl}
+                onClick={() => navigate(`/girls/${girl.id}`)}
+              />
+            </motion.div>
+          ))}
+        </div>
+      </PageSection>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center space-x-2 mt-8"
-          >
-            <motion.button
+      {/* Enhanced Pagination */}
+      {totalPages > 1 && (
+        <PageSection>
+          <div className="flex items-center justify-center space-x-3">
+            <Button
+              variant="modern"
+              size="icon"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn-modern-ghost p-3 rounded-xl text-muted-foreground hover:text-foreground disabled:opacity-50 transition-all"
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
-            </motion.button>
-            
+            </Button>
+
             <div className="flex space-x-2">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                 return (
-                  <motion.button
+                  <Button
                     key={page}
+                    variant={currentPage === page ? "modern-primary" : "modern"}
+                    size="sm"
                     onClick={() => setCurrentPage(page)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      currentPage === page
-                        ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg'
-                        : 'btn-modern-ghost text-muted-foreground hover:text-foreground'
-                    }`}
+                    className="min-w-[40px]"
+                    aria-label={`Go to page ${page}`}
+                    aria-current={currentPage === page ? "page" : undefined}
                   >
                     {page}
-                  </motion.button>
+                  </Button>
                 );
               })}
             </div>
-            <motion.button
+
+            <Button
+              variant="modern"
+              size="icon"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn-modern-ghost p-3 rounded-xl text-muted-foreground hover:text-foreground disabled:opacity-50 transition-all"
+              aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />
-            </motion.button>
-          </motion.div>
-        )}
+            </Button>
+          </div>
+        </PageSection>
+      )}
 
-        {/* Empty State */}
-        {filteredAndSortedGirls.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
+      {/* Enhanced Empty State */}
+      {filteredAndSortedGirls.length === 0 && (
+        <PageSection>
+          <PageCard className="text-center py-16" hover={false}>
             <motion.div
               className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"
               animate={{ scale: [1, 1.05, 1] }}
@@ -518,21 +509,20 @@ export default function GirlListPage() {
             >
               <User className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No girls found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-2xl font-bold text-foreground mb-3">No girls found</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               We couldn't find any girls matching your current filters. Try adjusting your search criteria.
             </p>
-            <motion.button
+            <Button
+              variant="neon"
               onClick={clearFilters}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
+              className="px-8 py-3"
             >
               Clear All Filters
-            </motion.button>
-          </motion.div>
-        )}
-      </div>
-    </div>
+            </Button>
+          </PageCard>
+        </PageSection>
+      )}
+    </StandardPageLayout>
   );
 }

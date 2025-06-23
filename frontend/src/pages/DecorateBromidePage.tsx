@@ -11,7 +11,7 @@ import { bromidesApi } from '@/services/api';
 import { type Bromide, type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
-import { Container, Section, Grid, StatusBadge } from '@/components/ui/spacing';
+import { Grid } from '@/components/ui/spacing';
 
 const bromideTypes = ['Character', 'Scene', 'Event', 'Special'] as const;
 const decorationTypes = ['Frame', 'Background', 'Sticker', 'Effect'] as const;
@@ -292,17 +292,21 @@ export default function DecorateBromidePage() {
   };
 
   return (
-    <Container>
-      {/* Modern Page Header */}
-      <Section
-        title="Bromide & Decoration Collection"
-        description={`Browse and customize your collection of ${bromides.length} bromides and decorations`}
-        action={
-          <StatusBadge status="info">
-            {filteredAndSortedBromides.length} found
-          </StatusBadge>
-        }
-      />
+    <div className="modern-page">
+      <div className="modern-container-lg">
+        {/* Modern Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="modern-page-header"
+        >
+          <h1 className="modern-page-title">
+            Bromide & Decoration Collection
+          </h1>
+          <p className="modern-page-subtitle">
+            Browse and customize your collection of {bromides.length} bromides and decorations
+          </p>
+        </motion.div>
 
       {/* Unified Filter Component */}
       <UnifiedFilter
@@ -416,6 +420,7 @@ export default function DecorateBromidePage() {
             </motion.button>
           </motion.div>
         )}
-    </Container>
+      </div>
+    </div>
   );
 }

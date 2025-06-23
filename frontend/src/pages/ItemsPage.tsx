@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
-import { Container, Section, Grid, StatusBadge } from '@/components/ui/spacing';
+import { Grid } from '@/components/ui/spacing';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 import { 
   swimsuitsApi,
@@ -492,27 +492,33 @@ export default function ItemsPage() {
   // Loading state
   if (loading) {
     return (
-      <Container>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-cyan"></div>
-          <span className="ml-4 text-muted-foreground">Loading items...</span>
+      <div className="modern-page">
+        <div className="modern-container-lg">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-cyan"></div>
+            <span className="ml-4 text-muted-foreground">Loading items...</span>
+          </div>
         </div>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container>
-      {/* Modern Page Header */}
-      <Section
-        title="Items Collection"
-        description={`Browse and search through ${unifiedItems.length} items with comprehensive multi-language support`}
-        action={
-          <StatusBadge status="info">
-            {filteredAndSortedItems.length} found
-          </StatusBadge>
-        }
-      />
+    <div className="modern-page">
+      <div className="modern-container-lg">
+        {/* Modern Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="modern-page-header"
+        >
+          <h1 className="modern-page-title">
+            Items Collection
+          </h1>
+          <p className="modern-page-subtitle">
+            Browse and search through {unifiedItems.length} items with comprehensive multi-language support
+          </p>
+        </motion.div>
 
       {/* Unified Filter Component */}
       <UnifiedFilter
@@ -568,6 +574,7 @@ export default function ItemsPage() {
           ))
         )}
       </Grid>
-    </Container>
+      </div>
+    </div>
   );
-} 
+}

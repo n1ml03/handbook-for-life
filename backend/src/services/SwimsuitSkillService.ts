@@ -335,6 +335,49 @@ export class SwimsuitSkillService {
   // HEALTH CHECK
   // ============================================================================
 
+  async initialize(): Promise<void> {
+    logger.info('Initializing SwimsuitSkillService...');
+
+    try {
+      // Initialize models if they have initialize methods
+      if (this.swimsuitSkillModel.initialize) {
+        await this.swimsuitSkillModel.initialize();
+      }
+      if (this.swimsuitModel.initialize) {
+        await this.swimsuitModel.initialize();
+      }
+      if (this.skillModel.initialize) {
+        await this.skillModel.initialize();
+      }
+
+      logger.info('SwimsuitSkillService initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize SwimsuitSkillService', { error });
+      throw error;
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    logger.info('Shutting down SwimsuitSkillService...');
+
+    try {
+      // Shutdown models if they have shutdown methods
+      if (this.swimsuitSkillModel.shutdown) {
+        await this.swimsuitSkillModel.shutdown();
+      }
+      if (this.swimsuitModel.shutdown) {
+        await this.swimsuitModel.shutdown();
+      }
+      if (this.skillModel.shutdown) {
+        await this.skillModel.shutdown();
+      }
+
+      logger.info('SwimsuitSkillService shut down successfully');
+    } catch (error) {
+      logger.error('Failed to shutdown SwimsuitSkillService', { error });
+    }
+  }
+
   async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
     const errors: string[] = [];
     let isHealthy = true;

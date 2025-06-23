@@ -2,7 +2,7 @@ import { UpdateLogModel } from '../models/UpdateLogModel';
 import { UpdateLog, NewUpdateLog } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
 import { AppError } from '../middleware/errorHandler';
-import logger from '../config/logger';
+import { logger } from '../config';
 
 export class UpdateLogService {
   private updateLogModel: UpdateLogModel;

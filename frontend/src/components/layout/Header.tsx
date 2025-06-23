@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, memo, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
@@ -41,7 +41,7 @@ export interface HeaderProps {
   className?: string;
 }
 
-function Dropdown({
+const Dropdown = memo(function Dropdown({
   trigger,
   children,
   isOpen,
@@ -107,11 +107,7 @@ function Dropdown({
   const dropdownContent = isOpen ? (
     <div
       ref={dropdownRef}
-      className={cn(
-        'header-dropdown-portal',
-        'animate-in fade-in-0 zoom-in-95 slide-in-from-top-1',
-        'duration-150'
-      )}
+      className="header-dropdown-portal"
       style={{
         top: dropdownPosition.top,
         left: dropdownPosition.left
@@ -120,8 +116,8 @@ function Dropdown({
       aria-orientation="vertical"
       aria-labelledby="dropdown-trigger"
     >
-      <div className="header-dropdown-content overflow-hidden rounded-lg border border-border/50 bg-background/95 backdrop-blur-md shadow-lg">
-        <div className="py-1.5" role="none">
+      <div className="header-dropdown-content overflow-hidden">
+        <div className="py-2" role="none">
           {children}
         </div>
       </div>
@@ -136,9 +132,9 @@ function Dropdown({
       }
     </div>
   );
-}
+});
 
-function DropdownItem({
+const DropdownItem = memo(function DropdownItem({
   item,
   isActive,
   onClick
@@ -157,7 +153,9 @@ function DropdownItem({
         'hover:bg-accent/10 hover:text-accent-pink focus:bg-accent/10',
         'focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1',
         'min-h-[44px]', // Updated to WCAG AA compliance
-        isActive ? 'bg-accent-pink/10 text-accent-pink border border-accent-pink/20' : 'text-muted-foreground'
+        // Light mode enhancements
+        'light:hover:bg-accent/20 light:hover:text-accent-pink light:focus:bg-accent/20',
+        isActive ? 'bg-accent-pink/10 text-accent-pink border border-accent-pink/20 light:bg-accent-pink/15 light:border-accent-pink/30' : 'text-muted-foreground light:text-muted-foreground'
       )}
       onClick={onClick}
       role="menuitem"
@@ -178,12 +176,16 @@ function DropdownItem({
       )}
     </Link>
   );
-}
+});
 
-export function Header({ className }: HeaderProps) {
+export const Header = memo(function Header({ className }: HeaderProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Focus management refs
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const firstMenuItemRef = useRef<HTMLAnchorElement>(null);
 
   // Menu items configuration
   const menuItems: MenuItem[] = useMemo(() => [
@@ -346,8 +348,51 @@ export function Header({ className }: HeaderProps) {
     }
   }, [mobileMenuOpen]);
 
+  // Enhanced keyboard navigation and focus management
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (openDropdown) {
+          setOpenDropdown(null);
+        } else if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+          // Return focus to mobile menu button
+          mobileMenuButtonRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [openDropdown, mobileMenuOpen]);
+
+  // Focus management for mobile menu
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // Focus first menu item when mobile menu opens
+      setTimeout(() => {
+        firstMenuItemRef.current?.focus();
+      }, 100);
+    }
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (mobileMenuOpen && !target.closest('#header-nav')) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [mobileMenuOpen]);
+
   // Render menu item
-  const renderMenuItem = useCallback((item: MenuItem, isMobile: boolean = false) => {
+  const renderMenuItem = useCallback((item: MenuItem, isMobile: boolean = false, isFirst: boolean = false) => {
     const isActive = isActiveItem(item.path);
     const hasChildren = item.children && item.children.length > 0;
     const hasActiveChildItem = hasActiveChild(item);
@@ -360,10 +405,8 @@ export function Header({ className }: HeaderProps) {
         <Button
           variant="ghost"
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-            "hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 hover:scale-105",
-            "focus:outline-hidden focus:ring-2 focus:ring-accent-pink/30",
-            (isActive || hasActiveChildItem || isDropdownOpen) ? "bg-gradient-to-r from-accent-pink/20 via-accent-purple/15 to-accent-ocean/20 text-white border border-accent-pink/30 shadow-lg" : "",
+            isMobile ? "mobile-menu-item" : "header-nav-item",
+            (isActive || hasActiveChildItem || isDropdownOpen) && "active",
             isMobile ? "w-full justify-start" : ""
           )}
           onClick={() => toggleDropdown(item.id)}
@@ -373,14 +416,18 @@ export function Header({ className }: HeaderProps) {
           aria-label={`${item.label} menu`}
         >
           <div className={cn(
-            "flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200",
-            isDropdownOpen ? "bg-white/10 scale-110" : ""
+            "flex items-center justify-center rounded-md transition-all duration-200",
+            isMobile ? "w-6 h-6" : "w-5 h-5",
+            isDropdownOpen ? "scale-110" : ""
           )} aria-hidden="true">
-            <ItemIcon className={cn("w-4 h-4", item.color)} />
+            <ItemIcon className={cn(
+              isMobile ? "w-5 h-5" : "w-4 h-4",
+              item.color
+            )} />
           </div>
-          <span>{item.label}</span>
+          <span className="font-medium">{item.label}</span>
           <ChevronDown className={cn(
-            "w-4 h-4 ml-1 transition-all duration-300 ease-out",
+            "w-4 h-4 ml-auto transition-all duration-300 ease-out",
             isDropdownOpen ? "rotate-180 text-accent-pink" : ""
           )} aria-hidden="true" />
         </Button>
@@ -392,27 +439,27 @@ export function Header({ className }: HeaderProps) {
           <div key={item.id} className="space-y-1">
             {trigger}
             {isDropdownOpen && (
-              <div className="ml-4 space-y-1 border-l-2 border-accent-pink/30 pl-4">
+              <div className="ml-6 space-y-1 border-l-2 border-accent-pink/30 pl-4 animate-in slide-in-from-left-2 duration-200">
                 {item.children!.map(child => (
                   <Link
                     key={child.id}
                     to={child.path!}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-lg",
-                      "hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 hover:scale-[1.02]",
-                      isActiveItem(child.path) ? "bg-accent-pink/20 text-accent-pink" : ""
+                      "mobile-menu-item text-sm",
+                      isActiveItem(child.path) && "active"
                     )}
                     onClick={() => {
                       setOpenDropdown(null);
                       setMobileMenuOpen(false);
                     }}
+                    role="menuitem"
                   >
-                    <div className="flex items-center justify-center w-6 h-6 rounded-md transition-all duration-200">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200">
                       <child.icon className={cn("w-4 h-4", child.color)} />
                     </div>
-                    <span>{child.label}</span>
+                    <span className="font-medium">{child.label}</span>
                     {child.badge && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
+                      <Badge variant="secondary" className="ml-auto text-xs px-2 py-1 bg-accent-pink/20 text-accent-pink border-accent-pink/30 font-semibold">
                         {child.badge}
                       </Badge>
                     )}
@@ -449,33 +496,33 @@ export function Header({ className }: HeaderProps) {
     return (
       <Link
         key={item.id}
+        ref={isMobile && isFirst ? firstMenuItemRef : undefined}
         to={item.path!}
         className={cn(
-          "flex items-center gap-2 text-sm font-medium rounded-lg transition-all duration-200",
-          "hover:bg-accent/10 hover:text-accent-pink",
-          "focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1",
-          isMobile
-            ? "w-full justify-start px-3 py-2 mx-1"
-            : "px-3 py-1.5",
-          isActive
-            ? "bg-accent-pink/10 text-accent-pink border border-accent-pink/20 shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+          isMobile ? "mobile-menu-item" : "header-nav-item",
+          isActive && "active"
         )}
-        onClick={() => setMobileMenuOpen(false)}
+        onClick={isMobile ? () => setMobileMenuOpen(false) : undefined}
+        role="menuitem"
+        tabIndex={0}
+        aria-current={isActive ? 'page' : undefined}
       >
         <div className={cn(
           "flex items-center justify-center rounded-md transition-all duration-200",
-          isMobile ? "w-5 h-5" : "w-4 h-4"
+          isMobile ? "w-6 h-6" : "w-5 h-5"
         )}>
           <ItemIcon className={cn(
-            isMobile ? "w-4 h-4" : "w-3.5 h-3.5",
+            isMobile ? "w-5 h-5" : "w-4 h-4",
             item.color,
             isActive ? "text-accent-pink" : ""
           )} />
         </div>
-        <span className={isMobile ? "text-sm" : "text-xs font-medium"}>{item.label}</span>
+        <span className={cn(
+          "truncate font-medium",
+          isMobile ? "text-base" : "text-sm"
+        )}>{item.label}</span>
         {item.badge && (
-          <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5">
+          <Badge variant="secondary" className="ml-auto text-xs px-2 py-1 bg-accent-pink/20 text-accent-pink border-accent-pink/30 font-semibold">
             {item.badge}
           </Badge>
         )}
@@ -487,69 +534,79 @@ export function Header({ className }: HeaderProps) {
     <header
       id="header-nav"
       className={cn(
-        "sticky top-0 z-[1000] w-full",
-        "bg-background/80 backdrop-blur-md border-b border-border/50",
-        "shadow-sm shadow-black/5",
-        "transition-all duration-300 ease-in-out",
+        "header-nav w-full gpu-accelerated contain-layout",
         className || ""
       )}
       role="banner"
     >
       <div className="container mx-auto px-4" style={{ overflow: 'visible' }}>
-        <div className="flex items-center justify-between h-12" style={{ overflow: 'visible' }}>
-          {/* Logo */}
+        <div className="flex items-center justify-between h-16 md:h-16" style={{ overflow: 'visible' }}>
+          {/* Enhanced Logo */}
           <Link
             to="/home"
-            className="flex items-center space-x-2 group transition-all duration-200 hover:scale-105"
+            className="header-logo"
+            aria-label="Handbook for Life - Home"
           >
             <div className="relative">
-              <Star className="w-6 h-6 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
-              <div className="absolute inset-0 w-6 h-6 text-accent-pink/30 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              <Star className="w-7 h-7 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
+              <div className="absolute inset-0 w-7 h-7 text-accent-pink/20 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </div>
             <div className="hidden sm:block">
-              <span className="font-semibold text-base text-foreground group-hover:text-accent-pink transition-colors duration-200">
+              <span className="font-bold text-lg text-foreground group-hover:text-accent-pink transition-colors duration-200">
                 Handbook
+              </span>
+              <span className="hidden md:inline text-sm text-muted-foreground ml-1 group-hover:text-accent-pink/70 transition-colors duration-200">
+                for Life
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-0.5" style={{ position: 'static' }}>
-            {menuItems.map(item => renderMenuItem(item))}
+          {/* Enhanced Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-1" style={{ position: 'static' }} role="navigation" aria-label="Main navigation">
+            {menuItems.map((item, index) => renderMenuItem(item, false, index === 0))}
           </nav>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
             <ThemeToggle />
 
-            {/* Mobile Menu Button */}
+            {/* Enhanced Mobile Menu Button */}
             <Button
+              ref={mobileMenuButtonRef}
               variant="ghost"
               size="sm"
-              className="md:hidden h-8 w-8 p-0 hover:bg-accent/10 transition-colors duration-200"
+              className="md:hidden h-11 w-11 p-0 hover:bg-accent/10 transition-all duration-200 rounded-lg"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
+              aria-haspopup="menu"
             >
-              {mobileMenuOpen ? (
-                <X className="w-4 h-4" />
-              ) : (
-                <Menu className="w-4 h-4" />
-              )}
+              <div className={cn("mobile-menu-toggle", mobileMenuOpen && "open")}>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </Button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Enhanced Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border/30 bg-background/90 backdrop-blur-md">
-            <nav className="py-3 space-y-1 max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar">
-              {menuItems.map(item => renderMenuItem(item, true))}
+          <div
+            className="mobile-menu md:hidden"
+            role="navigation"
+            aria-label="Mobile navigation"
+            id="mobile-navigation"
+          >
+            <nav className="mobile-menu-nav space-y-1 custom-scrollbar">
+              {menuItems.map((item, index) => renderMenuItem(item, true, index === 0))}
             </nav>
           </div>
         )}
       </div>
     </header>
   );
-}
+});
 
-export default Header; 
+export default Header;

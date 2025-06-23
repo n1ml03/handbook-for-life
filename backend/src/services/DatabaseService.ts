@@ -128,24 +128,17 @@ export class DatabaseService {
 
   async createUpdateLog(updateLogData: NewUpdateLog): Promise<UpdateLog> {
     try {
-      // Business logic validation
-      if (!updateLogData.version?.trim()) {
-        throw new AppError('Update log version is required', 400);
-      }
-
-      if (!updateLogData.title?.trim()) {
-        throw new AppError('Update log title is required', 400);
-      }
-
-      if (!updateLogData.content?.trim()) {
-        throw new AppError('Update log content is required', 400);
-      }
+      // Enhanced validation
+      this.validateCreateUpdateLogData(updateLogData);
 
       // Generate unique key if not provided
-      const uniqueKey = updateLogData.unique_key || 
-        `update-${updateLogData.version.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+      const uniqueKey = updateLogData.unique_key ||
+        this.generateUpdateLogUniqueKey(updateLogData.version);
 
-      logger.info(`Creating update log: ${updateLogData.title}`, { version: updateLogData.version });
+      logger.info(`Creating update log: ${updateLogData.title}`, {
+        version: updateLogData.version,
+        uniqueKey
+      });
 
       const [result] = await executeQuery(`
         INSERT INTO update_logs (
@@ -164,25 +157,25 @@ export class DatabaseService {
         JSON.stringify(updateLogData.technical_details || []),
         JSON.stringify(updateLogData.bug_fixes || []),
         JSON.stringify(updateLogData.screenshots || []),
-        JSON.stringify(updateLogData.metrics || {
-          performanceImprovement: '0%',
-          userSatisfaction: '0%',
-          bugReports: 0
-        })
+        JSON.stringify(updateLogData.metrics || this.getDefaultMetrics())
       ]);
 
       const insertResult = result as ResultSetHeader;
       const createdUpdateLog = await this.getUpdateLogById(insertResult.insertId.toString());
 
-      logger.info(`Update log created successfully: ${createdUpdateLog.title}`, { id: createdUpdateLog.id });
+      logger.info(`Update log created successfully: ${createdUpdateLog.title}`, {
+        id: createdUpdateLog.id,
+        uniqueKey: createdUpdateLog.unique_key
+      });
       return createdUpdateLog;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      logger.error(`Failed to create update log: ${updateLogData.title}`, { 
+      logger.error(`Failed to create update log: ${updateLogData.title}`, {
         error: error instanceof Error ? error.message : error,
-        version: updateLogData.version 
+        version: updateLogData.version,
+        stack: error instanceof Error ? error.stack : undefined
       });
       throw new AppError('Failed to create update log', 500);
     }
@@ -337,18 +330,188 @@ export class DatabaseService {
     }
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  private validateCreateUpdateLogData(data: NewUpdateLog): void {
+    // Required field validation
+    if (!data.version?.trim()) {
+      throw new AppError('Update log version is required', 400);
+    }
+
+    if (!data.title?.trim()) {
+      throw new AppError('Update log title is required', 400);
+    }
+
+    if (!data.content?.trim()) {
+      throw new AppError('Update log content is required', 400);
+    }
+
+    // Version format validation
+    const versionPattern = /^v?\d+\.\d+(\.\d+)?(-[a-zA-Z0-9]+)?$/;
+    if (!versionPattern.test(data.version.trim())) {
+      throw new AppError('Version must follow semantic versioning format (e.g., v1.0.0, 2.1.0-beta)', 400);
+    }
+
+    // Title length validation
+    if (data.title.trim().length > 255) {
+      throw new AppError('Update log title must be 255 characters or less', 400);
+    }
+
+    // Content length validation
+    if (data.content.trim().length > 65535) {
+      throw new AppError('Update log content is too long (maximum 65535 characters)', 400);
+    }
+
+    // Date validation
+    if (data.date && data.date > new Date()) {
+      throw new AppError('Update log date cannot be in the future', 400);
+    }
+
+    // Tags validation
+    if (data.tags && Array.isArray(data.tags)) {
+      if (data.tags.length > 10) {
+        throw new AppError('Maximum 10 tags allowed', 400);
+      }
+
+      for (const tag of data.tags) {
+        if (typeof tag !== 'string' || tag.trim().length === 0) {
+          throw new AppError('All tags must be non-empty strings', 400);
+        }
+        if (tag.trim().length > 50) {
+          throw new AppError('Each tag must be 50 characters or less', 400);
+        }
+      }
+    }
+
+    // Screenshots validation
+    if (data.screenshots && Array.isArray(data.screenshots)) {
+      for (const screenshot of data.screenshots) {
+        if (typeof screenshot !== 'string' || !this.isValidUrl(screenshot)) {
+          throw new AppError('All screenshots must be valid URLs', 400);
+        }
+      }
+    }
+  }
+
+  private generateUpdateLogUniqueKey(version: string): string {
+    const cleanVersion = version.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const timestamp = Date.now();
+    return `update-${cleanVersion}-${timestamp}`;
+  }
+
+  private getDefaultMetrics(): any {
+    return {
+      performanceImprovement: '0%',
+      userSatisfaction: '0%',
+      bugReports: 0,
+      downloadCount: 0,
+      installationSuccess: '100%'
+    };
+  }
+
+  private isValidUrl(url: string): boolean {
     try {
-      await executeQuery('SELECT 1 FROM update_logs LIMIT 1');
-      return {
-        isHealthy: true,
-        errors: []
-      };
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[]; warnings: string[] }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let isHealthy = true;
+
+    try {
+      // Test database connection with timeout
+      const connectionStart = Date.now();
+      await executeQuery('SELECT 1');
+      const connectionTime = Date.now() - connectionStart;
+
+      if (connectionTime > 1000) {
+        warnings.push(`Database connection is slow: ${connectionTime}ms`);
+      }
+
+      // Test each table with performance monitoring
+      const tables = [
+        'characters', 'swimsuits', 'skills', 'items', 'gachas', 'gacha_pools',
+        'bromides', 'episodes', 'events', 'documents', 'update_logs', 'shop_listings'
+      ];
+
+      for (const table of tables) {
+        try {
+          const tableStart = Date.now();
+          const [rows] = await executeQuery(`SELECT COUNT(*) as count FROM ${table}`);
+          const tableTime = Date.now() - tableStart;
+
+          if (tableTime > 500) {
+            warnings.push(`Table ${table} query is slow: ${tableTime}ms`);
+          }
+
+          const count = (rows as any[])[0]?.count || 0;
+          if (count === 0 && ['characters', 'skills'].includes(table)) {
+            warnings.push(`Table ${table} appears to be empty`);
+          }
+
+        } catch (error) {
+          errors.push(`Table ${table} is not accessible: ${error}`);
+          isHealthy = false;
+        }
+      }
+
+      // Check for missing indexes (simplified check)
+      try {
+        const [indexes] = await executeQuery(`
+          SELECT TABLE_NAME, INDEX_NAME
+          FROM information_schema.statistics
+          WHERE TABLE_SCHEMA = DATABASE()
+          AND INDEX_NAME != 'PRIMARY'
+        `);
+
+        const indexCount = (indexes as any[]).length;
+        if (indexCount < 10) {
+          warnings.push(`Low number of database indexes detected: ${indexCount}. Consider adding performance indexes.`);
+        }
+      } catch (error) {
+        warnings.push('Could not check database indexes');
+      }
+
     } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Database service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
+      errors.push(`Database connection failed: ${error}`);
+      isHealthy = false;
+    }
+
+    return { isHealthy, errors, warnings };
+  }
+
+  async initialize(): Promise<void> {
+    logger.info('Initializing DatabaseService...');
+
+    try {
+      // Test database connection
+      await executeQuery('SELECT 1');
+
+      // Verify critical tables exist
+      const criticalTables = ['characters', 'swimsuits', 'skills'];
+      for (const table of criticalTables) {
+        await executeQuery(`SELECT 1 FROM ${table} LIMIT 1`);
+      }
+
+      logger.info('DatabaseService initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize DatabaseService', { error });
+      throw error;
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    logger.info('Shutting down DatabaseService...');
+
+    try {
+      // Perform any cleanup operations
+      // Note: We don't close the connection pool here as it might be used by other services
+      logger.info('DatabaseService shut down successfully');
+    } catch (error) {
+      logger.error('Failed to shutdown DatabaseService', { error });
     }
   }
 }

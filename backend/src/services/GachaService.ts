@@ -2,7 +2,7 @@ import { GachaModel } from '../models/GachaModel';
 import { GachaPoolModel } from '../models/GachaPoolModel';
 import { Gacha, NewGacha, GachaPool, NewGachaPool, GachaSubtype, PaginationOptions, PaginatedResult } from '../types/database';
 import { AppError } from '../middleware/errorHandler';
-import logger from '../config/logger';
+import { logger } from '../config';
 
 export class GachaService {
   private gachaModel: GachaModel;

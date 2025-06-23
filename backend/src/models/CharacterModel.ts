@@ -171,15 +171,13 @@ export class CharacterModel extends BaseModel {
   }
 
   async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Character>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM characters WHERE is_active = TRUE AND 
-       (name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?)`,
-      `SELECT COUNT(*) FROM characters WHERE is_active = TRUE AND 
-       (name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?)`,
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    return this.getOptimizedSearchResults(
+      searchFields,
+      query,
       options,
       this.mapCharacterRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
+      'is_active = TRUE'
     );
   }
 
@@ -196,21 +194,30 @@ export class CharacterModel extends BaseModel {
   }
 
   async getCharacterSkills(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    // Get skills through swimsuits that belong to this character
+    // Optimized query with proper indexing hints and reduced redundancy
     const query = `
-      SELECT DISTINCT s.*, sk.skill_category, sk.effect_type
-      FROM swimsuits sw
-      JOIN swimsuit_skills ss ON sw.id = ss.swimsuit_id
-      JOIN skills s ON ss.skill_id = s.id
-      LEFT JOIN skills sk ON s.id = sk.id
+      SELECT DISTINCT
+        s.id,
+        s.unique_key,
+        s.name_jp,
+        s.name_en,
+        s.name_cn,
+        s.name_tw,
+        s.name_kr,
+        s.description_en,
+        s.skill_category,
+        s.effect_type
+      FROM skills s
+      INNER JOIN swimsuit_skills ss ON s.id = ss.skill_id
+      INNER JOIN swimsuits sw ON ss.swimsuit_id = sw.id
       WHERE sw.character_id = ?
     `;
 
     const countQuery = `
       SELECT COUNT(DISTINCT s.id) as count
-      FROM swimsuits sw
-      JOIN swimsuit_skills ss ON sw.id = ss.swimsuit_id
-      JOIN skills s ON ss.skill_id = s.id
+      FROM skills s
+      INNER JOIN swimsuit_skills ss ON s.id = ss.skill_id
+      INNER JOIN swimsuits sw ON ss.swimsuit_id = sw.id
       WHERE sw.character_id = ?
     `;
 

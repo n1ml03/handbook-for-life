@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { 
-  Database, 
+import {
+  Database,
   Shield,
   Calendar,
   Sparkles,
@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUpdateLogs } from '@/contexts/UpdateLogsContext';
+import { StandardPageLayout, PageSection, PageCard } from '@/components/layout/StandardPageLayout';
 
 // Enhanced Update Log Component
 function UpdateLog() {
@@ -71,7 +72,8 @@ function UpdateLog() {
               placeholder="Search updates, features, tags..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 text-lg modern-glass border-2 border-accent-cyan/20 hover:border-accent-cyan/40 focus:border-accent-cyan transition-all duration-300"
+              className="pl-12 pr-4 py-3 text-lg modern-glass border-2 border-border/30 hover:border-accent-cyan/50 focus:border-accent-cyan transition-all duration-300"
+              aria-label="Search update logs"
             />
           </div>
         </div>
@@ -127,7 +129,7 @@ function UpdateLog() {
                             </div>
                           </div>
                           
-                          <Button variant="ghost" size="sm" className="shrink-0">
+                          <Button variant="modern" size="sm" className="shrink-0" aria-label={isExpanded ? "Collapse details" : "Expand details"}>
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </Button>
                         </div>
@@ -215,10 +217,11 @@ function UpdateLog() {
                                           <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">{screenshot}</span>
                                         </div>
                                       </div>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-accent-pink/20"
+                                      <Button
+                                        variant="modern"
+                                        size="sm"
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                                        aria-label="View screenshot"
                                       >
                                         <ExternalLink className="w-4 h-4" />
                                       </Button>
@@ -243,34 +246,19 @@ function UpdateLog() {
 }
 
 export default function HomePage() {
-
   return (
-    <div className="modern-page">
-      {/* Header */}
-      <div className="modern-container">
-        <div className="modern-page-header">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl modern-glass">
-              <Database className="w-12 h-12 text-accent-pink" />
-            </div>
-          </div>
-          <h1 className="modern-page-title">
-            Update Log
-          </h1>
-          <p className="modern-page-subtitle">
-            Latest improvements and feature releases for the Handbook
-          </p>
-        </div>
-      </div>
-
-      {/* Update Log */}
-      <section className="pb-8">
-        <div className="modern-container">
-          <div className="max-w-6xl mx-auto">
-            <UpdateLog />
-          </div>
-        </div>
-      </section>
-    </div>
+    <StandardPageLayout
+      title="Update Log"
+      subtitle="Latest improvements and feature releases for the Handbook"
+      icon={<Database className="w-12 h-12 text-accent-pink" />}
+      containerSize="lg"
+      spacing="normal"
+      animateEntrance={true}
+      ariaLabel="Update log page"
+    >
+      <PageSection>
+        <UpdateLog />
+      </PageSection>
+    </StandardPageLayout>
   );
 }
