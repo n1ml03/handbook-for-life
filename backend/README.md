@@ -209,9 +209,6 @@ mysql -u doaxvv_user -p doaxvv_handbook < src/database/002_sample_data.sql
 # Start development server with auto-reload
 bun run dev
 
-# Or using npm
-npm run dev
-
 # Server will be available at:
 # - API: http://localhost:3001
 # - Health Check: http://localhost:3001/api/health

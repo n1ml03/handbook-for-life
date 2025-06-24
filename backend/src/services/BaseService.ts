@@ -178,7 +178,7 @@ export abstract class BaseService<TModel, TEntity, TNewEntity> {
         warnings,
         responseTime,
         timestamp: new Date().toISOString(),
-        version: process.env.npm_package_version || '1.0.0',
+        version: process.env.BUN_PACKAGE_VERSION || process.env.npm_package_version || '1.0.0',
         dependencies: await this.checkDependencies()
       };
     } catch (error) {
@@ -189,7 +189,7 @@ export abstract class BaseService<TModel, TEntity, TNewEntity> {
         warnings: [],
         responseTime: Date.now() - startTime,
         timestamp: new Date().toISOString(),
-        version: process.env.npm_package_version || '1.0.0',
+        version: process.env.BUN_PACKAGE_VERSION || process.env.npm_package_version || '1.0.0',
         dependencies: {}
       };
     }
