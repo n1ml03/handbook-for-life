@@ -6,6 +6,7 @@ export { useTheme } from './useTheme'
 export { useScrollDirection } from './useScrollDirection'
 export * from './useLocalStorage'
 export * from './useDebounce'
+export * from './useLoadingState'
 
 // Complex search hook remains in services
 export { useMultiLanguageSearch } from '@/services/useMultiLanguageSearch'

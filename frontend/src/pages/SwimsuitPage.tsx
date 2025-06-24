@@ -1,13 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight,
   Search,
-  SortAsc,
   Zap,
-  Filter,
-  RefreshCw,
   Calendar, 
   RotateCcw,
   Star, 
@@ -19,6 +16,9 @@ import {
 import { type Swimsuit } from '@/types';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { swimsuitsApi } from '@/services/api';
+import { PageLoadingState } from '@/components/ui';
+import UnifiedFilter, { SortDirection } from '@/components/features/UnifiedFilter';
+import { createSwimsuitFilterConfig, swimsuitSortOptions } from '@/components/features/FilterConfigs';
 import React from 'react';
 
 // SwimsuitCard Component
@@ -221,35 +221,35 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
                 className="mt-4 w-full"
               >
                 <div className="bg-dark-primary/60 backdrop-blur-sm rounded-xl p-4 border border-dark-border/30">
-                                  <div className="grid grid-cols-2 gap-3">
-                  <StatBar 
-                    stat={stats.pow} 
-                    max={maxStat} 
-                    color="bg-red-500" 
-                    icon={<Zap className="w-3 h-3" />}
-                    label="POW"
-                  />
-                  <StatBar 
-                    stat={stats.tec} 
-                    max={maxStat} 
-                    color="bg-cyan-500" 
-                    icon={<Star className="w-3 h-3" />}
-                    label="TEC"
-                  />
-                  <StatBar 
-                    stat={stats.stm} 
-                    max={maxStat} 
-                    color="bg-yellow-500" 
-                    icon={<Crown className="w-3 h-3" />}
-                    label="STM"
-                  />
-                  <StatBar 
-                    stat={stats.apl} 
-                    max={maxStat} 
-                    color="bg-purple-500" 
-                    icon={<Sparkles className="w-3 h-3" />}
-                    label="APL"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatBar 
+                      stat={stats.pow} 
+                      max={maxStat} 
+                      color="bg-red-500" 
+                      icon={<Zap className="w-3 h-3" />}
+                      label="POW"
+                    />
+                    <StatBar 
+                      stat={stats.tec} 
+                      max={maxStat} 
+                      color="bg-cyan-500" 
+                      icon={<Star className="w-3 h-3" />}
+                      label="TEC"
+                    />
+                    <StatBar 
+                      stat={stats.stm} 
+                      max={maxStat} 
+                      color="bg-yellow-500" 
+                      icon={<Crown className="w-3 h-3" />}
+                      label="STM"
+                    />
+                    <StatBar 
+                      stat={stats.apl} 
+                      max={maxStat} 
+                      color="bg-purple-500" 
+                      icon={<Sparkles className="w-3 h-3" />}
+                      label="APL"
+                    />
                 </div>
                 </div>
               </motion.div>
@@ -437,29 +437,15 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
   );
 });
 
-type SortDirection = 'asc' | 'desc';
-type SortOption = 'name' | 'character' | 'rarity' | 'pow' | 'tec' | 'stm' | 'apl' | 'total' | 'release';
-
 export default function SwimsuitPage() {
   const [swimsuits, setSwimsuits] = useState<Swimsuit[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filter, setFilter] = useState({
-    rarity: '',
-    character: '',
-    search: '',
-    minPow: '',
-    minTec: '',
-    minStm: '',
-    minApl: '',
-    hasSkills: false,
-    releaseYear: '',
-    version: ''
-  });
+  const [filterValues, setFilterValues] = useState<Record<string, string | boolean | number>>({});
 
   const itemsPerPage = 8;
 
@@ -494,20 +480,20 @@ export default function SwimsuitPage() {
 
   const filteredAndSortedSwimsuits = useMemo(() => {
     const filtered = multiLanguageSwimsuits.filter((swimsuit: any) => {
-      if (filter.rarity && swimsuit.rarity !== filter.rarity) return false;
+      if (filterValues.rarity && swimsuit.rarity !== filterValues.rarity) return false;
       const characterName = swimsuit.character?.name_en || 'Unknown';
-      if (filter.character && characterName !== filter.character) return false;
+      if (filterValues.character && characterName !== filterValues.character) return false;
       // Use multi-language search instead of simple string matching
-      if (filter.search && !searchInAllLanguages(swimsuit, filter.search)) return false;
+      if (filterValues.search && !searchInAllLanguages(swimsuit, filterValues.search as string)) return false;
       const stats = (swimsuit as any).stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
-      if (filter.minPow && stats.pow < Number(filter.minPow)) return false;
-      if (filter.minTec && stats.tec < Number(filter.minTec)) return false;
-      if (filter.minStm && stats.stm < Number(filter.minStm)) return false;
-      if (filter.minApl && stats.apl < Number(filter.minApl)) return false;
-      if (filter.hasSkills && (!swimsuit.skills || swimsuit.skills.length === 0)) return false;
+      if (filterValues.minPow && stats.pow < Number(filterValues.minPow)) return false;
+      if (filterValues.minTec && stats.tec < Number(filterValues.minTec)) return false;
+      if (filterValues.minStm && stats.stm < Number(filterValues.minStm)) return false;
+      if (filterValues.minApl && stats.apl < Number(filterValues.minApl)) return false;
+      if (filterValues.hasSkills && (!swimsuit.skills || swimsuit.skills.length === 0)) return false;
       const releaseDate = swimsuit.release_date_gl || '';
-      if (filter.releaseYear && !releaseDate.includes(filter.releaseYear)) return false;
-      if (filter.version && !String(swimsuit.id).includes(filter.version)) return false; // Simple version check
+      if (filterValues.releaseYear && !releaseDate.includes(filterValues.releaseYear as string)) return false;
+      if (filterValues.version && !String(swimsuit.id).includes(filterValues.version as string)) return false; // Simple version check
       return true;
     });
 
@@ -569,7 +555,7 @@ export default function SwimsuitPage() {
       const numB = Number(bValue);
       return sortDirection === 'asc' ? numA - numB : numB - numA;
     });
-  }, [multiLanguageSwimsuits, filter, sortBy, sortDirection]);
+  }, [multiLanguageSwimsuits, filterValues, sortBy, sortDirection]);
 
   const totalPages = Math.ceil(filteredAndSortedSwimsuits.length / itemsPerPage);
   const paginatedSwimsuits = filteredAndSortedSwimsuits.slice(
@@ -582,90 +568,29 @@ export default function SwimsuitPage() {
   const releaseYears = useMemo(() => [...new Set(swimsuits.map(s => (s.release_date_gl || '2023-01-01').toString().split('-')[0]))].sort().reverse(), [swimsuits]);
   const versions = useMemo(() => ['1.0', '1.5', '2.0', '2.5', '3.0'], []);
 
-  const handleSortChange = (newSortBy: SortOption) => {
-    if (sortBy === newSortBy) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(newSortBy);
-      setSortDirection('desc');
-    }
-  };
+  // Create filter configuration
+  const filterFields = useMemo(() => createSwimsuitFilterConfig(rarities, characters, releaseYears, versions), [characters, rarities, releaseYears, versions]);
 
-  const clearFilters = () => {
-    setFilter({
-      rarity: '',
-      character: '',
-      search: '',
-      minPow: '',
-      minTec: '',
-      minStm: '',
-      minApl: '',
-      hasSkills: false,
-      releaseYear: '',
-      version: ''
-    });
+  const handleFilterChange = (key: string, value: string | boolean | number) => {
+    setFilterValues(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
-  const getStatColor = (statType: string) => {
-    switch (statType) {
-      case 'pow': return 'text-red-400';
-      case 'tec': return 'text-cyan-400';
-      case 'stm': return 'text-yellow-400';
-      case 'apl': return 'text-purple-400';
-      default: return 'text-gray-400';
-    }
+  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
   };
 
-  const SortButton = ({ sortKey, children }: { sortKey: SortOption; children: React.ReactNode }) => (
-    <motion.button
-      onClick={() => handleSortChange(sortKey)}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={`flex items-center space-x-1 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-        sortBy === sortKey 
-          ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-lg border border-gray-700' 
-          : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-900/50 border border-gray-700/50'
-      }`}
-    >
-      <span>{children}</span>
-      {sortBy === sortKey && (
-        <motion.div
-          initial={{ rotate: 0 }}
-          animate={{ rotate: sortDirection === 'asc' ? 0 : 180 }}
-          transition={{ duration: 0.2 }}
-        >
-          <SortAsc className="w-3 h-3" />
-        </motion.div>
-      )}
-    </motion.button>
-  );
+  const clearFilters = () => {
+    setFilterValues({});
+    setCurrentPage(1);
+  };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-4 border-accent-cyan/30 border-t-accent-cyan rounded-full mx-auto mb-4"
-              />
-              <p className="text-gray-400">Loading swimsuits...</p>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
+    <PageLoadingState isLoading={loading} message="Đang tải danh sách đồ bơi...">
+    
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Page Title */}
@@ -682,242 +607,27 @@ export default function SwimsuitPage() {
           </p>
         </motion.div>
 
-        {/* Search and Filter Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-            {/* Search Bar */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={filter.search}
-                onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-                className="w-full bg-muted/70 backdrop-blur-sm border border-border/50 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-accent-cyan focus:ring-2 focus:ring-accent-cyan/20 transition-all placeholder-muted-foreground"
-                placeholder="Search swimsuits, characters in all languages..."
-              />
-              {filter.search && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => setFilter(prev => ({ ...prev, search: '' }))}
-                  className="absolute right-3 top-3 w-4 h-4 text-muted-foreground hover:text-accent-cyan transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </motion.button>
-              )}
-            </div>
-
-            {/* Filter Controls */}
-            <div className="flex items-center gap-3">
-              <motion.button
-                onClick={() => setShowFilters(!showFilters)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-3 rounded-xl transition-all flex items-center gap-2 ${
-                  showFilters 
-                    ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-lg border border-gray-700' 
-                    : 'bg-gray-800/70 border border-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-900/50'
-                }`}
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-sm font-medium">Filters</span>
-              </motion.button>
-
-              <div className="text-sm text-gray-500 bg-gray-900/50 px-3 py-3 rounded-xl border border-gray-700/50">
-                <span className="text-gray-300 font-medium">{filteredAndSortedSwimsuits.length}</span> found
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Advanced Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, y: -20 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 overflow-hidden"
-            >
-              <div className="bg-gray-900/80 backdrop-blur-xl rounded-3xl border border-gray-700/50 p-6">
-                {/* Filter Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-white flex items-center">
-                    <Filter className="w-5 h-5 mr-2 text-gray-400" />
-                    Advanced Filters
-                  </h3>
-                  <button
-                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                    className="text-sm text-accent-cyan hover:text-accent-pink transition-colors flex items-center"
-                  >
-                    {isFilterExpanded ? 'Show Less Stats' : 'Show Stat Filters'}
-                    <motion.div
-                      animate={{ rotate: isFilterExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="ml-1"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </motion.div>
-                  </button>
-                </div>
-
-                {/* Quick Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
-                    <input
-                      type="text"
-                      value={filter.search}
-                      onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                      placeholder="Search swimsuits..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Character</label>
-                    <select
-                      value={filter.character}
-                      onChange={(e) => setFilter(prev => ({ ...prev, character: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Characters</option>
-                      {characters.map((character: string) => (
-                        <option key={character} value={character}>{character}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Rarity</label>
-                    <select
-                      value={filter.rarity}
-                      onChange={(e) => setFilter(prev => ({ ...prev, rarity: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Rarities</option>
-                      {rarities.map(rarity => (
-                        <option key={rarity} value={rarity}>{rarity}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Release Year</label>
-                    <select
-                      value={filter.releaseYear}
-                      onChange={(e) => setFilter(prev => ({ ...prev, releaseYear: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Years</option>
-                      {releaseYears.map((year: string) => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Version</label>
-                    <select
-                      value={filter.version}
-                      onChange={(e) => setFilter(prev => ({ ...prev, version: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Versions</option>
-                      {versions.map(version => (
-                        <option key={version} value={version}>{version}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Additional Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-3">Special Features</label>
-                    <label className="flex items-center space-x-3 p-3 bg-gray-900/30 rounded-xl border border-gray-700/50 hover:border-gray-600/50 transition-all cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filter.hasSkills}
-                        onChange={(e) => setFilter(prev => ({ ...prev, hasSkills: e.target.checked }))}
-                        className="rounded border-gray-700 text-gray-900 focus:ring-gray-500/20"
-                      />
-                      <span className="text-sm text-gray-300">Has Skills</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Extended Filters */}
-                <AnimatePresence>
-                  {isFilterExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        {(['pow', 'tec', 'stm', 'apl'] as const).map((stat) => (
-                          <div key={stat}>
-                            <label className={`block text-sm font-medium mb-2 flex items-center ${getStatColor(stat)}`}>
-                              <Zap className="w-3 h-3 mr-1" />
-                              Min {stat.toUpperCase()}
-                            </label>
-                            <input
-                              type="number"
-                              value={filter[`min${stat.charAt(0).toUpperCase() + stat.slice(1)}` as keyof typeof filter] as string}
-                              onChange={(e) => setFilter(prev => ({ 
-                                ...prev, 
-                                [`min${stat.charAt(0).toUpperCase() + stat.slice(1)}`]: e.target.value 
-                              }))}
-                              className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-500 transition-all text-white"
-                              placeholder="0"
-                              min="0"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Sort Options */}
-                <div className="flex flex-wrap gap-3 mb-6">
-                  <span className="text-sm text-gray-400 flex items-center mr-2">
-                    <SortAsc className="w-4 h-4 mr-1" />
-                    Sort by:
-                  </span>
-                  <SortButton sortKey="name">Name</SortButton>
-                  <SortButton sortKey="character">Character</SortButton>
-                  <SortButton sortKey="rarity">Rarity</SortButton>
-                  <SortButton sortKey="total">Total Power</SortButton>
-                  <SortButton sortKey="release">Release Date</SortButton>
-                </div>
-
-                {/* Filter Actions */}
-                <div className="flex items-center justify-between">
-                  <motion.button
-                    onClick={clearFilters}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-gradient-to-r from-accent-pink/20 to-accent-purple/20 hover:from-accent-pink/30 hover:to-accent-purple/30 text-accent-pink border border-accent-pink/30 rounded-xl px-6 py-2 text-sm font-medium transition-all"
-                  >
-                    Clear All Filters
-                  </motion.button>
-                  <div className="text-sm text-gray-500">
-                    <span className="text-accent-cyan font-medium">{filteredAndSortedSwimsuits.length}</span> of {swimsuits.length} swimsuits
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Unified Filter Component */}
+        <UnifiedFilter
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          filterFields={filterFields}
+          sortOptions={swimsuitSortOptions}
+          filterValues={filterValues}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+          resultCount={filteredAndSortedSwimsuits.length}
+          totalCount={swimsuits.length}
+          itemLabel="swimsuits"
+          expandableStats={true}
+          isFilterExpanded={isFilterExpanded}
+          setIsFilterExpanded={setIsFilterExpanded}
+          accentColor="accent-cyan"
+          secondaryColor="accent-purple"
+        />
 
         {/* Swimsuit Display */}
         <motion.div
@@ -1004,9 +714,6 @@ export default function SwimsuitPage() {
               <Search className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No swimsuits found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any swimsuits matching your current filters. Try adjusting your search criteria.
-            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}
@@ -1019,5 +726,6 @@ export default function SwimsuitPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

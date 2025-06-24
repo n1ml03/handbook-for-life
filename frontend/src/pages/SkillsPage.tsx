@@ -14,8 +14,8 @@ import {
   getLocalizedName
 } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
-import { LoadingSpinner } from '@/components/ui/loading';
-import { ErrorState } from '@/components/ui/ErrorState';
+import { PageLoadingState, InlinePageLoader, ErrorState } from '@/components/ui';
+import { PageSection } from '@/components/ui/spacing';
 import React from 'react';
 
 const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
@@ -202,176 +202,159 @@ export default function SkillsPage() {
     setCurrentPage(1);
   };
 
-  // const handleSkillClick = (skill: Skill) => {
-  //   // Navigate to detail page when implemented
-  //   console.log('Clicked skill:', skill);
-  // };
-
-  if (loading && skills.length === 0) {
-    return (
-      <div className="min-h-screen bg-dark-primary flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-dark-primary flex items-center justify-center">
-        <ErrorState 
-          description={error}
-          onRetry={fetchSkills}
-        />
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingState 
+      isLoading={loading && skills.length === 0} 
+      message="Loading skills list..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
-        {/* Header */}
+        {/* Hero Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
           <h1 className="modern-page-title">
-            Skills
+            Skills Collection
           </h1>
           <p className="modern-page-subtitle">
-            Discover and learn about the diverse range of skills available in DOAXVV. Master the game mechanics and enhance your gameplay.
+            Explore and discover powerful skills across all categories • {totalItems} total skills
           </p>
         </motion.div>
 
-        {/* Content */}
         {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <UnifiedFilter
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            filterFields={filterFields}
-            sortOptions={sortOptions}
-            filterValues={filterValues}
-            onFilterChange={handleFilterChange}
-            onClearFilters={clearFilters}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-            resultCount={totalItems}
-            itemLabel="skills"
-          />
-        </motion.div>
+        <PageSection>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <UnifiedFilter
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              filterFields={filterFields}
+              sortOptions={sortOptions}
+              filterValues={filterValues}
+              onFilterChange={handleFilterChange}
+              onClearFilters={clearFilters}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+              resultCount={totalItems}
+              itemLabel="skills"
+            />
+          </motion.div>
+        </PageSection>
 
-        {/* Results Summary */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center justify-between mb-6"
-        >
-          <p className="text-muted-foreground">
-            Showing {skills.length} of {totalItems} skills
-          </p>
-          {loading && (
-            <div className="flex items-center space-x-2 text-muted-foreground">
-              <LoadingSpinner size="sm" />
-              <span>Loading...</span>
-            </div>
-          )}
-        </motion.div>
+        {/* Skills Display */}
+        <PageSection>
+          {/* Results Summary */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center justify-between mb-6"
+          >
+            {loading && (
+              <InlinePageLoader message="Đang tải thêm..." size="sm" />
+            )}
+          </motion.div>
 
-        {/* Skills Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
-        >
-          {skills.map((skill, index) => (
+          {/* Skills Grid */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
+          >
+            {skills.map((skill, index) => (
+              <motion.div
+                key={skill.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * (index % 8) }}
+              >
+                <SkillCard skill={skill} />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Empty State */}
+          {skills.length === 0 && !loading && (
             <motion.div
-              key={skill.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * (index % 8) }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
             >
-              <SkillCard skill={skill} />
+              <motion.div
+                className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Zap className="w-12 h-12 text-accent-cyan/60" />
+              </motion.div>
+              <h3 className="text-2xl font-bold text-foreground mb-3">No skills found</h3>
+              <motion.button
+                onClick={clearFilters}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
+              >
+                Clear All Filters
+              </motion.button>
             </motion.div>
-          ))}
-        </motion.div>
+          )}
 
-        {/* Empty State */}
-        {skills.length === 0 && !loading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <Zap className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-foreground mb-2">No skills found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your filters or search criteria.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-accent-cyan hover:bg-accent-cyan/90 text-dark-primary font-bold rounded-lg transition-colors"
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex justify-center items-center space-x-4 mt-8"
             >
-              Clear Filters
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex justify-center items-center space-x-4 mt-8"
-          >
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(currentPage - 2 + i, totalPages - 4 + i));
+                  return pageNum <= totalPages ? (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg font-bold transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-accent-cyan text-dark-primary'
+                          : 'btn-modern-ghost text-foreground'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ) : null;
+                })}
+              </div>
 
-            <div className="flex items-center space-x-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = Math.max(1, Math.min(currentPage - 2 + i, totalPages - 4 + i));
-                return pageNum <= totalPages ? (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-10 h-10 rounded-lg font-bold transition-colors ${
-                      currentPage === pageNum
-                        ? 'bg-accent-cyan text-dark-primary'
-                        : 'btn-modern-ghost text-foreground'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ) : null;
-              })}
-            </div>
-
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="btn-modern-ghost flex items-center space-x-2 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </PageSection>
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

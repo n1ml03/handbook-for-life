@@ -1,7 +1,6 @@
 import React from 'react';
-import { useState, useCallback, useMemo, useRef, useEffect, memo, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import {
   Home,
   Shirt,
@@ -24,6 +23,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
 import ThemeToggle from '@/components/ThemeToggle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MenuItem {
   id: string;
@@ -40,100 +45,42 @@ export interface HeaderProps {
   className?: string;
 }
 
-const Dropdown = memo(function Dropdown({
-  trigger,
-  children,
-  isOpen,
-  onToggle
+// Modernized compact dropdown trigger component
+const ModernDropdownTrigger = memo(function ModernDropdownTrigger({
+  item,
+  isActive,
+  hasActiveChild
 }: {
-  trigger: ReactNode;
-  children: ReactNode;
-  isOpen: boolean;
-  onToggle: () => void;
+  item: MenuItem;
+  isActive: boolean;
+  hasActiveChild: boolean;
 }) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-
-  const updateDropdownPosition = useCallback(() => {
-    if (triggerRef.current && isOpen) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const scrollX = window.scrollX || document.documentElement.scrollLeft;
-      setDropdownPosition({
-        top: triggerRect.bottom + scrollY + 8,
-        left: triggerRect.left + scrollX
-      });
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        triggerRef.current && !triggerRef.current.contains(event.target as Node)
-      ) {
-        if (isOpen) {
-          onToggle();
-        }
-      }
-    };
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onToggle();
-      }
-    };
-    const handleResize = () => {
-      if (isOpen) {
-        updateDropdownPosition();
-      }
-    };
-    if (isOpen) {
-      updateDropdownPosition();
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscapeKey);
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', updateDropdownPosition);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', updateDropdownPosition);
-    };
-  }, [isOpen, onToggle, updateDropdownPosition]);
-
-  const dropdownContent = isOpen ? (
-    <div
-      ref={dropdownRef}
-      className="header-dropdown-portal"
-      style={{
-        top: dropdownPosition.top,
-        left: dropdownPosition.left
-      }}
-      role="menu"
-      aria-orientation="vertical"
-      aria-labelledby="dropdown-trigger"
-    >
-      <div className="header-dropdown-content overflow-hidden">
-        <div className="py-2" role="none">
-          {children}
-        </div>
-      </div>
-    </div>
-  ) : null;
-
+  const ItemIcon = item.icon;
   return (
-    <div className="relative" ref={triggerRef}>
-      {trigger}
-      {typeof document !== 'undefined' && dropdownContent &&
-        createPortal(dropdownContent, document.body)
-      }
-    </div>
+    <DropdownMenuTrigger asChild>
+      <Button
+        variant="ghost"
+        className={cn(
+          'header-nav-item h-9 px-3 gap-2',
+          'transition-all duration-200 ease-out',
+          'hover:bg-accent/60 hover:text-accent-pink',
+          'data-[state=open]:bg-accent/80 data-[state=open]:text-accent-pink',
+          (isActive || hasActiveChild) ? 'bg-accent-pink/10 text-accent-pink' : ''
+        )}
+        aria-label={`${item.label} menu`}
+      >
+        <div className="flex items-center justify-center w-4 h-4">
+          <ItemIcon className={cn('w-4 h-4', item.color)} />
+        </div>
+        <span className="font-medium text-sm">{item.label}</span>
+        <ChevronDown className="w-3 h-3 ml-1 transition-transform duration-200 data-[state=open]:rotate-180" />
+      </Button>
+    </DropdownMenuTrigger>
   );
 });
 
-const DropdownItem = memo(function DropdownItem({
+// Modernized compact dropdown item component
+const ModernDropdownItem = memo(function ModernDropdownItem({
   item,
   isActive,
   onClick
@@ -144,43 +91,40 @@ const DropdownItem = memo(function DropdownItem({
 }) {
   const ItemIcon = item.icon;
   return (
-    <Link
-      to={item.path!}
-      className={cn(
-        'flex items-center gap-3 px-3 py-2 mx-1.5 text-sm font-medium rounded-md',
-        'transition-all duration-150 ease-in-out',
-        'hover:bg-accent/10 hover:text-accent-pink focus:bg-accent/10',
-        'focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1',
-        'min-h-[44px]', // Updated to WCAG AA compliance
-        // Light mode enhancements
-        'light:hover:bg-accent/20 light:hover:text-accent-pink light:focus:bg-accent/20',
-        isActive ? 'bg-accent-pink/10 text-accent-pink border border-accent-pink/20 light:bg-accent-pink/15 light:border-accent-pink/30' : 'text-muted-foreground light:text-muted-foreground'
-      )}
-      onClick={onClick}
-      role="menuitem"
-      aria-current={isActive ? 'page' : undefined}
-    >
-      <div className="flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200" aria-hidden="true">
-        <ItemIcon className={cn('w-4 h-4', item.color, isActive ? 'text-accent-pink' : '')} />
-      </div>
-      <span className="flex-1">{item.label}</span>
-      {item.badge && (
-        <Badge
-          variant="secondary"
-          className="text-xs h-5 px-1.5"
-          aria-label={`${item.badge} items`}
-        >
-          {item.badge}
-        </Badge>
-      )}
-    </Link>
+    <DropdownMenuItem asChild>
+      <Link
+        to={item.path!}
+        className={cn(
+          'flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md',
+          'transition-all duration-200 ease-out cursor-pointer',
+          'hover:bg-accent/80 focus:bg-accent/80',
+          'min-h-[36px]', // More compact than before
+          isActive 
+            ? 'bg-accent-pink/10 text-accent-pink border-l-2 border-accent-pink' 
+            : 'text-foreground hover:text-accent-pink'
+        )}
+        onClick={onClick}
+      >
+        <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
+          <ItemIcon className={cn('w-4 h-4', item.color, isActive ? 'text-accent-pink' : '')} />
+        </div>
+        <span className="flex-1 truncate">{item.label}</span>
+        {item.badge && (
+          <Badge
+            variant="secondary"
+            className="text-xs h-4 px-1.5 bg-accent-pink/15 text-accent-pink border-accent-pink/30"
+          >
+            {item.badge}
+          </Badge>
+        )}
+      </Link>
+    </DropdownMenuItem>
   );
 });
 
 export const Header = memo(function Header({ className }: HeaderProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Focus management refs
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
@@ -210,6 +154,14 @@ export const Header = memo(function Header({ className }: HeaderProps) {
           path: '/swimsuit',
           color: 'text-accent-ocean',
           category: 'outfits'
+        },
+        {
+          id: 'skills',
+          icon: Star,
+          label: 'Skills',
+          path: '/skills',
+          color: 'text-accent-purple',
+          category: 'main'
         },
         {
           id: 'accessory',
@@ -335,35 +287,19 @@ export const Header = memo(function Header({ className }: HeaderProps) {
     return false;
   }, [isActiveItem]);
 
-  // Toggle dropdown
-  const toggleDropdown = useCallback((itemId: string) => {
-    setOpenDropdown(prev => prev === itemId ? null : itemId);
-  }, []);
-
-  // Close dropdowns when clicking outside or on mobile menu close
-  useEffect(() => {
-    if (!mobileMenuOpen) {
-      setOpenDropdown(null);
-    }
-  }, [mobileMenuOpen]);
-
   // Enhanced keyboard navigation and focus management
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (openDropdown) {
-          setOpenDropdown(null);
-        } else if (mobileMenuOpen) {
-          setMobileMenuOpen(false);
-          // Return focus to mobile menu button
-          mobileMenuButtonRef.current?.focus();
-        }
+      if (event.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+        // Return focus to mobile menu button
+        mobileMenuButtonRef.current?.focus();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [openDropdown, mobileMenuOpen]);
+  }, [mobileMenuOpen]);
 
   // Focus management for mobile menu
   useEffect(() => {
@@ -390,7 +326,17 @@ export const Header = memo(function Header({ className }: HeaderProps) {
     }
   }, [mobileMenuOpen]);
 
-  // Render menu item
+  // Mobile dropdown state for each item
+  const [mobileDropdownStates, setMobileDropdownStates] = useState<Record<string, boolean>>({});
+
+  const toggleMobileDropdown = useCallback((itemId: string) => {
+    setMobileDropdownStates(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  }, []);
+
+  // Render menu item with modernized dropdown
   const renderMenuItem = useCallback((item: MenuItem, isMobile: boolean = false, isFirst: boolean = false) => {
     const isActive = isActiveItem(item.path);
     const hasChildren = item.children && item.children.length > 0;
@@ -398,46 +344,32 @@ export const Header = memo(function Header({ className }: HeaderProps) {
     const ItemIcon = item.icon;
 
     if (hasChildren) {
-      const isDropdownOpen = openDropdown === item.id;
-      
-      const trigger = (
-        <Button
-          variant="ghost"
-          className={cn(
-            isMobile ? "mobile-menu-item" : "header-nav-item",
-            (isActive || hasActiveChildItem || isDropdownOpen) ? "active" : undefined,
-            isMobile ? "w-full justify-start" : ""
-          )}
-          onClick={() => toggleDropdown(item.id)}
-          aria-expanded={isDropdownOpen}
-          aria-haspopup="menu"
-          id="dropdown-trigger"
-          aria-label={`${item.label} menu`}
-        >
-          <div className={cn(
-            "flex items-center justify-center rounded-md transition-all duration-200",
-            isMobile ? "w-6 h-6" : "w-5 h-5",
-            isDropdownOpen ? "scale-110" : ""
-          )} aria-hidden="true">
-            <ItemIcon className={cn(
-              isMobile ? "w-5 h-5" : "w-4 h-4",
-              item.color
-            )} />
-          </div>
-          <span className="font-medium">{item.label}</span>
-          <ChevronDown className={cn(
-            "w-4 h-4 ml-auto transition-all duration-300 ease-out",
-            isDropdownOpen ? "rotate-180 text-accent-pink" : ""
-          )} aria-hidden="true" />
-        </Button>
-      );
-
       if (isMobile) {
         // Mobile: render children inline instead of dropdown
+        const isOpen = mobileDropdownStates[item.id] || false;
         return (
           <div key={item.id} className="space-y-1">
-            {trigger}
-            {isDropdownOpen && (
+            <Button
+              variant="ghost"
+              className={cn(
+                "mobile-menu-item w-full justify-start",
+                (isActive || hasActiveChildItem) ? "active" : undefined
+              )}
+                             onClick={() => toggleMobileDropdown(item.id)}
+              aria-expanded={isOpen}
+              aria-haspopup="menu"
+              aria-label={`${item.label} menu`}
+            >
+              <div className="flex items-center justify-center w-6 h-6">
+                <ItemIcon className={cn("w-5 h-5", item.color)} />
+              </div>
+              <span className="font-medium">{item.label}</span>
+              <ChevronDown className={cn(
+                "w-4 h-4 ml-auto transition-transform duration-200",
+                isOpen ? "rotate-180" : ""
+              )} />
+            </Button>
+            {isOpen && (
               <div className="ml-6 space-y-1 border-l-2 border-accent-pink/30 pl-4 animate-in slide-in-from-left-2 duration-200">
                 {item.children!.map(child => (
                   <Link
@@ -447,13 +379,10 @@ export const Header = memo(function Header({ className }: HeaderProps) {
                       "mobile-menu-item text-sm",
                       isActiveItem(child.path) ? "active" : undefined
                     )}
-                    onClick={() => {
-                      setOpenDropdown(null);
-                      setMobileMenuOpen(false);
-                    }}
+                    onClick={() => setMobileMenuOpen(false)}
                     role="menuitem"
                   >
-                    <div className="flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200">
+                    <div className="flex items-center justify-center w-5 h-5">
                       <child.icon className={cn("w-4 h-4", child.color)} />
                     </div>
                     <span className="font-medium">{child.label}</span>
@@ -470,25 +399,34 @@ export const Header = memo(function Header({ className }: HeaderProps) {
         );
       }
 
+      // Desktop: use modernized Radix UI dropdown
       return (
-        <Dropdown
-          key={item.id}
-          trigger={trigger}
-          isOpen={isDropdownOpen}
-          onToggle={() => toggleDropdown(item.id)}
-        >
-          {item.children!.map(child => (
-            <DropdownItem
-              key={child.id}
-              item={child}
-              isActive={isActiveItem(child.path)}
-              onClick={() => {
-                setOpenDropdown(null);
-                setMobileMenuOpen(false);
-              }}
-            />
-          ))}
-        </Dropdown>
+        <DropdownMenu key={item.id}>
+          <ModernDropdownTrigger 
+            item={item} 
+            isActive={isActive} 
+            hasActiveChild={hasActiveChildItem}
+          />
+          <DropdownMenuContent
+            className={cn(
+              'min-w-[12rem] max-w-[16rem] p-1',
+              'border border-border/60 shadow-lg',
+              'bg-popover/95 backdrop-blur-sm',
+              'animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2'
+            )}
+            align="start"
+            sideOffset={8}
+          >
+            {item.children!.map(child => (
+              <ModernDropdownItem
+                key={child.id}
+                item={child}
+                isActive={isActiveItem(child.path)}
+                onClick={() => setMobileMenuOpen(false)}
+              />
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
 
@@ -527,7 +465,7 @@ export const Header = memo(function Header({ className }: HeaderProps) {
         )}
       </Link>
     );
-  }, [isActiveItem, hasActiveChild, openDropdown, toggleDropdown]);
+  }, [isActiveItem, hasActiveChild, mobileDropdownStates, toggleMobileDropdown]);
 
   return (
     <header

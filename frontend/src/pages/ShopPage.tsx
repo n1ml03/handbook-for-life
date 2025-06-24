@@ -11,6 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageLoadingState } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
 import { type ShopItem, type ShopItemCardProps, type ShopItemType, type Currency, type ShopItemRarity } from '@/types';
@@ -133,6 +134,37 @@ function ShopItemCard({ item }: ShopItemCardProps) {
     </motion.div>
   );
 }
+
+// Helper functions for dynamic styling
+const getActiveIconClasses = (sectionKey: string) => {
+  switch (sectionKey) {
+    case 'owner': return 'bg-blue-400/20 shadow-md shadow-blue-400/20';
+    case 'event': return 'bg-purple-400/20 shadow-md shadow-purple-400/20';
+    case 'venus': return 'bg-emerald-400/20 shadow-md shadow-emerald-400/20';
+    case 'vip': return 'bg-yellow-400/20 shadow-md shadow-yellow-400/20';
+    default: return 'bg-gray-700/50';
+  }
+};
+
+const getActiveTextColor = (sectionKey: string) => {
+  switch (sectionKey) {
+    case 'owner': return 'text-blue-400';
+    case 'event': return 'text-purple-400';
+    case 'venus': return 'text-emerald-400';
+    case 'vip': return 'text-yellow-400';
+    default: return 'text-white';
+  }
+};
+
+const getActiveIndicatorColor = (sectionKey: string) => {
+  switch (sectionKey) {
+    case 'owner': return 'bg-blue-400 shadow-sm shadow-blue-400/50';
+    case 'event': return 'bg-purple-400 shadow-sm shadow-purple-400/50';
+    case 'venus': return 'bg-emerald-400 shadow-sm shadow-emerald-400/50';
+    case 'vip': return 'bg-yellow-400 shadow-sm shadow-yellow-400/50';
+    default: return 'bg-gray-400';
+  }
+};
 
 export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -382,6 +414,10 @@ export default function ShopPage() {
   ];
 
   return (
+    <PageLoadingState 
+      isLoading={loading && shopItems.length === 0} 
+      message="Loading shop items..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Header */}
@@ -399,44 +435,78 @@ export default function ShopPage() {
         </motion.div>
 
         {/* Search and Filter Controls */}
-        <UnifiedFilter
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          filterFields={filterFields}
-          sortOptions={sortOptions}
-          filterValues={filterValues}
-          onFilterChange={handleFilterChange}
-          onClearFilters={clearFilters}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          resultCount={totalItems}
-          itemLabel="shop items"
-          accentColor="accent-cyan"
-          secondaryColor="accent-purple"
-          headerIcon={<ShoppingCart className="w-4 h-4" />}
-        />
+        <div className="mb-4">
+          <UnifiedFilter
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            filterFields={filterFields}
+            sortOptions={sortOptions}
+            filterValues={filterValues}
+            onFilterChange={handleFilterChange}
+            onClearFilters={clearFilters}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            resultCount={totalItems}
+            itemLabel="shop items"
+            accentColor="accent-cyan"
+            secondaryColor="accent-purple"
+            headerIcon={<ShoppingCart className="w-4 h-4" />}
+          />
+        </div>
 
         {/* Shop Sections */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap gap-2 mb-6"
+          className="mb-10"
         >
-          {sections.map((section) => (
-            <button
-              key={section.key}
-              onClick={() => setActiveSection(section.key)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                activeSection === section.key
-                  ? 'bg-accent-cyan/20 border-accent-cyan/50 text-accent-cyan'
-                  : 'bg-dark-card/50 border-dark-border/30 text-gray-400 hover:border-accent-cyan/30 hover:text-accent-cyan'
-              }`}
-            >
-              <span className="mr-2">{section.icon}</span>
-              {section.label}
-            </button>
-          ))}
+          <div className="flex flex-wrap gap-2 justify-between md:justify-evenly">
+            {sections.map((section) => (
+              <motion.button
+                key={section.key}
+                onClick={() => setActiveSection(section.key)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`shop-section-card relative group px-4 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex items-center gap-3 flex-1 min-w-[140px] max-w-[200px] ${
+                  activeSection === section.key
+                    ? `active-${section.key}`
+                    : 'bg-dark-card/40 border-dark-border/30 hover:border-gray-600/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Icon */}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all duration-300 flex-shrink-0 ${
+                    activeSection === section.key
+                      ? getActiveIconClasses(section.key)
+                      : 'bg-gray-700/50 group-hover:bg-gray-600/50'
+                  }`}>
+                    {section.icon}
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="text-left flex-1 min-w-0">
+                    <h3 className={`font-medium text-sm transition-colors duration-300 truncate ${
+                      activeSection === section.key
+                        ? getActiveTextColor(section.key)
+                        : 'text-white group-hover:text-gray-200'
+                    }`}>
+                      {section.label}
+                    </h3>
+                  </div>
+                  
+                  {/* Active Indicator */}
+                  {activeSection === section.key && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getActiveIndicatorColor(section.key)}`}
+                    />
+                  )}
+                </div>
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
 
         {/* Notice about shop functionality */}
@@ -497,7 +567,6 @@ export default function ShopPage() {
           <div className="text-center py-12">
             <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-300 mb-2">No items found</h3>
-            <p className="text-gray-400">Try adjusting your filters or check back later</p>
           </div>
         )}
 
@@ -535,5 +604,6 @@ export default function ShopPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 }

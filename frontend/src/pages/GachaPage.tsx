@@ -16,6 +16,7 @@ import { type Event, type SortDirection } from '@/types';
 import { eventsApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
+import { PageLoadingState } from '@/components/ui';
 
 // Define reward interface for gacha rewards
 interface GachaReward {
@@ -65,8 +66,6 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
     <div
       className="relative modern-card overflow-hidden"
     >
-
-      
       {/* Banner Image */}
       <div className="relative h-48 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20 overflow-hidden">
         {gacha.bannerImage && gacha.bannerImage !== '⭐' && gacha.bannerImage !== '🌙' && gacha.bannerImage !== '💎' ? (
@@ -357,16 +356,9 @@ export default function GachaPage() {
     setCurrentPage(1);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary flex items-center justify-center">
-        <div className="text-white text-lg">Loading gacha events...</div>
-      </div>
-    );
-  }
-
-
   return (
+    <PageLoadingState isLoading={loading} message="Loading gacha events...">
+    
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Page Title */}
@@ -502,5 +494,6 @@ export default function GachaPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

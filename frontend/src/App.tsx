@@ -2,11 +2,13 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { DocumentsProvider } from '@/contexts/DocumentsContext';
+import { LoadingProvider } from '@/contexts/LoadingContext';
 
 // Layout Components - Optimized with performance improvements
 import Header from '@/components/layout/Header';
 import { AccessibilityProvider, SkipLink } from '@/components/layout/AccessibilityProvider';
 import { UpdateLogsProvider } from '@/contexts/UpdateLogsContext';
+import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
 
 // Main Pages - Lazy loaded for better performance
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -26,27 +28,31 @@ const DocumentPage = lazy(() => import('@/pages/DocumentPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
-// Loading component with optimized styling
-function LoadingFallback() {
+// Simple Loading Component
+function EnhancedLoadingFallback() {
   return (
-    <div className="viewport-optimized flex items-center justify-center min-h-[60vh]">
-      <div className="loading doax-card p-8 text-center">
-        <div className="w-12 h-12 rounded-full border-2 border-accent-pink/20 border-t-accent-pink mx-auto mb-4 animate-spin"></div>
-        <p className="text-muted-foreground">Loading content...</p>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+      {/* Simple spinning circle */}
+      <div className="w-12 h-12 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+      
+      {/* Loading text */}
+      <div className="text-gray-600 font-medium">Loading...</div>
     </div>
   );
 }
+
+
 
 function App() {
   // Use theme hook to handle theme application
   useTheme();
 
   return (
-    <DocumentsProvider>
-      <AccessibilityProvider>
-        <UpdateLogsProvider>
-          <Router>
+    <LoadingProvider>
+      <DocumentsProvider>
+        <AccessibilityProvider>
+          <UpdateLogsProvider>
+            <Router>
             <div className="min-h-screen bg-background font-sans antialiased">
               {/* Skip Links for Accessibility */}
               <SkipLink href="#main-content">Skip to main content</SkipLink>
@@ -73,7 +79,7 @@ function App() {
                 }}
               >
                 <div className="container mx-auto px-4 py-6">
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<EnhancedLoadingFallback />}>
                     <Routes>
                       <Route path="/" element={<Navigate to="/home" replace />} />
                       <Route path="/home" element={<HomePage />} />
@@ -96,11 +102,15 @@ function App() {
                   </Suspense>
                 </div>
               </main>
+              
+              {/* Global Loading Overlay */}
+              <GlobalLoadingOverlay />
             </div>
-          </Router>
-        </UpdateLogsProvider>
-      </AccessibilityProvider>
-    </DocumentsProvider>
+            </Router>
+          </UpdateLogsProvider>
+        </AccessibilityProvider>
+      </DocumentsProvider>
+    </LoadingProvider>
   );
 }
 

@@ -432,6 +432,21 @@ export const bromideSortOptions: SortOption[] = [
   { key: 'id', label: 'ID' },
 ];
 
+export const memoriesSortOptions: SortOption[] = [
+  { key: 'title', label: 'Title' },
+  { key: 'episode_type', label: 'Type' },
+  { key: 'related_entity_type', label: 'Entity Type' },
+  { key: 'date', label: 'Date' },
+];
+
+export const festivalSortOptions: SortOption[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'status', label: 'Status' },
+  { key: 'startDate', label: 'Start Date' },
+  { key: 'endDate', label: 'End Date' },
+];
+
 export const createDecorBromideFilterConfig = (types: string[], rarities: string[], characters: string[], sources: string[], versions: string[] = []): FilterField[] => [
   {
     key: 'search',

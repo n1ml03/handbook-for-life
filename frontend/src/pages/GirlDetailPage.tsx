@@ -20,14 +20,13 @@ import {
   Book,
   Activity,
   Users,
-  Info,
-  Loader2
-} from 'lucide-react';
+  Info} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
 import { girlsApi } from '@/services/api';
 import { type Girl, type Skill, type Swimsuit } from '@/types';
+import { PageLoadingState, InlinePageLoader } from '@/components/ui';
 
 export default function GirlDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -97,37 +96,30 @@ export default function GirlDetailPage() {
     fetchGirl();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="modern-page flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-cyan"></div>
-      </div>
-    );
-  }
-
-
   if (!girl) {
     return (
-      <div className="modern-page flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
-            <User className="w-12 h-12 text-accent-cyan/60" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-3">Girl Not Found</h2>
-          <p className="text-muted-foreground mb-6">The girl you're looking for doesn't exist.</p>
-          <Button 
-            onClick={() => navigate('/girls')}
-            className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white"
+      <PageLoadingState isLoading={loading} message="Loading girl details...">
+        <div className="modern-page flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Girls
-          </Button>
-        </motion.div>
-      </div>
+            <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
+              <User className="w-12 h-12 text-accent-cyan/60" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-3">Girl Not Found</h2>
+            <p className="text-muted-foreground mb-6">The girl you're looking for doesn't exist.</p>
+            <Button 
+              onClick={() => navigate('/girls')}
+              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Girls
+            </Button>
+          </motion.div>
+        </div>
+      </PageLoadingState>
     );
   }
 
@@ -173,8 +165,9 @@ export default function GirlDetailPage() {
   };
 
   return (
-    <div className="modern-page">
-      <div className="modern-container-lg">
+    <PageLoadingState isLoading={loading} message="Đang tải thông tin cô gái...">
+      <div className="modern-page">
+        <div className="modern-container-lg">
         {/* Header with back button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -614,14 +607,11 @@ export default function GirlDetailPage() {
               <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                 <Star className="w-5 h-5 mr-2 text-accent-gold" />
                 Character Skills
-                {skillsLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin text-accent-cyan" />}
+                {skillsLoading && <InlinePageLoader message="" size="sm" className="ml-2" />}
               </h3>
 
               {skillsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 text-accent-cyan animate-spin" />
-                  <span className="ml-2 text-muted-foreground">Loading skills...</span>
-                </div>
+                <InlinePageLoader message="Đang tải kỹ năng..." className="py-8" />
               ) : skills.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {skills.map((skill) => (
@@ -671,14 +661,11 @@ export default function GirlDetailPage() {
               <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                 <Gem className="w-5 h-5 mr-2 text-accent-cyan" />
                 Character Swimsuits
-                {swimsuitsLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin text-accent-cyan" />}
+                {swimsuitsLoading && <InlinePageLoader message="" size="sm" className="ml-2" />}
               </h3>
 
               {swimsuitsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 text-accent-cyan animate-spin" />
-                  <span className="ml-2 text-muted-foreground">Loading swimsuits...</span>
-                </div>
+                <InlinePageLoader message="Đang tải đồ bơi..." className="py-8" />
               ) : swimsuits.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {swimsuits.map((swimsuit) => (
@@ -817,5 +804,6 @@ export default function GirlDetailPage() {
         </div>
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

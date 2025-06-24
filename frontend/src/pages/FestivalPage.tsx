@@ -14,6 +14,7 @@ import {
 import { type Event, type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
+import { PageLoadingState } from '@/components/ui';
 
 function FestivalCard({ festival }: { festival: any }) {
   const formatDate = (dateString?: string) => {
@@ -276,6 +277,10 @@ export default function FestivalPage() {
   };
 
   return (
+    <PageLoadingState 
+      isLoading={false} 
+      message="Loading festivals..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Page Title */}
@@ -411,5 +416,6 @@ export default function FestivalPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

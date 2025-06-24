@@ -408,5 +408,3 @@ This project is part of the Handbook for Life application. Please refer to the l
 - **Frontend App**: http://localhost:5173 (when running)
 
 ---
-
-**Made with ❤️ for the DOAXVV community** 

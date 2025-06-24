@@ -32,6 +32,7 @@ import {
   type UnifiedItem
 } from '@/types';
 import React from 'react';
+import { PageLoadingState } from '@/components/ui';
 
 export default function ItemsPage() {
   // State management
@@ -489,21 +490,11 @@ export default function ItemsPage() {
     );
   });
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="modern-page">
-        <div className="modern-container-lg">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-cyan"></div>
-            <span className="ml-4 text-muted-foreground">Loading items...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingState 
+      isLoading={loading} 
+      message="Loading items list..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Modern Page Header */}
@@ -555,9 +546,6 @@ export default function ItemsPage() {
               <Package className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-foreground mb-3">No items found</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              We couldn't find any items matching your current filters. Try adjusting your search criteria.
-            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}
@@ -575,5 +563,6 @@ export default function ItemsPage() {
       </Grid>
       </div>
     </div>
+    </PageLoadingState>
   );
 }

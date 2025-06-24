@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Database,
   Shield,
@@ -16,7 +17,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { StandardPageLayout, PageSection } from '@/components/ui/spacing';
+import { PageSection } from '@/components/ui/spacing';
+import { InlinePageLoader } from '@/components/ui';
 import { useUpdateLogs } from '@/hooks';
 
 // Enhanced Update Log Component
@@ -41,11 +43,7 @@ function UpdateLog() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-cyan"></div>
-      </div>
-    );
+    return <InlinePageLoader message="Loading update logs..." className="py-12" />;
   }
 
   if (filteredUpdates.length === 0) {
@@ -246,28 +244,29 @@ function UpdateLog() {
 }
 
 export default function HomePage() {
-  return (
-    <StandardPageLayout
-      title="Update Log"
-      className="min-h-screen"
-    >
-      {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-2xl flex items-center justify-center border border-accent-cyan/20">
-            <Database className="w-8 h-8 text-accent-pink" />
-          </div>
-          <div>
-            <p className="text-muted-foreground text-lg">
-              Latest improvements and feature releases for the Handbook
-            </p>
-          </div>
-        </div>
-      </div>
+  const { publishedUpdateLogs } = useUpdateLogs();
 
-      <PageSection>
-        <UpdateLog />
-      </PageSection>
-    </StandardPageLayout>
+  return (
+    <div className="modern-page">
+      <div className="modern-container-lg">
+        {/* Hero Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="modern-page-header"
+        >
+          <h1 className="modern-page-title">
+            Update Log
+          </h1>
+          <p className="modern-page-subtitle">
+            Latest updates and changes to the application • {publishedUpdateLogs.length} total updates
+          </p>
+        </motion.div>
+
+        <PageSection>
+          <UpdateLog />
+        </PageSection>
+      </div>
+    </div>
   );
 }

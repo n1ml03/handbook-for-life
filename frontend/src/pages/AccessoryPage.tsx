@@ -10,6 +10,7 @@ import { type SortDirection, type Item } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createAccessoryFilterConfig, accessorySortOptions } from '@/components/features/FilterConfigs';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
+import { PageLoadingState } from '@/components/ui';
 import React from 'react';
 
 // Extended accessory interface for display purposes
@@ -279,15 +280,11 @@ export default function AccessoryPage() {
     setCurrentPage(1);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary flex items-center justify-center">
-        <div className="text-white text-lg">Loading accessories...</div>
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingState 
+      isLoading={loading} 
+      message="Loading accessory list..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Page Title */}
@@ -410,9 +407,6 @@ export default function AccessoryPage() {
               <Search className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No accessories found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any accessories matching your current filters. Try adjusting your search criteria.
-            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}
@@ -425,5 +419,6 @@ export default function AccessoryPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

@@ -1,20 +1,17 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight,
-  Search,
-  SortAsc,
-  Filter,
-  RefreshCw,
   Calendar,
   Camera,
   Loader2} from 'lucide-react';
 import { type Memory, type MemoryCardProps, type SortDirection, type Episode, episodeToMemory } from '@/types';
 import { episodesApi } from '@/services/api';
+import { PageLoadingState } from '@/components/ui';
+import UnifiedFilter from '@/components/features/UnifiedFilter';
+import { createMemoriesFilterConfig, memoriesSortOptions } from '@/components/features/FilterConfigs';
 import React from 'react';
-
-type SortOption = 'title' | 'episode_type' | 'related_entity_type';
 
 const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 
@@ -114,15 +111,10 @@ export default function MemoriesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('title');
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [filter, setFilter] = useState({
-    search: '',
-    type: '',
-    entityType: '',
-    entityId: '',
-    unlocked: false
-  });
+  const [filterValues, setFilterValues] = useState<Record<string, string | boolean | number>>({});
 
   const itemsPerPage = 8;
 
@@ -136,10 +128,10 @@ export default function MemoriesPage() {
         limit: itemsPerPage,
         sortBy: sortBy,
         sortOrder: sortDirection,
-        ...(filter.type && { type: filter.type }),
-        ...(filter.entityType && { entityType: filter.entityType }),
-        ...(filter.entityId && { entityId: Number(filter.entityId) }),
-        ...(filter.search && { search: filter.search }),
+        ...(filterValues.type && typeof filterValues.type === 'string' && { type: filterValues.type }),
+        ...(filterValues.entityType && typeof filterValues.entityType === 'string' && { entityType: filterValues.entityType }),
+        ...(filterValues.entityId && { entityId: Number(filterValues.entityId) }),
+        ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
       };
 
       const response = await episodesApi.getEpisodes(params);
@@ -155,25 +147,44 @@ export default function MemoriesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, sortBy, sortDirection, filter.type, filter.entityType, filter.entityId, filter.search]);
+  }, [currentPage, sortBy, sortDirection, filterValues.type, filterValues.entityType, filterValues.entityId, filterValues.search]);
 
   // Fetch episodes on component mount and when dependencies change
   useEffect(() => {
     fetchEpisodes();
   }, [fetchEpisodes]);
 
-  // Filter memories locally for unlocked filter (since this isn't supported by API yet)
+  // Filter memories locally for additional filters (since some aren't supported by API yet)
   const filteredMemories = useMemo(() => {
     return memories.filter(memory => {
-      // Unlocked filter
-      if (filter.unlocked && !memory.unlocked) return false;
+      // Favorite filter
+      if (filterValues.favorite && !memory.favorite) return false;
       
       return true;
     });
-  }, [memories, filter.unlocked]);
+  }, [memories, filterValues.favorite]);
 
   const episodeTypes = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
-  const entityTypes = ['characters', 'events', 'swimsuits', 'items'];
+  const characters = useMemo(() => [...new Set(memories.map(m => m.characters).flat())].sort(), [memories]);
+  const versions = useMemo(() => ['1.0', '1.5', '2.0', '2.5', '3.0'], []);
+
+  // Create filter configuration
+  const filterFields = useMemo(() => createMemoriesFilterConfig(episodeTypes, characters, versions), [characters, versions]);
+
+  const handleFilterChange = (key: string, value: string | boolean | number) => {
+    setFilterValues(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
+  };
+
+  const clearFilters = () => {
+    setFilterValues({});
+    setCurrentPage(1);
+  };
 
   const handleToggleFavorite = async (id: string) => {
     try {
@@ -199,53 +210,13 @@ export default function MemoriesPage() {
     }
   };
 
-  const handleSortChange = (newSortBy: SortOption) => {
-    if (sortBy === newSortBy) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(newSortBy);
-      setSortDirection('desc');
-    }
-  };
 
-  const clearFilters = () => {
-    setFilter({
-      search: '',
-      type: '',
-      entityType: '',
-      entityId: '',
-      unlocked: false
-    });
-    setCurrentPage(1);
-  };
-
-
-
-  const SortButton = ({ sortKey, children }: { sortKey: SortOption; children: React.ReactNode }) => (
-    <motion.button
-      onClick={() => handleSortChange(sortKey)}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={`flex items-center space-x-1 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-        sortBy === sortKey 
-          ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-lg border border-gray-700' 
-          : 'bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-900/50 border border-gray-700/50'
-      }`}
-    >
-      <span>{children}</span>
-      {sortBy === sortKey && (
-        <motion.div
-          initial={{ rotate: 0 }}
-          animate={{ rotate: sortDirection === 'asc' ? 0 : 180 }}
-          transition={{ duration: 0.2 }}
-        >
-          <SortAsc className="w-3 h-3" />
-        </motion.div>
-      )}
-    </motion.button>
-  );
 
   return (
+    <PageLoadingState 
+      isLoading={loading && memories.length === 0} 
+      message="Đang tải danh sách kỷ niệm..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Page Title */}
@@ -262,161 +233,29 @@ export default function MemoriesPage() {
           </p>
         </motion.div>
 
-        {/* Search and Filter Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-            {/* Search Bar */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={filter.search}
-                onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-                className="w-full bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl pl-10 pr-4 py-3 focus:outline-hidden focus:border-gray-500 focus:ring-2 focus:ring-gray-500/20 transition-all placeholder-gray-500 text-white"
-                placeholder="Search episodes in all languages..."
-              />
-              {filter.search && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => setFilter(prev => ({ ...prev, search: '' }))}
-                  className="absolute right-3 top-3 w-4 h-4 text-gray-400 hover:text-accent-cyan transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </motion.button>
-              )}
-            </div>
+        {/* Unified Filter Component */}
+        <UnifiedFilter
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          filterFields={filterFields}
+          sortOptions={memoriesSortOptions}
+          filterValues={filterValues}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+          resultCount={filteredMemories.length}
+          totalCount={memories.length}
+          itemLabel="episodes"
+          expandableStats={false}
+          isFilterExpanded={isFilterExpanded}
+          setIsFilterExpanded={setIsFilterExpanded}
+          accentColor="accent-pink"
+          secondaryColor="accent-cyan"
+        />
 
-            {/* Filter Controls */}
-            <div className="flex items-center gap-3">
-              <motion.button
-                onClick={() => setShowFilters(!showFilters)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-3 rounded-xl transition-all flex items-center gap-2 ${
-                  showFilters 
-                    ? 'bg-gradient-to-r from-gray-900 to-black text-white shadow-lg border border-gray-700' 
-                    : 'bg-gray-800/70 border border-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-900/50'
-                }`}
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-sm font-medium">Filters</span>
-              </motion.button>
 
-              <div className="text-sm text-gray-500 bg-gray-900/50 px-3 py-3 rounded-xl border border-gray-700/50">
-                <span className="text-gray-300 font-medium">{filteredMemories.length}</span> found
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Advanced Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, y: -20 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 overflow-hidden"
-            >
-              <div className="bg-gray-900/80 backdrop-blur-xl rounded-3xl border border-gray-700/50 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-white flex items-center">
-                    <Filter className="w-5 h-5 mr-2 text-gray-400" />
-                    Advanced Filters
-                  </h3>
-                </div>
-
-                {/* Filter Options */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Episode Type</label>
-                    <select
-                      value={filter.type}
-                      onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Types</option>
-                      {episodeTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Entity Type</label>
-                    <select
-                      value={filter.entityType}
-                      onChange={(e) => setFilter(prev => ({ ...prev, entityType: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
-                    >
-                      <option value="">All Entities</option>
-                      {entityTypes.map(entityType => (
-                        <option key={entityType} value={entityType}>{entityType.charAt(0).toUpperCase() + entityType.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Entity ID</label>
-                    <input
-                      type="text"
-                      value={filter.entityId}
-                      onChange={(e) => setFilter(prev => ({ ...prev, entityId: e.target.value }))}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-gray-500 transition-all text-white"
-                      placeholder="Enter entity ID..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                    <label className="flex items-center space-x-2 mt-3">
-                      <input
-                        type="checkbox"
-                        checked={filter.unlocked}
-                        onChange={(e) => setFilter(prev => ({ ...prev, unlocked: e.target.checked }))}
-                        className="rounded-sm border-gray-700 text-gray-900 focus:ring-gray-500/20"
-                      />
-                      <span className="text-sm text-gray-300">Unlocked Only</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Sort Options */}
-                <div className="flex flex-wrap gap-3 mb-6">
-                  <span className="text-sm text-gray-400 flex items-center mr-2">
-                    <SortAsc className="w-4 h-4 mr-1" />
-                    Sort by:
-                  </span>
-                  <SortButton sortKey="title">Title</SortButton>
-                  <SortButton sortKey="episode_type">Type</SortButton>
-                  <SortButton sortKey="related_entity_type">Entity</SortButton>
-                </div>
-
-                {/* Filter Actions */}
-                <div className="flex items-center justify-between">
-                  <motion.button
-                    onClick={clearFilters}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-gradient-to-r from-accent-pink/20 to-accent-purple/20 hover:from-accent-pink/30 hover:to-accent-purple/30 text-accent-pink border border-accent-pink/30 rounded-xl px-6 py-2 text-sm font-medium transition-all"
-                  >
-                    Clear All Filters
-                  </motion.button>
-                  <div className="text-sm text-gray-500">
-                    <span className="text-accent-cyan font-medium">{filteredMemories.length}</span> of {memories.length} episodes
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Episode Display */}
         <motion.div
@@ -512,9 +351,6 @@ export default function MemoriesPage() {
               <Camera className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No episodes found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any episodes matching your current filters. Try adjusting your search criteria.
-            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}
@@ -527,5 +363,6 @@ export default function MemoriesPage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 } 

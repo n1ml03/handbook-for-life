@@ -12,6 +12,7 @@ import { type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
 import { Grid } from '@/components/ui/spacing';
+import { PageLoadingState } from '@/components/ui';
 
 const bromideTypes = ['Character', 'Scene', 'Event', 'Special'] as const;
 const decorationTypes = ['Frame', 'Background', 'Sticker', 'Effect'] as const;
@@ -133,6 +134,7 @@ function BromideCard({ bromide }: { bromide: any }) {
 
 export default function DecorateBromidePage() {
   const [bromides, setBromides] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name');
@@ -153,10 +155,13 @@ export default function DecorateBromidePage() {
   useEffect(() => {
     const fetchBromides = async () => {
       try {
+        setLoading(true);
         const response = await bromidesApi.getBromides({ limit: 1000 });
         setBromides(response.data as any[]);
       } catch (err) {
         console.error('Failed to fetch bromides:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -287,6 +292,10 @@ export default function DecorateBromidePage() {
   };
 
   return (
+    <PageLoadingState 
+      isLoading={loading} 
+      message="Loading bromide & decoration list..."
+    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Modern Page Header */}
@@ -401,9 +410,6 @@ export default function DecorateBromidePage() {
               <Search className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No items found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any bromides or decorations matching your current filters. Try adjusting your search criteria.
-            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}
@@ -416,5 +422,6 @@ export default function DecorateBromidePage() {
         )}
       </div>
     </div>
+    </PageLoadingState>
   );
 }
