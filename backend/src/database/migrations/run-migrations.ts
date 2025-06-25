@@ -24,7 +24,7 @@ class MigrationRunner {
   private lockTimeout: number;
 
   constructor() {
-    this.migrationsDir = path.join(__dirname);
+    this.migrationsDir = path.join(import.meta.dir);
     this.lockTimeout = parseInt(process.env.MIGRATION_LOCK_TIMEOUT || '30000');
   }
 

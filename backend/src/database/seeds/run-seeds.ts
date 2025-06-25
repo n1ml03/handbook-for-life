@@ -26,7 +26,7 @@ class SeedRunner {
   private lockTimeout: number;
 
   constructor() {
-    this.seedsDir = path.join(__dirname);
+    this.seedsDir = path.join(import.meta.dir);
     this.lockTimeout = parseInt(process.env.MIGRATION_LOCK_TIMEOUT || '30000');
   }
 

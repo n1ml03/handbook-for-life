@@ -1,6 +1,6 @@
 # DOAXVV Handbook Backend API
 
-A comprehensive Node.js backend API server for the DOAXVV (Dead or Alive Xtreme Venus Vacation) Handbook application, providing complete game data management and RESTful API endpoints.
+A comprehensive Bun backend API server for the DOAXVV (Dead or Alive Xtreme Venus Vacation) Handbook application, providing complete game data management and RESTful API endpoints.
 
 ## 🚀 Quick Start
 
@@ -31,7 +31,7 @@ bun run dev
 
 ## 🛠️ Technology Stack
 
-- **Runtime**: Node.js with Bun
+- **Runtime**: Bun
 - **Framework**: Express.js 5.1.0
 - **Language**: TypeScript 5.8.3
 - **Database**: MySQL 8.0+ with mysql2 driver
@@ -140,7 +140,7 @@ All API responses follow a consistent structure:
 ## 🚀 Installation & Setup
 
 ### Prerequisites
-- Node.js 18+ (recommended: use Bun for faster performance)
+- Bun 1.0+ (Fast all-in-one JavaScript runtime)
 - MySQL 8.0+
 - Git
 

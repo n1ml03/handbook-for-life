@@ -1,6 +1,6 @@
 # Handbook for Life
 
-A comprehensive full-stack application for managing DOAXVV (Dead or Alive Xtreme Venus Vacation) game data with a modern React frontend and Node.js backend API.
+A comprehensive full-stack application for managing DOAXVV (Dead or Alive Xtreme Venus Vacation) game data with a modern React frontend and Bun backend API.
 
 ## 🚀 Quick Start
 
@@ -50,7 +50,7 @@ This project is a monorepo containing two main applications:
 ## 🛠️ Technology Stack
 
 ### **Backend Technologies:**
-- **Runtime**: Node.js with Bun
+- **Runtime**: Bun
 - **Framework**: Express.js 5.1.0
 - **Language**: TypeScript 5.8.3
 - **Database**: MySQL 8.0+ with mysql2 driver
@@ -71,7 +71,7 @@ This project is a monorepo containing two main applications:
 
 ```
 handbook-for-life/
-├── backend/                    # Node.js API Server
+├── backend/                    # Bun API Server
 │   ├── src/
 │   │   ├── config/            # System configuration
 │   │   ├── database/          # MySQL schema, migrations, seeds
@@ -115,7 +115,7 @@ handbook-for-life/
 ## 🚀 Installation & Setup
 
 ### Prerequisites
-- **Node.js 18+** (recommended: use Bun for faster performance)
+- **Bun 1.0+** (Fast all-in-one JavaScript runtime)
 - **MySQL 8.0+**
 - **Git**
 

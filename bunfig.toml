@@ -1,0 +1,33 @@
+# Bun configuration file
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Install configuration
+auto = "auto"
+exact = false
+registry = "https://registry.npmjs.org"
+cache = "~/.bun/install/cache"
+
+[install.scopes]
+# Scoped package configurations if needed
+
+[runtime]
+# Runtime configuration
+jsx = "automatic"
+
+[build]
+# Build configuration
+minify = true
+sourcemap = "external"
+
+[test]
+# Test configuration
+preload = []
+
+[macros]
+# Macro configuration
+
+[bundler]
+# Bundler configuration
+minify = true
+sourcemap = "external" 
