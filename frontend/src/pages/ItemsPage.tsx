@@ -593,28 +593,6 @@ export default function ItemsPage() {
           ))
         )}
       </Grid>
-
-      {/* Error State */}
-      {itemsData.error && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16"
-        >
-          <div className="modern-card p-8 border-red-500/20">
-            <h3 className="text-2xl font-bold text-red-400 mb-3">Error Loading Items</h3>
-            <p className="text-gray-400 mb-6">{itemsData.error}</p>
-            <motion.button
-              onClick={fetchAllData}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
-            >
-              Try Again
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
       </div>
     </div>
     </PageLoadingState>
