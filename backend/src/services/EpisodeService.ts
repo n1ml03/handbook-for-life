@@ -1,186 +1,120 @@
 import { EpisodeModel } from '../models/EpisodeModel';
-import { Episode, NewEpisode } from '../types/database';
+import { Episode, NewEpisode, EpisodeType } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class EpisodeService {
-  private episodeModel: EpisodeModel;
-
+export class EpisodeService extends BaseService<EpisodeModel, Episode, NewEpisode> {
   constructor() {
-    this.episodeModel = new EpisodeModel();
+    super(new EpisodeModel(), 'EpisodeService');
   }
 
   async createEpisode(episodeData: NewEpisode): Promise<Episode> {
-    try {
-      if (!episodeData.unique_key?.trim()) {
-        throw new AppError('Episode unique key is required', 400);
-      }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(episodeData.unique_key, 'Episode unique key');
+      this.validateRequiredString(episodeData.title_en, 'Episode title');
 
-      if (!episodeData.title_en?.trim()) {
-        throw new AppError('Episode title is required', 400);
-      }
+      this.logOperationStart('Creating', episodeData.title_en, { key: episodeData.unique_key });
 
-      logger.info(`Creating episode: ${episodeData.title_en}`, { key: episodeData.unique_key });
-      
-      const episode = await this.episodeModel.create(episodeData);
-      
-      logger.info(`Episode created successfully: ${episode.title_en}`, { id: episode.id });
+      const episode = await this.model.create(episodeData);
+
+      this.logOperationSuccess('Created', episode.title_en, { id: episode.id });
       return episode;
-    } catch (error) {
-      logger.error(`Failed to create episode: ${episodeData.title_en}`, { 
-        error: error instanceof Error ? error.message : error 
-      });
-      throw error;
-    }
+    }, 'create episode', episodeData.title_en);
   }
 
   async getEpisodes(options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
-    try {
-      return await this.episodeModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to fetch episodes', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch episodes', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch episodes');
   }
 
-  async getEpisodeById(id: string): Promise<Episode> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Episode ID is required', 400);
-      }
-
-      return await this.episodeModel.findById(id);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch episode: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch episode', 500);
-    }
+  async getEpisodeById(id: string | number): Promise<Episode> {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Episode ID');
+      return await this.model.findById(numericId);
+    }, 'fetch episode', id);
   }
 
   async getEpisodeByKey(key: string): Promise<Episode> {
-    try {
-      if (!key?.trim()) {
-        throw new AppError('Episode key is required', 400);
-      }
-
-      return await this.episodeModel.findByKey(key);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch episode by key: ${key}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch episode', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(key, 'Episode key');
+      return await this.model.findByKey(key);
+    }, 'fetch episode by key', key);
   }
 
   async getEpisodesByType(type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
-    try {
-      if (!type?.trim()) {
-        throw new AppError('Episode type is required', 400);
-      }
-
-      return await this.episodeModel.findByType(type, options);
-    } catch (error) {
-      logger.error(`Failed to fetch episodes by type: ${type}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch episodes by type', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(type, 'Episode type');
+      
+      // Convert string to EpisodeType enum
+      const episodeType = this.validateEpisodeType(type);
+      
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByType(episodeType, validatedOptions);
+    }, 'fetch episodes by type', type);
   }
 
-  async getEpisodesByRelatedEntity(entityType: string, entityId: number, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
-    try {
-      if (!entityType?.trim()) {
-        throw new AppError('Entity type is required', 400);
-      }
+  async getEpisodesByRelatedEntity(entityType: string, entityId: string | number, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(entityType, 'Entity type');
+      const numericEntityId = this.parseNumericId(entityId, 'Entity ID');
 
-      if (!entityId) {
-        throw new AppError('Entity ID is required', 400);
-      }
-
-      return await this.episodeModel.findByRelatedEntity(entityType, entityId, options);
-    } catch (error) {
-      logger.error(`Failed to fetch episodes by related entity: ${entityType}:${entityId}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch episodes by related entity', 500);
-    }
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByRelatedEntity(entityType, numericEntityId, validatedOptions);
+    }, 'fetch episodes by related entity', `${entityType}:${entityId}`);
   }
 
-  async updateEpisode(id: string, updates: Partial<NewEpisode>): Promise<Episode> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Episode ID is required', 400);
-      }
+  async updateEpisode(id: string | number, updates: Partial<NewEpisode>): Promise<Episode> {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Episode ID');
+      this.validateOptionalString(updates.title_en, 'Episode title');
 
-      if (updates.title_en !== undefined && !updates.title_en?.trim()) {
-        throw new AppError('Episode title cannot be empty', 400);
-      }
+      this.logOperationStart('Updating', id, { updates });
 
-      logger.info(`Updating episode: ${id}`, { updates });
-      
-      const episode = await this.episodeModel.update(id, updates);
-      
-      logger.info(`Episode updated successfully: ${episode.title_en}`, { id: episode.id });
+      const episode = await this.model.update(numericId, updates);
+
+      this.logOperationSuccess('Updated', episode.title_en, { id: episode.id });
       return episode;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to update episode: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to update episode', 500);
-    }
+    }, 'update episode', id);
   }
 
-  async deleteEpisode(id: string): Promise<void> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Episode ID is required', 400);
-      }
+  async deleteEpisode(id: string | number): Promise<void> {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Episode ID');
 
-      await this.episodeModel.findById(id);
-      
-      logger.info(`Deleting episode: ${id}`);
-      await this.episodeModel.delete(id);
-      logger.info(`Episode deleted successfully: ${id}`);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to delete episode: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to delete episode', 500);
-    }
+      // Check if episode exists before deletion
+      await this.model.findById(numericId);
+
+      this.logOperationStart('Deleting', id);
+      await this.model.delete(numericId);
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete episode', id);
   }
 
   async searchEpisodes(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
-    try {
-      if (!query?.trim()) {
-        throw new AppError('Search query is required', 400);
-      }
-
-      return await this.episodeModel.search(query.trim(), options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to search episodes: ${query}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to search episodes', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search episodes', query);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    try {
-      const modelHealth = await this.episodeModel.healthCheck();
-      return {
-        isHealthy: modelHealth.isHealthy,
-        errors: modelHealth.errors
-      };
-    } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Episode service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  private validateEpisodeType(type: string): EpisodeType {
+    const validTypes: EpisodeType[] = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
+    
+    if (!validTypes.includes(type as EpisodeType)) {
+      throw this.handleServiceError('validate episode type', type, `Invalid episode type: ${type}. Valid types are: ${validTypes.join(', ')}`);
     }
+    
+    return type as EpisodeType;
   }
+
+  // Health check is inherited from BaseService
 }
 
 export const episodeService = new EpisodeService();

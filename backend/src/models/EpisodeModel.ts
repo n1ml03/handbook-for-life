@@ -2,6 +2,7 @@ import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Episode, NewEpisode, EpisodeType } from '../types/database';
 import { executeQuery } from '@config/database';
 import { AppError } from '@middleware/errorHandler';
+import { logger } from '../config';
 
 export class EpisodeModel extends BaseModel {
   constructor() {
@@ -47,6 +48,7 @@ export class EpisodeModel extends BaseModel {
         ]
       ) as [any, any];
 
+      logger.info(`Episode created: ${episode.title_en}`, { id: result.insertId });
       return this.findById(result.insertId);
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -163,6 +165,7 @@ export class EpisodeModel extends BaseModel {
       params
     );
 
+    logger.info(`Episode updated: ${id}`);
     return this.findById(id);
   }
 
@@ -199,5 +202,32 @@ export class EpisodeModel extends BaseModel {
       this.mapEpisodeRow,
       ['CHARACTER', character_id]
     );
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      // Test basic connection
+      await executeQuery('SELECT 1');
+      
+      // Test table existence and basic query
+      await executeQuery('SELECT COUNT(*) FROM episodes LIMIT 1');
+      
+      logger.debug('EpisodeModel health check passed');
+    } catch (error) {
+      const errorMsg = `EpisodeModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+      logger.error(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
+
+  async findByKey(key: string): Promise<Episode> {
+    return this.findByUniqueKey(key);
   }
 }

@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { 
-  Eye, Save, X, FileText, Edit3, Settings, Code, 
-  Plus, Wrench, Bug, Image as ImageIcon, Focus 
+  Eye, Save, X, FileText, Edit3, Settings,
+  Focus 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormGroup, StatusBadge } from '@/components/ui/spacing';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { cn } from '@/services/utils';
 import { UpdateLog } from '@/types';
 import { TagInput } from './TagInput';
@@ -35,9 +36,6 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   commonTags
 }) => {
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
-  const [technicalDetailInput, setTechnicalDetailInput] = useState('');
-  const [bugFixInput, setBugFixInput] = useState('');
-  const [screenshotInput, setScreenshotInput] = useState('');
   
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -60,54 +58,6 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
     const draftLog = { ...updateLog, isPublished: false };
     onUpdateLogChange(draftLog);
     onSave(draftLog);
-  };
-
-  const addTechnicalDetail = () => {
-    const trimmedDetail = technicalDetailInput.trim();
-    if (trimmedDetail && !updateLog.technicalDetails.includes(trimmedDetail)) {
-      onUpdateLogChange({
-        ...updateLog,
-        technicalDetails: [...updateLog.technicalDetails, trimmedDetail]
-      });
-      setTechnicalDetailInput('');
-    }
-  };
-
-  const removeTechnicalDetail = (index: number) => {
-    const newDetails = updateLog.technicalDetails.filter((_, i) => i !== index);
-    onUpdateLogChange({ ...updateLog, technicalDetails: newDetails });
-  };
-
-  const addBugFix = () => {
-    const trimmedFix = bugFixInput.trim();
-    if (trimmedFix && !updateLog.bugFixes.includes(trimmedFix)) {
-      onUpdateLogChange({
-        ...updateLog,
-        bugFixes: [...updateLog.bugFixes, trimmedFix]
-      });
-      setBugFixInput('');
-    }
-  };
-
-  const removeBugFix = (index: number) => {
-    const newFixes = updateLog.bugFixes.filter((_, i) => i !== index);
-    onUpdateLogChange({ ...updateLog, bugFixes: newFixes });
-  };
-
-  const addScreenshot = () => {
-    const trimmedScreenshot = screenshotInput.trim();
-    if (trimmedScreenshot && !updateLog.screenshots.includes(trimmedScreenshot)) {
-      onUpdateLogChange({
-        ...updateLog,
-        screenshots: [...updateLog.screenshots, trimmedScreenshot]
-      });
-      setScreenshotInput('');
-    }
-  };
-
-  const removeScreenshot = (index: number) => {
-    const newScreenshots = updateLog.screenshots.filter((_, i) => i !== index);
-    onUpdateLogChange({ ...updateLog, screenshots: newScreenshots });
   };
 
   // Enhanced focus mode rendering
@@ -201,7 +151,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   }
 
   return (
-    <div className="doax-card transition-all duration-300 relative">
+    <div className="doax-card relative">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold">
@@ -349,347 +299,175 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
             </div>
           </div>
 
-          {/* Technical Details & Bug Fixes Section */}
-          <div className="bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-border/30 rounded-2xl p-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-              <div>
-                <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Code className="w-4 h-4 text-accent-gold" />
-                  Technical Details & Bug Fixes
-                </h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Add technical improvements and bug fixes for this update
-                </p>
-              </div>
-            </div>
+          {/* Screenshots */}
+          <FileUpload
+            files={updateLog.screenshots}
+            onFilesChange={(files) => onUpdateLogChange({ ...updateLog, screenshots: files })}
+            maxFiles={10}
+            accept="image/*"
+            maxSize={5 * 1024 * 1024} // 5MB
+            label="Screenshots"
+            description="Upload screenshot images for this update (PNG, JPG, GIF, WebP)"
+            disabled={isPreviewMode}
+          />
+        </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Technical Details */}
-                <FormGroup
-                  label="Technical Details"
-                  description="Technical improvements and optimizations"
-                >
-                  <div className="space-y-3">
-                    {/* Current Technical Details Display */}
-                    {updateLog.technicalDetails.length > 0 && (
-                      <div className="space-y-2">
-                        {updateLog.technicalDetails.map((detail, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-2 p-3 bg-background/50 border border-border rounded-lg"
-                          >
-                            <Wrench className="w-4 h-4 text-accent-gold shrink-0 mt-0.5" />
-                            <span className="text-sm flex-1 font-mono">{detail}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeTechnicalDetail(index)}
-                              className="p-1 rounded-md bg-red-50 text-red-500 transition-colors duration-200 focus:ring-2 focus:ring-red-100 focus:outline-hidden"
-                              aria-label="Remove technical detail"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Technical Detail Input */}
-                    <div className="flex gap-2">
-                      <Input
-                        value={technicalDetailInput}
-                        onChange={(e) => setTechnicalDetailInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addTechnicalDetail();
-                          }
-                        }}
-                        placeholder="Enter technical detail and press Enter..."
-                        className="flex-1 h-10 px-3 border-2 border-border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-accent-gold/20 focus:border-accent-gold focus:outline-hidden"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={addTechnicalDetail}
-                        className="bg-accent-gold/20 text-accent-gold border-accent-gold/30"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </FormGroup>
-
-                {/* Bug Fixes */}
-                <FormGroup
-                  label="Bug Fixes"
-                  description="List of bugs fixed in this update"
-                >
-                  <div className="space-y-3">
-                    {/* Current Bug Fixes Display */}
-                    {updateLog.bugFixes.length > 0 && (
-                      <div className="space-y-2">
-                        {updateLog.bugFixes.map((fix, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-2 p-3 bg-background/50 border border-border rounded-lg"
-                          >
-                            <Bug className="w-4 h-4 text-accent-purple shrink-0 mt-0.5" />
-                            <span className="text-sm flex-1">{fix}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeBugFix(index)}
-                              className="p-1 rounded-md bg-red-50 text-red-500 transition-colors duration-200 focus:ring-2 focus:ring-red-100 focus:outline-hidden"
-                              aria-label="Remove bug fix"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Bug Fix Input */}
-                    <div className="flex gap-2">
-                      <Input
-                        value={bugFixInput}
-                        onChange={(e) => setBugFixInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addBugFix();
-                          }
-                        }}
-                        placeholder="Enter bug fix and press Enter..."
-                        className="flex-1 h-10 px-3 border-2 border-border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-accent-purple/20 focus:border-accent-purple focus:outline-hidden"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={addBugFix}
-                        className="bg-accent-purple/20 text-accent-purple border-accent-purple/30"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </FormGroup>
-              </div>
-
-              {/* Screenshots */}
-              <FormGroup
-                label="Screenshots"
-                description="Image filenames or URLs for this update"
-              >
-                <div className="space-y-3">
-                  {/* Current Screenshots Display */}
-                  {updateLog.screenshots.length > 0 && (
-                    <div className="space-y-2">
-                      {updateLog.screenshots.map((screenshot, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 p-3 bg-background/50 border border-border rounded-lg"
-                        >
-                          <ImageIcon className="w-4 h-4 text-accent-pink shrink-0" />
-                          <span className="text-sm flex-1">{screenshot}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeScreenshot(index)}
-                            className="p-1 rounded-md bg-red-50 text-red-500 transition-colors duration-200 focus:ring-2 focus:ring-red-100 focus:outline-hidden"
-                            aria-label="Remove screenshot"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Screenshot Input */}
-                  <div className="flex gap-2">
-                    <Input
-                      value={screenshotInput}
-                      onChange={(e) => setScreenshotInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addScreenshot();
-                        }
-                      }}
-                      placeholder="Enter image filename and press Enter..."
-                      className="flex-1 h-10 px-3 border-2 border-border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-hidden"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={addScreenshot}
-                      className="bg-accent-pink/20 text-accent-pink border-accent-pink/30"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </FormGroup>
+        {/* Content Editor Section - Bottom (Full Width) */}
+        <div className="space-y-6 mt-12" ref={editorRef}>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1">
+              <h4 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-accent-purple" />
+                Update Content
+              </h4>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Describe the update in detail. Include new features, bug fixes, improvements, and any other relevant information.
+              </p>
             </div>
           </div>
 
-          {/* Content Editor Section - Bottom (Full Width) */}
-          <div className="space-y-6" ref={editorRef}>
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-1">
-                <h4 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <Edit3 className="w-5 h-5 text-accent-purple" />
-                  Update Content
-                </h4>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                  Describe the update in detail. Include new features, bug fixes, improvements, and any other relevant information.
-                </p>
-              </div>
-            </div>
+          <div className={cn(
+            "border-2 border-border rounded-2xl overflow-hidden",
+            "bg-background shadow-xs",
+            "focus-within:border-accent-pink/50 focus-within:shadow-md",
+            "transition-all duration-300 ease-out"
+          )}>
+            <TiptapEditor
+              content={updateLog.content}
+              onChange={(content) => onUpdateLogChange({ ...updateLog, content })}
+              editable={!isPreviewMode}
+              placeholder="Describe the update in detail... What's new? What's fixed? What's improved?"
+              showToolbar={!isPreviewMode}
+              showCharacterCount={true}
+              showWordCount={true}
+              mode="full"
+              stickyToolbar={true}
+              className={cn(
+                "border-0 bg-transparent",
+                "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]"
+              )}
+            />
+          </div>
 
-            <div className={cn(
-              "border-2 border-border rounded-2xl overflow-hidden",
-              "bg-background shadow-xs",
-              "focus-within:border-accent-pink/50 focus-within:shadow-md",
-              "transition-all duration-300 ease-out"
-            )}>
-              <TiptapEditor
-                content={updateLog.content}
-                onChange={(content) => onUpdateLogChange({ ...updateLog, content })}
-                editable={!isPreviewMode}
-                placeholder="Describe the update in detail... What's new? What's fixed? What's improved?"
-                showToolbar={!isPreviewMode}
-                showCharacterCount={true}
-                showWordCount={true}
-                mode="full"
-                stickyToolbar={true}
-                className={cn(
-                  "border-0 bg-transparent",
-                  "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]"
-                )}
-              />
-            </div>
-
-            {/* Floating Toolbar */}
-            {showFloatingToolbar && !isPreviewMode && (
-              <div
-                ref={toolbarRef}
-                className="fixed top-4 right-4 z-50 bg-background/95 backdrop-blur-sm border-2 border-border rounded-xl shadow-xl p-3 transition-all duration-300 ease-out"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-accent-pink rounded-full animate-pulse"></div>
-                    <span className="text-xs font-medium text-muted-foreground">Quick Actions</span>
-                  </div>
-                  <div className="w-px h-4 bg-border"></div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onPreviewModeChange(true)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      Preview
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => onSave(updateLog)}
-                      className="h-8 px-2 text-xs bg-gradient-to-r from-accent-pink to-accent-purple text-white"
-                    >
-                      <Save className="w-3 h-3 mr-1" />
-                      Save
-                    </Button>
-                  </div>
+          {/* Floating Toolbar */}
+          {showFloatingToolbar && !isPreviewMode && (
+            <div
+              ref={toolbarRef}
+              className="fixed top-4 right-4 z-50 bg-background/95 backdrop-blur-sm border-2 border-border rounded-xl shadow-xl p-3 transition-all duration-300 ease-out"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-accent-pink rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-muted-foreground">Quick Actions</span>
+                </div>
+                <div className="w-px h-4 bg-border"></div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onPreviewModeChange(true)}
+                    className="h-8 px-2 text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onSave(updateLog)}
+                    className="h-8 px-2 text-xs bg-gradient-to-r from-accent-pink to-accent-purple text-white"
+                  >
+                    <Save className="w-3 h-3 mr-1" />
+                    Save
+                  </Button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Editor Stats and Tips */}
-            <div className="bg-muted/20 border border-border/50 rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="w-2 h-2 bg-accent-pink rounded-full"></div>
-                    <span className="font-medium">
-                      {updateLog.content.length} characters
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="w-2 h-2 bg-accent-purple rounded-full"></div>
-                    <span className="font-medium">
-                      ~{Math.max(1, Math.ceil(updateLog.content.split(' ').length / 200))} min read
-                    </span>
-                  </div>
+          {/* Editor Stats and Tips */}
+          <div className="bg-muted/20 border border-border/50 rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-2 h-2 bg-accent-pink rounded-full"></div>
+                  <span className="font-medium">
+                    {updateLog.content.length} characters
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Last edited: just now</span>
-                  <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                  <span className="text-muted-foreground font-medium">Manual save required</span>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-2 h-2 bg-accent-purple rounded-full"></div>
+                  <span className="font-medium">
+                    ~{Math.max(1, Math.ceil(updateLog.content.split(' ').length / 200))} min read
+                  </span>
                 </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Last edited: just now</span>
+                <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+                <span className="text-muted-foreground font-medium">Manual save required</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Action Bar */}
-        <div className="bg-gradient-to-r from-muted/20 to-muted/10 border-t-2 border-border/30 -mx-6 px-8 py-6 mt-8 rounded-b-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-accent-pink rounded-full"></div>
-                <span className="text-muted-foreground">
-                  {updateLog.id ? (
-                    <>Last saved: <span className="font-medium text-foreground">{updateLog.date}</span></>
-                  ) : (
-                    <span className="text-yellow-600 font-medium">New update log - not saved yet</span>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-1 bg-muted-foreground rounded-full hidden sm:block"></div>
-                <span className="text-sm text-muted-foreground">Status:</span>
-                {updateLog.isPublished ? (
-                  <StatusBadge status="success" className="text-xs font-medium">
-                    Published & Live
-                  </StatusBadge>
+      {/* Action Bar */}
+      <div className="bg-gradient-to-r from-muted/20 to-muted/10 border-t-2 border-border/30 -mx-6 px-8 py-6 mt-8 rounded-b-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 bg-accent-pink rounded-full"></div>
+              <span className="text-muted-foreground">
+                {updateLog.id ? (
+                  <>Last saved: <span className="font-medium text-foreground">{updateLog.date}</span></>
                 ) : (
-                  <StatusBadge status="warning" className="text-xs font-medium">
-                    Draft
-                  </StatusBadge>
+                  <span className="text-yellow-600 font-medium">New update log - not saved yet</span>
                 )}
-              </div>
+              </span>
             </div>
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full hidden sm:block"></div>
+              <span className="text-sm text-muted-foreground">Status:</span>
+              {updateLog.isPublished ? (
+                <StatusBadge status="success" className="text-xs font-medium">
+                  Published & Live
+                </StatusBadge>
+              ) : (
+                <StatusBadge status="warning" className="text-xs font-medium">
+                  Draft
+                </StatusBadge>
+              )}
+            </div>
+          </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="order-2 sm:order-1"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+
+            {updateLog.id && (
               <Button
                 variant="outline"
-                onClick={onCancel}
-                className="order-2 sm:order-1"
+                onClick={handleSaveDraft}
+                className="order-3 sm:order-2"
               >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
+                <FileText className="w-4 h-4 mr-2" />
+                Save as Draft
               </Button>
+            )}
 
-              {updateLog.id && (
-                <Button
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                  className="order-3 sm:order-2"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Save as Draft
-                </Button>
-              )}
-
-              <Button
-                onClick={() => onSave(updateLog)}
-                className="bg-gradient-to-r from-accent-pink to-accent-purple text-white font-semibold shadow-md transition-all duration-200 focus:ring-2 focus:ring-accent-pink/20 focus:outline-hidden order-1 sm:order-3"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {updateLog.id ? 'Save Changes' : 'Create Update Log'}
-              </Button>
-            </div>
+            <Button
+              onClick={() => onSave(updateLog)}
+              className="bg-gradient-to-r from-accent-pink to-accent-purple text-white font-semibold shadow-md transition-all duration-200 focus:ring-2 focus:ring-accent-pink/20 focus:outline-hidden order-1 sm:order-3"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {updateLog.id ? 'Save Changes' : 'Create Update Log'}
+            </Button>
           </div>
         </div>
       </div>

@@ -224,6 +224,7 @@ export interface Document {
   tags: string[]; // Generated from category and type
   author: string; // Default or computed author
   isPublished: boolean; // Maps to is_published for DocumentEditor compatibility
+  screenshots: string[]; // Screenshot URLs for visual documentation
 }
 
 // Timeline view (for HomePage)
@@ -586,8 +587,6 @@ export interface UpdateLog {
   date: string;
   tags: string[];
   isPublished: boolean;
-  technicalDetails: string[];
-  bugFixes: string[];
   screenshots: string[];
   metrics?: {
     performanceImprovement: string;

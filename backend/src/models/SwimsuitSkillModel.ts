@@ -329,4 +329,36 @@ export class SwimsuitSkillModel extends BaseModel {
       errors
     };
   }
+
+  async findByKey(key: string): Promise<SwimsuitSkill> {
+    // Since SwimsuitSkill uses composite key, we'll search by swimsuit_id
+    const numericKey = parseInt(key, 10);
+    if (isNaN(numericKey)) {
+      throw new AppError('Invalid key format for swimsuit skill', 400);
+    }
+    
+    const skills = await this.findBySwimsuitId(numericKey);
+    if (skills.data.length === 0) {
+      throw new AppError('Swimsuit skill not found', 404);
+    }
+    
+    return skills.data[0];
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM swimsuit_skills LIMIT 1');
+    } catch (error) {
+      const errorMsg = `SwimsuitSkillModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 }

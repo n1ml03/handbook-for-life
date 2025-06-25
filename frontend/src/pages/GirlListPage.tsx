@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -16,19 +16,21 @@ import UnifiedFilter, { FilterField, SortOption } from '@/components/features/Un
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { Button } from '@/components/ui/button';
 import { PageLoadingState } from '@/components/ui';
+import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
 
+// Optimized GirlCard with better memoization
 const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) {
-  const getTypeColor = (type: string) => {
+  const getTypeColor = useCallback((type: string) => {
     switch (type.toLowerCase()) {
       case 'pow': return 'from-red-400 to-pink-500';
       case 'tec': return 'from-cyan-400 to-blue-500';
       case 'stm': return 'from-yellow-400 to-orange-500';
       default: return 'from-gray-400 to-gray-600';
     }
-  };
+  }, []);
 
-  const getStatColor = (stat: string) => {
+  const getStatColor = useCallback((stat: string) => {
     switch (stat.toLowerCase()) {
       case 'pow': return 'text-red-400';
       case 'tec': return 'text-cyan-400';
@@ -36,7 +38,10 @@ const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) 
       case 'apl': return 'text-purple-400';
       default: return 'text-gray-400';
     }
-  };
+  }, []);
+
+  const typeColor = useMemo(() => getTypeColor(girl.type), [girl.type, getTypeColor]);
+  const statsEntries = useMemo(() => Object.entries(girl.stats), [girl.stats]);
 
   return (
     <motion.div
@@ -56,7 +61,7 @@ const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) 
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-bold text-white text-lg">{girl.name}</h3>
               <motion.div
-                className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${getTypeColor(girl.type)} text-white shadow-lg`}
+                className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${typeColor} text-white shadow-lg`}
                 whileHover={{ scale: 1.1 }}
               >
                 {girl.type.toUpperCase()}
@@ -80,7 +85,7 @@ const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) 
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {Object.entries(girl.stats).map(([stat, value]) => (
+          {statsEntries.map(([stat, value]) => (
             <motion.div 
               key={stat} 
               className="flex justify-between items-center p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30"
@@ -163,31 +168,30 @@ const GirlCard = React.memo(function GirlCard({ girl, onClick }: GirlCardProps) 
   );
 });
 
+// Add display name for better debugging
+GirlCard.displayName = 'GirlCard';
+
 export default function GirlListPage() {
   const navigate = useNavigate();
-  const [girls, setGirls] = useState<Girl[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    const fetchGirls = async () => {
-      try {
-        setLoading(true);
-        const response = await girlsApi.getGirls({ limit: 1000 });
-        setGirls(response.data);
-      } catch (err) {
-        console.error('Failed to fetch girls:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGirls();
-  }, []);
-  const [showFilters, setShowFilters] = useState(false);
-  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
+  // Optimized state management
+  const [girlsData, setGirlsData] = useState({
+    girls: [] as Girl[],
+    loading: true,
+    error: null as string | null,
+  });
+  
+  const [uiState, setUiState] = useState({
+    currentPage: 1,
+    showFilters: false,
+    isFilterExpanded: false,
+  });
+  
+  const [sortState, setSortState] = useState({
+    sortBy: 'name',
+    sortDirection: 'asc' as SortDirection,
+  });
+  
   const [filterValues, setFilterValues] = useState({
     search: '',
     type: '',
@@ -201,15 +205,38 @@ export default function GirlListPage() {
     hasAccessories: false
   });
 
+  // Debounce search to improve performance
+  const debouncedSearchTerm = useDebounce(filterValues.search, 300);
+
   const itemsPerPage = 8;
 
-  // Add multi-language support to girls data
-  const multiLanguageGirls = useMemo(() => {
-    return addTranslationsToItems(girls);
-  }, [girls]);
+  // Optimized fetch function with useCallback
+  const fetchGirls = useCallback(async () => {
+    try {
+      setGirlsData(prev => ({ ...prev, loading: true, error: null }));
+      const response = await girlsApi.getGirls({ limit: 1000 });
+      setGirlsData(prev => ({ ...prev, girls: response.data, loading: false }));
+    } catch (err) {
+      console.error('Failed to fetch girls:', err);
+      setGirlsData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Failed to fetch girls. Please try again.' 
+      }));
+    }
+  }, []);
 
-  // Filter fields configuration
-  const filterFields: FilterField[] = [
+  useEffect(() => {
+    fetchGirls();
+  }, [fetchGirls]);
+
+  // Add multi-language support to girls data with optimized memoization
+  const multiLanguageGirls = useMemo(() => {
+    return addTranslationsToItems(girlsData.girls);
+  }, [girlsData.girls]);
+
+  // Filter fields configuration - memoized to prevent recreation
+  const filterFields: FilterField[] = useMemo(() => [
     {
       key: 'search',
       label: 'Search',
@@ -294,36 +321,41 @@ export default function GirlListPage() {
       icon: <Zap className="w-3 h-3 mr-1" />,
       color: 'text-purple-400',
     }
-  ];
+  ], []);
 
-  // Sort options
-  const sortOptions: SortOption[] = [
+  // Sort options - memoized to prevent recreation
+  const sortOptions: SortOption[] = useMemo(() => [
     { key: 'name', label: 'Name' },
     { key: 'type', label: 'Type' },
     { key: 'level', label: 'Level' },
     { key: 'total', label: 'Total Power' }
-  ];
+  ], []);
 
+  // Optimized filtering and sorting with debounced search
   const filteredAndSortedGirls = useMemo(() => {
+    const filterValuesWithDebouncedSearch = {
+      ...filterValues,
+      search: debouncedSearchTerm
+    };
+
     const filtered = multiLanguageGirls.filter(girl => {
-      if (filterValues.type && girl.type !== filterValues.type) return false;
-      // Use multi-language search instead of simple string matching
-              if (filterValues.search && typeof filterValues.search === 'string' && !searchInAllLanguages(girl, filterValues.search)) return false;
-      if (filterValues.minLevel && girl.level < Number(filterValues.minLevel)) return false;
-      if (filterValues.maxLevel && girl.level > Number(filterValues.maxLevel)) return false;
-      if (filterValues.minPow && girl.stats.pow < Number(filterValues.minPow)) return false;
-      if (filterValues.minTec && girl.stats.tec < Number(filterValues.minTec)) return false;
-      if (filterValues.minStm && girl.stats.stm < Number(filterValues.minStm)) return false;
-      if (filterValues.minApl && girl.stats.apl < Number(filterValues.minApl)) return false;
-      if (filterValues.hasSwimsuit && !girl.swimsuit) return false;
-      if (filterValues.hasAccessories && girl.accessories.length === 0) return false;
+      if (filterValuesWithDebouncedSearch.type && girl.type !== filterValuesWithDebouncedSearch.type) return false;
+      if (filterValuesWithDebouncedSearch.search && !searchInAllLanguages(girl, filterValuesWithDebouncedSearch.search)) return false;
+      if (filterValuesWithDebouncedSearch.minLevel && girl.level < Number(filterValuesWithDebouncedSearch.minLevel)) return false;
+      if (filterValuesWithDebouncedSearch.maxLevel && girl.level > Number(filterValuesWithDebouncedSearch.maxLevel)) return false;
+      if (filterValuesWithDebouncedSearch.minPow && girl.stats.pow < Number(filterValuesWithDebouncedSearch.minPow)) return false;
+      if (filterValuesWithDebouncedSearch.minTec && girl.stats.tec < Number(filterValuesWithDebouncedSearch.minTec)) return false;
+      if (filterValuesWithDebouncedSearch.minStm && girl.stats.stm < Number(filterValuesWithDebouncedSearch.minStm)) return false;
+      if (filterValuesWithDebouncedSearch.minApl && girl.stats.apl < Number(filterValuesWithDebouncedSearch.minApl)) return false;
+      if (filterValuesWithDebouncedSearch.hasSwimsuit && !girl.swimsuit) return false;
+      if (filterValuesWithDebouncedSearch.hasAccessories && girl.accessories.length === 0) return false;
       return true;
     });
 
     return filtered.sort((a, b) => {
       let aValue: string | number, bValue: string | number;
       
-      switch (sortBy) {
+      switch (sortState.sortBy) {
         case 'name':
           aValue = a.name.toLowerCase();
           bValue = b.name.toLowerCase();
@@ -346,31 +378,35 @@ export default function GirlListPage() {
       }
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        return sortState.sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
       const numA = Number(aValue);
       const numB = Number(bValue);
-      return sortDirection === 'asc' ? numA - numB : numB - numA;
+      return sortState.sortDirection === 'asc' ? numA - numB : numB - numA;
     });
-  }, [multiLanguageGirls, filterValues, sortBy, sortDirection]);
+  }, [multiLanguageGirls, filterValues, debouncedSearchTerm, sortState]);
 
-  const totalPages = useMemo(() => Math.ceil(filteredAndSortedGirls.length / itemsPerPage), [filteredAndSortedGirls.length, itemsPerPage]);
-  const paginatedGirls = useMemo(() => filteredAndSortedGirls.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  ), [filteredAndSortedGirls, currentPage, itemsPerPage]);
+  // Optimized pagination calculations
+  const paginationData = useMemo(() => {
+    const totalPages = Math.ceil(filteredAndSortedGirls.length / itemsPerPage);
+    const paginatedGirls = filteredAndSortedGirls.slice(
+      (uiState.currentPage - 1) * itemsPerPage,
+      uiState.currentPage * itemsPerPage
+    );
+    return { totalPages, paginatedGirls };
+  }, [filteredAndSortedGirls, uiState.currentPage, itemsPerPage]);
 
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+    setUiState(prev => ({ ...prev, currentPage: 1 }));
+  }, []);
 
-  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(newDirection);
-  };
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
+    setSortState({ sortBy: newSortBy, sortDirection: newDirection });
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilterValues({
       search: '',
       type: '',
@@ -383,11 +419,39 @@ export default function GirlListPage() {
       hasSwimsuit: false,
       hasAccessories: false
     });
-    setCurrentPage(1);
-  };
+    setUiState(prev => ({ ...prev, currentPage: 1 }));
+  }, []);
+
+  const handleShowFilters = useCallback((show: boolean) => {
+    setUiState(prev => ({ ...prev, showFilters: show }));
+  }, []);
+
+  const handleFilterExpanded = useCallback((expanded: boolean) => {
+    setUiState(prev => ({ ...prev, isFilterExpanded: expanded }));
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setUiState(prev => ({ ...prev, currentPage: page }));
+  }, []);
+
+  const handlePrevPage = useCallback(() => {
+    setUiState(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setUiState(prev => ({ 
+      ...prev, 
+      currentPage: Math.min(paginationData.totalPages, prev.currentPage + 1) 
+    }));
+  }, [paginationData.totalPages]);
+
+  // Memoized navigation handler
+  const handleGirlClick = useCallback((girlId: string) => {
+    navigate(`/girls/${girlId}`);
+  }, [navigate]);
 
   return (
-    <PageLoadingState isLoading={loading} message="Loading girl list...">
+    <PageLoadingState isLoading={girlsData.loading} message="Loading girl list...">
     
     <div className="modern-page">
       <div className="modern-container-lg">
@@ -401,39 +465,39 @@ export default function GirlListPage() {
             Girl Collection
           </h1>
           <p className="modern-page-subtitle">
-            Explore and discover all characters with detailed stats and equipment • {filteredAndSortedGirls.length} of {girls.length} girls
+            Explore and discover all characters with detailed stats and equipment • {filteredAndSortedGirls.length} of {girlsData.girls.length} girls
           </p>
         </motion.div>
 
-              {/* Search and Filter Controls */}
+        {/* Search and Filter Controls */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
           <UnifiedFilter
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          filterFields={filterFields}
-          sortOptions={sortOptions}
-          filterValues={filterValues}
-          onFilterChange={handleFilterChange}
-          onClearFilters={clearFilters}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          resultCount={filteredAndSortedGirls.length}
-          totalCount={girls.length}
-          itemLabel="girls"
-          accentColor="accent-pink"
-          secondaryColor="accent-purple"
-          expandableStats={true}
-          isFilterExpanded={isFilterExpanded}
-          setIsFilterExpanded={setIsFilterExpanded}
-          headerIcon={<User className="w-4 h-4" />}
-          searchAriaLabel="Search girls by name, type, or attributes"
-          filterAriaLabel="Show or hide advanced filters"
-        />
+            showFilters={uiState.showFilters}
+            setShowFilters={handleShowFilters}
+            filterFields={filterFields}
+            sortOptions={sortOptions}
+            filterValues={filterValues}
+            onFilterChange={handleFilterChange}
+            onClearFilters={clearFilters}
+            sortBy={sortState.sortBy}
+            sortDirection={sortState.sortDirection}
+            onSortChange={handleSortChange}
+            resultCount={filteredAndSortedGirls.length}
+            totalCount={girlsData.girls.length}
+            itemLabel="girls"
+            accentColor="accent-pink"
+            secondaryColor="accent-purple"
+            expandableStats={true}
+            isFilterExpanded={uiState.isFilterExpanded}
+            setIsFilterExpanded={handleFilterExpanded}
+            headerIcon={<User className="w-4 h-4" />}
+            searchAriaLabel="Search girls by name, type, or attributes"
+            filterAriaLabel="Show or hide advanced filters"
+          />
         </motion.div>
 
         {/* Girl Display */}
@@ -444,7 +508,7 @@ export default function GirlListPage() {
           className="mb-8"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {paginatedGirls.map((girl, index) => (
+          {paginationData.paginatedGirls.map((girl, index) => (
             <motion.div
               key={girl.id}
               initial={{ opacity: 0, y: 40 }}
@@ -453,7 +517,7 @@ export default function GirlListPage() {
             >
               <GirlCard
                 girl={girl}
-                onClick={() => navigate(`/girls/${girl.id}`)}
+                onClick={() => handleGirlClick(girl.id)}
               />
             </motion.div>
           ))}
@@ -461,7 +525,7 @@ export default function GirlListPage() {
         </motion.div>
 
         {/* Enhanced Pagination */}
-        {totalPages > 1 && (
+        {paginationData.totalPages > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -470,25 +534,25 @@ export default function GirlListPage() {
             <Button
               variant="modern"
               size="icon"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              onClick={handlePrevPage}
+              disabled={uiState.currentPage === 1}
               aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
 
             <div className="flex space-x-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              {Array.from({ length: Math.min(5, paginationData.totalPages) }, (_, i) => {
+                const page = Math.max(1, Math.min(paginationData.totalPages - 4, uiState.currentPage - 2)) + i;
                 return (
                   <Button
                     key={page}
-                    variant={currentPage === page ? "modern-primary" : "modern"}
+                    variant={uiState.currentPage === page ? "modern-primary" : "modern"}
                     size="sm"
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => handlePageChange(page)}
                     className="min-w-[40px]"
                     aria-label={`Go to page ${page}`}
-                    aria-current={currentPage === page ? "page" : undefined}
+                    aria-current={uiState.currentPage === page ? "page" : undefined}
                   >
                     {page}
                   </Button>
@@ -499,8 +563,8 @@ export default function GirlListPage() {
             <Button
               variant="modern"
               size="icon"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
+              onClick={handleNextPage}
+              disabled={uiState.currentPage === paginationData.totalPages}
               aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />
@@ -509,7 +573,7 @@ export default function GirlListPage() {
         )}
 
         {/* Enhanced Empty State */}
-        {filteredAndSortedGirls.length === 0 && (
+        {filteredAndSortedGirls.length === 0 && !girlsData.loading && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -530,6 +594,27 @@ export default function GirlListPage() {
                 className="px-8 py-3"
               >
                 Clear All Filters
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {girlsData.error && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="modern-card p-8 border-red-500/20">
+              <h3 className="text-2xl font-bold text-red-400 mb-3">Error Loading Girls</h3>
+              <p className="text-gray-400 mb-6">{girlsData.error}</p>
+              <Button
+                variant="neon"
+                onClick={fetchGirls}
+                className="px-8 py-3"
+              >
+                Try Again
               </Button>
             </div>
           </motion.div>

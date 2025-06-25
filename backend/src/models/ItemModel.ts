@@ -197,4 +197,25 @@ export class ItemModel extends BaseModel {
     
     return rows.map(this.mapItemRow);
   }
+
+  async findByKey(key: string): Promise<Item> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM items LIMIT 1');
+    } catch (error) {
+      const errorMsg = `ItemModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 } 

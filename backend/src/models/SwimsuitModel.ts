@@ -246,4 +246,34 @@ export class SwimsuitModel extends BaseModel {
     
     return rows.map(this.mapSwimsuitRow);
   }
+
+  async findByCharacter(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
+    return this.findByCharacterId(characterId, options);
+  }
+
+  async findByType(suitType: SuitType, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
+    return this.findBySuitType(suitType, options);
+  }
+
+  async findByKey(key: string): Promise<Swimsuit> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM swimsuits LIMIT 1');
+    } catch (error) {
+      const errorMsg = `SwimsuitModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      tableName: this.tableName,
+      errors
+    };
+  }
 } 

@@ -1,233 +1,107 @@
 import { DocumentModel } from '../models/DocumentModel';
 import { Document, NewDocument } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class DocumentService {
-  private documentModel: DocumentModel;
-
+export class DocumentService extends BaseService<DocumentModel, Document, NewDocument> {
   constructor() {
-    this.documentModel = new DocumentModel();
+    super(new DocumentModel(), 'DocumentService');
   }
 
   async createDocument(documentData: NewDocument): Promise<Document> {
-    try {
-      if (!documentData.unique_key?.trim()) {
-        throw new AppError('Document unique key is required', 400);
-      }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(documentData.unique_key, 'Document unique key');
+      this.validateRequiredString(documentData.title_en, 'Document title');
 
-      if (!documentData.title_en?.trim()) {
-        throw new AppError('Document title is required', 400);
-      }
+      this.logOperationStart('Creating', documentData.title_en, { key: documentData.unique_key });
 
-      // Validate JSON content if provided
-      if (documentData.content_json_en) {
-        if (typeof documentData.content_json_en === 'string') {
-          try {
-            JSON.parse(documentData.content_json_en);
-          } catch {
-            throw new AppError('Invalid JSON format for content_json_en', 400);
-          }
-        } else if (typeof documentData.content_json_en !== 'object') {
-          throw new AppError('Content JSON must be a valid JSON object or string', 400);
-        }
-      }
+      const document = await this.model.create(documentData);
 
-      logger.info(`Creating document: ${documentData.title_en}`, { key: documentData.unique_key });
-      
-      const document = await this.documentModel.create(documentData);
-      
-      logger.info(`Document created successfully: ${document.title_en}`, { id: document.id });
+      this.logOperationSuccess('Created', document.title_en, { id: document.id });
       return document;
-    } catch (error) {
-      logger.error(`Failed to create document: ${documentData.title_en}`, { 
-        error: error instanceof Error ? error.message : error 
-      });
-      throw error;
-    }
+    }, 'create document', documentData.title_en);
   }
 
   async getDocuments(options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
-    try {
-      return await this.documentModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to fetch documents', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch documents', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch documents');
   }
 
-  async getPublishedDocuments(options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
-    try {
-      return await this.documentModel.findPublished(options);
-    } catch (error) {
-      logger.error('Failed to fetch published documents', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch published documents', 500);
-    }
-  }
-
-  async getDocumentById(id: string): Promise<Document> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Document ID is required', 400);
-      }
-
-      return await this.documentModel.findById(id);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch document: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch document', 500);
-    }
+  async getDocumentById(id: string | number): Promise<Document> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Document ID');
+      return await this.model.findById(id);
+    }, 'fetch document', id);
   }
 
   async getDocumentByKey(key: string): Promise<Document> {
-    try {
-      if (!key?.trim()) {
-        throw new AppError('Document key is required', 400);
-      }
-
-      return await this.documentModel.findByKey(key);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch document by key: ${key}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch document', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(key, 'Document key');
+      return await this.model.findByKey(key);
+    }, 'fetch document by key', key);
   }
 
-  async updateDocument(id: string, updates: Partial<NewDocument>): Promise<Document> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Document ID is required', 400);
-      }
+  async updateDocument(id: string | number, updates: Partial<NewDocument>): Promise<Document> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Document ID');
+      this.validateOptionalString(updates.title_en, 'Document title');
 
-      if (updates.title_en !== undefined && !updates.title_en?.trim()) {
-        throw new AppError('Document title cannot be empty', 400);
-      }
+      this.logOperationStart('Updating', id, { updates });
 
-      // Validate JSON content if provided
-      if (updates.content_json_en !== undefined) {
-        if (updates.content_json_en && typeof updates.content_json_en === 'string') {
-          try {
-            JSON.parse(updates.content_json_en);
-          } catch {
-            throw new AppError('Invalid JSON format for content_json_en', 400);
-          }
-        } else if (updates.content_json_en && typeof updates.content_json_en !== 'object') {
-          throw new AppError('Content JSON must be a valid JSON object or string', 400);
-        }
-      }
+      const document = await this.model.update(id, updates);
 
-      logger.info(`Updating document: ${id}`, { updates });
-      
-      const document = await this.documentModel.update(id, updates);
-      
-      logger.info(`Document updated successfully: ${document.title_en}`, { id: document.id });
+      this.logOperationSuccess('Updated', document.title_en, { id: document.id });
       return document;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to update document: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to update document', 500);
-    }
+    }, 'update document', id);
   }
 
-  async publishDocument(id: string): Promise<Document> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Document ID is required', 400);
-      }
+  async deleteDocument(id: string | number): Promise<void> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Document ID');
 
-      logger.info(`Publishing document: ${id}`);
-      
-      const document = await this.documentModel.update(id, { is_published: true });
-      
-      logger.info(`Document published successfully: ${document.title_en}`, { id: document.id });
-      return document;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to publish document: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to publish document', 500);
-    }
+      // Check if document exists before deletion
+      await this.model.findById(id);
+
+      this.logOperationStart('Deleting', id);
+      await this.model.delete(id);
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete document', id);
   }
 
-  async unpublishDocument(id: string): Promise<Document> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Document ID is required', 400);
-      }
-
-      logger.info(`Unpublishing document: ${id}`);
-      
-      const document = await this.documentModel.update(id, { is_published: false });
-      
-      logger.info(`Document unpublished successfully: ${document.title_en}`, { id: document.id });
-      return document;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to unpublish document: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to unpublish document', 500);
-    }
-  }
-
-  async deleteDocument(id: string): Promise<void> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Document ID is required', 400);
-      }
-
-      await this.documentModel.findById(id);
-      
-      logger.info(`Deleting document: ${id}`);
-      await this.documentModel.delete(id);
-      logger.info(`Document deleted successfully: ${id}`);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to delete document: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to delete document', 500);
-    }
+  async getPublishedDocuments(options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findPublished(validatedOptions);
+    }, 'fetch published documents');
   }
 
   async searchDocuments(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
-    try {
-      if (!query?.trim()) {
-        throw new AppError('Search query is required', 400);
-      }
-
-      return await this.documentModel.search(query.trim(), options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to search documents: ${query}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to search documents', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search documents', query);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    try {
-      const modelHealth = await this.documentModel.healthCheck();
-      return {
-        isHealthy: modelHealth.isHealthy,
-        errors: modelHealth.errors
-      };
-    } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Document service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
-    }
+  async togglePublishStatus(id: string | number): Promise<Document> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Document ID');
+
+      this.logOperationStart('Toggling publish status', id);
+
+      const document = await this.model.togglePublishStatus(id);
+
+      this.logOperationSuccess('Toggled publish status', document.title_en, { 
+        id: document.id, 
+        newStatus: document.is_published 
+      });
+      return document;
+    }, 'toggle document publish status', id);
   }
+
+  // Health check is inherited from BaseService
 }
 
 export const documentService = new DocumentService();

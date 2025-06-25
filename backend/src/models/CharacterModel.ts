@@ -250,9 +250,7 @@ export class CharacterModel extends BaseModel {
     `;
 
     const countQuery = `
-      SELECT COUNT(*) as count
-      FROM swimsuits s
-      WHERE s.character_id = ?
+      SELECT COUNT(*) FROM swimsuits WHERE character_id = ?
     `;
 
     return this.getPaginatedResults(
@@ -275,9 +273,31 @@ export class CharacterModel extends BaseModel {
         has_malfunction: Boolean(row.has_malfunction),
         is_limited: Boolean(row.is_limited),
         release_date_gl: row.release_date_gl,
+        game_version: row.game_version,
         character_name: row.character_name
       }),
       [characterId]
     );
+  }
+
+  async findByKey(key: string): Promise<Character> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM characters LIMIT 1');
+    } catch (error) {
+      const errorMsg = `CharacterModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
   }
 }

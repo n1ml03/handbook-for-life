@@ -490,7 +490,8 @@ export const schemas = {
     title_en: z.string().min(1).max(255),
     summary_en: z.string().optional(),
     content_json_en: z.any().optional(), // TipTap JSON content
-    is_published: z.boolean().default(false)
+    is_published: z.boolean().default(false),
+    screenshots: z.array(z.string()).optional()
   }),
 
   updateDocument: z.object({
@@ -498,7 +499,8 @@ export const schemas = {
     title_en: z.string().min(1).max(255).optional(),
     summary_en: z.string().optional(),
     content_json_en: z.any().optional(), // TipTap JSON content
-    is_published: z.boolean().optional()
+    is_published: z.boolean().optional(),
+    screenshots: z.array(z.string()).optional()
   }),
 
   // ============================================================================

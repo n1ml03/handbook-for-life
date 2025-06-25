@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { executeQuery, initializePool, closeDatabase } from '../../config/database';
-import { logger } from '../../config';
+import logger from '../../config/logger';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 interface Migration {
@@ -302,7 +302,7 @@ async function main() {
 }
 
 // Run if called directly
-if (import.meta.main) {
+if (require.main === module) {
   main();
 }
 

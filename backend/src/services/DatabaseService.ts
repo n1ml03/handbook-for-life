@@ -143,8 +143,8 @@ export class DatabaseService {
       const [result] = await executeQuery(`
         INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          is_published, technical_details, bug_fixes, screenshots, metrics
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          is_published, screenshots, metrics
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         uniqueKey,
         updateLogData.version,
@@ -154,8 +154,6 @@ export class DatabaseService {
         updateLogData.date,
         JSON.stringify(updateLogData.tags || []),
         updateLogData.is_published !== undefined ? updateLogData.is_published : true,
-        JSON.stringify(updateLogData.technical_details || []),
-        JSON.stringify(updateLogData.bug_fixes || []),
         JSON.stringify(updateLogData.screenshots || []),
         JSON.stringify(updateLogData.metrics || this.getDefaultMetrics())
       ]);
@@ -231,14 +229,6 @@ export class DatabaseService {
         updateFields.push('is_published = ?');
         updateValues.push(updates.is_published);
       }
-      if (updates.technical_details !== undefined) {
-        updateFields.push('technical_details = ?');
-        updateValues.push(JSON.stringify(updates.technical_details));
-      }
-      if (updates.bug_fixes !== undefined) {
-        updateFields.push('bug_fixes = ?');
-        updateValues.push(JSON.stringify(updates.bug_fixes));
-      }
       if (updates.screenshots !== undefined) {
         updateFields.push('screenshots = ?');
         updateValues.push(JSON.stringify(updates.screenshots));
@@ -308,8 +298,6 @@ export class DatabaseService {
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
       is_published: Boolean(row.is_published),
-      technical_details: this.parseJSONField(row.technical_details, []),
-      bug_fixes: this.parseJSONField(row.bug_fixes, []),
       screenshots: this.parseJSONField(row.screenshots, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',

@@ -186,4 +186,25 @@ export class SkillModel extends BaseModel {
     
     return rows.map(this.mapSkillRow);
   }
+
+  async findByKey(key: string): Promise<Skill> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM skills LIMIT 1');
+    } catch (error) {
+      const errorMsg = `SkillModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 } 

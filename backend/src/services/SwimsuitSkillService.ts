@@ -2,16 +2,14 @@ import { SwimsuitSkillModel } from '../models/SwimsuitSkillModel';
 import { SwimsuitModel } from '../models/SwimsuitModel';
 import { SkillModel } from '../models/SkillModel';
 import { SwimsuitSkill, NewSwimsuitSkill, SkillSlot, PaginationOptions, PaginatedResult } from '../types/database';
-import { AppError } from '../middleware/errorHandler';
-import logger from '../config/logger';
+import { BaseService } from './BaseService';
 
-export class SwimsuitSkillService {
-  private swimsuitSkillModel: SwimsuitSkillModel;
+export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, SwimsuitSkill, NewSwimsuitSkill> {
   private swimsuitModel: SwimsuitModel;
   private skillModel: SkillModel;
 
   constructor() {
-    this.swimsuitSkillModel = new SwimsuitSkillModel();
+    super(new SwimsuitSkillModel(), 'SwimsuitSkillService');
     this.swimsuitModel = new SwimsuitModel();
     this.skillModel = new SkillModel();
   }
@@ -21,7 +19,7 @@ export class SwimsuitSkillService {
   // ============================================================================
 
   async addSkillToSwimsuit(swimsuitSkillData: NewSwimsuitSkill): Promise<SwimsuitSkill> {
-    try {
+    return this.safeAsyncOperation(async () => {
       // Validate that swimsuit and skill exist
       await this.swimsuitModel.findById(swimsuitSkillData.swimsuit_id);
       await this.skillModel.findById(swimsuitSkillData.skill_id);
@@ -29,70 +27,81 @@ export class SwimsuitSkillService {
       // Validate skill configuration before adding
       const validation = await this.validateSkillAddition(swimsuitSkillData);
       if (!validation.isValid) {
-        throw new AppError(`Invalid skill configuration: ${validation.errors.join(', ')}`, 400);
+        throw new Error(`Invalid skill configuration: ${validation.errors.join(', ')}`);
       }
 
-      const swimsuitSkill = await this.swimsuitSkillModel.create(swimsuitSkillData);
-      logger.info(`Added skill ${swimsuitSkillData.skill_id} to swimsuit ${swimsuitSkillData.swimsuit_id} in slot ${swimsuitSkillData.skill_slot}`);
+      this.logOperationStart('Adding skill', 
+        `skill ${swimsuitSkillData.skill_id} to swimsuit ${swimsuitSkillData.swimsuit_id}`,
+        { slot: swimsuitSkillData.skill_slot }
+      );
+
+      const swimsuitSkill = await this.model.create(swimsuitSkillData);
+
+      this.logOperationSuccess('Added skill', swimsuitSkill.skill_id);
       return swimsuitSkill;
-    } catch (error) {
-      logger.error('Failed to add skill to swimsuit:', error);
-      throw error;
-    }
+    }, 'add skill to swimsuit');
   }
 
   async getSkillsBySwimsuitId(swimsuitId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.swimsuitSkillModel.findBySwimsuitIdWithDetails(swimsuitId, options);
-    } catch (error) {
-      logger.error(`Failed to get skills for swimsuit ${swimsuitId}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(swimsuitId, 'Swimsuit ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findBySwimsuitIdWithDetails(numericId, validatedOptions);
+    }, 'fetch skills by swimsuit', swimsuitId);
   }
 
   async getSwimsuitsBySkillId(skillId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.swimsuitSkillModel.findBySkillIdWithDetails(skillId, options);
-    } catch (error) {
-      logger.error(`Failed to get swimsuits for skill ${skillId}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(skillId, 'Skill ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findBySkillIdWithDetails(numericId, validatedOptions);
+    }, 'fetch swimsuits by skill', skillId);
   }
 
   async updateSwimsuitSkill(swimsuitId: number, skillSlot: SkillSlot, newSkillId: number): Promise<SwimsuitSkill> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericSwimsuitId = this.parseNumericId(swimsuitId, 'Swimsuit ID');
+      const numericSkillId = this.parseNumericId(newSkillId, 'New skill ID');
+
       // Validate that the new skill exists
-      await this.skillModel.findById(newSkillId);
+      await this.skillModel.findById(numericSkillId);
 
       // Validate the update won't break skill configuration
-      const validation = await this.validateSkillUpdate(swimsuitId, skillSlot, newSkillId);
+      const validation = await this.validateSkillUpdate(numericSwimsuitId, skillSlot, numericSkillId);
       if (!validation.isValid) {
-        throw new AppError(`Invalid skill update: ${validation.errors.join(', ')}`, 400);
+        throw new Error(`Invalid skill update: ${validation.errors.join(', ')}`);
       }
 
-      const swimsuitSkill = await this.swimsuitSkillModel.update(swimsuitId, skillSlot, { skill_id: newSkillId });
-      logger.info(`Updated skill in slot ${skillSlot} for swimsuit ${swimsuitId} to skill ${newSkillId}`);
+      this.logOperationStart('Updating swimsuit skill', 
+        `slot ${skillSlot} for swimsuit ${numericSwimsuitId}`,
+        { newSkillId: numericSkillId }
+      );
+
+      const swimsuitSkill = await this.model.update(numericSwimsuitId, skillSlot, { skill_id: numericSkillId });
+
+      this.logOperationSuccess('Updated swimsuit skill', swimsuitSkill.skill_id);
       return swimsuitSkill;
-    } catch (error) {
-      logger.error(`Failed to update swimsuit skill:`, error);
-      throw error;
-    }
+    }, 'update swimsuit skill');
   }
 
   async removeSkillFromSwimsuit(swimsuitId: number, skillSlot: SkillSlot): Promise<void> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(swimsuitId, 'Swimsuit ID');
+
       // Validate the removal won't break required skill configuration
-      const validation = await this.validateSkillRemoval(swimsuitId, skillSlot);
+      const validation = await this.validateSkillRemoval(numericId, skillSlot);
       if (!validation.isValid) {
-        throw new AppError(`Cannot remove skill: ${validation.errors.join(', ')}`, 400);
+        throw new Error(`Cannot remove skill: ${validation.errors.join(', ')}`);
       }
 
-      await this.swimsuitSkillModel.delete(swimsuitId, skillSlot);
-      logger.info(`Removed skill from slot ${skillSlot} for swimsuit ${swimsuitId}`);
-    } catch (error) {
-      logger.error(`Failed to remove skill from swimsuit:`, error);
-      throw error;
-    }
+      this.logOperationStart('Removing skill', 
+        `from slot ${skillSlot} for swimsuit ${numericId}`
+      );
+
+      await this.model.delete(numericId, skillSlot);
+      
+      this.logOperationSuccess('Removed skill', `${numericId}:${skillSlot}`);
+    }, 'remove skill from swimsuit');
   }
 
   // ============================================================================
@@ -100,9 +109,11 @@ export class SwimsuitSkillService {
   // ============================================================================
 
   async setSwimsuitSkills(swimsuitId: number, skills: Omit<NewSwimsuitSkill, 'swimsuit_id'>[]): Promise<SwimsuitSkill[]> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(swimsuitId, 'Swimsuit ID');
+
       // Validate that swimsuit exists
-      await this.swimsuitModel.findById(swimsuitId);
+      await this.swimsuitModel.findById(numericId);
 
       // Validate all skills exist
       for (const skill of skills) {
@@ -112,20 +123,22 @@ export class SwimsuitSkillService {
       // Validate the complete skill configuration
       const validation = await this.validateCompleteSkillConfiguration(skills);
       if (!validation.isValid) {
-        throw new AppError(`Invalid skill configuration: ${validation.errors.join(', ')}`, 400);
+        throw new Error(`Invalid skill configuration: ${validation.errors.join(', ')}`);
       }
 
-      const result = await this.swimsuitSkillModel.replaceSwimsuitSkills(swimsuitId, skills);
-      logger.info(`Set ${result.length} skills for swimsuit ${swimsuitId}`);
+      this.logOperationStart('Setting swimsuit skills', 
+        `${skills.length} skills for swimsuit ${numericId}`
+      );
+
+      const result = await this.model.replaceSwimsuitSkills(numericId, skills);
+
+      this.logOperationSuccess('Set swimsuit skills', result.length);
       return result;
-    } catch (error) {
-      logger.error(`Failed to set swimsuit skills:`, error);
-      throw error;
-    }
+    }, 'set swimsuit skills');
   }
 
   async bulkAddSwimsuitSkills(swimsuitSkills: NewSwimsuitSkill[]): Promise<SwimsuitSkill[]> {
-    try {
+    return this.safeAsyncOperation(async () => {
       // Validate all swimsuits and skills exist
       const swimsuitIds = new Set(swimsuitSkills.map(ss => ss.swimsuit_id));
       const skillIds = new Set(swimsuitSkills.map(ss => ss.skill_id));
@@ -154,17 +167,17 @@ export class SwimsuitSkillService {
       for (const [swimsuitId, skills] of swimsuitGroups) {
         const validation = await this.validateCompleteSkillConfiguration(skills);
         if (!validation.isValid) {
-          throw new AppError(`Invalid skill configuration for swimsuit ${swimsuitId}: ${validation.errors.join(', ')}`, 400);
+          throw new Error(`Invalid skill configuration for swimsuit ${swimsuitId}: ${validation.errors.join(', ')}`);
         }
       }
 
-      const results = await this.swimsuitSkillModel.bulkCreate(swimsuitSkills);
-      logger.info(`Bulk added ${results.length} swimsuit skills`);
+      this.logOperationStart('Bulk adding swimsuit skills', `${swimsuitSkills.length} skills`);
+
+      const results = await this.model.bulkCreate(swimsuitSkills);
+
+      this.logOperationSuccess('Bulk added swimsuit skills', results.length);
       return results;
-    } catch (error) {
-      logger.error('Failed to bulk add swimsuit skills:', error);
-      throw error;
-    }
+    }, 'bulk add swimsuit skills');
   }
 
   // ============================================================================
@@ -172,37 +185,28 @@ export class SwimsuitSkillService {
   // ============================================================================
 
   async getSwimsuitSkillSummary(swimsuitId: number): Promise<any> {
-    try {
-      const summary = await this.swimsuitSkillModel.getSwimsuitSkillSummary(swimsuitId);
-      logger.info(`Retrieved skill summary for swimsuit ${swimsuitId}`);
-      return summary;
-    } catch (error) {
-      logger.error(`Failed to get swimsuit skill summary:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(swimsuitId, 'Swimsuit ID');
+      return await this.model.getSwimsuitSkillSummary(numericId);
+    }, 'fetch swimsuit skill summary', swimsuitId);
   }
 
   async getSkillUsageStatistics(): Promise<any[]> {
-    try {
-      const statistics = await this.swimsuitSkillModel.getSkillUsageStatistics();
-      logger.info('Retrieved skill usage statistics');
-      return statistics;
-    } catch (error) {
-      logger.error('Failed to get skill usage statistics:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      return await this.model.getSkillUsageStatistics();
+    }, 'fetch skill usage statistics');
   }
 
   async getPopularSkillCombinations(limit: number = 10): Promise<any[]> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      if (limit <= 0 || limit > 100) {
+        throw new Error('Limit must be between 1 and 100');
+      }
       // This would require a more complex query to find common skill combinations
       // For now, return top skills by usage
       const statistics = await this.getSkillUsageStatistics();
       return statistics.slice(0, limit);
-    } catch (error) {
-      logger.error('Failed to get popular skill combinations:', error);
-      throw error;
-    }
+    }, 'fetch popular skill combinations');
   }
 
   // ============================================================================
@@ -214,29 +218,19 @@ export class SwimsuitSkillService {
 
     try {
       // Check if slot is already occupied
-      try {
-        await this.swimsuitSkillModel.findByCompositeKey(swimsuitSkillData.swimsuit_id, swimsuitSkillData.skill_slot);
+      const existingSkills = await this.model.findBySwimsuitId(swimsuitSkillData.swimsuit_id);
+      const slotTaken = existingSkills.some(skill => skill.skill_slot === swimsuitSkillData.skill_slot);
+      
+      if (slotTaken) {
         errors.push(`Skill slot ${swimsuitSkillData.skill_slot} is already occupied`);
-      } catch {
-        // Slot is free, which is what we want
       }
 
-      // Get current skills for the swimsuit
-      const currentSkills = await this.swimsuitSkillModel.findBySwimsuitId(swimsuitSkillData.swimsuit_id);
-      const currentSlots = currentSkills.data.map(s => s.skill_slot);
-
-      // Validate slot order logic
-      if (swimsuitSkillData.skill_slot === 'PASSIVE_2' && !currentSlots.includes('PASSIVE_1')) {
-        errors.push('PASSIVE_2 requires PASSIVE_1 to be present');
+      // Validate skill slot is valid
+      if (!this.isValidSkillSlot(swimsuitSkillData.skill_slot)) {
+        errors.push(`Invalid skill slot: ${swimsuitSkillData.skill_slot}`);
       }
-
-      if (swimsuitSkillData.skill_slot.startsWith('POTENTIAL') && 
-          (!currentSlots.includes('PASSIVE_1') || !currentSlots.includes('PASSIVE_2'))) {
-        errors.push('POTENTIAL skills require both PASSIVE skills to be present');
-      }
-
     } catch (error) {
-      errors.push(`Validation failed: ${error}`);
+      errors.push(`Validation error: ${error instanceof Error ? error.message : error}`);
     }
 
     return {
@@ -249,14 +243,20 @@ export class SwimsuitSkillService {
     const errors: string[] = [];
 
     try {
-      // Check if the skill slot exists
-      await this.swimsuitSkillModel.findByCompositeKey(swimsuitId, skillSlot);
+      // Check if the slot exists for this swimsuit
+      const existingSkills = await this.model.findBySwimsuitId(swimsuitId);
+      const slotExists = existingSkills.some(skill => skill.skill_slot === skillSlot);
+      
+      if (!slotExists) {
+        errors.push(`No skill found in slot ${skillSlot} for swimsuit ${swimsuitId}`);
+      }
 
-      // Additional validation logic can be added here
-      // For example, checking skill category compatibility with slot type
-
+      // Validate skill slot is valid
+      if (!this.isValidSkillSlot(skillSlot)) {
+        errors.push(`Invalid skill slot: ${skillSlot}`);
+      }
     } catch (error) {
-      errors.push(`Skill slot ${skillSlot} not found for swimsuit ${swimsuitId}`);
+      errors.push(`Validation error: ${error instanceof Error ? error.message : error}`);
     }
 
     return {
@@ -269,26 +269,18 @@ export class SwimsuitSkillService {
     const errors: string[] = [];
 
     try {
-      // Get current skills
-      const currentSkills = await this.swimsuitSkillModel.findBySwimsuitId(swimsuitId);
-      const currentSlots = currentSkills.data.map(s => s.skill_slot);
-
-      // Check if removing this skill would break dependencies
-      if (skillSlot === 'ACTIVE') {
-        errors.push('Cannot remove ACTIVE skill - it is required');
+      // Check if the slot exists for this swimsuit
+      const existingSkills = await this.model.findBySwimsuitId(swimsuitId);
+      const slotExists = existingSkills.some(skill => skill.skill_slot === skillSlot);
+      
+      if (!slotExists) {
+        errors.push(`No skill found in slot ${skillSlot} for swimsuit ${swimsuitId}`);
       }
 
-      if (skillSlot === 'PASSIVE_1' && currentSlots.includes('PASSIVE_2')) {
-        errors.push('Cannot remove PASSIVE_1 while PASSIVE_2 is present');
-      }
-
-      if ((skillSlot === 'PASSIVE_1' || skillSlot === 'PASSIVE_2') && 
-          currentSlots.some(slot => slot.startsWith('POTENTIAL'))) {
-        errors.push('Cannot remove PASSIVE skills while POTENTIAL skills are present');
-      }
-
+      // Add any business logic for mandatory skills if needed
+      // For example, maybe main skills cannot be removed
     } catch (error) {
-      errors.push(`Validation failed: ${error}`);
+      errors.push(`Validation error: ${error instanceof Error ? error.message : error}`);
     }
 
     return {
@@ -299,30 +291,26 @@ export class SwimsuitSkillService {
 
   private async validateCompleteSkillConfiguration(skills: Omit<NewSwimsuitSkill, 'swimsuit_id'>[]): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
-    const skillSlots = skills.map(s => s.skill_slot);
 
-    // Check for required active skill
-    if (!skillSlots.includes('ACTIVE')) {
-      errors.push('Swimsuit must have an ACTIVE skill');
-    }
+    try {
+      // Check for duplicate slots
+      const slots = skills.map(skill => skill.skill_slot);
+      const uniqueSlots = new Set(slots);
+      
+      if (slots.length !== uniqueSlots.size) {
+        errors.push('Duplicate skill slots detected');
+      }
 
-    // Check for duplicate slots
-    const uniqueSlots = new Set(skillSlots);
-    if (uniqueSlots.size !== skillSlots.length) {
-      errors.push('Duplicate skill slots detected');
-    }
+      // Validate all slots are valid
+      for (const skill of skills) {
+        if (!this.isValidSkillSlot(skill.skill_slot)) {
+          errors.push(`Invalid skill slot: ${skill.skill_slot}`);
+        }
+      }
 
-    // Check slot order logic
-    const hasPassive1 = skillSlots.includes('PASSIVE_1');
-    const hasPassive2 = skillSlots.includes('PASSIVE_2');
-    const hasPotential = skillSlots.some(slot => slot.startsWith('POTENTIAL'));
-
-    if (hasPassive2 && !hasPassive1) {
-      errors.push('PASSIVE_2 requires PASSIVE_1 to be present');
-    }
-
-    if (hasPotential && (!hasPassive1 || !hasPassive2)) {
-      errors.push('POTENTIAL skills require both PASSIVE skills to be present');
+      // Add any other business rules for skill configuration
+    } catch (error) {
+      errors.push(`Validation error: ${error instanceof Error ? error.message : error}`);
     }
 
     return {
@@ -331,84 +319,14 @@ export class SwimsuitSkillService {
     };
   }
 
-  // ============================================================================
-  // HEALTH CHECK
-  // ============================================================================
-
-  async initialize(): Promise<void> {
-    logger.info('Initializing SwimsuitSkillService...');
-
-    try {
-      // Initialize models if they have initialize methods
-      if (this.swimsuitSkillModel.initialize) {
-        await this.swimsuitSkillModel.initialize();
-      }
-      if (this.swimsuitModel.initialize) {
-        await this.swimsuitModel.initialize();
-      }
-      if (this.skillModel.initialize) {
-        await this.skillModel.initialize();
-      }
-
-      logger.info('SwimsuitSkillService initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize SwimsuitSkillService', { error });
-      throw error;
-    }
+  private isValidSkillSlot(slot: SkillSlot): boolean {
+    const validSlots: SkillSlot[] = ['MAIN', 'SUB1', 'SUB2', 'POTENTIAL1', 'POTENTIAL2'];
+    return validSlots.includes(slot);
   }
 
-  async shutdown(): Promise<void> {
-    logger.info('Shutting down SwimsuitSkillService...');
-
-    try {
-      // Shutdown models if they have shutdown methods
-      if (this.swimsuitSkillModel.shutdown) {
-        await this.swimsuitSkillModel.shutdown();
-      }
-      if (this.swimsuitModel.shutdown) {
-        await this.swimsuitModel.shutdown();
-      }
-      if (this.skillModel.shutdown) {
-        await this.skillModel.shutdown();
-      }
-
-      logger.info('SwimsuitSkillService shut down successfully');
-    } catch (error) {
-      logger.error('Failed to shutdown SwimsuitSkillService', { error });
-    }
-  }
-
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    const errors: string[] = [];
-    let isHealthy = true;
-
-    try {
-      const swimsuitSkillHealth = await this.swimsuitSkillModel.healthCheck();
-      const swimsuitHealth = await this.swimsuitModel.healthCheck();
-      const skillHealth = await this.skillModel.healthCheck();
-
-      if (!swimsuitSkillHealth.isHealthy) {
-        errors.push(...swimsuitSkillHealth.errors);
-        isHealthy = false;
-      }
-
-      if (!swimsuitHealth.isHealthy) {
-        errors.push(...swimsuitHealth.errors);
-        isHealthy = false;
-      }
-
-      if (!skillHealth.isHealthy) {
-        errors.push(...skillHealth.errors);
-        isHealthy = false;
-      }
-    } catch (error) {
-      errors.push(`SwimsuitSkillService health check failed: ${error}`);
-      isHealthy = false;
-    }
-
-    return { isHealthy, errors };
-  }
+  // Health check is inherited from BaseService
 }
 
 // Export singleton instance
 export const swimsuitSkillService = new SwimsuitSkillService();
+export default swimsuitSkillService;

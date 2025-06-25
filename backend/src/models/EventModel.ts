@@ -2,6 +2,7 @@ import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Event, NewEvent, EventType } from '../types/database';
 import { executeQuery } from '@config/database';
 import { AppError } from '@middleware/errorHandler';
+import { logger } from '../config';
 
 export class EventModel extends BaseModel {
   constructor() {
@@ -46,6 +47,7 @@ export class EventModel extends BaseModel {
         ]
       ) as [any, any];
 
+      logger.info(`Event created: ${event.name_en}`, { id: result.insertId });
       return this.findById(result.insertId);
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -166,6 +168,7 @@ export class EventModel extends BaseModel {
       params
     );
 
+    logger.info(`Event updated: ${id}`);
     return this.findById(id);
   }
 
@@ -184,5 +187,75 @@ export class EventModel extends BaseModel {
       this.mapEventRow,
       [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
     );
+  }
+
+  async findByKey(key: string): Promise<Event> {
+    return this.findByUniqueKey(key);
+  }
+
+  async findActive(options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
+    const now = new Date();
+    const whereClause = 'WHERE start_date <= ? AND end_date >= ?';
+    const values = [now, now];
+
+    return this.findWithPagination(whereClause, values, options);
+  }
+
+  async findUpcoming(options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
+    const now = new Date();
+    const whereClause = 'WHERE start_date > ?';
+    const values = [now];
+
+    return this.findWithPagination(whereClause, values, options);
+  }
+
+  async findByDateRange(startDate: Date, endDate: Date, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
+    const whereClause = 'WHERE start_date >= ? AND end_date <= ?';
+    const values = [startDate, endDate];
+
+    return this.findWithPagination(whereClause, values, options);
+  }
+
+  private async findWithPagination(
+    whereClause: string,
+    values: any[],
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Event>> {
+    const { offset, limit, sortBy, sortOrder } = this.processPaginationOptions(options);
+
+    // Count total records
+    const countSql = `SELECT COUNT(*) as total FROM events ${whereClause}`;
+    const [countRows] = await executeQuery(countSql, values);
+    const total = (countRows as any[])[0].total;
+
+    // Fetch paginated data
+    const dataSql = `
+      SELECT * FROM events 
+      ${whereClause}
+      ORDER BY ${sortBy} ${sortOrder}
+      LIMIT ? OFFSET ?
+    `;
+    const dataValues = [...values, limit, offset];
+    const [dataRows] = await executeQuery(dataSql, dataValues);
+
+    return this.buildPaginatedResult(dataRows as Event[], total, options);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM events LIMIT 1');
+    } catch (error) {
+      const errorMsg = `EventModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      tableName: this.tableName,
+      errors
+    };
   }
 } 

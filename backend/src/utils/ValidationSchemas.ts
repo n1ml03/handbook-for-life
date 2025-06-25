@@ -366,7 +366,27 @@ export const ServiceSchemas = {
       description: { ...CommonSchemas.description, required: false },
       date: { ...CommonSchemas.date, required: false },
       tags: { ...CommonSchemas.tags, required: false },
-      is_published: { type: 'boolean' as const, required: false, field: 'Published status' }
+      is_published: { type: 'boolean' as const, required: false, field: 'Published status' },
+      screenshots: { type: 'array' as const, required: false, maxLength: 10, field: 'Screenshots' }
+    }
+  },
+
+  Document: {
+    create: {
+      unique_key: CommonSchemas.uniqueKey,
+      title_en: { ...CommonSchemas.name, maxLength: 255, field: 'Document title' },
+      summary_en: { ...CommonSchemas.description, maxLength: 1000, field: 'Summary' },
+      content_json_en: { type: 'object' as const, required: false, field: 'Content' },
+      is_published: { type: 'boolean' as const, required: false, field: 'Published status' },
+      screenshots: { type: 'array' as const, required: false, maxLength: 10, field: 'Screenshots' }
+    },
+    update: {
+      unique_key: { ...CommonSchemas.uniqueKey, required: false },
+      title_en: { ...CommonSchemas.name, maxLength: 255, required: false, field: 'Document title' },
+      summary_en: { ...CommonSchemas.description, maxLength: 1000, required: false, field: 'Summary' },
+      content_json_en: { type: 'object' as const, required: false, field: 'Content' },
+      is_published: { type: 'boolean' as const, required: false, field: 'Published status' },
+      screenshots: { type: 'array' as const, required: false, maxLength: 10, field: 'Screenshots' }
     }
   },
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -16,27 +16,32 @@ import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
 import { type ShopItem, type ShopItemCardProps, type ShopItemType, type Currency, type ShopItemRarity } from '@/types';
 import { shopItemsApi } from '@/services/api';
+import React from 'react';
 
-function ShopItemCard({ item }: ShopItemCardProps) {
-  const getCurrencyIcon = (currency: string) => {
+// Memoized shop item card component
+const ShopItemCard = React.memo(function ShopItemCard({ item }: ShopItemCardProps) {
+  const getCurrencyIcon = useCallback((currency: string) => {
     switch (currency) {
       case 'coins': return <Coins className="w-4 h-4" />;
       case 'gems': return <Gem className="w-4 h-4" />;
       case 'tickets': return <Tag className="w-4 h-4" />;
       default: return <Coins className="w-4 h-4" />;
     }
-  };
+  }, []);
 
-  const getCurrencyColor = (currency: string) => {
+  const getCurrencyColor = useCallback((currency: string) => {
     switch (currency) {
       case 'coins': return 'text-yellow-400';
       case 'gems': return 'text-purple-400';
       case 'tickets': return 'text-green-400';
       default: return 'text-yellow-400';
     }
-  };
+  }, []);
 
-  const finalPrice = item.discount ? Math.floor(item.price * (1 - item.discount / 100)) : item.price;
+  const finalPrice = useMemo(() => 
+    item.discount ? Math.floor(item.price * (1 - item.discount / 100)) : item.price,
+    [item.discount, item.price]
+  );
 
   return (
     <motion.div
@@ -66,7 +71,7 @@ function ShopItemCard({ item }: ShopItemCardProps) {
         {/* Description */}
         <div className="mb-4">
           <p className="text-sm text-gray-300 leading-relaxed line-clamp-2">
-            {item.description || item.description || 'No description available'}
+            {item.description || 'No description available'}
           </p>
         </div>
 
@@ -133,9 +138,9 @@ function ShopItemCard({ item }: ShopItemCardProps) {
       </div>
     </motion.div>
   );
-}
+});
 
-// Helper functions for dynamic styling
+// Helper functions for dynamic styling - memoized
 const getActiveIconClasses = (sectionKey: string) => {
   switch (sectionKey) {
     case 'owner': return 'bg-blue-400/20 shadow-md shadow-blue-400/20';
@@ -172,6 +177,8 @@ export default function ShopPage() {
   const [activeSection, setActiveSection] = useState<'owner' | 'event' | 'venus' | 'vip'>('owner');
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
+  // Optimized filter state management
   const [filterValues, setFilterValues] = useState({
     search: '',
     type: '',
@@ -185,19 +192,20 @@ export default function ShopPage() {
     priceMax: ''
   });
 
-  // API state
-  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [totalItems, setTotalItems] = useState(0);
-  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  // API state with better organization
+  const [shopData, setShopData] = useState({
+    items: [] as ShopItem[],
+    loading: false,
+    error: null as string | null,
+    totalItems: 0,
+    availableTypes: [] as string[]
+  });
 
   const itemsPerPage = 8;
 
-  // Load shop items from API
+  // Optimized load function with better error handling
   const loadShopItems = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setShopData(prev => ({ ...prev, loading: true, error: null }));
     
     try {
       const params = {
@@ -212,100 +220,108 @@ export default function ShopPage() {
 
       const response = await shopItemsApi.getShopItems(params);
       
-      // Transform items to shop item format - response is already { data: unknown[], pagination: unknown }
-      const transformedItems = (response.data || []).map((item: Record<string, unknown>) => {
-        // Map item category to shop item type
+      // Transform items to shop item format with better type safety
+      const transformedItems: ShopItem[] = (response.data || []).map((item: Record<string, unknown>) => {
         let shopType: ShopItemType = 'currency';
-        if (item.category === 'ACCESSORY' || item.item_category === 'ACCESSORY') {
-          shopType = 'accessory';
-        } else if (item.category === 'CURRENCY' || item.item_category === 'CURRENCY') {
-          shopType = 'currency';
-        } else if (item.category === 'DECORATION' || item.type === 'decoration') {
-          shopType = 'decoration';
-        } else if (item.category === 'BOOSTER' || item.type === 'booster') {
-          shopType = 'booster';
-        }
+        const category = String(item.category || item.item_category || '');
+        
+        if (category === 'ACCESSORY') shopType = 'accessory';
+        else if (category === 'CURRENCY') shopType = 'currency';
+        else if (String(item.type) === 'decoration') shopType = 'decoration';
+        else if (String(item.type) === 'booster') shopType = 'booster';
 
-        // Map rarity to shop item rarity
         let shopRarity: ShopItemRarity = 'common';
         const itemRarity = String(item.rarity || '').toLowerCase();
-        if (itemRarity === 'rare' || itemRarity === 'r') {
-          shopRarity = 'rare';
-        } else if (itemRarity === 'epic' || itemRarity === 'sr') {
-          shopRarity = 'epic';
-        } else if (itemRarity === 'legendary' || itemRarity === 'ssr') {
-          shopRarity = 'legendary';
-        }
+        if (itemRarity === 'rare' || itemRarity === 'r') shopRarity = 'rare';
+        else if (itemRarity === 'epic' || itemRarity === 'sr') shopRarity = 'epic';
+        else if (itemRarity === 'legendary' || itemRarity === 'ssr') shopRarity = 'legendary';
 
         return {
           id: String(item.id || item.unique_key || ''),
           name: String(item.name_en || item.name || ''),
           description: String(item.description_en || item.description || ''),
           type: shopType,
-          category: String(item.category || item.item_category || 'general'),
+          category: category,
           section: activeSection,
           rarity: shopRarity,
           price: Number(item.price || 0),
           currency: (item.currency || 'coins') as Currency,
           image: String(item.image || '📦'),
-          inStock: item.in_stock !== false,
-          isNew: Boolean(item.is_new),
+          inStock: Boolean(item.in_stock !== false), // Default to true if not specified
           featured: Boolean(item.featured),
-          discount: Number(item.discount || 0),
+          isNew: Boolean(item.is_new),
+          discount: Number(item.discount || 0) || undefined,
           limitedTime: Boolean(item.limited_time)
         };
       });
-      
-      // Apply client-side filtering for checkbox filters
-      let filteredItems = transformedItems;
-      
-      if (filterValues.inStock) {
-        filteredItems = filteredItems.filter((item) => item.inStock);
-      }
-      if (filterValues.featured) {
-        filteredItems = filteredItems.filter((item) => item.featured);
-      }
-      if (filterValues.isNew) {
-        filteredItems = filteredItems.filter((item) => item.isNew);
-      }
-      if (filterValues.hasDiscount) {
-        filteredItems = filteredItems.filter((item) => item.discount > 0);
-      }
-      if (filterValues.currency) {
-        filteredItems = filteredItems.filter((item) => item.currency === filterValues.currency);
-      }
 
-      setShopItems(filteredItems);
-      setTotalItems(response.pagination?.total || filteredItems.length);
+      setShopData(prev => ({
+        ...prev,
+        items: transformedItems,
+        totalItems: response.pagination?.total || transformedItems.length,
+        loading: false,
+        error: null
+      }));
 
-      // Extract available types for filter options
-      if (!availableTypes.length) {
-        const types = [...new Set(transformedItems.map((item) => item.type))].filter(Boolean) as string[];
-        setAvailableTypes(types);
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load shop items';
-      setError(errorMessage);
+      // Extract unique types for filter options
+      const types = [...new Set(transformedItems.map(item => item.type))];
+      setShopData(prev => ({ ...prev, availableTypes: types }));
+
+    } catch (err) {
       console.error('Failed to load shop items:', err);
-      
-      // If it's a network error, show a more helpful message
-      if (errorMessage?.includes('Network error') || (err as Record<string, unknown>)?.status === 0) {
-        setError('Unable to connect to the shop service. Please check your connection.');
-      }
-    } finally {
-      setLoading(false);
+      setShopData(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load shop items'
+      }));
     }
-  }, [currentPage, sortBy, sortDirection, filterValues.search, filterValues.type, filterValues.rarity, filterValues.inStock, filterValues.featured, filterValues.isNew, filterValues.hasDiscount, filterValues.currency, availableTypes.length]);
+  }, [currentPage, sortBy, sortDirection, filterValues.search, filterValues.type, filterValues.rarity, activeSection]);
 
-  // Load items on component mount and when filters change
+  // Load shop items when dependencies change
   useEffect(() => {
     loadShopItems();
   }, [loadShopItems]);
 
-  const totalPages = Math.ceil((totalItems || 0) / itemsPerPage);
+  // Optimized filter change handler
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
+    setFilterValues(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to first page when filtering
+  }, []);
 
-  // Filter fields configuration
-  const filterFields: FilterField[] = [
+  // Optimized sort change handler
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
+    setCurrentPage(1); // Reset to first page when sorting
+  }, []);
+
+  // Optimized clear filters
+  const clearFilters = useCallback(() => {
+    setFilterValues({
+      search: '',
+      type: '',
+      rarity: '',
+      currency: '',
+      inStock: false,
+      isNew: false,
+      hasDiscount: false,
+      featured: false,
+      priceMin: '',
+      priceMax: ''
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Shop sections configuration
+  const sections = useMemo(() => [
+    { key: 'owner' as const, label: 'Owner Room', icon: '🏠' },
+    { key: 'event' as const, label: 'Event Shop', icon: '🎪' },
+    { key: 'venus' as const, label: 'Venus Shop', icon: '💎' },
+    { key: 'vip' as const, label: 'VIP Shop', icon: '👑' }
+  ], []);
+
+  // Memoized filter configuration
+  const filterFields: FilterField[] = useMemo(() => [
     {
       key: 'search',
       label: 'Search',
@@ -318,7 +334,7 @@ export default function ShopPage() {
       label: 'Type',
       type: 'select',
       placeholder: 'All Types',
-      options: availableTypes.map(type => ({ 
+      options: shopData.availableTypes.map(type => ({ 
         value: type, 
         label: type.charAt(0).toUpperCase() + type.slice(1) 
       })),
@@ -335,7 +351,6 @@ export default function ShopPage() {
         { value: 'epic', label: 'Epic' },
         { value: 'legendary', label: 'Legendary' }
       ],
-      icon: <Gem className="w-3 h-3 mr-1" />,
     },
     {
       key: 'currency',
@@ -366,244 +381,254 @@ export default function ShopPage() {
     },
     {
       key: 'hasDiscount',
-      label: 'On Sale Only',
+      label: 'On Sale',
       type: 'checkbox',
     }
-  ];
+  ], [shopData.availableTypes]);
 
-  // Sort options
-  const sortOptions: SortOption[] = [
+  // Memoized sort options
+  const sortOptions: SortOption[] = useMemo(() => [
     { key: 'name', label: 'Name' },
     { key: 'price', label: 'Price' },
     { key: 'rarity', label: 'Rarity' },
     { key: 'type', label: 'Type' }
-  ];
+  ], []);
 
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filter changes
-  };
-
-  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(newDirection);
-    setCurrentPage(1); // Reset to first page when sort changes
-  };
-
-  const clearFilters = () => {
-    setFilterValues({
-      search: '',
-      type: '',
-      rarity: '',
-      currency: '',
-      inStock: false,
-      isNew: false,
-      hasDiscount: false,
-      featured: false,
-      priceMin: '',
-      priceMax: ''
+  // Memoized filtered items for better performance
+  const filteredItems = useMemo(() => {
+    return shopData.items.filter(item => {
+      if (filterValues.featured && !item.featured) return false;
+      if (filterValues.hasDiscount && !item.discount) return false;
+      if (filterValues.inStock && !item.inStock) return false;
+      if (filterValues.isNew && !item.isNew) return false;
+      if (filterValues.currency && item.currency !== filterValues.currency) return false;
+      return true;
     });
-    setCurrentPage(1);
-  };
+  }, [shopData.items, filterValues.featured, filterValues.hasDiscount, filterValues.inStock, filterValues.isNew, filterValues.currency]);
 
-  const sections = [
-    { key: 'owner' as const, label: 'Owner Room', icon: '🏠' },
-    { key: 'event' as const, label: 'Event Shop', icon: '🎪' },
-    { key: 'venus' as const, label: 'Venus Shop', icon: '💎' },
-    { key: 'vip' as const, label: 'VIP Shop', icon: '👑' }
-  ];
+  // Memoized pagination calculations
+  const paginationData = useMemo(() => {
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = filteredItems.slice(startIndex, endIndex);
+    
+    return {
+      totalPages,
+      currentItems,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1
+    };
+  }, [filteredItems, currentPage, itemsPerPage]);
+
+  // Page navigation handlers
+  const handleNextPage = useCallback(() => {
+    if (paginationData.hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [paginationData.hasNextPage]);
+
+  const handlePrevPage = useCallback(() => {
+    if (paginationData.hasPrevPage) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [paginationData.hasPrevPage]);
 
   return (
     <PageLoadingState 
-      isLoading={loading && shopItems.length === 0} 
+      isLoading={shopData.loading && shopData.items.length === 0} 
       message="Loading shop items..."
     >
-    <div className="modern-page">
-      <div className="modern-container-lg">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="modern-page-header"
-        >
-          <h1 className="modern-page-title">
-            Shop
-          </h1>
-          <p className="modern-page-subtitle">
-            Showing {totalItems} items
-          </p>
-        </motion.div>
-
-        {/* Search and Filter Controls */}
-        <div className="mb-4">
-          <UnifiedFilter
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            filterFields={filterFields}
-            sortOptions={sortOptions}
-            filterValues={filterValues}
-            onFilterChange={handleFilterChange}
-            onClearFilters={clearFilters}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-            resultCount={totalItems}
-            itemLabel="shop items"
-            accentColor="accent-cyan"
-            secondaryColor="accent-purple"
-            headerIcon={<ShoppingCart className="w-4 h-4" />}
-          />
-        </div>
-
-        {/* Shop Sections */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <div className="flex flex-wrap gap-2 justify-between md:justify-evenly">
-            {sections.map((section) => (
-              <motion.button
-                key={section.key}
-                onClick={() => setActiveSection(section.key)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`shop-section-card relative group px-4 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex items-center gap-3 flex-1 min-w-[140px] max-w-[200px] ${
-                  activeSection === section.key
-                    ? `active-${section.key}`
-                    : 'bg-dark-card/40 border-dark-border/30 hover:border-gray-600/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Icon */}
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all duration-300 flex-shrink-0 ${
-                    activeSection === section.key
-                      ? getActiveIconClasses(section.key)
-                      : 'bg-gray-700/50 group-hover:bg-gray-600/50'
-                  }`}>
-                    {section.icon}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="text-left flex-1 min-w-0">
-                    <h3 className={`font-medium text-sm transition-colors duration-300 truncate ${
-                      activeSection === section.key
-                        ? getActiveTextColor(section.key)
-                        : 'text-white group-hover:text-gray-200'
-                    }`}>
-                      {section.label}
-                    </h3>
-                  </div>
-                  
-                  {/* Active Indicator */}
-                  {activeSection === section.key && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${getActiveIndicatorColor(section.key)}`}
-                    />
-                  )}
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Notice about shop functionality */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6"
-        >
-          <div className="flex items-center gap-3 text-blue-400">
-            <ShoppingCart className="w-5 h-5" />
-            <span className="font-medium">
-              Shop system is integrated with the items catalog. Items shown are from the unified items database.
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
-            <span className="ml-3 text-gray-300">Loading shop items...</span>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !loading && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
-            <div className="flex items-center gap-3 text-red-400 mb-2">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="font-medium">Failed to load shop items</span>
-            </div>
-            <p className="text-red-300 text-sm">{error}</p>
-            <Button
-              onClick={loadShopItems}
-              className="mt-3 bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
-              size="sm"
-            >
-              Retry
-            </Button>
-          </div>
-        )}
-
-        {/* Items Grid */}
-        {!loading && !error && shopItems.length > 0 && (
+      <div className="modern-page">
+        <div className="modern-container-md">
+          {/* Header */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="modern-page-header"
           >
-            {shopItems.map((item) => (
-              <ShopItemCard key={item.id} item={item} />
-            ))}
+            <h1 className="modern-page-title">Shop</h1>
+            <p className="modern-page-subtitle">
+              Showing {shopData.totalItems} items
+            </p>
           </motion.div>
-        )}
 
-        {/* Empty State */}
-        {!loading && !error && shopItems.length === 0 && (
-          <div className="text-center py-12">
-            <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-300 mb-2">No items found</h3>
+          {/* Search and Filter Controls */}
+          <div className="mb-4">
+            <UnifiedFilter
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              filterFields={filterFields}
+              sortOptions={sortOptions}
+              filterValues={filterValues}
+              onFilterChange={handleFilterChange}
+              onClearFilters={clearFilters}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+              resultCount={filteredItems.length}
+              totalCount={shopData.totalItems}
+              itemLabel="shop items"
+              accentColor="accent-cyan"
+              secondaryColor="accent-purple"
+              headerIcon={<ShoppingCart className="w-4 h-4" />}
+            />
           </div>
-        )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+          {/* Shop Sections */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-2"
+            className="mb-10"
           >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            
-            <span className="px-4 py-2 text-sm text-gray-300">
-              Page {currentPage} of {totalPages}
-            </span>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="flex flex-wrap gap-2 justify-between md:justify-evenly">
+              {sections.map((section) => (
+                <motion.button
+                  key={section.key}
+                  onClick={() => setActiveSection(section.key)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`shop-section-card relative group px-4 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex items-center gap-3 flex-1 min-w-[140px] max-w-[200px] ${
+                    activeSection === section.key
+                      ? `active-${section.key}`
+                      : 'bg-dark-card/40 border-dark-border/30 hover:border-gray-600/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Icon */}
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all duration-300 flex-shrink-0 ${
+                      activeSection === section.key
+                        ? getActiveIconClasses(section.key)
+                        : 'bg-gray-700/50 group-hover:bg-gray-600/50'
+                    }`}>
+                      {section.icon}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="text-left flex-1 min-w-0">
+                      <h3 className={`font-medium text-sm transition-colors duration-300 truncate ${
+                        activeSection === section.key
+                          ? getActiveTextColor(section.key)
+                          : 'text-white group-hover:text-gray-200'
+                      }`}>
+                        {section.label}
+                      </h3>
+                    </div>
+                    
+                    {/* Active Indicator */}
+                    {activeSection === section.key && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${getActiveIndicatorColor(section.key)}`}
+                      />
+                    )}
+                  </div>
+                </motion.button>
+              ))}
+            </div>
           </motion.div>
-        )}
+
+          {/* Notice about shop functionality */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6"
+          >
+            <div className="flex items-center gap-3 text-blue-400">
+              <ShoppingCart className="w-5 h-5" />
+              <span className="font-medium">
+                Shop system is integrated with the items catalog. Items shown are from the unified items database.
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Error State */}
+          {shopData.error && !shopData.loading && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-3 text-red-400 mb-2">
+                <ShoppingCart className="w-5 h-5" />
+                <span className="font-medium">Failed to load shop items</span>
+              </div>
+              <p className="text-red-300 text-sm">{shopData.error}</p>
+              <Button
+                onClick={loadShopItems}
+                className="mt-3 bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
+                size="sm"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {/* Items Grid */}
+          {!shopData.loading && !shopData.error && paginationData.currentItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
+            >
+              {paginationData.currentItems.map((item) => (
+                <ShopItemCard key={item.id} item={item} />
+              ))}
+            </motion.div>
+          )}
+
+          {/* Empty State */}
+          {!shopData.loading && !shopData.error && paginationData.currentItems.length === 0 && (
+            <div className="text-center py-12">
+              <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-300 mb-2">No items found</h3>
+              <p className="text-gray-400">
+                {filterValues.search || Object.values(filterValues).some(v => v) 
+                  ? 'No items match your search criteria.' 
+                  : 'No shop items available.'}
+              </p>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {shopData.loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
+              <span className="ml-3 text-gray-300">Loading shop items...</span>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {paginationData.totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-2"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={!paginationData.hasPrevPage || shopData.loading}
+                className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <span className="px-4 py-2 text-sm text-gray-300">
+                Page {currentPage} of {paginationData.totalPages}
+              </span>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={!paginationData.hasNextPage || shopData.loading}
+                className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </div>
-    </div>
     </PageLoadingState>
   );
 }

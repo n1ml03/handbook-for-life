@@ -141,7 +141,8 @@ const AdminPage = () => {
       tags: [], // Empty tags array
       author: 'Admin', // Default author
       // Additional UI compatibility property
-      isPublished: false // Maps to is_published for DocumentEditor compatibility
+      isPublished: false, // Maps to is_published for DocumentEditor compatibility
+      screenshots: [] // Empty screenshots array
     };
     setEditingDocument(newDocument);
     setIsEditMode(true);
@@ -224,8 +225,6 @@ const AdminPage = () => {
       date: new Date().toISOString().split('T')[0],
       isPublished: false,
       tags: [],
-      technicalDetails: [],
-      bugFixes: [],
       screenshots: [],
       metrics: {
         performanceImprovement: '0%',
@@ -423,7 +422,7 @@ const AdminPage = () => {
       </div>
 
       {/* Header */}
-      {(!isEditMode || !isFocusMode) && (
+      {!isEditMode && (
         <Section
           title="Admin Panel"
           description="Manage website content, updates, and system settings with enhanced CSV import/export capabilities"
@@ -431,7 +430,7 @@ const AdminPage = () => {
       )}
 
       {/* Tab Navigation */}
-      {(!isEditMode || !isFocusMode) && (
+      {!isEditMode && (
         <Card className="p-2">
           <Inline spacing="sm" wrap>
             {adminSections.map(section => {

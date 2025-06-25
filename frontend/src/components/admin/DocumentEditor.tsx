@@ -3,6 +3,7 @@ import { Eye, Save, X, FileText, Edit3, Focus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormGroup, StatusBadge } from '@/components/ui/spacing';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { cn } from '@/services/utils';
 import { Document, DocumentCategory } from '@/types';
 import { TagInput } from './TagInput';
@@ -212,14 +213,17 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 />
               </FormGroup>
 
-              {/* Category and Status in a responsive grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Category */}
-                <FormGroup label="Category" required>
+              {/* Category */}
+              <FormGroup 
+                label="Category" 
+                description="Choose the most appropriate category for your document"
+                required
+              >
+                <div className="relative">
                   <select
                     value={document.category}
                     onChange={(e) => onDocumentChange({ ...document, category: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background transition-all duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:border-accent-cyan focus:outline-hidden text-sm font-medium"
+                    className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background transition-all duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:border-accent-cyan focus:outline-hidden text-sm font-medium appearance-none cursor-pointer"
                   >
                     {documentCategories.map(category => (
                       <option key={category.id} value={category.id}>
@@ -227,37 +231,48 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                       </option>
                     ))}
                   </select>
-                </FormGroup>
-
-                {/* Status */}
-                <FormGroup label="Publication Status" className="lg:col-span-1">
-                  <div className="flex items-center gap-4 p-4 bg-muted/30 border-2 border-border rounded-xl transition-all duration-200 focus-within:border-accent-cyan/50">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="admin-published"
-                        checked={document.isPublished}
-                        onChange={(e) => onDocumentChange({ ...document, isPublished: e.target.checked })}
-                        className="w-5 h-5 rounded-md border-2 border-border transition-all duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden checked:bg-accent-cyan checked:border-accent-cyan"
-                      />
-                      <label htmlFor="admin-published" className="text-sm font-semibold text-foreground cursor-pointer">
-                        Publish Document
-                      </label>
-                    </div>
-                    <div className="flex-1 flex justify-end">
-                      {document.isPublished ? (
-                        <StatusBadge status="success" className="text-xs font-medium">
-                          Published
-                        </StatusBadge>
-                      ) : (
-                        <StatusBadge status="warning" className="text-xs font-medium">
-                          Draft
-                        </StatusBadge>
-                      )}
-                    </div>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                </FormGroup>
-              </div>
+                </div>
+              </FormGroup>
+
+              {/* Publication Status */}
+              <FormGroup 
+                label="Publication Status"
+                description="Control whether this document is visible to the public"
+              >
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/20 to-muted/10 border-2 border-border rounded-xl transition-all duration-200 focus-within:border-accent-cyan/50">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="admin-published"
+                      checked={document.isPublished}
+                      onChange={(e) => onDocumentChange({ ...document, isPublished: e.target.checked })}
+                      className="w-5 h-5 rounded-md border-2 border-border transition-all duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden checked:bg-accent-cyan checked:border-accent-cyan"
+                    />
+                    <label htmlFor="admin-published" className="text-sm font-semibold text-foreground cursor-pointer">
+                      Publish Document
+                    </label>
+                    <span className="text-xs text-muted-foreground">
+                      {document.isPublished ? 'Document is live and visible to users' : 'Document is saved as draft'}
+                    </span>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {document.isPublished ? (
+                      <StatusBadge status="success" className="text-xs font-medium">
+                        Published
+                      </StatusBadge>
+                    ) : (
+                      <StatusBadge status="warning" className="text-xs font-medium">
+                        Draft
+                      </StatusBadge>
+                    )}
+                  </div>
+                </div>
+              </FormGroup>
 
               {/* Tags */}
               <TagInput
@@ -271,6 +286,18 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               />
             </div>
           </div>
+
+          {/* Screenshots */}
+          <FileUpload
+            files={document.screenshots}
+            onFilesChange={(files) => onDocumentChange({ ...document, screenshots: files })}
+            maxFiles={10}
+            accept="image/*"
+            maxSize={5 * 1024 * 1024} // 5MB
+            label="Screenshots"
+            description="Upload screenshot images for this document (PNG, JPG, GIF, WebP)"
+            disabled={isPreviewMode}
+          />
 
           {/* Content Editor Section*/}
           <div className="space-y-6" ref={editorRef}>

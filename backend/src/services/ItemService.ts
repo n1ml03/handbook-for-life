@@ -1,183 +1,128 @@
 import { ItemModel } from '../models/ItemModel';
-import { Item, NewItem } from '../types/database';
+import { Item, NewItem, ItemCategory, ItemRarity } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class ItemService {
-  private itemModel: ItemModel;
-
+export class ItemService extends BaseService<ItemModel, Item, NewItem> {
   constructor() {
-    this.itemModel = new ItemModel();
+    super(new ItemModel(), 'ItemService');
   }
 
   async createItem(itemData: NewItem): Promise<Item> {
-    try {
-      if (!itemData.unique_key?.trim()) {
-        throw new AppError('Item unique key is required', 400);
-      }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(itemData.unique_key, 'Item unique key');
+      this.validateRequiredString(itemData.name_en, 'Item name');
 
-      if (!itemData.name_en?.trim()) {
-        throw new AppError('Item name is required', 400);
-      }
+      this.logOperationStart('Creating', itemData.name_en, { key: itemData.unique_key });
 
-      logger.info(`Creating item: ${itemData.name_en}`, { key: itemData.unique_key });
-      
-      const item = await this.itemModel.create(itemData);
-      
-      logger.info(`Item created successfully: ${item.name_en}`, { id: item.id });
+      const item = await this.model.create(itemData);
+
+      this.logOperationSuccess('Created', item.name_en, { id: item.id });
       return item;
-    } catch (error) {
-      logger.error(`Failed to create item: ${itemData.name_en}`, { 
-        error: error instanceof Error ? error.message : error 
-      });
-      throw error;
-    }
+    }, 'create item', itemData.name_en);
   }
 
   async getItems(options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    try {
-      return await this.itemModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to fetch items', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch items', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch items');
   }
 
-  async getItemById(id: string): Promise<Item> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Item ID is required', 400);
-      }
-
-      return await this.itemModel.findById(id);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch item: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch item', 500);
-    }
+  async getItemById(id: string | number): Promise<Item> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Item ID');
+      return await this.model.findById(id);
+    }, 'fetch item', id);
   }
 
   async getItemByKey(key: string): Promise<Item> {
-    try {
-      if (!key?.trim()) {
-        throw new AppError('Item key is required', 400);
-      }
-
-      return await this.itemModel.findByKey(key);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch item by key: ${key}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch item', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(key, 'Item key');
+      return await this.model.findByKey(key);
+    }, 'fetch item by key', key);
   }
 
   async getItemsByCategory(category: string, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    try {
-      if (!category?.trim()) {
-        throw new AppError('Item category is required', 400);
-      }
-
-      return await this.itemModel.findByCategory(category, options);
-    } catch (error) {
-      logger.error(`Failed to fetch items by category: ${category}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch items by category', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(category, 'Item category');
+      const itemCategory = this.validateItemCategory(category);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByCategory(itemCategory, validatedOptions);
+    }, 'fetch items by category', category);
   }
 
   async getItemsByRarity(rarity: string, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    try {
-      if (!rarity?.trim()) {
-        throw new AppError('Rarity is required', 400);
-      }
-
-      return await this.itemModel.findByRarity(rarity, options);
-    } catch (error) {
-      logger.error(`Failed to fetch items by rarity: ${rarity}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch items by rarity', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(rarity, 'Rarity');
+      const itemRarity = this.validateItemRarity(rarity);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByRarity(itemRarity, validatedOptions);
+    }, 'fetch items by rarity', rarity);
   }
 
-  async updateItem(id: string, updates: Partial<NewItem>): Promise<Item> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Item ID is required', 400);
-      }
+  async updateItem(id: string | number, updates: Partial<NewItem>): Promise<Item> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Item ID');
+      this.validateOptionalString(updates.name_en, 'Item name');
 
-      if (updates.name_en !== undefined && !updates.name_en?.trim()) {
-        throw new AppError('Item name cannot be empty', 400);
-      }
+      this.logOperationStart('Updating', id, { updates });
 
-      logger.info(`Updating item: ${id}`, { updates });
-      
-      const item = await this.itemModel.update(id, updates);
-      
-      logger.info(`Item updated successfully: ${item.name_en}`, { id: item.id });
+      const item = await this.model.update(id, updates);
+
+      this.logOperationSuccess('Updated', item.name_en, { id: item.id });
       return item;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to update item: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to update item', 500);
-    }
+    }, 'update item', id);
   }
 
-  async deleteItem(id: string): Promise<void> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Item ID is required', 400);
-      }
+  async deleteItem(id: string | number): Promise<void> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Item ID');
 
-      await this.itemModel.findById(id);
-      
-      logger.info(`Deleting item: ${id}`);
-      await this.itemModel.delete(id);
-      logger.info(`Item deleted successfully: ${id}`);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to delete item: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to delete item', 500);
-    }
+      // Check if item exists before deletion
+      await this.model.findById(id);
+
+      this.logOperationStart('Deleting', id);
+      await this.model.delete(id);
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete item', id);
   }
 
   async searchItems(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    try {
-      if (!query?.trim()) {
-        throw new AppError('Search query is required', 400);
-      }
-
-      return await this.itemModel.search(query.trim(), options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to search items: ${query}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to search items', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search items', query);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    try {
-      const modelHealth = await this.itemModel.healthCheck();
-      return {
-        isHealthy: modelHealth.isHealthy,
-        errors: modelHealth.errors
-      };
-    } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Item service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  private validateItemCategory(category: string): ItemCategory {
+    const validCategories: ItemCategory[] = ['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL'];
+    
+    if (!validCategories.includes(category as ItemCategory)) {
+      throw new Error(`Invalid item category: ${category}. Valid categories are: ${validCategories.join(', ')}`);
     }
+    
+    return category as ItemCategory;
   }
+
+  private validateItemRarity(rarity: string): ItemRarity {
+    const validRarities: ItemRarity[] = ['N', 'R', 'SR', 'SSR'];
+    
+    if (!validRarities.includes(rarity as ItemRarity)) {
+      throw new Error(`Invalid item rarity: ${rarity}. Valid rarities are: ${validRarities.join(', ')}`);
+    }
+    
+    return rarity as ItemRarity;
+  }
+
+  // Health check is inherited from BaseService
 }
 
+// Export singleton instance
 export const itemService = new ItemService();
 export default itemService; 

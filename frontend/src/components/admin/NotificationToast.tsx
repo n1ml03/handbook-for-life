@@ -22,31 +22,38 @@ export const NotificationToast = React.memo(function NotificationToast({
 }: NotificationToastProps) {
   return (
     <div className={cn(
-      "flex items-start gap-3 p-4 rounded-lg border shadow-lg transition-all duration-300",
-      "bg-background/95 backdrop-blur-sm",
-      {
-        "border-green-500/20 bg-green-500/5": notification.type === 'success',
-        "border-red-500/20 bg-red-500/5": notification.type === 'error',
-        "border-yellow-500/20 bg-yellow-500/5": notification.type === 'warning',
-        "border-blue-500/20 bg-blue-500/5": notification.type === 'info'
-      }
+      "flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300",
+      "bg-background/90 backdrop-blur-md border-border/40",
+      "hover:shadow-2xl hover:scale-[1.02] transform",
+      "animate-in slide-in-from-right-5 fade-in duration-300"
     )}>
-      <div className="shrink-0 mt-0.5">
-        {notification.type === 'success' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-        {notification.type === 'error' && <AlertCircle className="w-5 h-5 text-red-600" />}
-        {notification.type === 'warning' && <AlertTriangle className="w-5 h-5 text-yellow-600" />}
-        {notification.type === 'info' && <Info className="w-5 h-5 text-blue-600" />}
+      <div className={cn(
+        "shrink-0 mt-0.5 p-1.5 rounded-lg",
+        notification.type === 'success' ? "bg-emerald-100/50 text-emerald-600" : "",
+        notification.type === 'error' ? "bg-red-100/50 text-red-600" : "",
+        notification.type === 'warning' ? "bg-amber-100/50 text-amber-600" : "",
+        notification.type === 'info' ? "bg-blue-100/50 text-blue-600" : ""
+      )}>
+        {notification.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+        {notification.type === 'error' && <AlertCircle className="w-4 h-4" />}
+        {notification.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
+        {notification.type === 'info' && <Info className="w-4 h-4" />}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-foreground">{notification.title}</h4>
-        <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+        <h4 className="text-sm font-medium text-foreground leading-tight">{notification.title}</h4>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{notification.message}</p>
       </div>
       <button
         onClick={() => onRemove(notification.id)}
-        className="shrink-0 p-1 rounded-md bg-muted/20 transition-colors duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden"
+        className={cn(
+          "shrink-0 p-1.5 rounded-lg transition-all duration-200",
+          "bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground",
+          "focus:ring-2 focus:ring-border/50 focus:outline-none",
+          "hover:scale-110 active:scale-95"
+        )}
         aria-label="Dismiss notification"
       >
-        <X className="w-4 h-4 text-muted-foreground" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

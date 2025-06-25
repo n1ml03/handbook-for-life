@@ -2,6 +2,7 @@ import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Bromide, NewBromide, BromideType, BromideRarity } from '../types/database';
 import { executeQuery } from '@config/database';
 import { AppError } from '@middleware/errorHandler';
+import { logger } from '../config';
 
 export class BromideModel extends BaseModel {
   constructor() {
@@ -47,6 +48,7 @@ export class BromideModel extends BaseModel {
         ]
       ) as [any, any];
 
+      logger.info(`Bromide created: ${bromide.name_en}`, { id: result.insertId });
       return this.findById(result.insertId);
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -87,13 +89,17 @@ export class BromideModel extends BaseModel {
   }
 
   async findByType(bromide_type: BromideType, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM bromides WHERE bromide_type = ?',
-      'SELECT COUNT(*) FROM bromides WHERE bromide_type = ?',
-      options,
-      this.mapBromideRow,
-      [bromide_type]
-    );
+    const { offset, limit, sortBy, sortOrder } = this.processPaginationOptions(options);
+
+    // Validate the type is a valid BromideType
+    if (!['DECO', 'OWNER'].includes(bromide_type)) {
+      throw new AppError(`Invalid bromide type: ${bromide_type}`, 400);
+    }
+
+    const whereClause = 'WHERE bromide_type = ?';
+    const values = [bromide_type];
+
+    return this.findWithPagination(whereClause, values, { offset, limit, sortBy, sortOrder });
   }
 
   async findByRarity(rarity: BromideRarity, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
@@ -166,6 +172,7 @@ export class BromideModel extends BaseModel {
       params
     );
 
+    logger.info(`Bromide updated: ${id}`);
     return this.findById(id);
   }
 
@@ -184,5 +191,61 @@ export class BromideModel extends BaseModel {
       this.mapBromideRow,
       [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
     );
+  }
+
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
+  private async findWithPagination(
+    whereClause: string,
+    values: any[],
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Bromide>> {
+    const { offset, limit, sortBy, sortOrder } = this.processPaginationOptions(options);
+
+    // Count total records
+    const countSql = `SELECT COUNT(*) as total FROM bromides ${whereClause}`;
+    const [countRows] = await executeQuery(countSql, values);
+    const total = (countRows as any[])[0].total;
+
+    // Fetch paginated data
+    const dataSql = `
+      SELECT * FROM bromides 
+      ${whereClause}
+      ORDER BY ${sortBy} ${sortOrder}
+      LIMIT ? OFFSET ?
+    `;
+    const dataValues = [...values, limit, offset];
+    const [dataRows] = await executeQuery(dataSql, dataValues);
+
+    return this.buildPaginatedResult(dataRows as Bromide[], total, options);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      // Test basic connection
+      await executeQuery('SELECT 1');
+      
+      // Test table existence and basic query
+      await executeQuery('SELECT COUNT(*) FROM bromides LIMIT 1');
+      
+      logger.debug('BromideModel health check passed');
+    } catch (error) {
+      const errorMsg = `BromideModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+      logger.error(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
+
+  async findByKey(key: string): Promise<Bromide> {
+    return this.findByUniqueKey(key);
   }
 } 

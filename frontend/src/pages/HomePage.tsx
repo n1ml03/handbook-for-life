@@ -1,17 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Database,
-  Shield,
   Calendar,
   Sparkles,
   ChevronDown,
   ChevronUp,
   Search,
   ExternalLink,
-  Code,
-  Bug,
-  Wrench,
   Image as ImageIcon} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,27 +16,35 @@ import { Input } from '@/components/ui/input';
 import { PageSection } from '@/components/ui/spacing';
 import { InlinePageLoader } from '@/components/ui';
 import { useUpdateLogs } from '@/hooks';
+import React from 'react';
 
-// Enhanced Update Log Component
-function UpdateLog() {
+// Enhanced Update Log Component with performance optimizations
+const UpdateLog = React.memo(function UpdateLog() {
   const { publishedUpdateLogs, isLoading } = useUpdateLogs();
   const [expandedUpdate, setExpandedUpdate] = useState<string | null>('2.1.0');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const filteredUpdates = useMemo(() => {
-    return publishedUpdateLogs.filter(update => {
-      const matchesSearch = searchTerm === '' || 
-        update.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        update.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        update.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      return matchesSearch;
-    });
-  }, [publishedUpdateLogs, searchTerm]);
+  // Memoized search function for better performance
+  const debouncedSearchTerm = useMemo(() => searchTerm, [searchTerm]);
 
-  const toggleExpanded = (version: string) => {
-    setExpandedUpdate(expandedUpdate === version ? null : version);
-  };
+  const filteredUpdates = useMemo(() => {
+    if (!debouncedSearchTerm) return publishedUpdateLogs;
+    
+    const searchLower = debouncedSearchTerm.toLowerCase();
+    return publishedUpdateLogs.filter(update => {
+      return update.title.toLowerCase().includes(searchLower) ||
+        update.description.toLowerCase().includes(searchLower) ||
+        update.tags.some(tag => tag.toLowerCase().includes(searchLower));
+    });
+  }, [publishedUpdateLogs, debouncedSearchTerm]);
+
+  const toggleExpanded = useCallback((version: string) => {
+    setExpandedUpdate(prev => prev === version ? null : version);
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
 
   if (isLoading) {
     return <InlinePageLoader message="Loading update logs..." className="py-12" />;
@@ -69,7 +73,7 @@ function UpdateLog() {
               type="text"
               placeholder="Search updates, features, tags..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-12 pr-4 py-3 text-lg modern-glass border-2 border-border/30 hover:border-accent-cyan/50 focus:border-accent-cyan transition-all duration-300"
               aria-label="Search update logs"
             />
@@ -87,161 +91,165 @@ function UpdateLog() {
             const isExpanded = expandedUpdate === update.version;
             
             return (
-              <div key={update.version} className="relative">
-                {/* Timeline Node */}
-                <div className="absolute left-3 md:left-9 w-6 h-6 rounded-full bg-background border-2 border-accent-cyan z-10 flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-accent-cyan"></div>
-                </div>
-                
-                {/* Main Card */}
-                <div className="ml-12 md:ml-24">
-                  <Card className="modern-card border-0 group modern-interactive hover:shadow-2xl hover:shadow-accent-cyan/20 transition-all duration-700 ease-out overflow-hidden">
-                    <CardContent className="p-0">
-                      {/* Header */}
-                      <div 
-                        className="p-6 cursor-pointer transition-all duration-500"
-                        onClick={() => toggleExpanded(update.version)}
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-4">
-                            <div className="p-3 rounded-xl border border-accent-cyan/30 bg-accent-cyan/20 text-accent-cyan">
-                              <Database className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <div className="flex items-center space-x-3 mb-2">
-                                <h3 className="text-xl font-bold text-foreground">
-                                  Version {update.version}
-                                </h3>
-                                {index === 0 && (
-                                  <Badge className="bg-gradient-to-r from-accent-pink to-accent-purple text-white border-0">
-                                    Latest
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>{update.date}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <Button variant="modern" size="sm" className="shrink-0" aria-label={isExpanded ? "Collapse details" : "Expand details"}>
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                          </Button>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-2 text-lg">{update.title}</h4>
-                            <p className="text-muted-foreground leading-relaxed">
-                              {update.content}
-                            </p>
-                          </div>
-
-                          {/* Tags */}
-                          <div className="flex flex-wrap gap-2">
-                            {update.tags.map(tag => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Expanded Content */}
-                      {isExpanded && (
-                        <div className="border-t border-border/40 bg-gradient-to-br from-muted/20 to-accent-cyan/5 animate-in slide-in-from-top-4 duration-700 ease-out">
-                          <div className="p-6 space-y-8 animate-in fade-in duration-1000 delay-200">
-                            {/* Features */}
-                            <div className="animate-in slide-in-from-left-4 duration-500 delay-300">
-                              <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                                <Sparkles className="w-5 h-5 mr-2 text-accent-cyan" />
-                                New Features
-                              </h5>
-                            </div>
-
-                            {/* Technical Details */}
-                            {update.technicalDetails.length > 0 && (
-                              <div className="animate-in slide-in-from-left-4 duration-500 delay-400">
-                                <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                                  <Code className="w-5 h-5 mr-2 text-accent-gold" />
-                                  Technical Details
-                                </h5>
-                                <div className="space-y-3">
-                                  {update.technicalDetails.map((detail, detailIndex) => (
-                                    <div key={detailIndex} className="flex items-start space-x-3 p-3 rounded-lg bg-background/50 hover:bg-background/80 transform hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-right-2" style={{animationDelay: `${detailIndex * 100 + 500}ms`}}>
-                                      <Wrench className="w-4 h-4 text-accent-gold shrink-0 mt-0.5" />
-                                      <span className="text-sm text-foreground font-mono">{detail}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Bug Fixes */}
-                            {update.bugFixes.length > 0 && (
-                              <div className="animate-in slide-in-from-left-4 duration-500 delay-500">
-                                <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                                  <Shield className="w-5 h-5 mr-2 text-accent-purple" />
-                                  Bug Fixes
-                                </h5>
-                                <div className="space-y-3">
-                                  {update.bugFixes.map((fix, fixIndex) => (
-                                    <div key={fixIndex} className="flex items-start space-x-3 p-3 rounded-lg bg-background/50 hover:bg-background/80 transform hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-right-2" style={{animationDelay: `${fixIndex * 100 + 600}ms`}}>
-                                      <Bug className="w-4 h-4 text-accent-purple shrink-0 mt-0.5" />
-                                      <span className="text-sm text-foreground">{fix}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Screenshots */}
-                            {update.screenshots.length > 0 && (
-                              <div className="animate-in slide-in-from-left-4 duration-500 delay-600">
-                                <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                                  <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
-                                  Images
-                                </h5>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {update.screenshots.map((screenshot, screenshotIndex) => (
-                                    <div key={screenshotIndex} className="relative group animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${screenshotIndex * 200 + 700}ms`}}>
-                                      <div className="aspect-video bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg border border-border/40 flex items-center justify-center hover:scale-105 hover:shadow-lg hover:shadow-accent-pink/20 transition-all duration-500 group-hover:border-accent-pink/60">
-                                        <div className="text-center space-y-2">
-                                          <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto group-hover:text-accent-pink transition-colors duration-300" />
-                                          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">{screenshot}</span>
-                                        </div>
-                                      </div>
-                                      <Button
-                                        variant="modern"
-                                        size="sm"
-                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
-                                        aria-label="View screenshot"
-                                      >
-                                        <ExternalLink className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              <UpdateCard
+                key={update.version}
+                update={update}
+                index={index}
+                isExpanded={isExpanded}
+                onToggleExpanded={toggleExpanded}
+              />
             );
           })}
         </div>
       </div>
     </div>
   );
-}
+});
+
+// Extracted UpdateCard component for better performance
+const UpdateCard = React.memo(function UpdateCard({ 
+  update, 
+  index, 
+  isExpanded, 
+  onToggleExpanded 
+}: {
+  update: any;
+  index: number;
+  isExpanded: boolean;
+  onToggleExpanded: (version: string) => void;
+}) {
+  const handleToggle = useCallback(() => {
+    onToggleExpanded(update.version);
+  }, [update.version, onToggleExpanded]);
+
+  return (
+    <div className="relative">
+      {/* Timeline Node */}
+      <div className="absolute left-3 md:left-9 w-6 h-6 rounded-full bg-background border-2 border-accent-cyan z-10 flex items-center justify-center">
+        <div className="w-3 h-3 rounded-full bg-accent-cyan"></div>
+      </div>
+      
+      {/* Main Card */}
+      <div className="ml-12 md:ml-24">
+        <Card className="modern-card border-0 group modern-interactive hover:shadow-2xl hover:shadow-accent-cyan/20 transition-all duration-700 ease-out overflow-hidden">
+          <CardContent className="p-0">
+            {/* Header */}
+            <div 
+              className="p-6 cursor-pointer transition-all duration-500"
+              onClick={handleToggle}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 rounded-xl border border-accent-cyan/30 bg-accent-cyan/20 text-accent-cyan">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-xl font-bold text-foreground">
+                        Version {update.version}
+                      </h3>
+                      {index === 0 && (
+                        <Badge className="bg-gradient-to-r from-accent-pink to-accent-purple text-white border-0">
+                          Latest
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{update.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button variant="modern" size="sm" className="shrink-0" aria-label={isExpanded ? "Collapse details" : "Expand details"}>
+                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2 text-lg">{update.title}</h4>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {update.content}
+                  </p>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {update.tags.map((tag: string) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Expanded Content */}
+            {isExpanded && (
+              <ExpandedContent update={update} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+});
+
+// Extracted ExpandedContent for lazy loading
+const ExpandedContent = React.memo(function ExpandedContent({ update }: { update: any }) {
+  return (
+    <div className="border-t border-border/40 bg-gradient-to-br from-muted/20 to-accent-cyan/5 animate-in slide-in-from-top-4 duration-700 ease-out">
+      <div className="p-6 space-y-8 animate-in fade-in duration-1000 delay-200">
+        {/* Features */}
+        <div className="animate-in slide-in-from-left-4 duration-500 delay-300">
+          <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+            <Sparkles className="w-5 h-5 mr-2 text-accent-cyan" />
+            New Features
+          </h5>
+        </div>
+
+        {/* Screenshots */}
+        {update.screenshots.length > 0 && (
+          <Screenshots screenshots={update.screenshots} />
+        )}
+      </div>
+    </div>
+  );
+});
+
+const Screenshots = React.memo(function Screenshots({ screenshots }: { screenshots: string[] }) {
+  return (
+    <div className="animate-in slide-in-from-left-4 duration-500 delay-600">
+      <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+        <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
+        Images
+      </h5>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {screenshots.map((screenshot, screenshotIndex) => (
+          <div key={screenshotIndex} className="relative group animate-in fade-in slide-in-from-bottom-4 duration-500" style={{animationDelay: `${screenshotIndex * 200 + 700}ms`}}>
+            <div className="aspect-video bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg border border-border/40 flex items-center justify-center hover:scale-105 hover:shadow-lg hover:shadow-accent-pink/20 transition-all duration-500 group-hover:border-accent-pink/60">
+              <div className="text-center space-y-2">
+                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto group-hover:text-accent-pink transition-colors duration-300" />
+                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">{screenshot}</span>
+              </div>
+            </div>
+            <Button
+              variant="modern"
+              size="sm"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+              aria-label="View screenshot"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 export default function HomePage() {
   const { publishedUpdateLogs } = useUpdateLogs();
@@ -259,7 +267,7 @@ export default function HomePage() {
             Update Log
           </h1>
           <p className="modern-page-subtitle">
-            Latest updates and changes to the application • {publishedUpdateLogs.length} total updates
+            Your comprehensive guide to the tropical paradise • {publishedUpdateLogs.length} updates available
           </p>
         </motion.div>
 

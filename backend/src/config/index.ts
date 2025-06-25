@@ -125,35 +125,35 @@ export async function shutdownConfigurations(): Promise<void> {
 // ENVIRONMENT-SPECIFIC CONFIGURATIONS
 // ============================================================================
 
-import { appConfig } from './app';
+import appConfigDefault from './app';
 
 export const config = {
   // Re-export main configs for convenience
-  app: appConfig,
+  app: appConfigDefault,
   
   // Environment helpers
   env: {
-    isDevelopment: appConfig.environment === 'development',
-    isProduction: appConfig.environment === 'production',
-    isStaging: appConfig.environment === 'staging',
-    name: appConfig.environment
+    isDevelopment: appConfigDefault.environment === 'development',
+    isProduction: appConfigDefault.environment === 'production',
+    isStaging: appConfigDefault.environment === 'staging',
+    name: appConfigDefault.environment
   },
   
   // Server settings
   server: {
-    port: appConfig.port,
-    host: appConfig.host,
-    url: `${appConfig.security.enableHttps ? 'https' : 'http'}://${appConfig.host}:${appConfig.port}`,
-    apiPath: `${appConfig.apiPrefix}/${appConfig.apiVersion}`
+    port: appConfigDefault.port,
+    host: appConfigDefault.host,
+    url: `${appConfigDefault.security.enableHttps ? 'https' : 'http'}://${appConfigDefault.host}:${appConfigDefault.port}`,
+    apiPath: `${appConfigDefault.apiPrefix}/${appConfigDefault.apiVersion}`
   },
   
   // Common settings for easy access
-  pagination: appConfig.pagination,
-  cors: appConfig.cors,
-  security: appConfig.security,
-  upload: appConfig.upload,
-  cache: appConfig.cache,
-  search: appConfig.search
+  pagination: appConfigDefault.pagination,
+  cors: appConfigDefault.cors,
+  security: appConfigDefault.security,
+  upload: appConfigDefault.upload,
+  cache: appConfigDefault.cache,
+  search: appConfigDefault.search
 };
 
 // ============================================================================

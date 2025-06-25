@@ -187,4 +187,25 @@ export class GachaModel extends BaseModel {
       [startDate, endDate]
     );
   }
+
+  async findByKey(key: string): Promise<Gacha> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM gachas LIMIT 1');
+    } catch (error) {
+      const errorMsg = `GachaModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 }

@@ -215,4 +215,47 @@ export abstract class BaseModel {
 
     return { isHealthy, tableName: this.tableName, errors };
   }
+
+  /**
+   * Process and normalize pagination options
+   */
+  protected processPaginationOptions(options: PaginationOptions = {}): {
+    offset: number;
+    limit: number;
+    sortBy: string;
+    sortOrder: 'ASC' | 'DESC';
+  } {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const offset = (page - 1) * limit;
+    const sortBy = options.sortBy || 'id';
+    const sortOrder = (options.sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC') as 'ASC' | 'DESC';
+
+    return { offset, limit, sortBy, sortOrder };
+  }
+
+  /**
+   * Build a paginated result object
+   */
+  protected buildPaginatedResult<T>(
+    data: T[],
+    total: number,
+    options: PaginationOptions = {}
+  ): PaginatedResult<T> {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
 }

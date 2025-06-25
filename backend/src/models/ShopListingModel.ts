@@ -321,4 +321,29 @@ export class ShopListingModel extends BaseModel {
       avg_cost: parseFloat(row.avg_cost || '0'),
     }));
   }
+
+  async findByKey(key: string): Promise<ShopListing> {
+    const numericId = parseInt(key, 10);
+    if (isNaN(numericId)) {
+      throw new AppError('Invalid key format for shop listing', 400);
+    }
+    return this.findById(numericId);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM shop_listings LIMIT 1');
+    } catch (error) {
+      const errorMsg = `ShopListingModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 }

@@ -84,7 +84,7 @@ const config: LoggerConfig = {
 // ENHANCED LOGGER CLASS
 // ============================================================================
 
-class EnhancedLogger {
+export class EnhancedLogger {
   private config: LoggerConfig;
   private logBuffer: LogEntry[] = [];
   private writeStream: fs.WriteStream | null = null;
@@ -200,7 +200,7 @@ class EnhancedLogger {
   }
 
   // ============================================================================
-  // FORMATTING
+  // UTILITY METHODS
   // ============================================================================
 
   private getTimestamp(): string {
@@ -212,54 +212,52 @@ class EnhancedLogger {
   }
 
   private formatConsoleMessage(entry: LogEntry): string {
-    const { level, message, timestamp, meta, context, error } = entry;
-
-    if (this.config.enableJson) {
-      return JSON.stringify(entry);
-    }
-
-    const color = this.config.enableColors ? COLORS[level] : '';
-    const reset = this.config.enableColors ? COLORS.reset : '';
+    const { level, timestamp, message, meta, context, error } = entry;
     
-    let formattedMessage = `${color}${timestamp} [${level.toUpperCase()}]:${reset} ${message}`;
-
-    // Add context information
+    const colorStart = this.config.enableColors ? COLORS[level] : '';
+    const colorEnd = this.config.enableColors ? COLORS.reset : '';
+    
+    let output = `${colorStart}[${timestamp}] ${level.toUpperCase()}:${colorEnd} ${message}`;
+    
+    // Add context information if available
     if (context) {
-      const contextParts = [];
-      if (context.requestId) contextParts.push(`reqId=${context.requestId}`);
-      if (context.userId) contextParts.push(`userId=${context.userId}`);
+      const contextParts: string[] = [];
+      if (context.requestId) contextParts.push(`req:${context.requestId}`);
       if (context.method && context.url) contextParts.push(`${context.method} ${context.url}`);
-      if (context.statusCode) contextParts.push(`status=${context.statusCode}`);
+      if (context.statusCode) contextParts.push(`status:${context.statusCode}`);
       if (context.duration) contextParts.push(`${context.duration}ms`);
       
       if (contextParts.length > 0) {
-        formattedMessage += ` [${contextParts.join(', ')}]`;
+        output += ` [${contextParts.join(' | ')}]`;
       }
     }
-
+    
     // Add meta information
-    if (meta) {
-      formattedMessage += ` ${JSON.stringify(meta)}`;
+    if (meta && typeof meta === 'object') {
+      try {
+        output += ` ${JSON.stringify(meta)}`;
+      } catch {
+        output += ` [object]`;
+      }
     }
-
+    
     // Add error information
     if (error) {
-      formattedMessage += `\n  Error: ${error.name}: ${error.message}`;
+      output += `\nError: ${error.message}`;
       if (error.stack && level === 'error') {
-        formattedMessage += `\n  Stack: ${error.stack}`;
+        output += `\nStack: ${error.stack}`;
       }
     }
-
-    return formattedMessage;
+    
+    return output;
   }
 
   private formatFileMessage(entry: LogEntry): string {
-    return JSON.stringify(entry) + '\n';
+    if (this.config.enableJson) {
+      return JSON.stringify(entry);
+    }
+    return this.formatConsoleMessage(entry);
   }
-
-  // ============================================================================
-  // LOGGING METHODS
-  // ============================================================================
 
   private log(level: LogLevel, message: string, meta?: any, context?: LogEntry['context']): void {
     if (!this.shouldLog(level)) return;
@@ -268,43 +266,44 @@ class EnhancedLogger {
       level,
       message,
       timestamp: this.getTimestamp(),
-      meta,
-      context
+      ...(meta && { meta }),
+      ...(context && { context }),
+      ...(meta instanceof Error && {
+        error: {
+          name: meta.name,
+          message: meta.message,
+          stack: meta.stack
+        }
+      })
     };
 
-    // Handle Error objects
-    if (meta instanceof Error) {
-      entry.error = {
-        name: meta.name,
-        message: meta.message,
-        stack: meta.stack
-      };
-      entry.meta = undefined;
+    // Store in buffer
+    this.logBuffer.push(entry);
+    if (this.logBuffer.length > 1000) {
+      this.logBuffer = this.logBuffer.slice(-500); // Keep last 500 entries
     }
 
     // Console output
     if (this.config.enableConsole) {
-      const consoleMethod = level === 'error' ? console.error : 
-                           level === 'warn' ? console.warn : console.log;
-      consoleMethod(this.formatConsoleMessage(entry));
+      const formattedMessage = this.formatConsoleMessage(entry);
+      if (level === 'error') {
+        console.error(formattedMessage);
+      } else if (level === 'warn') {
+        console.warn(formattedMessage);
+      } else {
+        console.log(formattedMessage);
+      }
     }
 
     // File output
     if (this.config.enableFile && this.writeStream) {
-      this.writeStream.write(this.formatFileMessage(entry));
-    }
-
-    // Buffer for external processing
-    this.logBuffer.push(entry);
-    
-    // Keep buffer size manageable
-    if (this.logBuffer.length > 1000) {
-      this.logBuffer = this.logBuffer.slice(-500);
+      const fileMessage = this.formatFileMessage(entry) + '\n';
+      this.writeStream.write(fileMessage);
     }
   }
 
   // ============================================================================
-  // PUBLIC API
+  // PUBLIC LOGGING METHODS
   // ============================================================================
 
   debug(message: string, meta?: any, context?: LogEntry['context']): void {
@@ -325,52 +324,48 @@ class EnhancedLogger {
 
   // HTTP request logging
   logRequest(req: any, res: any, duration: number): void {
-    const context: LogEntry['context'] = {
-      requestId: req.id || req.headers['x-request-id'],
+    const level = res.statusCode >= 400 ? 'warn' : 'info';
+    this.log(level, `HTTP ${req.method} ${req.url}`, null, {
+      requestId: req.id,
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
       duration,
-      ip: req.ip || req.connection.remoteAddress,
-      userAgent: req.headers['user-agent']
-    };
-
-    const level: LogLevel = res.statusCode >= 500 ? 'error' : 
-                           res.statusCode >= 400 ? 'warn' : 'info';
-
-    this.log(level, `${req.method} ${req.url}`, null, context);
+      ip: req.ip || req.connection?.remoteAddress,
+      userAgent: req.get('user-agent')
+    });
   }
 
-  // Get recent logs (for debugging/monitoring)
+  // ============================================================================
+  // UTILITY METHODS
+  // ============================================================================
+
   getRecentLogs(count: number = 100): LogEntry[] {
     return this.logBuffer.slice(-count);
   }
 
-  // Get logs by level
   getLogsByLevel(level: LogLevel, count: number = 100): LogEntry[] {
     return this.logBuffer
       .filter(entry => entry.level === level)
       .slice(-count);
   }
 
-  // Change log level at runtime
+  // Configuration management
   setLogLevel(level: LogLevel): void {
     this.config.level = level;
     this.info(`Log level changed to: ${level}`);
   }
 
-  // Get current configuration
   getConfig(): LoggerConfig {
     return { ...this.config };
   }
 
-  // Flush pending logs
-  flush(): Promise<void> {
-    return new Promise((resolve, reject) => {
+  // Graceful shutdown
+  async flush(): Promise<void> {
+    return new Promise((resolve) => {
       if (this.writeStream) {
-        this.writeStream.write('', (error) => {
-          if (error) reject(error);
-          else resolve();
+        this.writeStream.end(() => {
+          resolve();
         });
       } else {
         resolve();
@@ -378,19 +373,12 @@ class EnhancedLogger {
     });
   }
 
-  // Graceful shutdown
   async shutdown(): Promise<void> {
-    this.info('Logger shutdown initiated...');
-    
+    this.info('Logger shutting down...');
     await this.flush();
-    
     if (this.writeStream) {
-      return new Promise((resolve) => {
-        this.writeStream!.end(() => {
-          this.writeStream = null;
-          resolve();
-        });
-      });
+      this.writeStream.destroy();
+      this.writeStream = null;
     }
   }
 }
@@ -401,18 +389,8 @@ class EnhancedLogger {
 
 const logger = new EnhancedLogger(config);
 
-// Handle process termination
-process.on('SIGTERM', async () => {
-  await logger.shutdown();
-});
-
-process.on('SIGINT', async () => {
-  await logger.shutdown();
-});
-
 // ============================================================================
 // EXPORTS
 // ============================================================================
 
-export default logger;
-export { EnhancedLogger, LoggerConfig, LogEntry, LogLevel }; 
+export default logger; 

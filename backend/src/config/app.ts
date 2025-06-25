@@ -2,35 +2,44 @@
 // APPLICATION CONFIGURATION
 // ============================================================================
 
+import { config } from 'dotenv';
+
+// Load environment variables
+config();
+
 export interface AppConfig {
-  // Basic app settings
-  name: string;
-  version: string;
-  environment: 'development' | 'staging' | 'production';
+  // Server settings
   port: number;
   host: string;
+  environment: 'development' | 'production' | 'staging' | 'test';
   
   // API settings
   apiPrefix: string;
   apiVersion: string;
   
-  // Security settings (simplified for local development)
+  // Security settings
   security: {
     enableHttps: boolean;
-    trustProxy: boolean;
+    enableHelmet: boolean;
+    enableCors: boolean;
+    corsOrigins: string[];
+    enableRateLimit: boolean;
+    rateLimitWindow: number;
+    rateLimitMax: number;
+    jwtSecret: string;
+    jwtExpiration: string;
+    bcryptRounds: number;
   };
   
-  // CORS settings
-  cors: {
-    origins: string[];
-    methods: string[];
-    allowedHeaders: string[];
-    credentials: boolean;
+  // Database settings
+  database: {
+    connectionRetries: number;
+    retryDelay: number;
+    enableHealthCheck: boolean;
+    healthCheckInterval: number;
   };
   
-  // Rate limiting (disabled for local development)
-  
-  // File upload settings
+  // Upload settings
   upload: {
     maxFileSize: number;
     allowedMimeTypes: string[];
@@ -38,205 +47,188 @@ export interface AppConfig {
     tempDir: string;
   };
   
-  // Frontend settings
-  frontend: {
-    url: string;
-    buildPath: string;
-    staticPath: string;
-  };
-  
-  // Health check settings
-  health: {
-    checkInterval: number;
-    endpoints: string[];
-    timeout: number;
-  };
-  
-  // Monitoring settings
-  monitoring: {
-    enabled: boolean;
-    metricsPath: string;
-    healthPath: string;
-  };
-  
-  // Cache settings (disabled for local development)
-  cache: {
-    enabled: boolean;
-  };
-  
-  // Pagination defaults
+  // Pagination settings
   pagination: {
     defaultLimit: number;
     maxLimit: number;
-    defaultOffset: number;
+    defaultPage: number;
+  };
+  
+  // CORS settings
+  cors: {
+    origin: boolean | string | string[];
+    credentials: boolean;
+    methods: string[];
+    allowedHeaders: string[];
+  };
+  
+  // Cache settings
+  cache: {
+    ttl: number;
+    checkPeriod: number;
+    maxKeys: number;
   };
   
   // Search settings
   search: {
-    defaultLanguage: string;
-    supportedLanguages: string[];
-    fuzzyThreshold: number;
+    minQueryLength: number;
+    maxResults: number;
+    enableFuzzy: boolean;
+  };
+  
+  // Logging settings
+  logging: {
+    level: string;
+    enableFile: boolean;
+    enableConsole: boolean;
+    maxFileSize: number;
+    maxFiles: number;
   };
 }
 
-// ============================================================================
-// ENVIRONMENT PARSING UTILITIES
-// ============================================================================
-
-function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
-  if (!value) return defaultValue;
-  return value.toLowerCase() === 'true';
-}
-
-function parseNumber(value: string | undefined, defaultValue: number): number {
-  if (!value) return defaultValue;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? defaultValue : parsed;
-}
-
-function parseArray(value: string | undefined, defaultValue: string[]): string[] {
-  if (!value) return defaultValue;
-  return value.split(',').map(item => item.trim()).filter(Boolean);
-}
-
-function parseEnvironment(value: string | undefined): AppConfig['environment'] {
-  const env = value?.toLowerCase();
-  if (env === 'production' || env === 'staging' || env === 'development') {
-    return env;
-  }
-  return 'development';
-}
-
-// ============================================================================
-// CONFIGURATION OBJECT
-// ============================================================================
-
-export const appConfig: AppConfig = {
-  // Basic app settings
-  name: process.env.APP_NAME || 'DOAXVV Handbook API',
-  version: process.env.APP_VERSION || '1.0.0',
-  environment: parseEnvironment(process.env.NODE_ENV),
-  port: parseNumber(process.env.PORT, 3001),
-  host: process.env.HOST || '0.0.0.0',
+const appConfig: AppConfig = {
+  // Server settings
+  port: parseInt(process.env.PORT || '3001', 10),
+  host: process.env.HOST || 'localhost',
+  environment: (process.env.NODE_ENV as AppConfig['environment']) || 'development',
   
   // API settings
   apiPrefix: process.env.API_PREFIX || '/api',
   apiVersion: process.env.API_VERSION || 'v1',
   
-  // Security settings (simplified for local development)
+  // Security settings
   security: {
-    enableHttps: false,
-    trustProxy: false,
+    enableHttps: process.env.ENABLE_HTTPS === 'true',
+    enableHelmet: process.env.ENABLE_HELMET !== 'false',
+    enableCors: process.env.ENABLE_CORS !== 'false',
+    corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
+    enableRateLimit: process.env.ENABLE_RATE_LIMIT === 'true',
+    rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '900000', 10), // 15 minutes
+    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+    jwtExpiration: process.env.JWT_EXPIRATION || '24h',
+    bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
   },
   
-  // CORS settings
-  cors: {
-    origins: parseArray(process.env.CORS_ORIGINS, ['http://localhost:5173']),
-    methods: parseArray(process.env.CORS_METHODS, ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']),
-    allowedHeaders: parseArray(process.env.CORS_ALLOWED_HEADERS, [
-      'Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'
-    ]),
-    credentials: parseBoolean(process.env.CORS_CREDENTIALS, true),
+  // Database settings
+  database: {
+    connectionRetries: parseInt(process.env.DB_CONNECTION_RETRIES || '3', 10),
+    retryDelay: parseInt(process.env.DB_RETRY_DELAY || '5000', 10),
+    enableHealthCheck: process.env.DB_ENABLE_HEALTH_CHECK !== 'false',
+    healthCheckInterval: parseInt(process.env.DB_HEALTH_CHECK_INTERVAL || '30000', 10),
   },
   
-  // Rate limiting (disabled for local development)
-  
-  // File upload settings
+  // Upload settings
   upload: {
-    maxFileSize: parseNumber(process.env.MAX_FILE_SIZE, 10 * 1024 * 1024), // 10MB
-    allowedMimeTypes: parseArray(process.env.ALLOWED_MIME_TYPES, [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'text/csv', 'application/json', 'application/pdf'
-    ]),
+    maxFileSize: parseInt(process.env.UPLOAD_MAX_FILE_SIZE || '10485760', 10), // 10MB
+    allowedMimeTypes: process.env.UPLOAD_ALLOWED_TYPES?.split(',') || [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+      'text/csv',
+      'application/json'
+    ],
     uploadDir: process.env.UPLOAD_DIR || './uploads',
     tempDir: process.env.TEMP_DIR || './temp',
   },
   
-  // Frontend settings
-  frontend: {
-    url: process.env.FRONTEND_URL || 'http://localhost:5173',
-    buildPath: process.env.FRONTEND_BUILD_PATH || '../frontend/dist',
-    staticPath: process.env.FRONTEND_STATIC_PATH || '/static',
-  },
-  
-  // Health check settings
-  health: {
-    checkInterval: parseNumber(process.env.HEALTH_CHECK_INTERVAL, 30000), // 30 seconds
-    endpoints: parseArray(process.env.HEALTH_CHECK_ENDPOINTS, ['/health', '/api/health']),
-    timeout: parseNumber(process.env.HEALTH_CHECK_TIMEOUT, 5000), // 5 seconds
-  },
-  
-  // Monitoring settings
-  monitoring: {
-    enabled: parseBoolean(process.env.MONITORING_ENABLED, true),
-    metricsPath: process.env.METRICS_PATH || '/metrics',
-    healthPath: process.env.HEALTH_PATH || '/health',
-  },
-  
-  // Cache settings (disabled for local development)
-  cache: {
-    enabled: false,
-  },
-  
-  // Pagination defaults
+  // Pagination settings
   pagination: {
-    defaultLimit: parseNumber(process.env.PAGINATION_DEFAULT_LIMIT, 20),
-    maxLimit: parseNumber(process.env.PAGINATION_MAX_LIMIT, 100),
-    defaultOffset: parseNumber(process.env.PAGINATION_DEFAULT_OFFSET, 0),
+    defaultLimit: parseInt(process.env.PAGINATION_DEFAULT_LIMIT || '10', 10),
+    maxLimit: parseInt(process.env.PAGINATION_MAX_LIMIT || '100', 10),
+    defaultPage: parseInt(process.env.PAGINATION_DEFAULT_PAGE || '1', 10),
+  },
+  
+  // CORS settings
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? process.env.CORS_ORIGINS?.split(',') || false
+      : true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  },
+  
+  // Cache settings
+  cache: {
+    ttl: parseInt(process.env.CACHE_TTL || '3600', 10), // 1 hour
+    checkPeriod: parseInt(process.env.CACHE_CHECK_PERIOD || '600', 10), // 10 minutes
+    maxKeys: parseInt(process.env.CACHE_MAX_KEYS || '1000', 10),
   },
   
   // Search settings
   search: {
-    defaultLanguage: process.env.SEARCH_DEFAULT_LANGUAGE || 'en',
-    supportedLanguages: parseArray(process.env.SEARCH_SUPPORTED_LANGUAGES, ['en', 'jp', 'cn', 'tw', 'kr']),
-    fuzzyThreshold: parseNumber(process.env.SEARCH_FUZZY_THRESHOLD, 0.8),
+    minQueryLength: parseInt(process.env.SEARCH_MIN_QUERY_LENGTH || '2', 10),
+    maxResults: parseInt(process.env.SEARCH_MAX_RESULTS || '50', 10),
+    enableFuzzy: process.env.SEARCH_ENABLE_FUZZY !== 'false',
+  },
+  
+  // Logging settings
+  logging: {
+    level: process.env.LOG_LEVEL || 'info',
+    enableFile: process.env.LOG_ENABLE_FILE === 'true',
+    enableConsole: process.env.LOG_ENABLE_CONSOLE !== 'false',
+    maxFileSize: parseInt(process.env.LOG_MAX_FILE_SIZE || '10485760', 10), // 10MB
+    maxFiles: parseInt(process.env.LOG_MAX_FILES || '5', 10),
   },
 };
 
 // ============================================================================
-// CONFIGURATION VALIDATION
+// VALIDATION
 // ============================================================================
 
-export function validateConfig(): { isValid: boolean; errors: string[] } {
+export interface ConfigValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export function validateConfig(): ConfigValidation {
   const errors: string[] = [];
-  
-  // Basic validation for local development
-  
+  const warnings: string[] = [];
+
+  // Validate required environment variables for production
+  if (appConfig.environment === 'production') {
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-super-secret-jwt-key-change-in-production') {
+      errors.push('JWT_SECRET must be set to a secure value in production');
+    }
+    
+    if (!process.env.DB_PASSWORD) {
+      warnings.push('DB_PASSWORD is not set, using empty password');
+    }
+    
+    if (appConfig.cors.origin === true) {
+      warnings.push('CORS is set to allow all origins in production');
+    }
+  }
+
   // Validate port range
   if (appConfig.port < 1 || appConfig.port > 65535) {
     errors.push('PORT must be between 1 and 65535');
   }
-  
+
   // Validate pagination settings
   if (appConfig.pagination.maxLimit < appConfig.pagination.defaultLimit) {
     errors.push('PAGINATION_MAX_LIMIT must be greater than or equal to PAGINATION_DEFAULT_LIMIT');
   }
-  
-  // Rate limiting validation removed for local development
-  
+
   // Validate file upload settings
-  if (appConfig.upload.maxFileSize <= 0) {
-    errors.push('MAX_FILE_SIZE must be greater than 0');
+  if (appConfig.upload.maxFileSize < 1024) {
+    warnings.push('UPLOAD_MAX_FILE_SIZE is very small (< 1KB)');
   }
-  
-  // Validate CORS origins in production
-  if (appConfig.environment === 'production') {
-    const hasLocalhost = appConfig.cors.origins.some(origin => 
-      origin.includes('localhost') || origin.includes('127.0.0.1')
-    );
-    if (hasLocalhost) {
-      errors.push('CORS_ORIGINS should not include localhost in production environment');
-    }
-  }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 }
 
 // ============================================================================
-// CONFIGURATION UTILITIES
+// UTILITY FUNCTIONS
 // ============================================================================
 
 export function getFullApiPath(): string {
@@ -259,9 +251,5 @@ export function getServerUrl(): string {
   const protocol = appConfig.security.enableHttps ? 'https' : 'http';
   return `${protocol}://${appConfig.host}:${appConfig.port}`;
 }
-
-// ============================================================================
-// EXPORT DEFAULT
-// ============================================================================
 
 export default appConfig; 

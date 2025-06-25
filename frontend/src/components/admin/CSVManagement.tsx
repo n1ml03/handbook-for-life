@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
   Download, Upload, FileDown, FileUp, Settings2, X, 
-  CheckCircle2, BookOpen, FileText
+  CheckCircle2, BookOpen, FileText, AlertCircle, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,6 @@ import { cn } from '@/services/utils';
 import { Document, UpdateLog } from '@/types';
 import { CSVPreviewModal, type CSVPreviewData, type CSVValidationError, type ColumnMapping } from './CSVPreviewModal';
 import { NotificationToast, type NotificationState } from './NotificationToast';
-
-
 
 interface ImportProgress {
   stage: 'uploading' | 'parsing' | 'validating' | 'importing' | 'complete';
@@ -44,6 +42,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   const [csvImportType, setCsvImportType] = useState<'documents' | 'update-logs'>('documents');
   const [importPage, setImportPage] = useState<string>('all');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<string>('');
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [csvPreview, setCsvPreview] = useState<CSVPreviewData | null>(null);
@@ -111,8 +110,8 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
-  // Export functionality
-  const exportToCSV = useCallback((data: Record<string, unknown>[], filename: string, selectedColumns?: string[]) => {
+  // Export functionality with better type safety
+  const exportToCSV = useCallback((data: Document[] | UpdateLog[], filename: string, selectedColumns?: string[]) => {
     if (data.length === 0) {
       addNotification({
         type: 'warning',
@@ -122,12 +121,14 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       return;
     }
 
-    const allHeaders = Object.keys(data[0]);
+    // Convert data to Record<string, unknown>[] for CSV processing
+    const recordData = data.map(item => ({ ...item } as Record<string, unknown>));
+    const allHeaders = Object.keys(recordData[0]);
     const headers = selectedColumns && selectedColumns.length > 0 ? selectedColumns : allHeaders;
 
     const csvContent = [
       headers.join(','),
-      ...data.map(row =>
+      ...recordData.map(row =>
         headers.map(header => {
           const value = row[header];
           if (Array.isArray(value)) {
@@ -291,7 +292,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     }
   }, [csvImportType, documentFields, updateLogFields, parseCSVData, addNotification]);
 
-  // Import functionality
+  // Import functionality with better type safety
   const handleImportCSV = useCallback(async () => {
     if (!csvPreview || !columnMappings.length) return;
 
@@ -342,17 +343,26 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
         for (let i = 0; i < mappedData.length; i++) {
           const doc = mappedData[i];
           try {
-            if (!doc.id) doc.id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
-            if (!doc.createdAt) doc.createdAt = new Date().toISOString().split('T')[0];
-            if (!doc.updatedAt) doc.updatedAt = new Date().toISOString().split('T')[0];
-            if (!doc.author) doc.author = 'Admin';
-            if (doc.isPublished === undefined) doc.isPublished = false;
+            // Create properly typed Document
+            const document: Document = {
+              id: Number(doc.id) || Date.now(),
+              unique_key: doc.unique_key as string || `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              title_en: doc.title as string || doc.title_en as string || '',
+              content_json_en: doc.content_json_en as Record<string, unknown> || undefined,
+              is_published: doc.isPublished as boolean || false,
+              created_at: doc.createdAt as string || new Date().toISOString(),
+              updated_at: doc.updatedAt as string || new Date().toISOString(),
+              // Extended properties for UI compatibility
+              title: doc.title as string || doc.title_en as string || '',
+              content: doc.content as string || '',
+              category: doc.category as string || (importPage !== 'all' ? importPage : ''),
+              tags: doc.tags as string[] || [],
+              author: doc.author as string || 'Admin',
+              isPublished: doc.isPublished as boolean || false,
+              screenshots: doc.screenshots as string[] || []
+            };
 
-            if (importPage !== 'all' && !doc.category) {
-              doc.category = importPage;
-            }
-
-            onAddDocument(doc as Document);
+            onAddDocument(document);
             successCount++;
           } catch {
             errorCount++;
@@ -362,23 +372,31 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
         for (let i = 0; i < mappedData.length; i++) {
           const log = mappedData[i];
           try {
-            if (!log.id) log.id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
-            if (!log.version) log.version = 'v1.0.0';
-            if (!log.title) log.title = 'Untitled Update';
-            if (!log.content) log.content = '';
-            if (!log.date) log.date = new Date().toISOString().split('T')[0];
-            if (log.isPublished === undefined) log.isPublished = false;
-            if (!log.tags) log.tags = [];
-            if (!log.technicalDetails) log.technicalDetails = [];
-            if (!log.bugFixes) log.bugFixes = [];
-            if (!log.screenshots) log.screenshots = [];
-            if (!log.metrics) log.metrics = {
-              performanceImprovement: '0%',
-              userSatisfaction: '0%',
-              bugReports: 0
+            // Create properly typed UpdateLog
+            const updateLog: UpdateLog = {
+              id: log.id as string || `update_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              version: log.version as string || 'v1.0.0',
+              title: log.title as string || 'Untitled Update',
+              description: log.description as string || '',
+              content: log.content as string || '',
+              date: log.date as string || new Date().toISOString().split('T')[0],
+              tags: log.tags as string[] || [],
+              isPublished: log.isPublished as boolean || false,
+              screenshots: log.screenshots as string[] || [],
+              metrics: log.metrics as {
+                performanceImprovement: string;
+                userSatisfaction: string;
+                bugReports: number;
+              } || {
+                performanceImprovement: '0%',
+                userSatisfaction: '0%',
+                bugReports: 0
+              },
+              createdAt: log.createdAt as string || new Date().toISOString(),
+              updatedAt: log.updatedAt as string || new Date().toISOString()
             };
 
-            await onAddUpdateLog(log);
+            await onAddUpdateLog(updateLog);
             successCount++;
           } catch {
             errorCount++;
@@ -403,10 +421,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       });
 
       // Clear data
-      setUploadedFile(null);
-      setCsvPreview(null);
-      setShowPreviewModal(false);
-      setColumnMappings([]);
+      clearImportData();
 
       setTimeout(() => setImportProgress(null), 3000);
     } catch (error) {
@@ -418,6 +433,17 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       setImportProgress(null);
     }
   }, [csvPreview, columnMappings, csvImportType, importPage, availablePages, onAddDocument, onAddUpdateLog, addNotification]);
+
+  // Clear import data
+  const clearImportData = useCallback(() => {
+    setUploadedFile(null);
+    setCsvData('');
+    setCsvPreview(null);
+    setShowPreviewModal(false);
+    setColumnMappings([]);
+    const fileInput = document.getElementById('csvFileInput') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }, []);
 
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
@@ -446,15 +472,36 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Notifications */}
+    <>
+      {/* Notification Portal */}
       {notifications.length > 0 && (
-        <div className="fixed top-4 right-4 z-40 space-y-2 max-w-md">
-          {notifications.map(notification => (
-            <NotificationToast key={notification.id} notification={notification} onRemove={removeNotification} />
-          ))}
+        <div className="fixed inset-0 z-[9999] pointer-events-none">
+          <div className="absolute top-6 right-6 space-y-3 max-w-sm">
+            {notifications.map((notification, index) => (
+              <div
+                key={notification.id}
+                className={cn(
+                  "transform transition-all duration-500 ease-out pointer-events-auto",
+                  "animate-in slide-in-from-right-full fade-in",
+                  index > 0 ? "delay-100" : ""
+                )}
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: 'both'
+                }}
+              >
+                <NotificationToast 
+                  notification={notification} 
+                  onRemove={removeNotification}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Main Content */}
+      <div className="space-y-8">
 
       {/* Import Progress Overlay */}
       {importProgress && (
@@ -476,11 +523,11 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       />
 
       {/* Export Section */}
-      <Card className="p-6">
+      <Card className="p-6 bg-muted/20 border border-border/30 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <Download className="w-6 h-6 text-accent-pink" />
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Download className="w-5 h-5 text-muted-foreground" />
               Export Data
             </h3>
             <p className="text-muted-foreground text-sm mt-1">
@@ -491,7 +538,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
             variant="outline"
             size="sm"
             onClick={() => setShowExportOptions(!showExportOptions)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-border/40 text-muted-foreground hover:bg-muted/30"
           >
             <Settings2 className="w-4 h-4" />
             {showExportOptions ? 'Hide' : 'Show'} Options
@@ -503,7 +550,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
           <DownloadButton
             isDownloading={false}
             onClick={() => exportToCSV(documents, 'documents.csv')}
-            className="w-full justify-start"
+            className="w-full justify-start bg-muted/30 border-border/40 text-foreground hover:bg-muted/40 backdrop-blur-sm"
           >
             <FileDown className="w-4 h-4 mr-2" />
             Export Documents ({documents.length} items)
@@ -512,7 +559,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
           <DownloadButton
             isDownloading={false}
             onClick={() => exportToCSV(updateLogs, 'update-logs.csv')}
-            className="w-full justify-start"
+            className="w-full justify-start bg-muted/30 border-border/40 text-foreground hover:bg-muted/40 backdrop-blur-sm"
           >
             <FileDown className="w-4 h-4 mr-2" />
             Export Update Logs ({updateLogs.length} items)
@@ -521,20 +568,20 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
       </Card>
 
       {/* Import Section */}
-      <Card className="p-6">
+      <Card className="p-6 bg-muted/20 border border-border/30 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <Upload className="w-6 h-6 text-accent-cyan" />
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Upload className="w-5 h-5 text-muted-foreground" />
               Import Data
             </h3>
             <p className="text-muted-foreground text-sm mt-1">
-              Import data from CSV with advanced validation and preview
+              Import data from CSV with intelligent validation and preview
             </p>
           </div>
           {csvPreview && (
-            <Badge variant="outline" className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <Badge variant="outline" className="flex items-center gap-2 border-border/40 text-muted-foreground bg-muted/30 backdrop-blur-sm">
+              <CheckCircle2 className="w-4 h-4" />
               Data Ready for Import
             </Badge>
           )}
@@ -548,14 +595,13 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
                 value={csvImportType}
                 onValueChange={(value: 'documents' | 'update-logs') => {
                   setCsvImportType(value);
-                  setCsvPreview(null);
-                  setColumnMappings([]);
+                  clearImportData();
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="border-border/40 focus:border-border/60 bg-muted/20 backdrop-blur-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background/95 backdrop-blur-sm border-border/40">
                   <SelectItem value="documents">
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4" />
@@ -575,10 +621,10 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
             {csvImportType === 'documents' && (
               <FormGroup label="Target Page">
                 <Select value={importPage} onValueChange={setImportPage}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-border/40 focus:border-border/60 bg-muted/20 backdrop-blur-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background/95 backdrop-blur-sm border-border/40">
                     <SelectItem value="all">All Pages (Keep Original Categories)</SelectItem>
                     {availablePages.map(page => (
                       <SelectItem key={page.id} value={page.id}>
@@ -591,38 +637,53 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
             )}
           </div>
 
-          {/* File Upload Section */}
+          {/* Enhanced File Upload Section */}
           <div
             className={cn(
-              "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300",
+              "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer backdrop-blur-sm",
               isDragging
-                ? 'border-accent-cyan bg-accent-cyan/10 scale-[1.01] shadow-lg'
-                : 'border-border bg-muted/10'
+                ? 'border-border/60 bg-muted/40 scale-[1.02] shadow-lg'
+                : uploadedFile
+                ? 'border-border/50 bg-muted/30'
+                : 'border-border/40 bg-muted/20 hover:border-border/50 hover:bg-muted/25'
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => document.getElementById('csvFileInput')?.click()}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-center">
                 <div className={cn(
-                  "p-4 rounded-full transition-all duration-300",
-                  isDragging ? 'bg-accent-cyan/20 scale-110' : 'bg-muted/50'
+                  "p-4 rounded-full transition-all duration-300 backdrop-blur-sm",
+                  isDragging 
+                    ? 'bg-muted/60 scale-110' 
+                    : uploadedFile
+                    ? 'bg-muted/50'
+                    : 'bg-muted/40'
                 )}>
-                  <Upload className={cn(
-                    "w-8 h-8 transition-colors",
-                    isDragging ? 'text-accent-cyan' : 'text-muted-foreground'
-                  )} />
+                  {uploadedFile ? (
+                    <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
+                  ) : (
+                    <Upload className={cn(
+                      "w-8 h-8 transition-colors",
+                      isDragging ? 'text-muted-foreground' : 'text-muted-foreground'
+                    )} />
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="csvFileInput" className="cursor-pointer">
-                  <span className="text-accent-cyan font-semibold text-lg">
-                    Choose CSV file
-                  </span>
-                  <span className="text-muted-foreground"> or drag and drop here</span>
-                </label>
+                <div className="text-lg font-medium">
+                  {uploadedFile ? (
+                    <span className="text-foreground">File Ready to Process</span>
+                  ) : (
+                    <>
+                      <span className="text-foreground">Choose CSV file</span>
+                      <span className="text-muted-foreground"> or drag and drop here</span>
+                    </>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Supports CSV files up to 10MB with automatic validation and preview
                 </p>
@@ -636,7 +697,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
               </div>
 
               {uploadedFile && (
-                <div className="inline-flex items-center gap-3 text-sm text-accent-cyan bg-accent-cyan/10 rounded-lg p-3 border border-accent-cyan/20">
+                <div className="inline-flex items-center gap-3 text-sm text-foreground bg-muted/40 rounded-lg p-4 border border-border/40 backdrop-blur-sm">
                   <FileUp className="w-5 h-5" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">{uploadedFile.name}</div>
@@ -645,14 +706,11 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      setUploadedFile(null);
-                      setCsvData('');
-                      setCsvPreview(null);
-                      const fileInput = document.getElementById('csvFileInput') as HTMLInputElement;
-                      if (fileInput) fileInput.value = '';
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearImportData();
                     }}
-                    className="text-red-500 p-2 rounded-lg bg-red-50 transition-colors duration-200"
+                    className="text-muted-foreground hover:text-foreground p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors duration-200 backdrop-blur-sm"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -660,15 +718,42 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
               )}
 
               {isProcessingFile && (
-                <div className="inline-flex items-center gap-3 text-sm text-accent-cyan bg-accent-cyan/10 rounded-lg p-3">
-                  <div className="animate-spin w-5 h-5 border-2 border-accent-cyan border-t-transparent rounded-full"></div>
+                <div className="inline-flex items-center gap-3 text-sm text-foreground bg-muted/40 rounded-lg p-4 border border-border/40 backdrop-blur-sm">
+                  <div className="animate-spin w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full"></div>
                   <span className="font-medium">Processing file...</span>
+                </div>
+              )}
+
+              {csvPreview && !isProcessingFile && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-4 text-sm">
+                    <div className="flex items-center gap-2 text-foreground">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{csvPreview.validRows} valid rows</span>
+                    </div>
+                    {csvPreview.errors.length > 0 && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>{csvPreview.errors.length} warnings</span>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPreviewModal(true);
+                    }}
+                    className="bg-muted/50 hover:bg-muted/60 text-foreground border border-border/40 backdrop-blur-sm"
+                  >
+                    Review & Import Data
+                  </Button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }; 

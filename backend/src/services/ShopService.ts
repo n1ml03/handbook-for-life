@@ -1,15 +1,13 @@
 import { ShopListingModel } from '../models/ShopListingModel';
 import { ItemModel } from '../models/ItemModel';
 import { ShopListing, NewShopListing, ShopType, PaginationOptions, PaginatedResult } from '../types/database';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class ShopService {
-  private shopListingModel: ShopListingModel;
+export class ShopService extends BaseService<ShopListingModel, ShopListing, NewShopListing> {
   private itemModel: ItemModel;
 
   constructor() {
-    this.shopListingModel = new ShopListingModel();
+    super(new ShopListingModel(), 'ShopService');
     this.itemModel = new ItemModel();
   }
 
@@ -18,50 +16,48 @@ export class ShopService {
   // ============================================================================
 
   async createShopListing(listingData: NewShopListing): Promise<ShopListing> {
-    try {
+    return this.safeAsyncOperation(async () => {
       // Validate that both items exist
       await this.itemModel.findById(listingData.item_id);
       await this.itemModel.findById(listingData.cost_currency_item_id);
 
-      // Validate cost amount
-      if (listingData.cost_amount <= 0) {
-        throw new AppError('Cost amount must be greater than 0', 400);
-      }
+      this.validateCostAmount(listingData.cost_amount);
 
       // Validate date range if both dates are provided
-      if (listingData.start_date && listingData.end_date && listingData.start_date >= listingData.end_date) {
-        throw new AppError('Start date must be before end date', 400);
+      if (listingData.start_date && listingData.end_date) {
+        this.validateDateRange(listingData.start_date, listingData.end_date);
       }
 
-      const listing = await this.shopListingModel.create(listingData);
-      logger.info(`Created shop listing: ${listing.id} for item ${listing.item_id}`);
+      this.logOperationStart('Creating shop listing', 
+        `item ${listingData.item_id}`, 
+        { costAmount: listingData.cost_amount, currency: listingData.cost_currency_item_id }
+      );
+
+      const listing = await this.model.create(listingData);
+
+      this.logOperationSuccess('Created shop listing', listing.id);
       return listing;
-    } catch (error) {
-      logger.error('Failed to create shop listing:', error);
-      throw error;
-    }
+    }, 'create shop listing');
   }
 
   async getShopListingById(id: number): Promise<ShopListing> {
-    try {
-      return await this.shopListingModel.findById(id);
-    } catch (error) {
-      logger.error(`Failed to get shop listing by ID ${id}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Shop listing ID');
+      return await this.model.findById(numericId);
+    }, 'fetch shop listing', id);
   }
 
   async getAllShopListings(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.shopListingModel.findWithItemDetails(options);
-    } catch (error) {
-      logger.error('Failed to get all shop listings:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findWithItemDetails(validatedOptions);
+    }, 'fetch all shop listings');
   }
 
   async updateShopListing(id: number, updates: Partial<NewShopListing>): Promise<ShopListing> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Shop listing ID');
+
       // Validate items if they are being updated
       if (updates.item_id) {
         await this.itemModel.findById(updates.item_id);
@@ -71,32 +67,32 @@ export class ShopService {
       }
 
       // Validate cost amount if provided
-      if (updates.cost_amount !== undefined && updates.cost_amount <= 0) {
-        throw new AppError('Cost amount must be greater than 0', 400);
+      if (updates.cost_amount !== undefined) {
+        this.validateCostAmount(updates.cost_amount);
       }
 
       // Validate date range if both dates are provided
-      if (updates.start_date && updates.end_date && updates.start_date >= updates.end_date) {
-        throw new AppError('Start date must be before end date', 400);
+      if (updates.start_date && updates.end_date) {
+        this.validateDateRange(updates.start_date, updates.end_date);
       }
 
-      const listing = await this.shopListingModel.update(id, updates);
-      logger.info(`Updated shop listing: ${listing.id}`);
+      this.logOperationStart('Updating shop listing', id, { updates });
+
+      const listing = await this.model.update(numericId, updates);
+
+      this.logOperationSuccess('Updated shop listing', listing.id);
       return listing;
-    } catch (error) {
-      logger.error(`Failed to update shop listing ${id}:`, error);
-      throw error;
-    }
+    }, 'update shop listing', id);
   }
 
   async deleteShopListing(id: number): Promise<void> {
-    try {
-      await this.shopListingModel.delete(id);
-      logger.info(`Deleted shop listing with ID: ${id}`);
-    } catch (error) {
-      logger.error(`Failed to delete shop listing ${id}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Shop listing ID');
+
+      this.logOperationStart('Deleting shop listing', id);
+      await this.model.delete(numericId);
+      this.logOperationSuccess('Deleted shop listing', id);
+    }, 'delete shop listing', id);
   }
 
   // ============================================================================
@@ -104,58 +100,50 @@ export class ShopService {
   // ============================================================================
 
   async getShopListingsByType(shopType: ShopType, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.shopListingModel.findByShopTypeWithDetails(shopType, options);
-    } catch (error) {
-      logger.error(`Failed to get shop listings by type ${shopType}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateShopType(shopType);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByShopTypeWithDetails(shopType, validatedOptions);
+    }, 'fetch shop listings by type', shopType);
   }
 
   async getActiveShopListings(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.shopListingModel.findActiveWithDetails(options);
-    } catch (error) {
-      logger.error('Failed to get active shop listings:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findActiveWithDetails(validatedOptions);
+    }, 'fetch active shop listings');
   }
 
   async getShopListingsByItem(itemId: number, options: PaginationOptions = {}): Promise<PaginatedResult<ShopListing>> {
-    try {
-      // Validate that the item exists
-      await this.itemModel.findById(itemId);
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(itemId, 'Item ID');
       
-      return await this.shopListingModel.findByItemId(itemId, options);
-    } catch (error) {
-      logger.error(`Failed to get shop listings by item ${itemId}:`, error);
-      throw error;
-    }
+      // Validate that the item exists
+      await this.itemModel.findById(numericId);
+      
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByItemId(numericId, validatedOptions);
+    }, 'fetch shop listings by item', itemId);
   }
 
   async getShopListingsByCurrency(currencyId: number, options: PaginationOptions = {}): Promise<PaginatedResult<ShopListing>> {
-    try {
-      // Validate that the currency item exists
-      await this.itemModel.findById(currencyId);
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(currencyId, 'Currency ID');
       
-      return await this.shopListingModel.findByCurrencyId(currencyId, options);
-    } catch (error) {
-      logger.error(`Failed to get shop listings by currency ${currencyId}:`, error);
-      throw error;
-    }
+      // Validate that the currency item exists
+      await this.itemModel.findById(numericId);
+      
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByCurrencyId(numericId, validatedOptions);
+    }, 'fetch shop listings by currency', currencyId);
   }
 
   async getShopListingsByDateRange(startDate: Date, endDate: Date, options: PaginationOptions = {}): Promise<PaginatedResult<ShopListing>> {
-    try {
-      if (startDate >= endDate) {
-        throw new AppError('Start date must be before end date', 400);
-      }
-      
-      return await this.shopListingModel.findByDateRange(startDate, endDate, options);
-    } catch (error) {
-      logger.error('Failed to get shop listings by date range:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateDateRange(startDate, endDate);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByDateRange(startDate, endDate, validatedOptions);
+    }, 'fetch shop listings by date range');
   }
 
   // ============================================================================
@@ -163,7 +151,7 @@ export class ShopService {
   // ============================================================================
 
   async bulkCreateShopListings(listings: NewShopListing[]): Promise<ShopListing[]> {
-    try {
+    return this.safeAsyncOperation(async () => {
       // Validate all items exist
       const itemIds = new Set<number>();
       for (const listing of listings) {
@@ -176,147 +164,92 @@ export class ShopService {
         await this.itemModel.findById(itemId);
       }
 
-      // Validate all cost amounts
+      // Validate all cost amounts and date ranges
       for (const listing of listings) {
-        if (listing.cost_amount <= 0) {
-          throw new AppError('All cost amounts must be greater than 0', 400);
-        }
+        this.validateCostAmount(listing.cost_amount);
         
-        // Validate date range if both dates are provided
-        if (listing.start_date && listing.end_date && listing.start_date >= listing.end_date) {
-          throw new AppError('All start dates must be before end dates', 400);
+        if (listing.start_date && listing.end_date) {
+          this.validateDateRange(listing.start_date, listing.end_date);
         }
       }
 
-      const results = await this.shopListingModel.bulkCreate(listings);
-      logger.info(`Bulk created ${results.length} shop listings`);
+      this.logOperationStart('Bulk creating shop listings', `${listings.length} listings`);
+
+      const results = await this.model.bulkCreate(listings);
+
+      this.logOperationSuccess('Bulk created shop listings', results.length);
       return results;
-    } catch (error) {
-      logger.error('Failed to bulk create shop listings:', error);
-      throw error;
-    }
+    }, 'bulk create shop listings');
   }
 
   // ============================================================================
-  // SHOP ANALYTICS
+  // ANALYTICS AND STATISTICS
   // ============================================================================
 
   async getShopStatistics(): Promise<any> {
-    try {
-      const statistics = await this.shopListingModel.getShopStatistics();
-      logger.info('Retrieved shop statistics');
-      return statistics;
-    } catch (error) {
-      logger.error('Failed to get shop statistics:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      return await this.model.getShopStatistics();
+    }, 'fetch shop statistics');
   }
 
   async getShopSummary(): Promise<any> {
-    try {
-      const [statistics, activeListings] = await Promise.all([
-        this.shopListingModel.getShopStatistics(),
-        this.shopListingModel.findActive({ limit: 1 })
-      ]);
+    return this.safeAsyncOperation(async () => {
+      return await this.model.getShopSummary();
+    }, 'fetch shop summary');
+  }
 
-      const totalListings = statistics.reduce((sum: number, stat: any) => sum + stat.total_listings, 0);
-      const totalActiveListings = statistics.reduce((sum: number, stat: any) => sum + stat.active_listings, 0);
+  async validateShopListing(listingData: NewShopListing): Promise<{ isValid: boolean; errors: string[] }> {
+    return this.safeAsyncOperation(async () => {
+      const errors: string[] = [];
+
+      try {
+        await this.itemModel.findById(listingData.item_id);
+      } catch (error) {
+        errors.push(`Item with ID ${listingData.item_id} does not exist`);
+      }
+
+      try {
+        await this.itemModel.findById(listingData.cost_currency_item_id);
+      } catch (error) {
+        errors.push(`Currency item with ID ${listingData.cost_currency_item_id} does not exist`);
+      }
+
+      if (listingData.cost_amount <= 0) {
+        errors.push('Cost amount must be greater than 0');
+      }
+
+      if (listingData.start_date && listingData.end_date && 
+          listingData.start_date >= listingData.end_date) {
+        errors.push('Start date must be before end date');
+      }
 
       return {
-        total_listings: totalListings,
-        active_listings: totalActiveListings,
-        shop_types: statistics,
-        last_updated: new Date().toISOString(),
+        isValid: errors.length === 0,
+        errors
       };
-    } catch (error) {
-      logger.error('Failed to get shop summary:', error);
-      throw error;
-    }
+    }, 'validate shop listing');
   }
 
   // ============================================================================
   // VALIDATION HELPERS
   // ============================================================================
 
-  async validateShopListing(listingData: NewShopListing): Promise<{ isValid: boolean; errors: string[] }> {
-    const errors: string[] = [];
-
-    try {
-      // Check if item exists
-      await this.itemModel.findById(listingData.item_id);
-    } catch {
-      errors.push(`Item with ID ${listingData.item_id} does not exist`);
+  private validateShopType(shopType: ShopType): void {
+    const validTypes: ShopType[] = ['GENERAL', 'EVENT', 'LIMITED', 'PREMIUM', 'EXCHANGE'];
+    if (!validTypes.includes(shopType)) {
+      throw new Error(`Invalid shop type: ${shopType}. Valid types are: ${validTypes.join(', ')}`);
     }
-
-    try {
-      // Check if currency item exists
-      await this.itemModel.findById(listingData.cost_currency_item_id);
-    } catch {
-      errors.push(`Currency item with ID ${listingData.cost_currency_item_id} does not exist`);
-    }
-
-    // Validate cost amount
-    if (listingData.cost_amount <= 0) {
-      errors.push('Cost amount must be greater than 0');
-    }
-
-    // Validate date range
-    if (listingData.start_date && listingData.end_date && listingData.start_date >= listingData.end_date) {
-      errors.push('Start date must be before end date');
-    }
-
-    // Check for duplicate listings (same item in same shop type)
-    try {
-      const existingListings = await this.shopListingModel.findByItemId(listingData.item_id);
-      const duplicateInSameShop = existingListings.data.some(listing => 
-        listing.shop_type === listingData.shop_type &&
-        // Check if time periods overlap
-        (!listingData.start_date || !listing.end_date || listingData.start_date <= listing.end_date) &&
-        (!listingData.end_date || !listing.start_date || listingData.end_date >= listing.start_date)
-      );
-
-      if (duplicateInSameShop) {
-        errors.push('Item already exists in this shop type during the specified time period');
-      }
-    } catch {
-      // If we can't check for duplicates, it's not a validation error
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
   }
 
-  // ============================================================================
-  // HEALTH CHECK
-  // ============================================================================
-
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    const errors: string[] = [];
-    let isHealthy = true;
-
-    try {
-      const shopHealth = await this.shopListingModel.healthCheck();
-      const itemHealth = await this.itemModel.healthCheck();
-
-      if (!shopHealth.isHealthy) {
-        errors.push(...shopHealth.errors);
-        isHealthy = false;
-      }
-
-      if (!itemHealth.isHealthy) {
-        errors.push(...itemHealth.errors);
-        isHealthy = false;
-      }
-    } catch (error) {
-      errors.push(`ShopService health check failed: ${error}`);
-      isHealthy = false;
+  private validateCostAmount(amount: number): void {
+    if (amount <= 0) {
+      throw new Error('Cost amount must be greater than 0');
     }
-
-    return { isHealthy, errors };
   }
+
+  // Health check is inherited from BaseService
 }
 
 // Export singleton instance
 export const shopService = new ShopService();
+export default shopService;

@@ -36,7 +36,6 @@ export const UpdateLogManagement: React.FC<UpdateLogManagementProps> = ({
         <h2 className="text-2xl font-semibold">Update Logs Management</h2>
         <Button 
           onClick={onCreateNew}
-          className="bg-gradient-to-r from-accent-pink to-accent-purple"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Update Log

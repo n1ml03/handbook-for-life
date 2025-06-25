@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { config } from 'dotenv';
+import { Server } from 'http';
 
 // Load environment variables
 config();
@@ -22,6 +24,7 @@ import eventsRoutes from '@routes/events';
 import bromidesRoutes from '@routes/bromides';
 import gachasRoutes from '@routes/gachas';
 import shopListingsRoutes from '@routes/shop-listings';
+import uploadRoutes from '@routes/upload';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +40,9 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Request ID middleware for tracking
 app.use((req: any, res, next) => {
@@ -62,6 +68,7 @@ app.use('/api/gachas', gachasRoutes);
 app.use('/api/shop-listings', shopListingsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/update-logs', updateLogsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {
@@ -82,7 +89,8 @@ app.get('/', (_req, res) => {
       events: '/api/events',
       bromides: '/api/bromides',
       gachas: '/api/gachas',
-      shopListings: '/api/shop-listings'
+      shopListings: '/api/shop-listings',
+      upload: '/api/upload'
     }
   });
 });
@@ -93,28 +101,35 @@ app.use(notFound);
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
+// Server instance (will be set after starting)
+let server: Server;
+
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
   
-  server.close(async () => {
-    logger.info('HTTP server closed');
-    
-    try {
-      await closeDatabase();
-      logger.info('Database connection closed');
-      process.exit(0);
-    } catch (error) {
-      logger.error('Error during shutdown:', error);
-      process.exit(1);
-    }
-  });
+  if (server) {
+    server.close(async () => {
+      logger.info('HTTP server closed');
+      
+      try {
+        await closeDatabase();
+        logger.info('Database connection closed');
+        process.exit(0);
+      } catch (error) {
+        logger.error('Error during shutdown:', error);
+        process.exit(1);
+      }
+    });
 
-  // Force shutdown after 30 seconds
-  setTimeout(() => {
-    logger.error('Could not close connections in time, forcefully shutting down');
-    process.exit(1);
-  }, 30000);
+    // Force shutdown after 30 seconds
+    setTimeout(() => {
+      logger.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 30000);
+  } else {
+    process.exit(0);
+  }
 };
 
 // Start server
@@ -127,7 +142,7 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    const server = app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       logger.info(`\n🚀 DOAXVV Handbook API Server Started\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌍 Server running on: http://localhost:${PORT}\n📊 Health check: http://localhost:${PORT}/api/health\n🗃️  Database: Connected to MySQL\n📝 Logging: Console output\n⚡ Environment: ${process.env.NODE_ENV || 'development'}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n      `);
     });
 
@@ -143,6 +158,6 @@ const startServer = async () => {
 };
 
 // Start the server
-const server = startServer();
+startServer();
 
 export default app;

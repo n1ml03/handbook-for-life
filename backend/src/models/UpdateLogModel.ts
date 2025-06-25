@@ -21,8 +21,6 @@ export class UpdateLogModel extends BaseModel {
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
       is_published: Boolean(row.is_published),
-      technical_details: this.parseJSONField(row.technical_details, []),
-      bug_fixes: this.parseJSONField(row.bug_fixes, []),
       screenshots: this.parseJSONField(row.screenshots, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',
@@ -60,8 +58,8 @@ export class UpdateLogModel extends BaseModel {
       const [result] = await executeQuery(
         `INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          is_published, technical_details, bug_fixes, screenshots, metrics
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          is_published, screenshots, metrics
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           uniqueKey,
           updateLog.version,
@@ -71,8 +69,6 @@ export class UpdateLogModel extends BaseModel {
           updateLog.date,
           JSON.stringify(updateLog.tags || []),
           updateLog.is_published !== undefined ? updateLog.is_published : true,
-          JSON.stringify(updateLog.technical_details || []),
-          JSON.stringify(updateLog.bug_fixes || []),
           JSON.stringify(updateLog.screenshots || []),
           JSON.stringify(updateLog.metrics || {
             performanceImprovement: '0%',
@@ -180,14 +176,6 @@ export class UpdateLogModel extends BaseModel {
       setClause.push(`is_published = ?`);
       params.push(updates.is_published);
     }
-    if (updates.technical_details !== undefined) {
-      setClause.push(`technical_details = ?`);
-      params.push(JSON.stringify(updates.technical_details));
-    }
-    if (updates.bug_fixes !== undefined) {
-      setClause.push(`bug_fixes = ?`);
-      params.push(JSON.stringify(updates.bug_fixes));
-    }
     if (updates.screenshots !== undefined) {
       setClause.push(`screenshots = ?`);
       params.push(JSON.stringify(updates.screenshots));
@@ -252,5 +240,26 @@ export class UpdateLogModel extends BaseModel {
       this.mapUpdateLogRow.bind(this),
       [searchPattern, searchPattern]
     );
+  }
+
+  async findByKey(key: string): Promise<UpdateLog> {
+    return this.findByUniqueKey(key);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM update_logs LIMIT 1');
+    } catch (error) {
+      const errorMsg = `UpdateLogModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
   }
 }

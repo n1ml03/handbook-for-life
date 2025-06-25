@@ -176,6 +176,7 @@ CREATE TABLE documents (
     summary_en TEXT COMMENT 'Summary of the document (English)',
     content_json_en JSON NULL COMMENT 'Document content in English, stored as JSON from Tiptap',
     is_published BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Flag for pre-publication drafting',
+    screenshots JSON COMMENT 'Screenshots array for visual documentation',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
     INDEX idx_published_key (is_published, unique_key) COMMENT 'Optimized for accessing published documents'
@@ -191,8 +192,6 @@ CREATE TABLE update_logs (
     date DATETIME NOT NULL COMMENT 'Update release date',
     tags JSON COMMENT 'Tags array for categorization',
     is_published BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether the update log is published',
-    technical_details JSON COMMENT 'Technical details array',
-    bug_fixes JSON COMMENT 'Bug fixes array',
     screenshots JSON COMMENT 'Screenshots array',
     metrics JSON COMMENT 'Performance metrics object',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',

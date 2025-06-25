@@ -1,225 +1,145 @@
 import { EventModel } from '../models/EventModel';
-import { Event, NewEvent } from '../types/database';
+import { Event, NewEvent, EventType } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class EventService {
-  private eventModel: EventModel;
-
+export class EventService extends BaseService<EventModel, Event, NewEvent> {
   constructor() {
-    this.eventModel = new EventModel();
+    super(new EventModel(), 'EventService');
   }
 
   async createEvent(eventData: NewEvent): Promise<Event> {
-    try {
-      if (!eventData.unique_key?.trim()) {
-        throw new AppError('Event unique key is required', 400);
-      }
-
-      if (!eventData.name_en?.trim()) {
-        throw new AppError('Event name is required', 400);
-      }
-
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(eventData.unique_key, 'Event unique key');
+      this.validateRequiredString(eventData.name_en, 'Event name');
+      
       if (!eventData.start_date || !eventData.end_date) {
-        throw new AppError('Event start and end dates are required', 400);
+        throw new Error('Event start and end dates are required');
       }
 
-      if (new Date(eventData.start_date) >= new Date(eventData.end_date)) {
-        throw new AppError('Event start date must be before end date', 400);
-      }
+      this.validateDateRange(new Date(eventData.start_date), new Date(eventData.end_date));
 
-      logger.info(`Creating event: ${eventData.name_en}`, { 
+      this.logOperationStart('Creating', eventData.name_en, { 
         key: eventData.unique_key,
         startDate: eventData.start_date,
         endDate: eventData.end_date
       });
-      
-      const event = await this.eventModel.create(eventData);
-      
-      logger.info(`Event created successfully: ${event.name_en}`, { id: event.id });
+
+      const event = await this.model.create(eventData);
+
+      this.logOperationSuccess('Created', event.name_en, { id: event.id });
       return event;
-    } catch (error) {
-      logger.error(`Failed to create event: ${eventData.name_en}`, { 
-        error: error instanceof Error ? error.message : error 
-      });
-      throw error;
-    }
+    }, 'create event', eventData.name_en);
   }
 
   async getEvents(options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      return await this.eventModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to fetch events', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch events', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch events');
   }
 
-  async getEventById(id: string): Promise<Event> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Event ID is required', 400);
-      }
-
-      return await this.eventModel.findById(id);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch event: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch event', 500);
-    }
+  async getEventById(id: string | number): Promise<Event> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Event ID');
+      return await this.model.findById(id);
+    }, 'fetch event', id);
   }
 
   async getEventByKey(key: string): Promise<Event> {
-    try {
-      if (!key?.trim()) {
-        throw new AppError('Event key is required', 400);
-      }
-
-      return await this.eventModel.findByKey(key);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch event by key: ${key}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch event', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(key, 'Event key');
+      return await this.model.findByKey(key);
+    }, 'fetch event by key', key);
   }
 
   async getEventsByType(type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      if (!type?.trim()) {
-        throw new AppError('Event type is required', 400);
-      }
-
-      return await this.eventModel.findByType(type, options);
-    } catch (error) {
-      logger.error(`Failed to fetch events by type: ${type}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch events by type', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(type, 'Event type');
+      const eventType = this.validateEventType(type);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByType(eventType, validatedOptions);
+    }, 'fetch events by type', type);
   }
 
   async getActiveEvents(options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      return await this.eventModel.findActive(options);
-    } catch (error) {
-      logger.error('Failed to fetch active events', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch active events', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findActive(validatedOptions);
+    }, 'fetch active events');
   }
 
   async getUpcomingEvents(options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      return await this.eventModel.findUpcoming(options);
-    } catch (error) {
-      logger.error('Failed to fetch upcoming events', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch upcoming events', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findUpcoming(validatedOptions);
+    }, 'fetch upcoming events');
   }
 
   async getEventsByDateRange(startDate: Date, endDate: Date, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      if (!startDate || !endDate) {
-        throw new AppError('Start and end dates are required', 400);
-      }
-
-      if (startDate >= endDate) {
-        throw new AppError('Start date must be before end date', 400);
-      }
-
-      return await this.eventModel.findByDateRange(startDate, endDate, options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch events by date range: ${startDate} to ${endDate}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch events by date range', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateDateRange(startDate, endDate);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByDateRange(startDate, endDate, validatedOptions);
+    }, 'fetch events by date range');
   }
 
-  async updateEvent(id: string, updates: Partial<NewEvent>): Promise<Event> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Event ID is required', 400);
+  async updateEvent(id: string | number, updates: Partial<NewEvent>): Promise<Event> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Event ID');
+      this.validateOptionalString(updates.name_en, 'Event name');
+
+      if (updates.start_date && updates.end_date) {
+        this.validateDateRange(new Date(updates.start_date), new Date(updates.end_date));
       }
 
-      if (updates.name_en !== undefined && !updates.name_en?.trim()) {
-        throw new AppError('Event name cannot be empty', 400);
-      }
+      this.logOperationStart('Updating', id, { updates });
 
-      if (updates.start_date && updates.end_date && 
-          new Date(updates.start_date) >= new Date(updates.end_date)) {
-        throw new AppError('Event start date must be before end date', 400);
-      }
+      const event = await this.model.update(id, updates);
 
-      logger.info(`Updating event: ${id}`, { updates });
-      
-      const event = await this.eventModel.update(id, updates);
-      
-      logger.info(`Event updated successfully: ${event.name_en}`, { id: event.id });
+      this.logOperationSuccess('Updated', event.name_en, { id: event.id });
       return event;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to update event: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to update event', 500);
-    }
+    }, 'update event', id);
   }
 
-  async deleteEvent(id: string): Promise<void> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Event ID is required', 400);
-      }
+  async deleteEvent(id: string | number): Promise<void> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Event ID');
 
-      await this.eventModel.findById(id);
-      
-      logger.info(`Deleting event: ${id}`);
-      await this.eventModel.delete(id);
-      logger.info(`Event deleted successfully: ${id}`);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to delete event: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to delete event', 500);
-    }
+      // Check if event exists before deletion
+      await this.model.findById(id);
+
+      this.logOperationStart('Deleting', id);
+      await this.model.delete(id);
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete event', id);
   }
 
   async searchEvents(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    try {
-      if (!query?.trim()) {
-        throw new AppError('Search query is required', 400);
-      }
-
-      return await this.eventModel.search(query.trim(), options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to search events: ${query}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to search events', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search events', query);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    try {
-      const modelHealth = await this.eventModel.healthCheck();
-      return {
-        isHealthy: modelHealth.isHealthy,
-        errors: modelHealth.errors
-      };
-    } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Event service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  private validateEventType(type: string): EventType {
+    const validTypes: EventType[] = ['REGULAR', 'LIMITED', 'SEASONAL', 'COLLABORATION', 'ANNIVERSARY'];
+    
+    if (!validTypes.includes(type as EventType)) {
+      throw new Error(`Invalid event type: ${type}. Valid types are: ${validTypes.join(', ')}`);
     }
+    
+    return type as EventType;
   }
+
+  // Health check is inherited from BaseService
 }
 
+// Export singleton instance
 export const eventService = new EventService();
 export default eventService; 

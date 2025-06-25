@@ -1,203 +1,143 @@
 import { SwimsuitModel } from '../models/SwimsuitModel';
-import { Swimsuit, NewSwimsuit } from '../types/database';
+import { Swimsuit, NewSwimsuit, SwimsuitRarity, SuitType } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class SwimsuitService {
-  private swimsuitModel: SwimsuitModel;
-
+export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwimsuit> {
   constructor() {
-    this.swimsuitModel = new SwimsuitModel();
+    super(new SwimsuitModel(), 'SwimsuitService');
   }
 
   async createSwimsuit(swimsuitData: NewSwimsuit): Promise<Swimsuit> {
-    try {
-      if (!swimsuitData.unique_key?.trim()) {
-        throw new AppError('Swimsuit unique key is required', 400);
-      }
-
-      if (!swimsuitData.name_en?.trim()) {
-        throw new AppError('Swimsuit name is required', 400);
-      }
-
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(swimsuitData.unique_key, 'Swimsuit unique key');
+      this.validateRequiredString(swimsuitData.name_en, 'Swimsuit name');
+      
       if (!swimsuitData.character_id) {
-        throw new AppError('Character ID is required', 400);
+        throw new Error('Character ID is required');
       }
 
-      logger.info(`Creating swimsuit: ${swimsuitData.name_en}`, { 
+      this.logOperationStart('Creating', swimsuitData.name_en, { 
         key: swimsuitData.unique_key, 
         characterId: swimsuitData.character_id 
       });
-      
-      const swimsuit = await this.swimsuitModel.create(swimsuitData);
-      
-      logger.info(`Swimsuit created successfully: ${swimsuit.name_en}`, { id: swimsuit.id });
+
+      const swimsuit = await this.model.create(swimsuitData);
+
+      this.logOperationSuccess('Created', swimsuit.name_en, { id: swimsuit.id });
       return swimsuit;
-    } catch (error) {
-      logger.error(`Failed to create swimsuit: ${swimsuitData.name_en}`, { 
-        error: error instanceof Error ? error.message : error 
-      });
-      throw error;
-    }
+    }, 'create swimsuit', swimsuitData.name_en);
   }
 
   async getSwimsuits(options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    try {
-      return await this.swimsuitModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to fetch swimsuits', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuits', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch swimsuits');
   }
 
-  async getSwimsuitById(id: string): Promise<Swimsuit> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Swimsuit ID is required', 400);
-      }
-
-      return await this.swimsuitModel.findById(id);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch swimsuit: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuit', 500);
-    }
+  async getSwimsuitById(id: string | number): Promise<Swimsuit> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Swimsuit ID');
+      return await this.model.findById(id);
+    }, 'fetch swimsuit', id);
   }
 
   async getSwimsuitByKey(key: string): Promise<Swimsuit> {
-    try {
-      if (!key?.trim()) {
-        throw new AppError('Swimsuit key is required', 400);
-      }
-
-      return await this.swimsuitModel.findByKey(key);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to fetch swimsuit by key: ${key}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuit', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(key, 'Swimsuit key');
+      return await this.model.findByKey(key);
+    }, 'fetch swimsuit by key', key);
   }
 
-  async getSwimsuitsByCharacter(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    try {
-      if (!characterId) {
-        throw new AppError('Character ID is required', 400);
-      }
-
-      return await this.swimsuitModel.findByCharacter(characterId, options);
-    } catch (error) {
-      logger.error(`Failed to fetch swimsuits for character: ${characterId}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuits for character', 500);
-    }
+  async getSwimsuitsByCharacter(characterId: string | number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
+    return this.safeAsyncOperation(async () => {
+      const numericCharacterId = this.parseNumericId(characterId, 'Character ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByCharacter(numericCharacterId, validatedOptions);
+    }, 'fetch swimsuits by character', characterId);
   }
 
   async getSwimsuitsByRarity(rarity: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    try {
-      if (!rarity?.trim()) {
-        throw new AppError('Rarity is required', 400);
-      }
-
-      return await this.swimsuitModel.findByRarity(rarity, options);
-    } catch (error) {
-      logger.error(`Failed to fetch swimsuits by rarity: ${rarity}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuits by rarity', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(rarity, 'Rarity');
+      const swimsuitRarity = this.validateSwimsuitRarity(rarity);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByRarity(swimsuitRarity, validatedOptions);
+    }, 'fetch swimsuits by rarity', rarity);
   }
 
   async getSwimsuitsByType(type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    try {
-      if (!type?.trim()) {
-        throw new AppError('Suit type is required', 400);
-      }
-
-      return await this.swimsuitModel.findByType(type, options);
-    } catch (error) {
-      logger.error(`Failed to fetch swimsuits by type: ${type}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch swimsuits by type', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateRequiredString(type, 'Suit type');
+      const suitType = this.validateSuitType(type);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByType(suitType, validatedOptions);
+    }, 'fetch swimsuits by type', type);
   }
 
-  async updateSwimsuit(id: string, updates: Partial<NewSwimsuit>): Promise<Swimsuit> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Swimsuit ID is required', 400);
-      }
+  async updateSwimsuit(id: string | number, updates: Partial<NewSwimsuit>): Promise<Swimsuit> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Swimsuit ID');
+      this.validateOptionalString(updates.name_en, 'Swimsuit name');
 
-      if (updates.name_en !== undefined && !updates.name_en?.trim()) {
-        throw new AppError('Swimsuit name cannot be empty', 400);
-      }
+      this.logOperationStart('Updating', id, { updates });
 
-      logger.info(`Updating swimsuit: ${id}`, { updates });
-      
-      const swimsuit = await this.swimsuitModel.update(id, updates);
-      
-      logger.info(`Swimsuit updated successfully: ${swimsuit.name_en}`, { id: swimsuit.id });
+      const swimsuit = await this.model.update(id, updates);
+
+      this.logOperationSuccess('Updated', swimsuit.name_en, { id: swimsuit.id });
       return swimsuit;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to update swimsuit: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to update swimsuit', 500);
-    }
+    }, 'update swimsuit', id);
   }
 
-  async deleteSwimsuit(id: string): Promise<void> {
-    try {
-      if (!id?.trim()) {
-        throw new AppError('Swimsuit ID is required', 400);
-      }
+  async deleteSwimsuit(id: string | number): Promise<void> {
+    return this.safeAsyncOperation(async () => {
+      this.validateId(id, 'Swimsuit ID');
 
-      await this.swimsuitModel.findById(id);
-      
-      logger.info(`Deleting swimsuit: ${id}`);
-      await this.swimsuitModel.delete(id);
-      logger.info(`Swimsuit deleted successfully: ${id}`);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to delete swimsuit: ${id}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to delete swimsuit', 500);
-    }
+      // Check if swimsuit exists before deletion
+      await this.model.findById(id);
+
+      this.logOperationStart('Deleting', id);
+      await this.model.delete(id);
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete swimsuit', id);
   }
 
   async searchSwimsuits(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    try {
-      if (!query?.trim()) {
-        throw new AppError('Search query is required', 400);
-      }
-
-      return await this.swimsuitModel.search(query.trim(), options);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      logger.error(`Failed to search swimsuits: ${query}`, { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to search swimsuits', 500);
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search swimsuits', query);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    try {
-      const modelHealth = await this.swimsuitModel.healthCheck();
-      return {
-        isHealthy: modelHealth.isHealthy,
-        errors: modelHealth.errors
-      };
-    } catch (error) {
-      return {
-        isHealthy: false,
-        errors: [`Swimsuit service health check failed: ${error instanceof Error ? error.message : error}`]
-      };
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  private validateSwimsuitRarity(rarity: string): SwimsuitRarity {
+    const validRarities: SwimsuitRarity[] = ['N', 'R', 'SR', 'SSR'];
+    
+    if (!validRarities.includes(rarity as SwimsuitRarity)) {
+      throw new Error(`Invalid swimsuit rarity: ${rarity}. Valid rarities are: ${validRarities.join(', ')}`);
     }
+    
+    return rarity as SwimsuitRarity;
   }
+
+  private validateSuitType(type: string): SuitType {
+    const validTypes: SuitType[] = ['OFFENSIVE', 'DEFENSIVE', 'SUPPORTER'];
+    
+    if (!validTypes.includes(type as SuitType)) {
+      throw new Error(`Invalid suit type: ${type}. Valid types are: ${validTypes.join(', ')}`);
+    }
+    
+    return type as SuitType;
+  }
+
+  // Health check is inherited from BaseService
 }
 
+// Export singleton instance
 export const swimsuitService = new SwimsuitService();
 export default swimsuitService; 

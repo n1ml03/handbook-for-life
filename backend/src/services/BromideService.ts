@@ -1,5 +1,5 @@
 import { BromideModel } from '../models/BromideModel';
-import { Bromide, NewBromide } from '../types/database';
+import { Bromide, NewBromide, BromideType } from '../types/database';
 import { PaginationOptions, PaginatedResult } from '../models/BaseModel';
 import { BaseService } from './BaseService';
 import { ValidationHelpers } from '../utils/validationHelpers';
@@ -47,8 +47,12 @@ export class BromideService extends BaseService<BromideModel, Bromide, NewBromid
   async getBromidesByType(type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
     return this.safeAsyncOperation(async () => {
       ValidationHelpers.validateRequiredString(type, 'Bromide type');
+      
+      // Convert string to BromideType enum
+      const bromideType = this.validateBromideType(type);
+      
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.findByType(type, validatedOptions);
+      return await this.model.findByType(bromideType, validatedOptions);
     }, 'fetch bromides by type', type);
   }
 
@@ -85,6 +89,20 @@ export class BromideService extends BaseService<BromideModel, Bromide, NewBromid
       const validatedOptions = this.validatePaginationOptions(options);
       return await this.model.search(query.trim(), validatedOptions);
     }, 'search bromides', query);
+  }
+
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  private validateBromideType(type: string): BromideType {
+    const validTypes: BromideType[] = ['DECO', 'OWNER'];
+    
+    if (!validTypes.includes(type as BromideType)) {
+      throw new Error(`Invalid bromide type: ${type}. Valid types are: ${validTypes.join(', ')}`);
+    }
+    
+    return type as BromideType;
   }
 
   // Health check is inherited from BaseService

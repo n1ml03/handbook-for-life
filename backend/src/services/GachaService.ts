@@ -1,15 +1,13 @@
 import { GachaModel } from '../models/GachaModel';
 import { GachaPoolModel } from '../models/GachaPoolModel';
 import { Gacha, NewGacha, GachaPool, NewGachaPool, GachaSubtype, PaginationOptions, PaginatedResult } from '../types/database';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { BaseService } from './BaseService';
 
-export class GachaService {
-  private gachaModel: GachaModel;
+export class GachaService extends BaseService<GachaModel, Gacha, NewGacha> {
   private gachaPoolModel: GachaPoolModel;
 
   constructor() {
-    this.gachaModel = new GachaModel();
+    super(new GachaModel(), 'GachaService');
     this.gachaPoolModel = new GachaPoolModel();
   }
 
@@ -18,76 +16,75 @@ export class GachaService {
   // ============================================================================
 
   async createGacha(gachaData: NewGacha): Promise<Gacha> {
-    try {
-      // Validate date range
-      if (gachaData.start_date >= gachaData.end_date) {
-        throw new AppError('Start date must be before end date', 400);
-      }
+    return this.safeAsyncOperation(async () => {
+      this.validateDateRange(gachaData.start_date, gachaData.end_date);
 
-      const gacha = await this.gachaModel.create(gachaData);
-      logger.info(`Created gacha: ${gacha.name_en} (ID: ${gacha.id})`);
+      this.logOperationStart('Creating', gachaData.name_en, { 
+        key: gachaData.unique_key,
+        startDate: gachaData.start_date,
+        endDate: gachaData.end_date
+      });
+
+      const gacha = await this.model.create(gachaData);
+
+      this.logOperationSuccess('Created', gacha.name_en, { id: gacha.id });
       return gacha;
-    } catch (error) {
-      logger.error('Failed to create gacha:', error);
-      throw error;
-    }
+    }, 'create gacha', gachaData.name_en);
   }
 
   async getGachaById(id: number): Promise<Gacha> {
-    try {
-      return await this.gachaModel.findById(id);
-    } catch (error) {
-      logger.error(`Failed to get gacha by ID ${id}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Gacha ID');
+      return await this.model.findById(numericId);
+    }, 'fetch gacha', id);
   }
 
   async getGachaByUniqueKey(uniqueKey: string): Promise<Gacha> {
-    try {
-      return await this.gachaModel.findByUniqueKey(uniqueKey);
-    } catch (error) {
-      logger.error(`Failed to get gacha by unique key ${uniqueKey}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateId(uniqueKey, 'Gacha unique key');
+      return await this.model.findByUniqueKey(uniqueKey);
+    }, 'fetch gacha by unique key', uniqueKey);
   }
 
   async getAllGachas(options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    try {
-      return await this.gachaModel.findAll(options);
-    } catch (error) {
-      logger.error('Failed to get all gachas:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findAll(validatedOptions);
+    }, 'fetch all gachas');
   }
 
   async updateGacha(id: number, updates: Partial<NewGacha>): Promise<Gacha> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Gacha ID');
+      
       // Validate date range if both dates are provided
-      if (updates.start_date && updates.end_date && updates.start_date >= updates.end_date) {
-        throw new AppError('Start date must be before end date', 400);
+      if (updates.start_date && updates.end_date) {
+        this.validateDateRange(updates.start_date, updates.end_date);
       }
 
-      const gacha = await this.gachaModel.update(id, updates);
-      logger.info(`Updated gacha: ${gacha.name_en} (ID: ${gacha.id})`);
+      this.logOperationStart('Updating', id, { updates });
+
+      const gacha = await this.model.update(numericId, updates);
+
+      this.logOperationSuccess('Updated', gacha.name_en, { id: gacha.id });
       return gacha;
-    } catch (error) {
-      logger.error(`Failed to update gacha ${id}:`, error);
-      throw error;
-    }
+    }, 'update gacha', id);
   }
 
   async deleteGacha(id: number): Promise<void> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Gacha ID');
+
+      this.logOperationStart('Deleting', id);
+      
       // First delete all gacha pool items
-      await this.gachaPoolModel.deleteByGachaId(id);
+      await this.gachaPoolModel.deleteByGachaId(numericId);
       
       // Then delete the gacha
-      await this.gachaModel.delete(id);
-      logger.info(`Deleted gacha with ID: ${id}`);
-    } catch (error) {
-      logger.error(`Failed to delete gacha ${id}:`, error);
-      throw error;
-    }
+      await this.model.delete(numericId);
+      
+      this.logOperationSuccess('Deleted', id);
+    }, 'delete gacha', id);
   }
 
   // ============================================================================
@@ -95,42 +92,34 @@ export class GachaService {
   // ============================================================================
 
   async searchGachas(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    try {
-      return await this.gachaModel.search(query, options);
-    } catch (error) {
-      logger.error(`Failed to search gachas with query "${query}":`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateSearchQuery(query);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.search(query.trim(), validatedOptions);
+    }, 'search gachas', query);
   }
 
   async getActiveGachas(options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    try {
-      return await this.gachaModel.findActive(options);
-    } catch (error) {
-      logger.error('Failed to get active gachas:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findActive(validatedOptions);
+    }, 'fetch active gachas');
   }
 
   async getGachasBySubtype(subtype: GachaSubtype, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    try {
-      return await this.gachaModel.findBySubtype(subtype, options);
-    } catch (error) {
-      logger.error(`Failed to get gachas by subtype ${subtype}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateGachaSubtype(subtype);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findBySubtype(subtype, validatedOptions);
+    }, 'fetch gachas by subtype', subtype);
   }
 
   async getGachasByDateRange(startDate: Date, endDate: Date, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    try {
-      if (startDate >= endDate) {
-        throw new AppError('Start date must be before end date', 400);
-      }
-      return await this.gachaModel.findByDateRange(startDate, endDate, options);
-    } catch (error) {
-      logger.error('Failed to get gachas by date range:', error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      this.validateDateRange(startDate, endDate);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByDateRange(startDate, endDate, validatedOptions);
+    }, 'fetch gachas by date range');
   }
 
   // ============================================================================
@@ -138,93 +127,92 @@ export class GachaService {
   // ============================================================================
 
   async addPoolItem(poolData: NewGachaPool): Promise<GachaPool> {
-    try {
+    return this.safeAsyncOperation(async () => {
       // Validate that the gacha exists
-      await this.gachaModel.findById(poolData.gacha_id);
+      await this.model.findById(poolData.gacha_id);
+      this.validateDropRate(poolData.drop_rate);
 
-      // Validate drop rate
-      if (poolData.drop_rate <= 0 || poolData.drop_rate > 1) {
-        throw new AppError('Drop rate must be between 0 and 1', 400);
-      }
+      this.logOperationStart('Adding pool item', 
+        `${poolData.pool_item_type} ID ${poolData.item_id}`, 
+        { gachaId: poolData.gacha_id }
+      );
 
       const poolItem = await this.gachaPoolModel.create(poolData);
-      logger.info(`Added pool item to gacha ${poolData.gacha_id}: ${poolData.pool_item_type} ID ${poolData.item_id}`);
+
+      this.logOperationSuccess('Added pool item', poolItem.id);
       return poolItem;
-    } catch (error) {
-      logger.error('Failed to add pool item:', error);
-      throw error;
-    }
+    }, 'add pool item');
   }
 
   async getGachaPool(gachaId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    try {
-      return await this.gachaPoolModel.findByGachaIdWithDetails(gachaId, options);
-    } catch (error) {
-      logger.error(`Failed to get gacha pool for gacha ${gachaId}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(gachaId, 'Gacha ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.gachaPoolModel.findByGachaIdWithDetails(numericId, validatedOptions);
+    }, 'fetch gacha pool', gachaId);
   }
 
   async getFeaturedItems(gachaId: number, options: PaginationOptions = {}): Promise<PaginatedResult<GachaPool>> {
-    try {
-      return await this.gachaPoolModel.findFeaturedByGachaId(gachaId, options);
-    } catch (error) {
-      logger.error(`Failed to get featured items for gacha ${gachaId}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(gachaId, 'Gacha ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.gachaPoolModel.findFeaturedByGachaId(numericId, validatedOptions);
+    }, 'fetch featured items', gachaId);
   }
 
   async updatePoolItem(id: number, updates: Partial<NewGachaPool>): Promise<GachaPool> {
-    try {
-      // Validate drop rate if provided
-      if (updates.drop_rate !== undefined && (updates.drop_rate <= 0 || updates.drop_rate > 1)) {
-        throw new AppError('Drop rate must be between 0 and 1', 400);
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Pool item ID');
+      
+      if (updates.drop_rate !== undefined) {
+        this.validateDropRate(updates.drop_rate);
       }
 
-      const poolItem = await this.gachaPoolModel.update(id, updates);
-      logger.info(`Updated pool item ${id}`);
+      this.logOperationStart('Updating pool item', id, { updates });
+
+      const poolItem = await this.gachaPoolModel.update(numericId, updates);
+
+      this.logOperationSuccess('Updated pool item', poolItem.id);
       return poolItem;
-    } catch (error) {
-      logger.error(`Failed to update pool item ${id}:`, error);
-      throw error;
-    }
+    }, 'update pool item', id);
   }
 
   async removePoolItem(id: number): Promise<void> {
-    try {
-      await this.gachaPoolModel.delete(id);
-      logger.info(`Removed pool item ${id}`);
-    } catch (error) {
-      logger.error(`Failed to remove pool item ${id}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(id, 'Pool item ID');
+
+      this.logOperationStart('Removing pool item', id);
+      await this.gachaPoolModel.delete(numericId);
+      this.logOperationSuccess('Removed pool item', id);
+    }, 'remove pool item', id);
   }
 
   async bulkAddPoolItems(gachaId: number, poolItems: Omit<NewGachaPool, 'gacha_id'>[]): Promise<GachaPool[]> {
-    try {
+    return this.safeAsyncOperation(async () => {
+      const numericGachaId = this.parseNumericId(gachaId, 'Gacha ID');
+      
       // Validate that the gacha exists
-      await this.gachaModel.findById(gachaId);
+      await this.model.findById(numericGachaId);
 
-      // Add gacha_id to all items
-      const poolItemsWithGachaId = poolItems.map(item => ({
-        ...item,
-        gacha_id: gachaId,
-      }));
+      // Add gacha_id to all items and validate drop rates
+      const poolItemsWithGachaId = poolItems.map(item => {
+        this.validateDropRate(item.drop_rate);
+        return {
+          ...item,
+          gacha_id: numericGachaId,
+        };
+      });
 
-      // Validate all drop rates
-      for (const item of poolItemsWithGachaId) {
-        if (item.drop_rate <= 0 || item.drop_rate > 1) {
-          throw new AppError('All drop rates must be between 0 and 1', 400);
-        }
-      }
+      this.logOperationStart('Bulk adding pool items', 
+        `${poolItems.length} items`, 
+        { gachaId: numericGachaId }
+      );
 
       const results = await this.gachaPoolModel.bulkCreate(poolItemsWithGachaId);
-      logger.info(`Bulk added ${results.length} pool items to gacha ${gachaId}`);
+
+      this.logOperationSuccess('Bulk added pool items', results.length);
       return results;
-    } catch (error) {
-      logger.error(`Failed to bulk add pool items to gacha ${gachaId}:`, error);
-      throw error;
-    }
+    }, 'bulk add pool items', gachaId);
   }
 
   // ============================================================================
@@ -232,8 +220,9 @@ export class GachaService {
   // ============================================================================
 
   async validateGachaDropRates(gachaId: number): Promise<{ isValid: boolean; totalRate: number; message: string }> {
-    try {
-      const { isValid, totalRate } = await this.gachaPoolModel.validateDropRates(gachaId);
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(gachaId, 'Gacha ID');
+      const { isValid, totalRate } = await this.gachaPoolModel.validateDropRates(numericId);
       
       let message = '';
       if (!isValid) {
@@ -247,58 +236,36 @@ export class GachaService {
       }
 
       return { isValid, totalRate, message };
-    } catch (error) {
-      logger.error(`Failed to validate drop rates for gacha ${gachaId}:`, error);
-      throw error;
-    }
+    }, 'validate gacha drop rates', gachaId);
   }
 
   async getGachaStatistics(gachaId: number): Promise<any> {
-    try {
-      const [dropRateValidation, rarityBreakdown] = await Promise.all([
-        this.gachaPoolModel.validateDropRates(gachaId),
-        this.gachaPoolModel.getDropRatesByRarity(gachaId),
-      ]);
-
-      return {
-        dropRateValidation,
-        rarityBreakdown,
-      };
-    } catch (error) {
-      logger.error(`Failed to get statistics for gacha ${gachaId}:`, error);
-      throw error;
-    }
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(gachaId, 'Gacha ID');
+      return await this.gachaPoolModel.getGachaStatistics(numericId);
+    }, 'fetch gacha statistics', gachaId);
   }
 
   // ============================================================================
-  // HEALTH CHECK
+  // VALIDATION HELPERS
   // ============================================================================
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
-    const errors: string[] = [];
-    let isHealthy = true;
-
-    try {
-      const gachaHealth = await this.gachaModel.healthCheck();
-      const poolHealth = await this.gachaPoolModel.healthCheck();
-
-      if (!gachaHealth.isHealthy) {
-        errors.push(...gachaHealth.errors);
-        isHealthy = false;
-      }
-
-      if (!poolHealth.isHealthy) {
-        errors.push(...poolHealth.errors);
-        isHealthy = false;
-      }
-    } catch (error) {
-      errors.push(`GachaService health check failed: ${error}`);
-      isHealthy = false;
+  private validateGachaSubtype(subtype: GachaSubtype): void {
+    const validSubtypes: GachaSubtype[] = ['STANDARD', 'FEATURED', 'LIMITED', 'EVENT'];
+    if (!validSubtypes.includes(subtype)) {
+      throw new Error(`Invalid gacha subtype: ${subtype}. Valid subtypes are: ${validSubtypes.join(', ')}`);
     }
-
-    return { isHealthy, errors };
   }
+
+  private validateDropRate(dropRate: number): void {
+    if (dropRate <= 0 || dropRate > 1) {
+      throw new Error('Drop rate must be between 0 and 1');
+    }
+  }
+
+  // Health check is inherited from BaseService
 }
 
 // Export singleton instance
 export const gachaService = new GachaService();
+export default gachaService;

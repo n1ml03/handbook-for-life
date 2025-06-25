@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Gem,
@@ -31,14 +31,244 @@ import {
   type Language,
   type UnifiedItem
 } from '@/types';
+import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
 import { PageLoadingState } from '@/components/ui';
 
+// Memoized helper functions outside component
+const getTypeIcon = (type: ItemType) => {
+  switch (type) {
+    case 'swimsuit': return <Shirt className="w-4 h-4" />;
+    case 'accessory': return <Gem className="w-4 h-4" />;
+    case 'skill': return <Zap className="w-4 h-4" />;
+    case 'bromide': return <Image className="w-4 h-4" />;
+    default: return <Package className="w-4 h-4" />;
+  }
+};
+
+const getTypeColor = (type: ItemType) => {
+  switch (type) {
+    case 'swimsuit': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+    case 'accessory': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
+    case 'skill': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+    case 'bromide': return 'text-pink-400 bg-pink-400/10 border-pink-400/20';
+    default: return 'text-muted-foreground bg-muted/10 border-border/20';
+  }
+};
+
+const getRarityColor = (rarity: string) => {
+  switch (rarity) {
+    case 'SSR': return 'text-yellow-400 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-yellow-400/30';
+    case 'SR': return 'text-purple-400 bg-gradient-to-r from-purple-400/20 to-pink-400/20 border-purple-400/30';
+    case 'R': return 'text-blue-400 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 border-blue-400/30';
+    default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+  }
+};
+
+// Optimized translation function
+const getItemTranslations = (item: any): Record<Language, { name?: string; description?: string }> => {
+  return {
+    jp: { name: item.name_jp || item.name, description: item.description_en || item.description || '' },
+    en: { name: item.name_en || item.name, description: item.description_en || item.description || '' },
+    cn: { name: item.name_cn || item.name, description: item.description_en || item.description || '' },
+    tw: { name: item.name_tw || item.name, description: item.description_en || item.description || '' },
+    kr: { name: item.name_kr || item.name, description: item.description_en || item.description || '' }
+  };
+};
+
+// Language info constant
+const languageInfo = {
+  en: { flag: '🇺🇸', name: 'EN' },
+  cn: { flag: '🇨🇳', name: 'CN' },
+  tw: { flag: '🇹🇼', name: 'TW' },
+  kr: { flag: '🇰🇷', name: 'KO' },
+  jp: { flag: '🇯🇵', name: 'JP' }
+};
+
+// Optimized ItemCard component
+const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem }) {
+  const translation = useMemo(() => item.translations?.['en'], [item.translations]);
+  const displayName = useMemo(() => translation?.name || item.name, [translation, item.name]);
+  const displayDescription = useMemo(() => translation?.description || item.description, [translation, item.description]);
+  const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
+  const typeColor = useMemo(() => getTypeColor(item.type), [item.type]);
+  const rarityColor = useMemo(() => item.rarity ? getRarityColor(item.rarity) : '', [item.rarity]);
+  const statsEntries = useMemo(() => item.stats ? Object.entries(item.stats).slice(0, 4) : [], [item.stats]);
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -5 }}
+      className="relative bg-card/80 backdrop-blur-sm border border-border/30 rounded-xl p-6 mt-2 overflow-hidden group cursor-pointer"
+    >
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="relative z-10">
+        {/* Header Section */}
+        <div className="flex items-start gap-4 mb-6">
+          {/* Enhanced Item Icon */}
+          <div className="relative">
+            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-muted/60 to-muted/40 shrink-0 border-2 border-border/20 flex items-center justify-center group-hover:border-accent-cyan/20 transition-all duration-200">
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div
+                className={cn(
+                  'w-full h-full flex items-center justify-center text-muted-foreground',
+                  item.image ? 'hidden' : 'flex'
+                )}
+              >
+                {typeIcon}
+              </div>
+            </div>
+            
+            {/* Rarity badge - positioned as overlay */}
+            {item.rarity && (
+              <div className="absolute -top-2 -right-2">
+                <Badge className={cn('text-xs font-bold shadow-lg', rarityColor)}>
+                  <Star className="w-3 h-3 mr-1" />
+                  {item.rarity}
+                </Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Item Type Badge */}
+          <div className="flex-1 min-w-0">
+            <Badge variant="outline" className={cn('text-xs mb-3 shadow-xs', typeColor)}>
+              {typeIcon}
+              <span className="ml-1 capitalize font-medium">{item.type}</span>
+            </Badge>
+          </div>
+        </div>
+
+        {/* Name Section - Enhanced Visual */}
+        <div className="mb-6">
+          {/* Primary Name with modern styling */}
+          <div className="mb-4 p-4 bg-gradient-to-r from-accent-cyan/5 via-accent-cyan/10 to-transparent rounded-lg border border-accent-cyan/10 group-hover:border-accent-cyan/15 transition-all duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
+              <span className="text-xs font-medium text-accent-cyan/80 uppercase tracking-wider">
+                Primary (EN)
+              </span>
+            </div>
+            <h3 className="font-bold text-foreground text-lg leading-tight">
+              {displayName}
+            </h3>
+          </div>
+          
+          {/* All Language Translations - Enhanced Cards */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Other Languages
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {Object.entries(languageInfo).map(([lang, info]) => {
+                const langTranslation = item.translations?.[lang as Language];
+                const langName = langTranslation?.name || item.name;
+                
+                // Skip if it's the same as the primary name to avoid duplication
+                if (lang === 'en') return null;
+                
+                return (
+                  <div 
+                    key={lang} 
+                    className="flex items-center gap-3 p-3 bg-card/40 rounded-lg border border-border/20 hover:bg-card/50 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm shrink-0">{info.flag}</span>
+                      <span className="text-xs font-medium text-muted-foreground/60 bg-muted/30 px-2 py-1 rounded-md">
+                        {info.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground/90 flex-1 min-w-0 truncate">
+                      {langName}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Character & Description */}
+        <div className="space-y-3 mb-6">
+          {item.character && (
+            <div className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg border border-border/10">
+              <User className="w-4 h-4 text-accent-cyan" />
+              <span className="text-sm font-medium text-foreground">{item.character}</span>
+            </div>
+          )}
+
+          {displayDescription && (
+            <div className="p-3 bg-muted/10 rounded-lg border border-border/10">
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                {displayDescription}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Section - Enhanced */}
+        {item.stats && (
+          <div className="p-4 bg-gradient-to-br from-accent-cyan/5 to-transparent rounded-lg border border-accent-cyan/10">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-4 h-4 text-accent-cyan" />
+              <span className="text-sm font-semibold text-foreground">Stats</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {statsEntries.map(([stat, value]) => (
+                <div key={stat} className="flex justify-between items-center p-2 bg-card/40 rounded-md border border-border/10">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat}</span>
+                  <span className="font-bold text-accent-cyan text-sm">{String(value || 0)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+});
+
+// Add display name for better debugging
+ItemCard.displayName = 'ItemCard';
+
 export default function ItemsPage() {
-  // State management
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  // Optimized state management
+  const [itemsData, setItemsData] = useState({
+    swimsuits: [] as Swimsuit[],
+    accessories: [] as Accessory[],
+    skills: [] as Skill[],
+    bromides: [] as Bromide[],
+    loading: true,
+    error: null as string | null,
+  });
+
+  const [uiState, setUiState] = useState({
+    showFilters: false,
+  });
+
+  const [sortState, setSortState] = useState({
+    sortBy: 'name',
+    sortDirection: 'asc' as SortDirection,
+  });
+
   const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({
     search: '',
     type: 'all',
@@ -46,57 +276,50 @@ export default function ItemsPage() {
     character: ''
   });
 
-  // Data state
-  const [swimsuits, setSwimsuits] = useState<Swimsuit[]>([]);
-  const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [bromides, setBromides] = useState<Bromide[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Debounce search to improve performance
+  const debouncedSearchTerm = useDebounce(String(filterValues.search || ''), 300);
+
+  // Optimized fetch function with useCallback
+  const fetchAllData = useCallback(async () => {
+    try {
+      setItemsData(prev => ({ ...prev, loading: true, error: null }));
+      
+      const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
+        swimsuitsApi.getSwimsuits({ limit: 1000 }),
+        accessoriesApi.getAccessories({ limit: 1000 }),
+        skillsApi.getSkills({ limit: 1000 }),
+        bromidesApi.getBromides({ limit: 1000 })
+      ]);
+
+      setItemsData(prev => ({
+        ...prev,
+        swimsuits: swimsuitsRes.data,
+        accessories: accessoriesRes.data,
+        skills: skillsRes.data,
+        bromides: bromidesRes.data,
+        loading: false
+      }));
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setItemsData(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to fetch items. Please try again.'
+      }));
+    }
+  }, []);
 
   // Fetch data on component mount
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        setLoading(true);
-        
-        const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
-          swimsuitsApi.getSwimsuits({ limit: 1000 }),
-          accessoriesApi.getAccessories({ limit: 1000 }),
-          skillsApi.getSkills({ limit: 1000 }),
-          bromidesApi.getBromides({ limit: 1000 })
-        ]);
-
-        setSwimsuits(swimsuitsRes.data);
-        setAccessories(accessoriesRes.data);
-        setSkills(skillsRes.data);
-        setBromides(bromidesRes.data);
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAllData();
-  }, []);
+  }, [fetchAllData]);
 
-  // Mock translations for demonstration
-  const getItemTranslations = (item: any): Record<Language, { name?: string; description?: string }> => {
-    return {
-      jp: { name: item.name_jp || item.name, description: item.description_en || item.description || '' },
-      en: { name: item.name_en || item.name, description: item.description_en || item.description || '' },
-      cn: { name: item.name_cn || item.name, description: item.description_en || item.description || '' },
-      tw: { name: item.name_tw || item.name, description: item.description_en || item.description || '' },
-      kr: { name: item.name_kr || item.name, description: item.description_en || item.description || '' }
-    };
-  };
-
-  // Unified items data
+  // Memoized unified items data with optimized processing
   const unifiedItems: UnifiedItem[] = useMemo(() => {
     const items: UnifiedItem[] = [];
 
     // Add swimsuits
-    swimsuits.forEach((swimsuit: Swimsuit) => {
+    itemsData.swimsuits.forEach((swimsuit: Swimsuit) => {
       items.push({
         id: `swimsuit-${swimsuit.id}`,
         name: swimsuit.name_en || swimsuit.name_jp,
@@ -108,8 +331,8 @@ export default function ItemsPage() {
       });
     });
 
-    // Add accessories (mapped from items with category ACCESSORY)
-    accessories.forEach((accessory: Accessory) => {
+    // Add accessories
+    itemsData.accessories.forEach((accessory: Accessory) => {
       items.push({
         id: `accessory-${accessory.id}`,
         name: accessory.name,
@@ -123,7 +346,7 @@ export default function ItemsPage() {
     });
 
     // Add skills
-    skills.forEach((skill: Skill) => {
+    itemsData.skills.forEach((skill: Skill) => {
       items.push({
         id: `skill-${skill.id}`,
         name: skill.name_en || skill.name_jp,
@@ -136,7 +359,7 @@ export default function ItemsPage() {
     });
 
     // Add bromides
-    bromides.forEach((bromide: Bromide) => {
+    itemsData.bromides.forEach((bromide: Bromide) => {
       items.push({
         id: `bromide-${bromide.id}`,
         name: bromide.name_en || bromide.name_jp,
@@ -149,17 +372,24 @@ export default function ItemsPage() {
     });
 
     return items;
-  }, [swimsuits, accessories, skills, bromides]);
+  }, [itemsData.swimsuits, itemsData.accessories, itemsData.skills, itemsData.bromides]);
 
-  // Filtering and sorting
+  // Get unique values for filters - memoized
+  const filterOptions = useMemo(() => {
+    const uniqueRarities = [...new Set(unifiedItems.map(item => item.rarity).filter(Boolean))];
+    const uniqueCharacters = [...new Set(unifiedItems.map(item => item.character).filter(Boolean))];
+    return { uniqueRarities, uniqueCharacters };
+  }, [unifiedItems]);
+
+  // Optimized filtering and sorting with debounced search
   const filteredAndSortedItems = useMemo(() => {
+    const searchText = debouncedSearchTerm.toLowerCase();
+
     const filtered = unifiedItems.filter(item => {
       // Type filter
       const typeMatch = filterValues.type === 'all' || item.type === filterValues.type;
 
       // Text search (multi-language) - Search across ALL languages
-      const searchText = String(filterValues.search || '').toLowerCase();
-      
       let nameMatch = true;
       if (searchText) {
         // Search in original name and description
@@ -185,11 +415,13 @@ export default function ItemsPage() {
       return typeMatch && nameMatch && rarityMatch && characterMatch;
     });
 
-    // Sorting
-    filtered.sort((a, b) => {
+    // Optimized sorting
+    const rarityOrder: Record<string, number> = { 'SSR': 3, 'SR': 2, 'R': 1, '': 0 };
+    
+    return filtered.sort((a, b) => {
       let comparison = 0;
 
-      switch (sortBy) {
+      switch (sortState.sortBy) {
         case 'name': {
           const aName = a.translations?.['en']?.name || a.name;
           const bName = b.translations?.['en']?.name || b.name;
@@ -206,25 +438,16 @@ export default function ItemsPage() {
           break;
         }
         case 'rarity': {
-          const rarityOrder: Record<string, number> = { 'SSR': 3, 'SR': 2, 'R': 1, '': 0 };
           comparison = (rarityOrder[a.rarity || ''] || 0) - (rarityOrder[b.rarity || ''] || 0);
           break;
         }
       }
 
-      return sortDirection === 'desc' ? -comparison : comparison;
+      return sortState.sortDirection === 'desc' ? -comparison : comparison;
     });
+  }, [unifiedItems, filterValues, debouncedSearchTerm, sortState]);
 
-    return filtered;
-  }, [unifiedItems, filterValues, sortBy, sortDirection]);
-
-  // Get unique values for filters
-  const uniqueRarities = useMemo(() =>
-    [...new Set(unifiedItems.map(item => item.rarity).filter(Boolean))], [unifiedItems]);
-  const uniqueCharacters = useMemo(() =>
-    [...new Set(unifiedItems.map(item => item.character).filter(Boolean))], [unifiedItems]);
-
-  // Create filter configuration
+  // Create filter configuration - memoized
   const filterFields: FilterField[] = useMemo(() => [
     {
       key: 'search',
@@ -252,7 +475,7 @@ export default function ItemsPage() {
       label: 'Rarity',
       type: 'select',
       placeholder: 'All Rarities',
-      options: uniqueRarities.map(r => ({ value: r!, label: r! })),
+      options: filterOptions.uniqueRarities.map(r => ({ value: r!, label: r! })),
       icon: <Star className="w-3 h-3 mr-1" />,
     },
     {
@@ -260,239 +483,48 @@ export default function ItemsPage() {
       label: 'Character',
       type: 'select',
       placeholder: 'All Characters',
-      options: uniqueCharacters.map(c => ({ value: c!, label: c! })),
+      options: filterOptions.uniqueCharacters.map(c => ({ value: c!, label: c! })),
       icon: <User className="w-3 h-3 mr-1" />,
     }
-  ], [uniqueRarities, uniqueCharacters]);
+  ], [filterOptions.uniqueRarities, filterOptions.uniqueCharacters]);
 
-  // Sort options
-  const sortOptions: UnifiedSortOption[] = [
+  // Sort options - memoized
+  const sortOptions: UnifiedSortOption[] = useMemo(() => [
     { key: 'name', label: 'Name' },
     { key: 'type', label: 'Type' },
     { key: 'rarity', label: 'Rarity' },
     { key: 'stats', label: 'Stats' }
-  ];
+  ], []);
 
-  // Helper functions
-  const getTypeIcon = (type: ItemType) => {
-    switch (type) {
-      case 'swimsuit': return <Shirt className="w-4 h-4" />;
-      case 'accessory': return <Gem className="w-4 h-4" />;
-      case 'skill': return <Zap className="w-4 h-4" />;
-      case 'bromide': return <Image className="w-4 h-4" />;
-      default: return <Package className="w-4 h-4" />;
-    }
-  };
-
-  const getTypeColor = (type: ItemType) => {
-    switch (type) {
-      case 'swimsuit': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
-      case 'accessory': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
-      case 'skill': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-      case 'bromide': return 'text-pink-400 bg-pink-400/10 border-pink-400/20';
-      default: return 'text-muted-foreground bg-muted/10 border-border/20';
-    }
-  };
-
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'SSR': return 'text-yellow-400 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-yellow-400/30';
-      case 'SR': return 'text-purple-400 bg-gradient-to-r from-purple-400/20 to-pink-400/20 border-purple-400/30';
-      case 'R': return 'text-blue-400 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 border-blue-400/30';
-      default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
-    }
-  };
-
-  // Filter and sort handlers
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilterValues({
       search: '',
       type: 'all',
       rarity: '',
       character: ''
     });
-    setSortBy('name');
-    setSortDirection('asc');
-  };
+    setSortState({
+      sortBy: 'name',
+      sortDirection: 'asc'
+    });
+  }, []);
 
-  const handleSortChange = (newSortBy: string, direction: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(direction);
-  };
+  const handleSortChange = useCallback((newSortBy: string, direction: SortDirection) => {
+    setSortState({ sortBy: newSortBy, sortDirection: direction });
+  }, []);
 
-  // Item card component
-  const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem }) {
-    const translation = item.translations?.['en'];
-    const displayName = translation?.name || item.name;
-    const displayDescription = translation?.description || item.description;
-
-    // Language flag emojis with names
-    const languageInfo = {
-      en: { flag: '🇺🇸', name: 'EN' },
-      cn: { flag: '🇨🇳', name: 'CN' },
-      tw: { flag: '🇹🇼', name: 'TW' },
-      kr: { flag: '🇰🇷', name: 'KO' },
-      jp: { flag: '🇯🇵', name: 'JP' }
-    };
-
-    return (
-      <motion.div
-        whileHover={{ scale: 1.02, y: -5 }}
-        className="relative bg-card/80 backdrop-blur-sm border border-border/30 rounded-xl p-6 mt-2 overflow-hidden group cursor-pointer"
-      >
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        <div className="relative z-10">
-          {/* Header Section */}
-          <div className="flex items-start gap-4 mb-6">
-            {/* Enhanced Item Icon */}
-            <div className="relative">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-muted/60 to-muted/40 shrink-0 border-2 border-border/20 flex items-center justify-center group-hover:border-accent-cyan/20 transition-all duration-200">
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={cn(
-                    'w-full h-full flex items-center justify-center text-muted-foreground',
-                    item.image ? 'hidden' : 'flex'
-                  )}
-                >
-                  {getTypeIcon(item.type)}
-                </div>
-              </div>
-              
-              {/* Rarity badge - positioned as overlay */}
-              {item.rarity && (
-                <div className="absolute -top-2 -right-2">
-                  <Badge className={cn('text-xs font-bold shadow-lg', getRarityColor(item.rarity))}>
-                    <Star className="w-3 h-3 mr-1" />
-                    {item.rarity}
-                  </Badge>
-                </div>
-              )}
-            </div>
-
-            {/* Item Type Badge */}
-            <div className="flex-1 min-w-0">
-              <Badge variant="outline" className={cn('text-xs mb-3 shadow-xs', getTypeColor(item.type))}>
-                {getTypeIcon(item.type)}
-                <span className="ml-1 capitalize font-medium">{item.type}</span>
-              </Badge>
-            </div>
-          </div>
-
-          {/* Name Section - Enhanced Visual */}
-          <div className="mb-6">
-            {/* Primary Name with modern styling */}
-            <div className="mb-4 p-4 bg-gradient-to-r from-accent-cyan/5 via-accent-cyan/10 to-transparent rounded-lg border border-accent-cyan/10 group-hover:border-accent-cyan/15 transition-all duration-200">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
-                <span className="text-xs font-medium text-accent-cyan/80 uppercase tracking-wider">
-                  Primary (EN)
-                </span>
-              </div>
-              <h3 className="font-bold text-foreground text-lg leading-tight">
-                {displayName}
-              </h3>
-            </div>
-            
-            {/* All Language Translations - Enhanced Cards */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Other Languages
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-2">
-                {Object.entries(languageInfo).map(([lang, info]) => {
-                  const langTranslation = item.translations?.[lang as Language];
-                  const langName = langTranslation?.name || item.name;
-                  
-                  // Skip if it's the same as the primary name to avoid duplication
-                  if (lang === 'en') return null;
-                  
-                  return (
-                    <div 
-                      key={lang} 
-                      className="flex items-center gap-3 p-3 bg-card/40 rounded-lg border border-border/20 hover:bg-card/50 transition-colors duration-200"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm shrink-0">{info.flag}</span>
-                        <span className="text-xs font-medium text-muted-foreground/60 bg-muted/30 px-2 py-1 rounded-md">
-                          {info.name}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground/90 flex-1 min-w-0 truncate">
-                        {langName}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Character & Description */}
-          <div className="space-y-3 mb-6">
-            {item.character && (
-              <div className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg border border-border/10">
-                <User className="w-4 h-4 text-accent-cyan" />
-                <span className="text-sm font-medium text-foreground">{item.character}</span>
-              </div>
-            )}
-
-            {displayDescription && (
-              <div className="p-3 bg-muted/10 rounded-lg border border-border/10">
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                  {displayDescription}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Stats Section - Enhanced */}
-          {item.stats && (
-            <div className="p-4 bg-gradient-to-br from-accent-cyan/5 to-transparent rounded-lg border border-accent-cyan/10">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-4 h-4 text-accent-cyan" />
-                <span className="text-sm font-semibold text-foreground">Stats</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(item.stats).slice(0, 4).map(([stat, value]) => (
-                  <div key={stat} className="flex justify-between items-center p-2 bg-card/40 rounded-md border border-border/10">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat}</span>
-                    <span className="font-bold text-accent-cyan text-sm">{String(value || 0)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    );
-  });
+  const handleShowFilters = useCallback((show: boolean) => {
+    setUiState(prev => ({ ...prev, showFilters: show }));
+  }, []);
 
   return (
     <PageLoadingState 
-      isLoading={loading} 
+      isLoading={itemsData.loading} 
       message="Loading items list..."
     >
     <div className="modern-page">
@@ -513,15 +545,15 @@ export default function ItemsPage() {
 
       {/* Unified Filter Component */}
       <UnifiedFilter
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
+        showFilters={uiState.showFilters}
+        setShowFilters={handleShowFilters}
         filterFields={filterFields}
         sortOptions={sortOptions}
         filterValues={filterValues}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
-        sortBy={sortBy}
-        sortDirection={sortDirection}
+        sortBy={sortState.sortBy}
+        sortDirection={sortState.sortDirection}
         onSortChange={handleSortChange}
         resultCount={filteredAndSortedItems.length}
         itemLabel="items"
@@ -532,7 +564,7 @@ export default function ItemsPage() {
 
       {/* Items Grid */}
       <Grid cols={3} gap="md" className="pt-2">
-        {filteredAndSortedItems.length === 0 ? (
+        {filteredAndSortedItems.length === 0 && !itemsData.loading ? (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -561,6 +593,28 @@ export default function ItemsPage() {
           ))
         )}
       </Grid>
+
+      {/* Error State */}
+      {itemsData.error && (
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <div className="modern-card p-8 border-red-500/20">
+            <h3 className="text-2xl font-bold text-red-400 mb-3">Error Loading Items</h3>
+            <p className="text-gray-400 mb-6">{itemsData.error}</p>
+            <motion.button
+              onClick={fetchAllData}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
+            >
+              Try Again
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
       </div>
     </div>
     </PageLoadingState>

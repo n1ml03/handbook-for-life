@@ -1,4 +1,4 @@
-import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
+import { PaginationOptions, PaginatedResult } from './BaseModel';
 import { Document, NewDocument } from '../types/database';
 import { executeQuery } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
@@ -11,10 +11,8 @@ export interface UpdateDocument {
   is_published?: boolean;
 }
 
-export class DocumentModel extends BaseModel {
-  constructor() {
-    super('documents');
-  }
+export class DocumentModel {
+  protected tableName = 'documents';
 
   // Mapper function to convert database row to Document object
   private mapDocumentRow(row: any): Document {
@@ -25,26 +23,64 @@ export class DocumentModel extends BaseModel {
       summary_en: row.summary_en,
       content_json_en: row.content_json_en,
       is_published: Boolean(row.is_published),
+      screenshots: row.screenshots ? JSON.parse(row.screenshots) : [],
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
+    };
+  }
+
+  // Helper method for pagination
+  protected async getPaginatedResults<T>(
+    query: string,
+    countQuery: string,
+    options: PaginationOptions,
+    mapFunction: (row: any) => T,
+    params: any[] = []
+  ): Promise<PaginatedResult<T>> {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const offset = (page - 1) * limit;
+
+    // Execute count and data queries in parallel
+    const [countResult, dataResult] = await Promise.all([
+      executeQuery(countQuery, params) as Promise<[any[], any]>,
+      executeQuery(`${query} LIMIT ${limit} OFFSET ${offset}`, params) as Promise<[any[], any]>
+    ]);
+
+    const total = countResult[0][0]?.['COUNT(*)'] || 0;
+    const data = dataResult[0].map(mapFunction);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
     };
   }
 
   async create(document: NewDocument): Promise<Document> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, is_published)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, is_published, screenshots)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           document.unique_key,
           document.title_en,
           document.summary_en,
           document.content_json_en ? JSON.stringify(document.content_json_en) : null,
           document.is_published ?? false,
+          document.screenshots ? JSON.stringify(document.screenshots) : null,
         ]
       ) as [any, any];
 
-      return this.findById(result.insertId);
+      const documentId = result.insertId;
+      return this.findById(documentId);
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
         throw new AppError('Document with this unique_key already exists', 409);
@@ -62,24 +98,30 @@ export class DocumentModel extends BaseModel {
     );
   }
 
-  // Overload signatures
-  async findById(id: number): Promise<Document>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-
-  // Implementation
-  async findById<T = Document>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Document> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
+  // Public method for finding by ID
+  async findById(id: string | number): Promise<Document> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(numericId)) {
+      throw new AppError('Invalid document ID', 400);
     }
-    return super.findById<Document>(id, this.mapDocumentRow);
+    
+    const [rows] = await executeQuery('SELECT * FROM documents WHERE id = ?', [numericId]) as [any[], any];
+    if (rows.length === 0) {
+      throw new AppError('Document not found', 404);
+    }
+    return this.mapDocumentRow(rows[0]);
   }
 
-  async findByKey(unique_key: string): Promise<Document> {
+  async findByUniqueKey(unique_key: string): Promise<Document> {
     const [rows] = await executeQuery('SELECT * FROM documents WHERE unique_key = ?', [unique_key]) as [any[], any];
     if (rows.length === 0) {
       throw new AppError('Document not found', 404);
     }
     return this.mapDocumentRow(rows[0]);
+  }
+
+  async findByKey(key: string): Promise<Document> {
+    return this.findByUniqueKey(key);
   }
 
   async update(id: string | number, updates: Partial<NewDocument>): Promise<Document> {
@@ -106,13 +148,17 @@ export class DocumentModel extends BaseModel {
       setClause.push(`is_published = ?`);
       params.push(updates.is_published);
     }
+    if (updates.screenshots !== undefined) {
+      setClause.push(`screenshots = ?`);
+      params.push(updates.screenshots ? JSON.stringify(updates.screenshots) : null);
+    }
 
     if (setClause.length === 0) {
       return this.findById(id);
     }
 
     setClause.push(`updated_at = CURRENT_TIMESTAMP`);
-    params.push(id);
+    params.push(typeof id === 'string' ? parseInt(id, 10) : id);
 
     await executeQuery(
       `UPDATE documents SET ${setClause.join(', ')} WHERE id = ?`,
@@ -123,7 +169,15 @@ export class DocumentModel extends BaseModel {
   }
 
   async delete(id: string | number): Promise<void> {
-    await this.deleteById(id);
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(numericId)) {
+      throw new AppError('Invalid document ID', 400);
+    }
+    
+    const [result] = await executeQuery('DELETE FROM documents WHERE id = ?', [numericId]) as [any, any];
+    if (result.affectedRows === 0) {
+      throw new AppError('Document not found', 404);
+    }
   }
 
   /**
@@ -157,9 +211,10 @@ export class DocumentModel extends BaseModel {
   /**
    * Toggle publish status
    */
-  async togglePublishStatus(id: number): Promise<Document> {
+  async togglePublishStatus(id: string | number): Promise<Document> {
     const document = await this.findById(id);
     const newStatus = !document.is_published;
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
 
     const query = `
       UPDATE documents 
@@ -167,7 +222,24 @@ export class DocumentModel extends BaseModel {
       WHERE id = ?
     `;
 
-    await executeQuery(query, [newStatus, id]);
+    await executeQuery(query, [newStatus, numericId]);
     return this.findById(id);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM documents LIMIT 1');
+    } catch (error) {
+      const errorMsg = `DocumentModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
   }
 } 

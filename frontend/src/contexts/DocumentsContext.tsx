@@ -29,8 +29,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
+      // Load all documents (including drafts) for admin functionality
       const response = await documentsApi.getDocuments({
-        published: true,
         sortBy: 'updated_at',
         sortOrder: 'desc',
         limit: 100
@@ -38,7 +38,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       // Ensure isPublished property is synchronized with is_published for UI compatibility
       const documentsWithSyncedProps = response.data.map(doc => ({
         ...doc,
-        isPublished: doc.is_published
+        isPublished: doc.is_published,
+        screenshots: doc.screenshots || [] // Ensure screenshots array exists
       }));
       setDocuments(documentsWithSyncedProps);
     } catch (error) {
@@ -56,7 +57,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       // Ensure isPublished property is synchronized with is_published for UI compatibility
       const documentWithSyncedProps = {
         ...newDocument,
-        isPublished: newDocument.is_published
+        isPublished: newDocument.is_published,
+        screenshots: newDocument.screenshots || [] // Ensure screenshots array exists
       };
       setDocuments(prev => [documentWithSyncedProps, ...prev]);
       return documentWithSyncedProps;
@@ -72,10 +74,11 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       // Ensure isPublished property is synchronized with is_published for UI compatibility
       const documentWithSyncedProps = {
         ...updatedDocument,
-        isPublished: updatedDocument.is_published
+        isPublished: updatedDocument.is_published,
+        screenshots: updatedDocument.screenshots || [] // Ensure screenshots array exists
       };
       setDocuments(prev => prev.map(doc =>
-        doc.id === id ? documentWithSyncedProps : doc
+        doc.id === parseInt(id) ? documentWithSyncedProps : doc
       ));
       return documentWithSyncedProps;
     } catch (error) {
@@ -87,7 +90,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const deleteDocument = useCallback(async (id: string): Promise<void> => {
     try {
       await documentsApi.deleteDocument(id);
-      setDocuments(prev => prev.filter(doc => doc.id !== id));
+      setDocuments(prev => prev.filter(doc => doc.id !== parseInt(id)));
     } catch (error) {
       console.error('Error deleting document:', error);
       throw error;

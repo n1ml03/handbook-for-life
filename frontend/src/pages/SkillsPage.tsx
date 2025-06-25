@@ -108,7 +108,6 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -123,7 +122,6 @@ export default function SkillsPage() {
   const fetchSkills = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -141,7 +139,6 @@ export default function SkillsPage() {
       setTotalItems(response.pagination.total);
     } catch (err) {
       console.error('Failed to fetch skills:', err);
-      setError('Failed to load skills');
     } finally {
       setLoading(false);
     }

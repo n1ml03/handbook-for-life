@@ -1,180 +1,18 @@
 import { RowDataPacket, ResultSetHeader, FieldPacket, QueryResult, OkPacket } from 'mysql2';
 import { executeQuery } from './database';
+import { pool } from './database';
+import logger from './logger';
+import { AppError } from '../middleware/errorHandler';
 
 // ============================================================================
-// TYPED DATABASE QUERY UTILITIES
-// ============================================================================
-
-/**
- * Execute a SELECT query and return typed rows
- */
-export async function selectQuery<T extends RowDataPacket>(
-  query: string,
-  params?: any[]
-): Promise<T[]> {
-  const [result] = await executeQuery(query, params);
-  if (Array.isArray(result)) {
-    return result as T[];
-  }
-  throw new Error('Query did not return row data');
-}
-
-/**
- * Execute an INSERT query and return the result
- */
-export async function insertQuery(
-  query: string,
-  params?: any[]
-): Promise<ResultSetHeader> {
-  const [result] = await executeQuery(query, params);
-  if ('insertId' in result || 'affectedRows' in result) {
-    return result as ResultSetHeader;
-  }
-  throw new Error('Query did not return insert result');
-}
-
-/**
- * Execute an UPDATE query and return the result
- */
-export async function updateQuery(
-  query: string,
-  params?: any[]
-): Promise<ResultSetHeader> {
-  const [result] = await executeQuery(query, params);
-  if ('affectedRows' in result) {
-    return result as ResultSetHeader;
-  }
-  throw new Error('Query did not return update result');
-}
-
-/**
- * Execute a DELETE query and return the result
- */
-export async function deleteQuery(
-  query: string,
-  params?: any[]
-): Promise<ResultSetHeader> {
-  const [result] = await executeQuery(query, params);
-  if ('affectedRows' in result) {
-    return result as ResultSetHeader;
-  }
-  throw new Error('Query did not return delete result');
-}
-
-/**
- * Execute a COUNT query and return the count
- */
-export async function countQuery(
-  query: string,
-  params?: any[]
-): Promise<number> {
-  const [result] = await executeQuery(query, params);
-  if (Array.isArray(result)) {
-    const rows = result as RowDataPacket[];
-    return rows[0]?.count || rows[0]?.['COUNT(*)'] || 0;
-  }
-  throw new Error('COUNT query did not return row data');
-}
-
-/**
- * Execute a query that returns a single row
- */
-export async function selectOne<T extends RowDataPacket>(
-  query: string,
-  params?: any[]
-): Promise<T | null> {
-  const [result] = await executeQuery(query, params);
-  if (Array.isArray(result)) {
-    const rows = result as T[];
-    return rows[0] || null;
-  }
-  throw new Error('Query did not return row data');
-}
-
-/**
- * Check if a record exists
- */
-export async function existsQuery(
-  query: string,
-  params?: any[]
-): Promise<boolean> {
-  const [result] = await executeQuery(query, params);
-  if (Array.isArray(result)) {
-    const rows = result as RowDataPacket[];
-    return rows.length > 0;
-  }
-  throw new Error('EXISTS query did not return row data');
-}
-
-// ============================================================================
-// COMMON QUERY PATTERNS
-// ============================================================================
-
-/**
- * Find a record by ID
- */
-export async function findById<T extends RowDataPacket>(
-  tableName: string,
-  id: number
-): Promise<T | null> {
-  return selectOne<T>(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
-}
-
-/**
- * Find a record by unique key
- */
-export async function findByUniqueKey<T extends RowDataPacket>(
-  tableName: string,
-  uniqueKey: string
-): Promise<T | null> {
-  return selectOne<T>(`SELECT * FROM ${tableName} WHERE unique_key = ?`, [uniqueKey]);
-}
-
-/**
- * Delete a record by ID
- */
-export async function deleteById(
-  tableName: string,
-  id: number
-): Promise<boolean> {
-  const result = await deleteQuery(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
-  return result.affectedRows > 0;
-}
-
-/**
- * Check if a record exists by ID
- */
-export async function existsById(
-  tableName: string,
-  id: number
-): Promise<boolean> {
-  return existsQuery(`SELECT 1 FROM ${tableName} WHERE id = ? LIMIT 1`, [id]);
-}
-
-/**
- * Get total count of records in a table
- */
-export async function getTableCount(
-  tableName: string,
-  whereClause?: string,
-  params?: any[]
-): Promise<number> {
-  const query = whereClause 
-    ? `SELECT COUNT(*) as count FROM ${tableName} WHERE ${whereClause}`
-    : `SELECT COUNT(*) as count FROM ${tableName}`;
-  
-  return countQuery(query, params);
-}
-
-// ============================================================================
-// PAGINATION HELPERS
+// TYPE DEFINITIONS
 // ============================================================================
 
 export interface PaginationParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface PaginatedResult<T> {
@@ -189,37 +27,164 @@ export interface PaginatedResult<T> {
   };
 }
 
-/**
- * Execute a paginated query
- */
+export interface QueryOptions {
+  timeout?: number;
+  connection?: any;
+}
+
+// ============================================================================
+// BASIC QUERY UTILITIES
+// ============================================================================
+
+export async function selectQuery<T extends RowDataPacket>(
+  sql: string,
+  params: any[] = []
+): Promise<T[]> {
+  try {
+    const [rows] = await executeQuery(sql, params);
+    return rows as T[];
+  } catch (error) {
+    logger.error('Select query failed', { sql, params, error: error instanceof Error ? error.message : error });
+    throw new AppError('Database query failed', 500);
+  }
+}
+
+export async function selectOne<T extends RowDataPacket>(
+  sql: string,
+  params: any[] = []
+): Promise<T | null> {
+  const results = await selectQuery<T>(sql, params);
+  return results.length > 0 ? results[0] : null;
+}
+
+export async function insertQuery(
+  sql: string,
+  params: any[] = []
+): Promise<ResultSetHeader> {
+  try {
+    const [result] = await executeQuery(sql, params);
+    return result as ResultSetHeader;
+  } catch (error) {
+    logger.error('Insert query failed', { sql, params, error: error instanceof Error ? error.message : error });
+    throw new AppError('Database insert failed', 500);
+  }
+}
+
+export async function updateQuery(
+  sql: string,
+  params: any[] = []
+): Promise<ResultSetHeader> {
+  try {
+    const [result] = await executeQuery(sql, params);
+    return result as ResultSetHeader;
+  } catch (error) {
+    logger.error('Update query failed', { sql, params, error: error instanceof Error ? error.message : error });
+    throw new AppError('Database update failed', 500);
+  }
+}
+
+export async function deleteQuery(
+  sql: string,
+  params: any[] = []
+): Promise<ResultSetHeader> {
+  try {
+    const [result] = await executeQuery(sql, params);
+    return result as ResultSetHeader;
+  } catch (error) {
+    logger.error('Delete query failed', { sql, params, error: error instanceof Error ? error.message : error });
+    throw new AppError('Database delete failed', 500);
+  }
+}
+
+export async function countQuery(
+  table: string,
+  whereClause: string = '',
+  params: any[] = []
+): Promise<number> {
+  const sql = `SELECT COUNT(*) as count FROM ${table} ${whereClause}`;
+  const result = await selectOne<RowDataPacket & { count: number }>(sql, params);
+  return result?.count || 0;
+}
+
+// ============================================================================
+// ADVANCED QUERY UTILITIES
+// ============================================================================
+
+export async function existsQuery(
+  table: string,
+  whereClause: string,
+  params: any[] = []
+): Promise<boolean> {
+  const sql = `SELECT 1 FROM ${table} WHERE ${whereClause} LIMIT 1`;
+  const result = await selectOne(sql, params);
+  return result !== null;
+}
+
+export async function findById<T extends RowDataPacket>(
+  table: string,
+  id: string | number,
+  columns: string = '*'
+): Promise<T | null> {
+  const sql = `SELECT ${columns} FROM ${table} WHERE id = ? LIMIT 1`;
+  return await selectOne<T>(sql, [id]);
+}
+
+export async function findByUniqueKey<T extends RowDataPacket>(
+  table: string,
+  uniqueKey: string,
+  keyColumn: string = 'unique_key',
+  columns: string = '*'
+): Promise<T | null> {
+  const sql = `SELECT ${columns} FROM ${table} WHERE ${keyColumn} = ? LIMIT 1`;
+  return await selectOne<T>(sql, [uniqueKey]);
+}
+
+export async function deleteById(
+  table: string,
+  id: string | number
+): Promise<boolean> {
+  const result = await deleteQuery(`DELETE FROM ${table} WHERE id = ?`, [id]);
+  return result.affectedRows > 0;
+}
+
+export async function existsById(
+  table: string,
+  id: string | number
+): Promise<boolean> {
+  return await existsQuery(table, 'id = ?', [id]);
+}
+
+// ============================================================================
+// PAGINATION UTILITIES
+// ============================================================================
+
 export async function paginatedQuery<T extends RowDataPacket>(
   baseQuery: string,
   countQuery: string,
-  params: any[],
-  pagination: PaginationParams
+  params: any[] = [],
+  pagination: PaginationParams = {}
 ): Promise<PaginatedResult<T>> {
   const page = Math.max(1, pagination.page || 1);
-  const limit = Math.min(100, Math.max(1, pagination.limit || 20));
+  const limit = Math.min(100, Math.max(1, pagination.limit || 10));
   const offset = (page - 1) * limit;
-  
-  // Add sorting if specified
-  let query = baseQuery;
+
+  // Build ORDER BY clause if sorting is specified
+  let orderByClause = '';
   if (pagination.sortBy) {
-    const sortOrder = pagination.sortOrder === 'DESC' ? 'DESC' : 'ASC';
-    query += ` ORDER BY ${pagination.sortBy} ${sortOrder}`;
+    const sortOrder = pagination.sortOrder === 'desc' ? 'DESC' : 'ASC';
+    orderByClause = ` ORDER BY ${pagination.sortBy} ${sortOrder}`;
   }
-  
-  // Add pagination
-  query += ` LIMIT ${limit} OFFSET ${offset}`;
-  
-  // Execute both queries in parallel
-  const [data, total] = await Promise.all([
-    selectQuery<T>(query, params),
-    countQuery ? countQuery(countQuery, params) : 0
-  ]);
-  
+
+  // Execute count query to get total records
+  const [totalResult] = await selectQuery<RowDataPacket & { total: number }>(countQuery, params);
+  const total = totalResult?.total || 0;
+
+  // Execute main query with pagination
+  const paginatedSql = `${baseQuery}${orderByClause} LIMIT ${limit} OFFSET ${offset}`;
+  const data = await selectQuery<T>(paginatedSql, params);
+
   const totalPages = Math.ceil(total / limit);
-  
+
   return {
     data,
     pagination: {
@@ -237,145 +202,125 @@ export async function paginatedQuery<T extends RowDataPacket>(
 // BULK OPERATIONS
 // ============================================================================
 
-/**
- * Bulk insert records
- */
-export async function bulkInsert<T>(
-  tableName: string,
-  records: T[],
-  fields: string[]
+export async function bulkInsert(
+  table: string,
+  columns: string[],
+  values: any[][]
 ): Promise<ResultSetHeader> {
-  if (records.length === 0) {
-    throw new Error('No records to insert');
+  if (values.length === 0) {
+    throw new AppError('No values provided for bulk insert', 400);
   }
-  
-  const placeholders = records.map(() => `(${fields.map(() => '?').join(', ')})`).join(', ');
-  const query = `INSERT INTO ${tableName} (${fields.join(', ')}) VALUES ${placeholders}`;
-  
-  const params = records.flatMap(record => 
-    fields.map(field => (record as any)[field])
-  );
-  
-  return insertQuery(query, params);
+
+  const placeholders = values.map(() => `(${columns.map(() => '?').join(', ')})`).join(', ');
+  const sql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${placeholders}`;
+  const params = values.flat();
+
+  return await insertQuery(sql, params);
 }
 
-/**
- * Upsert (INSERT ... ON DUPLICATE KEY UPDATE)
- */
-export async function upsert<T>(
-  tableName: string,
-  record: T,
-  fields: string[],
-  updateFields?: string[]
+export async function upsert(
+  table: string,
+  data: Record<string, any>,
+  uniqueColumns: string[] = ['id']
 ): Promise<ResultSetHeader> {
-  const insertFields = fields.join(', ');
-  const placeholders = fields.map(() => '?').join(', ');
-  const updatePart = updateFields || fields.filter(f => f !== 'id');
-  const updateClause = updatePart.map(field => `${field} = VALUES(${field})`).join(', ');
+  const columns = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = columns.map(() => '?').join(', ');
   
-  const query = `
-    INSERT INTO ${tableName} (${insertFields}) 
+  const updateClause = columns
+    .filter(col => !uniqueColumns.includes(col))
+    .map(col => `${col} = VALUES(${col})`)
+    .join(', ');
+
+  const sql = `
+    INSERT INTO ${table} (${columns.join(', ')}) 
     VALUES (${placeholders})
     ON DUPLICATE KEY UPDATE ${updateClause}
   `;
-  
-  const params = fields.map(field => (record as any)[field]);
-  
-  return insertQuery(query, params);
+
+  return await insertQuery(sql, values);
 }
 
 // ============================================================================
-// SEARCH HELPERS
+// SEARCH UTILITIES
 // ============================================================================
 
-/**
- * Build a multi-language search query
- */
 export function buildMultiLanguageSearch(
+  columns: string[],
   searchTerm: string,
-  languages: string[] = ['en', 'jp', 'cn', 'tw', 'kr'],
-  fieldPrefix: string = 'name'
-): { whereClause: string; params: string[] } {
-  if (!searchTerm.trim()) {
-    return { whereClause: '1=1', params: [] };
+  tableAlias: string = ''
+): { whereClause: string; params: any[] } {
+  if (!searchTerm?.trim()) {
+    return { whereClause: '', params: [] };
   }
-  
-  const searchPattern = `%${searchTerm.trim()}%`;
-  const conditions = languages.map(lang => `${fieldPrefix}_${lang} LIKE ?`);
+
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+  const conditions = columns.map(column => `${prefix}${column} LIKE ?`);
   const whereClause = `(${conditions.join(' OR ')})`;
-  const params = new Array(languages.length).fill(searchPattern);
-  
+  const params = columns.map(() => `%${searchTerm.trim()}%`);
+
   return { whereClause, params };
 }
 
-/**
- * Build a date range filter
- */
 export function buildDateRangeFilter(
-  startDate?: Date,
-  endDate?: Date,
-  fieldName: string = 'created_at'
+  dateColumn: string,
+  startDate?: string | Date,
+  endDate?: string | Date,
+  tableAlias: string = ''
 ): { whereClause: string; params: any[] } {
   const conditions: string[] = [];
   const params: any[] = [];
-  
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+
   if (startDate) {
-    conditions.push(`${fieldName} >= ?`);
+    conditions.push(`${prefix}${dateColumn} >= ?`);
     params.push(startDate);
   }
-  
+
   if (endDate) {
-    conditions.push(`${fieldName} <= ?`);
+    conditions.push(`${prefix}${dateColumn} <= ?`);
     params.push(endDate);
   }
-  
+
   return {
-    whereClause: conditions.length > 0 ? conditions.join(' AND ') : '1=1',
+    whereClause: conditions.length > 0 ? conditions.join(' AND ') : '',
     params
   };
 }
 
 // ============================================================================
-// HEALTH CHECK HELPERS
+// UTILITY FUNCTIONS
 // ============================================================================
 
-/**
- * Check table health
- */
-export async function checkTableHealth(tableName: string): Promise<{
+export async function getTableCount(table: string): Promise<number> {
+  return await countQuery(table, '', []);
+}
+
+export async function checkTableHealth(table: string): Promise<{
   exists: boolean;
-  recordCount: number;
-  lastModified?: Date;
+  rowCount: number;
+  error?: string;
 }> {
   try {
     // Check if table exists
-    const exists = await existsQuery(`
-      SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
-    `, [tableName]);
-    
-    if (!exists) {
-      return { exists: false, recordCount: 0 };
+    const tableExists = await selectOne(`
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = DATABASE() AND table_name = ?
+    `, [table]);
+
+    if (!tableExists) {
+      return { exists: false, rowCount: 0, error: 'Table does not exist' };
     }
-    
-    // Get record count
-    const recordCount = await getTableCount(tableName);
-    
-    // Try to get last modified time (if table has updated_at column)
-    let lastModified: Date | undefined;
-    try {
-      const result = await selectOne<RowDataPacket>(`
-        SELECT updated_at FROM ${tableName} 
-        ORDER BY updated_at DESC LIMIT 1
-      `);
-      lastModified = result?.updated_at;
-    } catch {
-      // Table might not have updated_at column
-    }
-    
-    return { exists: true, recordCount, lastModified };
-    
+
+    // Get row count
+    const rowCount = await getTableCount(table);
+
+    return { exists: true, rowCount };
   } catch (error) {
-    throw new Error(`Health check failed for table ${tableName}: ${error}`);
+    return {
+      exists: false,
+      rowCount: 0,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 } 

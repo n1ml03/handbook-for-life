@@ -243,4 +243,29 @@ export class GachaPoolModel extends BaseModel {
       item_count: row.item_count,
     }));
   }
+
+  async findByKey(key: string): Promise<GachaPool> {
+    const [rows] = await executeQuery('SELECT * FROM gacha_pools WHERE id = ?', [key]) as [any[], any];
+    if (rows.length === 0) {
+      throw new AppError('Gacha pool not found', 404);
+    }
+    return this.mapGachaPoolRow(rows[0]);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    try {
+      await executeQuery('SELECT 1');
+      await executeQuery('SELECT COUNT(*) FROM gacha_pools LIMIT 1');
+    } catch (error) {
+      const errorMsg = `GachaPoolModel health check failed: ${error instanceof Error ? error.message : error}`;
+      errors.push(errorMsg);
+    }
+
+    return {
+      isHealthy: errors.length === 0,
+      errors
+    };
+  }
 }

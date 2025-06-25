@@ -1,17 +1,39 @@
-import { CharacterService, characterService } from './CharacterService';
-import { BromideService, bromideService } from './BromideService';
-import { SwimsuitService, swimsuitService } from './SwimsuitService';
-import { SkillService, skillService } from './SkillService';
-import { ItemService, itemService } from './ItemService';
-import { EventService, eventService } from './EventService';
-import { EpisodeService, episodeService } from './EpisodeService';
-import { DocumentService, documentService } from './DocumentService';
-import { GachaService, gachaService } from './GachaService';
-import { ShopService, shopService } from './ShopService';
-import { SwimsuitSkillService, swimsuitSkillService } from './SwimsuitSkillService';
-import { DatabaseService, databaseService } from './DatabaseService';
-import { UpdateLogService, updateLogService } from './UpdateLogService';
+import { CharacterService } from './CharacterService';
+import { BromideService } from './BromideService';
+import { SwimsuitService } from './SwimsuitService';
+import { SkillService } from './SkillService';
+import { ItemService } from './ItemService';
+import { EventService } from './EventService';
+import { EpisodeService } from './EpisodeService';
+import { DocumentService } from './DocumentService';
+import { GachaService } from './GachaService';
+import { ShopService } from './ShopService';
+import { SwimsuitSkillService } from './SwimsuitSkillService';
+import { DatabaseService } from './DatabaseService';
+import { UpdateLogService } from './UpdateLogService';
 import { logger } from '../config';
+
+// ============================================================================
+// SERVICE INSTANCES
+// ============================================================================
+
+export const databaseService = new DatabaseService();
+export const characterService = new CharacterService();
+export const bromideService = new BromideService();
+export const swimsuitService = new SwimsuitService();
+export const skillService = new SkillService();
+export const itemService = new ItemService();
+export const eventService = new EventService();
+export const episodeService = new EpisodeService();
+export const documentService = new DocumentService();
+export const gachaService = new GachaService();
+export const shopService = new ShopService();
+export const swimsuitSkillService = new SwimsuitSkillService();
+export const updateLogService = new UpdateLogService();
+
+// ============================================================================
+// SERVICE TYPES AND INTERFACES
+// ============================================================================
 
 export interface ServiceHealthStatus {
   serviceName: string;
@@ -44,6 +66,10 @@ export interface ServiceDependency {
   required: boolean;
   initialized: boolean;
 }
+
+// ============================================================================
+// SERVICE REGISTRY CLASS
+// ============================================================================
 
 class ServiceRegistry {
   private services: Map<string, any> = new Map();
@@ -199,125 +225,128 @@ class ServiceRegistry {
           });
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        systemIsHealthy = false;
         serviceHealthStatuses.push({
           serviceName,
           isHealthy: false,
-          errors: [errorMessage],
-          warnings: []
+          errors: [error instanceof Error ? error.message : 'Unknown error'],
+          warnings: [],
+          timestamp: new Date().toISOString()
         });
-        systemIsHealthy = false;
-        logger.error(`Health check failed for service: ${serviceName}`, { error: errorMessage });
       }
     }
 
+    // Get system information
     const memoryUsage = process.memoryUsage();
+    const systemInfo = {
+      nodeVersion: process.version,
+      platform: process.platform,
+      memory: {
+        used: Math.round(memoryUsage.rss / 1024 / 1024) + 'MB',
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB'
+      },
+      uptime: Math.round(process.uptime()) + 's'
+    };
 
     return {
       isHealthy: systemIsHealthy,
       services: serviceHealthStatuses,
       timestamp: new Date().toISOString(),
-      systemInfo: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        memory: {
-          used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
-          total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`
-        },
-        uptime: `${Math.round(process.uptime())}s`
-      }
+      systemInfo
     };
   }
 
   async initialize(): Promise<void> {
-    logger.info('Initializing services in dependency order...', {
-      order: this.initializationOrder
+    if (this.isInitialized) {
+      logger.warn('Services already initialized');
+      return;
+    }
+
+    logger.info('Initializing services...', { 
+      order: this.initializationOrder,
+      total: this.services.size 
     });
 
+    let initializedCount = 0;
+    
     for (const serviceName of this.initializationOrder) {
-      const service = this.services.get(serviceName);
-      if (!service) {
-        logger.warn(`Service not found during initialization: ${serviceName}`);
-        continue;
-      }
-
       try {
-        // Check dependencies before initializing
-        const deps = this.dependencies.get(serviceName) || [];
-        for (const dep of deps) {
-          if (dep.required && !dep.initialized) {
-            throw new Error(`Required dependency '${dep.name}' is not initialized`);
-          }
-        }
-
-        if (service.initialize && typeof service.initialize === 'function') {
+        const service = this.services.get(serviceName);
+        
+        if (service && typeof service.initialize === 'function') {
+          logger.info(`Initializing service: ${serviceName}`);
           await service.initialize();
-          logger.info(`Service initialized: ${serviceName}`);
-
-          // Mark dependencies as initialized
-          for (const [depServiceName, depList] of this.dependencies.entries()) {
-            for (const dep of depList) {
-              if (dep.name === serviceName) {
-                dep.initialized = true;
-              }
-            }
-          }
+          logger.info(`Service initialized successfully: ${serviceName}`);
         } else {
-          logger.debug(`Service ${serviceName} has no initialize method`);
+          logger.info(`Service ${serviceName} does not require initialization`);
         }
-      } catch (error) {
-        logger.error(`Failed to initialize service: ${serviceName}`, {
-          error: error instanceof Error ? error.message : error
+        
+        // Mark dependencies as initialized
+        const deps = this.dependencies.get(serviceName) || [];
+        deps.forEach(dep => {
+          if (dep.name === serviceName) {
+            dep.initialized = true;
+          }
         });
-        throw error;
+        
+        initializedCount++;
+        
+      } catch (error) {
+        logger.error(`Failed to initialize service: ${serviceName}`, error);
+        throw new Error(`Service initialization failed: ${serviceName} - ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
     this.isInitialized = true;
-    logger.info('All services initialized successfully');
+    logger.info(`All services initialized successfully (${initializedCount}/${this.services.size})`);
   }
 
   async shutdown(): Promise<void> {
+    if (!this.isInitialized) {
+      logger.warn('Services not initialized, skipping shutdown');
+      return;
+    }
+
     logger.info('Shutting down services...');
-    
-    for (const [serviceName, service] of this.services.entries()) {
+
+    // Shutdown in reverse order
+    const shutdownOrder = [...this.initializationOrder].reverse();
+    let shutdownCount = 0;
+
+    for (const serviceName of shutdownOrder) {
       try {
-        if (service.shutdown && typeof service.shutdown === 'function') {
+        const service = this.services.get(serviceName);
+        
+        if (service && typeof service.shutdown === 'function') {
+          logger.info(`Shutting down service: ${serviceName}`);
           await service.shutdown();
-          logger.info(`Service shut down: ${serviceName}`);
+          logger.info(`Service shut down successfully: ${serviceName}`);
         }
+        
+        shutdownCount++;
+        
       } catch (error) {
-        logger.error(`Failed to shut down service: ${serviceName}`, { 
-          error: error instanceof Error ? error.message : error 
-        });
+        logger.error(`Failed to shutdown service: ${serviceName}`, error);
+        // Continue with other services even if one fails
       }
     }
-    
-    logger.info('All services shut down');
+
+    this.isInitialized = false;
+    logger.info(`Services shutdown completed (${shutdownCount}/${this.services.size})`);
   }
 }
 
-// Export singleton instance
+// ============================================================================
+// GLOBAL SERVICE REGISTRY INSTANCE
+// ============================================================================
+
 export const serviceRegistry = new ServiceRegistry();
 
-// Export individual services for direct access
-export {
-  characterService,
-  bromideService,
-  swimsuitService,
-  skillService,
-  itemService,
-  eventService,
-  episodeService,
-  documentService,
-  gachaService,
-  shopService,
-  swimsuitSkillService,
-  databaseService,
-  updateLogService
-};
+// ============================================================================
+// CONVENIENCE EXPORTS
+// ============================================================================
 
-export type {
+export {
   CharacterService,
   BromideService,
   SwimsuitService,
@@ -333,5 +362,8 @@ export type {
   UpdateLogService
 };
 
-// Export the service registry as default
+// ============================================================================
+// DEFAULT EXPORT
+// ============================================================================
+
 export default serviceRegistry; 
