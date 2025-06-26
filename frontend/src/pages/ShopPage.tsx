@@ -259,18 +259,21 @@ export default function ShopPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            className="modern-page-header"
+          >
+            <h1 className="modern-page-title">
+              Shop Collection
+            </h1>
+            <p className="modern-page-subtitle">
+              Browse and discover all available shop items • {shopData.listings.length} of {shopData.totalListings} listings
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2">
-                  Shop Collection
-                </h1>
-                <p className="text-gray-400">
-                  Browse and discover all available shop items • {shopData.listings.length} of {shopData.totalListings} listings
-                </p>
-              </div>
-            </div>
 
             {/* Filters */}
             <UnifiedFilter

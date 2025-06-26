@@ -347,18 +347,21 @@ export default function CharacterListPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
+            className="modern-page-header"
+          >
+            <h1 className="modern-page-title">
+              Character Collection
+            </h1>
+            <p className="modern-page-subtitle">
+              Explore and discover all characters with detailed information • {filteredAndSortedCharacters.length} of {charactersData.characters.length} characters
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2">
-                  Character Collection
-                </h1>
-                <p className="text-gray-400">
-                  Explore and discover all characters with detailed information • {filteredAndSortedCharacters.length} of {charactersData.characters.length} characters
-                </p>
-              </div>
-            </div>
 
             {/* Filters */}
             <UnifiedFilter
@@ -491,27 +494,6 @@ export default function CharacterListPage() {
                   className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white"
                 >
                   Reset Filters
-                </Button>
-              </motion.div>
-            )}
-
-            {/* Error State */}
-            {charactersData.error && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12"
-              >
-                <div className="w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-red-500/20">
-                  <User className="w-12 h-12 text-red-500/60" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">Error Loading Characters</h3>
-                <p className="text-muted-foreground mb-6">{charactersData.error}</p>
-                <Button 
-                  onClick={fetchCharacters}
-                  className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white"
-                >
-                  Try Again
                 </Button>
               </motion.div>
             )}
