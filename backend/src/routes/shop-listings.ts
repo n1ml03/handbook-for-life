@@ -155,20 +155,6 @@ router.get('/statistics',
   })
 );
 
-// GET /api/shop-listings/summary - Get shop summary
-router.get('/summary',
-  asyncHandler(async (req, res) => {
-    const summary = await shopService.getShopSummary();
-
-    logger.info('Retrieved shop summary');
-
-    res.json({
-      success: true,
-      data: summary
-    });
-  })
-);
-
 // GET /api/shop-listings/:id - Get shop listing by ID
 router.get('/:id',
   asyncHandler(async (req, res) => {

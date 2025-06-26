@@ -31,8 +31,8 @@ export class SkillService extends BaseService<SkillModel, Skill, NewSkill> {
 
   async getSkillById(id: string | number): Promise<Skill> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Skill ID');
-      return await this.model.findById(id);
+      const numericId = this.parseNumericId(id, 'Skill ID');
+      return await this.model.findById(numericId);
     }, 'fetch skill', id);
   }
 
@@ -62,12 +62,12 @@ export class SkillService extends BaseService<SkillModel, Skill, NewSkill> {
 
   async updateSkill(id: string | number, updates: Partial<NewSkill>): Promise<Skill> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Skill ID');
+      const numericId = this.parseNumericId(id, 'Skill ID');
       this.validateOptionalString(updates.name_en, 'Skill name');
 
       this.logOperationStart('Updating', id, { updates });
 
-      const skill = await this.model.update(id, updates);
+      const skill = await this.model.update(numericId, updates);
 
       this.logOperationSuccess('Updated', skill.name_en, { id: skill.id });
       return skill;
@@ -76,13 +76,13 @@ export class SkillService extends BaseService<SkillModel, Skill, NewSkill> {
 
   async deleteSkill(id: string | number): Promise<void> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Skill ID');
+      const numericId = this.parseNumericId(id, 'Skill ID');
 
       // Check if skill exists before deletion
-      await this.model.findById(id);
+      await this.model.findById(numericId);
 
       this.logOperationStart('Deleting', id);
-      await this.model.delete(id);
+      await this.model.delete(numericId);
       this.logOperationSuccess('Deleted', id);
     }, 'delete skill', id);
   }
@@ -91,7 +91,8 @@ export class SkillService extends BaseService<SkillModel, Skill, NewSkill> {
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search skills', query);
   }
 

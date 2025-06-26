@@ -79,7 +79,8 @@ router.get('/search',
       return;
     }
 
-    const result = await skillModel.search(q as string, {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    const result = await skillModel.search(searchFields, q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,

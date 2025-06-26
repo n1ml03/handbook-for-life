@@ -17,21 +17,27 @@ import { Grid } from '@/components/ui/spacing';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 import { 
   swimsuitsApi,
-  accessoriesApi,
+  itemsApi,
   skillsApi,
   bromidesApi
 } from '@/services/api';
 import { 
   type Swimsuit,
-  type Accessory,
+  type Item,
   type Skill,
   type Bromide,
   type ItemType,
   type SortDirection,
-  type Language,
   type UnifiedItem
 } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
+// Import multi-language search functionality
+import { 
+  addTranslationsToItems, 
+  type MultiLanguageItem,
+  getDisplayName,
+  getDisplayDescription} from '@/services/multiLanguageSearch';
+import { useMultiLanguageSearch } from '@/services/useMultiLanguageSearch';
 import React from 'react';
 import { PageLoadingState } from '@/components/ui';
 
@@ -65,31 +71,62 @@ const getRarityColor = (rarity: string) => {
   }
 };
 
-// Optimized translation function
-const getItemTranslations = (item: any): Record<Language, { name?: string; description?: string }> => {
+// Convert database items to multi-language compatible format
+const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageItem & UnifiedItem => {
+  // Extract the appropriate name and description based on the item type
+  let name = '';
+  let description = '';
+  
+  switch (type) {
+    case 'swimsuit':
+      name = item.name_en || item.name_jp || `Swimsuit ${item.id}`;
+      description = item.description_en || '';
+      break;
+    case 'accessory':
+      name = item.name || `Accessory ${item.id}`;
+      description = item.description || '';
+      break;
+    case 'skill':
+      name = item.name_en || item.name_jp || `Skill ${item.id}`;
+      description = item.description_en || '';
+      break;
+    case 'bromide':
+      name = item.name_en || item.name_jp || `Bromide ${item.id}`;
+      description = item.art_url ? 'Bromide artwork' : '';
+      break;
+    default:
+      name = item.name || `Item ${item.id}`;
+      description = item.description || '';
+  }
+
   return {
-    jp: { name: item.name_jp || item.name, description: item.description_en || item.description || '' },
-    en: { name: item.name_en || item.name, description: item.description_en || item.description || '' },
-    cn: { name: item.name_cn || item.name, description: item.description_en || item.description || '' },
-    tw: { name: item.name_tw || item.name, description: item.description_en || item.description || '' },
-    kr: { name: item.name_kr || item.name, description: item.description_en || item.description || '' }
+    id: `${type}-${item.id}`,
+    name,
+    description,
+    type,
+    rarity: item.rarity,
+    character: type === 'swimsuit' ? item.character?.name_en : undefined,
+    category: type === 'accessory' ? item.type : type === 'skill' ? item.skill_category : undefined,
+    image: `/images/${type}s/${item.id}.jpg`,
+    stats: item.stats,
+    // Add any other relevant properties from the original item
+    ...item
   };
 };
 
-// Language info constant
+// Language info constant - updated to match multi-language search format
 const languageInfo = {
-  en: { flag: '🇺🇸', name: 'EN' },
-  cn: { flag: '🇨🇳', name: 'CN' },
-  tw: { flag: '🇹🇼', name: 'TW' },
-  kr: { flag: '🇰🇷', name: 'KO' },
-  jp: { flag: '🇯🇵', name: 'JP' }
+  EN: { flag: '🇺🇸', name: 'EN' },
+  CN: { flag: '🇨🇳', name: 'CN' },
+  TW: { flag: '🇹🇼', name: 'TW' },
+  KO: { flag: '🇰🇷', name: 'KO' },
+  JP: { flag: '🇯🇵', name: 'JP' }
 };
 
 // Optimized ItemCard component
-const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem }) {
-  const translation = useMemo(() => item.translations?.['en'], [item.translations]);
-  const displayName = useMemo(() => translation?.name || item.name, [translation, item.name]);
-  const displayDescription = useMemo(() => translation?.description || item.description, [translation, item.description]);
+const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & MultiLanguageItem }) {
+  const displayName = useMemo(() => getDisplayName(item, 'EN'), [item]);
+  const displayDescription = useMemo(() => getDisplayDescription(item, 'EN'), [item]);
   const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
   const typeColor = useMemo(() => getTypeColor(item.type), [item.type]);
   const rarityColor = useMemo(() => item.rarity ? getRarityColor(item.rarity) : '', [item.rarity]);
@@ -179,11 +216,10 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem }) {
             
             <div className="grid grid-cols-1 gap-2">
               {Object.entries(languageInfo).map(([lang, info]) => {
-                const langTranslation = item.translations?.[lang as Language];
-                const langName = langTranslation?.name || item.name;
+                const langName = getDisplayName(item, lang as keyof typeof languageInfo);
                 
                 // Skip if it's the same as the primary name to avoid duplication
-                if (lang === 'en') return null;
+                if (lang === 'EN') return null;
                 
                 return (
                   <div 
@@ -253,7 +289,7 @@ export default function ItemsPage() {
   // Optimized state management
   const [itemsData, setItemsData] = useState({
     swimsuits: [] as Swimsuit[],
-    accessories: [] as Accessory[],
+    accessories: [] as Item[],
     skills: [] as Skill[],
     bromides: [] as Bromide[],
     loading: true,
@@ -286,7 +322,7 @@ export default function ItemsPage() {
       
       const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
         swimsuitsApi.getSwimsuits({ limit: 1000 }),
-        accessoriesApi.getAccessories({ limit: 1000 }),
+        itemsApi.getItems({ category: 'ACCESSORY', limit: 1000 }),
         skillsApi.getSkills({ limit: 1000 }),
         bromidesApi.getBromides({ limit: 1000 })
       ]);
@@ -314,65 +350,37 @@ export default function ItemsPage() {
     fetchAllData();
   }, [fetchAllData]);
 
-  // Memoized unified items data with optimized processing
-  const unifiedItems: UnifiedItem[] = useMemo(() => {
-    const items: UnifiedItem[] = [];
+  // Memoized unified items data with multi-language support
+  const rawUnifiedItems = useMemo(() => {
+    const items: (MultiLanguageItem & UnifiedItem)[] = [];
 
     // Add swimsuits
     itemsData.swimsuits.forEach((swimsuit: Swimsuit) => {
-      items.push({
-        id: `swimsuit-${swimsuit.id}`,
-        name: swimsuit.name_en || swimsuit.name_jp,
-        type: 'swimsuit' as ItemType,
-        rarity: swimsuit.rarity,
-        character: swimsuit.character?.name_en || undefined,
-        image: `/images/swimsuits/${swimsuit.id}.jpg`,
-        translations: getItemTranslations(swimsuit)
-      });
+      items.push(convertToMultiLanguageItem(swimsuit, 'swimsuit'));
     });
 
     // Add accessories
-    itemsData.accessories.forEach((accessory: Accessory) => {
-      items.push({
-        id: `accessory-${accessory.id}`,
-        name: accessory.name,
-        type: 'accessory' as ItemType,
-        category: accessory.type,
-        rarity: accessory.rarity,
-        description: accessory.description,
-        image: `/images/accessories/${accessory.id}.jpg`,
-        translations: getItemTranslations(accessory)
-      });
-    });
+            itemsData.accessories.forEach((accessory: Item) => {
+          items.push(convertToMultiLanguageItem(accessory, 'accessory'));
+        });
 
     // Add skills
     itemsData.skills.forEach((skill: Skill) => {
-      items.push({
-        id: `skill-${skill.id}`,
-        name: skill.name_en || skill.name_jp,
-        type: 'skill' as ItemType,
-        category: skill.skill_category,
-        description: skill.description_en,
-        image: `/images/skills/${skill.id}.jpg`,
-        translations: getItemTranslations(skill)
-      });
+      items.push(convertToMultiLanguageItem(skill, 'skill'));
     });
 
     // Add bromides
     itemsData.bromides.forEach((bromide: Bromide) => {
-      items.push({
-        id: `bromide-${bromide.id}`,
-        name: bromide.name_en || bromide.name_jp,
-        type: 'bromide' as ItemType,
-        rarity: bromide.rarity,
-        description: bromide.art_url ? 'Bromide artwork' : undefined,
-        image: bromide.art_url || `/images/bromides/${bromide.id}.jpg`,
-        translations: getItemTranslations(bromide)
-      });
+      items.push(convertToMultiLanguageItem(bromide, 'bromide'));
     });
 
     return items;
   }, [itemsData.swimsuits, itemsData.accessories, itemsData.skills, itemsData.bromides]);
+
+  // Add translations to items using the multi-language search service
+  const unifiedItems = useMemo(() => {
+    return addTranslationsToItems(rawUnifiedItems);
+  }, [rawUnifiedItems]);
 
   // Get unique values for filters - memoized
   const filterOptions = useMemo(() => {
@@ -381,73 +389,32 @@ export default function ItemsPage() {
     return { uniqueRarities, uniqueCharacters };
   }, [unifiedItems]);
 
-  // Optimized filtering and sorting with debounced search
-  const filteredAndSortedItems = useMemo(() => {
-    const searchText = debouncedSearchTerm.toLowerCase();
+  // Create additional filters function for multi-language search
+  const additionalFilters = useCallback((item: any) => {
+    // Type filter
+    const typeMatch = filterValues.type === 'all' || item.type === filterValues.type;
 
-    const filtered = unifiedItems.filter(item => {
-      // Type filter
-      const typeMatch = filterValues.type === 'all' || item.type === filterValues.type;
+    // Rarity filter
+    const rarityMatch = !filterValues.rarity || item.rarity === filterValues.rarity;
 
-      // Text search (multi-language) - Search across ALL languages
-      let nameMatch = true;
-      if (searchText) {
-        // Search in original name and description
-        const originalNameMatch = item.name.toLowerCase().includes(searchText);
-        const originalDescMatch = item.description?.toLowerCase().includes(searchText) || false;
-        
-        // Search across ALL language translations
-        const translationMatches = Object.values(item.translations || {}).some(translation => {
-          const nameMatch = translation?.name?.toLowerCase().includes(searchText) || false;
-          const descMatch = translation?.description?.toLowerCase().includes(searchText) || false;
-          return nameMatch || descMatch;
-        });
-        
-        nameMatch = originalNameMatch || originalDescMatch || translationMatches;
-      }
+    // Character filter
+    const characterMatch = !filterValues.character || item.character === filterValues.character;
 
-      // Rarity filter
-      const rarityMatch = !filterValues.rarity || item.rarity === filterValues.rarity;
+    return typeMatch && rarityMatch && characterMatch;
+  }, [filterValues.type, filterValues.rarity, filterValues.character]);
 
-      // Character filter
-      const characterMatch = !filterValues.character || item.character === filterValues.character;
+  // Use the multi-language search hook
+  const { items: filteredAndSortedItems } = useMultiLanguageSearch(
+    unifiedItems,
+    debouncedSearchTerm,
+    additionalFilters,
+    sortState.sortBy,
+    sortState.sortDirection
+  );
 
-      return typeMatch && nameMatch && rarityMatch && characterMatch;
-    });
 
-    // Optimized sorting
-    const rarityOrder: Record<string, number> = { 'SSR': 3, 'SR': 2, 'R': 1, '': 0 };
-    
-    return filtered.sort((a, b) => {
-      let comparison = 0;
 
-      switch (sortState.sortBy) {
-        case 'name': {
-          const aName = a.translations?.['en']?.name || a.name;
-          const bName = b.translations?.['en']?.name || b.name;
-          comparison = aName.localeCompare(bName);
-          break;
-        }
-        case 'type':
-          comparison = a.type.localeCompare(b.type);
-          break;
-        case 'stats': {
-          const aTotal = a.stats ? Object.values(a.stats).reduce((sum: number, val: number | undefined) => sum + (val || 0), 0) : 0;
-          const bTotal = b.stats ? Object.values(b.stats).reduce((sum: number, val: number | undefined) => sum + (val || 0), 0) : 0;
-          comparison = aTotal - bTotal;
-          break;
-        }
-        case 'rarity': {
-          comparison = (rarityOrder[a.rarity || ''] || 0) - (rarityOrder[b.rarity || ''] || 0);
-          break;
-        }
-      }
-
-      return sortState.sortDirection === 'desc' ? -comparison : comparison;
-    });
-  }, [unifiedItems, filterValues, debouncedSearchTerm, sortState]);
-
-  // Create filter configuration - memoized
+  // Create filter configuration
   const filterFields: FilterField[] = useMemo(() => [
     {
       key: 'search',

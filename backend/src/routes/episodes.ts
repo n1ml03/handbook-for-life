@@ -127,7 +127,8 @@ router.get('/search',
       return;
     }
 
-    const result = await episodeModel.search(q as string, {
+    const searchFields = ['title_jp', 'title_en', 'title_cn', 'title_tw', 'title_kr', 'unique_key'];
+    const result = await episodeModel.search(searchFields, q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,

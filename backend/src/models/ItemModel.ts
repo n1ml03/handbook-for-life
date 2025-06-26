@@ -1,15 +1,16 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Item, NewItem, ItemCategory, ItemRarity } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
+import { logger } from '../config';
 
-export class ItemModel extends BaseModel {
+export class ItemModel extends BaseModel<Item, NewItem> {
   constructor() {
     super('items');
   }
 
-  // Mapper function to convert database row to Item object
-  private mapItemRow(row: any): Item {
+  // Implementation of abstract methods
+  protected mapRow(row: any): Item {
     return {
       id: row.id,
       unique_key: row.unique_key,
@@ -20,11 +21,37 @@ export class ItemModel extends BaseModel {
       name_kr: row.name_kr,
       description_en: row.description_en,
       source_description_en: row.source_description_en,
-      item_category: row.item_category as ItemCategory,
-      rarity: row.rarity as ItemRarity,
+      item_category: row.item_category,
+      rarity: row.rarity,
       icon_url: row.icon_url,
       game_version: row.game_version,
     };
+  }
+
+  protected getCreateFields(): (keyof NewItem)[] {
+    return [
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'description_en',
+      'source_description_en',
+      'item_category',
+      'rarity',
+      'icon_url',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewItem)[] {
+    return this.getCreateFields(); // Same fields can be updated
+  }
+
+  // Mapper function to convert database row to Item object
+  private mapItemRow(row: any): Item {
+    return this.mapRow(row);
   }
 
   async create(item: NewItem): Promise<Item> {
@@ -67,14 +94,9 @@ export class ItemModel extends BaseModel {
     );
   }
 
-  async findById(id: number): Promise<Item>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = Item>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Item> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<Item>(id as number, this.mapItemRow);
+  // Override findById to use proper typing
+  async findById(id: number): Promise<Item> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Item> {
@@ -164,45 +186,36 @@ export class ItemModel extends BaseModel {
 
     params.push(id);
 
-    await executeQuery(
+    const [result] = await executeQuery(
       `UPDATE items SET ${setClause.join(', ')} WHERE id = ?`,
       params
-    );
+    ) as [any, any];
+
+    if (result.affectedRows === 0) {
+      throw new AppError('Item not found', 404);
+    }
 
     return this.findById(id);
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
-  }
-
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM items WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM items WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapItemRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
-  }
-
-  async getCurrencyItems(): Promise<Item[]> {
-    const [rows] = await executeQuery(
-      'SELECT * FROM items WHERE item_category = "CURRENCY"',
-      []
-    ) as [any[], any];
-    
-    return rows.map(this.mapItemRow);
+    return super.delete(id);
   }
 
   async findByKey(key: string): Promise<Item> {
     return this.findByUniqueKey(key);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async getCurrencyItems(): Promise<Item[]> {
+    const [rows] = await executeQuery(
+      'SELECT * FROM items WHERE item_category = ? ORDER BY name_en',
+      ['CURRENCY']
+    ) as [any[], any];
+    
+    return rows.map(this.mapItemRow);
+  }
+
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -215,7 +228,8 @@ export class ItemModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'items',
       errors
     };
   }
-} 
+}

@@ -1,7 +1,8 @@
-import { PaginationOptions, PaginatedResult } from './BaseModel';
+import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Document, NewDocument } from '../types/database';
 import { executeQuery } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
+import { QueryOptimizer } from '../services/QueryOptimizer';
 
 export interface UpdateDocument {
   unique_key?: string;
@@ -9,13 +10,57 @@ export interface UpdateDocument {
   summary_en?: string;
   content_json_en?: any;
   is_published?: boolean;
+  screenshots?: string[];
 }
 
-export class DocumentModel {
-  protected tableName = 'documents';
+// Extended Document type that matches frontend expectations
+export interface ExtendedDocument extends Document {
+  title: string; // Maps to title_en
+  content: string; // Maps to content_json_en converted to HTML
+  category: string; // Generated category
+  tags: string[]; // Generated tags
+  author: string; // Default author
+  isPublished: boolean; // Maps to is_published
+  createdAt: string; // Maps to created_at
+  updatedAt: string; // Maps to updated_at
+}
 
-  // Mapper function to convert database row to Document object
-  private mapDocumentRow(row: any): Document {
+export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
+  constructor() {
+    super('documents');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): ExtendedDocument {
+    return this.mapDocumentRow(row);
+  }
+
+  protected getCreateFields(): (keyof NewDocument)[] {
+    return [
+      'unique_key',
+      'title_en',
+      'summary_en',
+      'content_json_en',
+      'is_published',
+      'screenshots'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewDocument)[] {
+    return this.getCreateFields(); // Same fields can be updated
+  }
+
+  // Enhanced mapper function to convert database row to Extended Document object
+  private mapDocumentRow = (row: any): ExtendedDocument => {
+    // Convert TipTap JSON to HTML for content field
+    const content = this.convertTipTapToHtml(row.content_json_en);
+    
+    // Generate category based on unique_key or content analysis
+    const category = this.generateCategory(row.unique_key, content);
+    
+    // Generate tags from category and content
+    const tags = this.generateTags(category, content);
+
     return {
       id: row.id,
       unique_key: row.unique_key,
@@ -26,45 +71,111 @@ export class DocumentModel {
       screenshots: row.screenshots ? JSON.parse(row.screenshots) : [],
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
+      // Extended fields for frontend compatibility
+      title: row.title_en,
+      content,
+      category,
+      tags,
+      author: 'System Admin', // Default author
+      isPublished: Boolean(row.is_published),
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
     };
-  }
+  };
 
-  // Helper method for pagination
-  protected async getPaginatedResults<T>(
-    query: string,
-    countQuery: string,
-    options: PaginationOptions,
-    mapFunction: (row: any) => T,
-    params: any[] = []
-  ): Promise<PaginatedResult<T>> {
-    const page = Math.max(1, options.page || 1);
-    const limit = Math.min(100, Math.max(1, options.limit || 10));
-    const offset = (page - 1) * limit;
-
-    // Execute count and data queries in parallel
-    const [countResult, dataResult] = await Promise.all([
-      executeQuery(countQuery, params) as Promise<[any[], any]>,
-      executeQuery(`${query} LIMIT ${limit} OFFSET ${offset}`, params) as Promise<[any[], any]>
-    ]);
-
-    const total = countResult[0][0]?.['COUNT(*)'] || 0;
-    const data = dataResult[0].map(mapFunction);
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
+  // Helper method to convert TipTap JSON to HTML
+  private convertTipTapToHtml(jsonContent: any): string {
+    if (!jsonContent) return '';
+    
+    try {
+      const parsed = typeof jsonContent === 'string' ? JSON.parse(jsonContent) : jsonContent;
+      // Simple conversion - in production, use a proper TipTap to HTML converter
+      if (parsed?.content) {
+        return this.extractTextFromTipTap(parsed.content);
       }
-    };
+      return '';
+    } catch (error) {
+      return '';
+    }
   }
 
-  async create(document: NewDocument): Promise<Document> {
+  // Extract text content from TipTap structure with better HTML generation
+  private extractTextFromTipTap(content: any[]): string {
+    if (!Array.isArray(content)) return '';
+    
+    return content.map(node => {
+      if (node.type === 'paragraph' && node.content) {
+        const text = node.content.map((textNode: any) => textNode.text || '').join('');
+        return `<p>${text}</p>`;
+      }
+      if (node.type === 'heading' && node.content) {
+        const text = node.content.map((textNode: any) => textNode.text || '').join('');
+        const level = node.attrs?.level || 1;
+        return `<h${level}>${text}</h${level}>`;
+      }
+      if (node.type === 'bulletList' && node.content) {
+        const items = this.extractTextFromTipTap(node.content);
+        return `<ul>${items}</ul>`;
+      }
+      if (node.type === 'listItem' && node.content) {
+        const text = this.extractTextFromTipTap(node.content);
+        return `<li>${text}</li>`;
+      }
+      if (node.content) {
+        return this.extractTextFromTipTap(node.content);
+      }
+      return '';
+    }).join('\n');
+  }
+
+  // Enhanced category generation with more sophisticated logic
+  private generateCategory(uniqueKey: string, content: string): string {
+    const key = uniqueKey.toLowerCase();
+    
+    if (key.includes('guide')) return 'Guide';
+    if (key.includes('tutorial')) return 'Tutorial';
+    if (key.includes('changelog') || key.includes('update')) return 'Changelog';
+    if (key.includes('faq') || key.includes('help')) return 'FAQ';
+    if (key.includes('news') || key.includes('announcement')) return 'News';
+    if (key.includes('feature')) return 'Feature';
+    if (key.includes('api') || key.includes('technical')) return 'Technical';
+    
+    // Analyze content for category hints
+    const contentLower = content.toLowerCase();
+    if (contentLower.includes('how to') || contentLower.includes('step by step')) return 'Guide';
+    if (contentLower.includes('frequently asked') || contentLower.includes('common question')) return 'FAQ';
+    if (contentLower.includes('new feature') || contentLower.includes('release note')) return 'Changelog';
+    if (contentLower.includes('troubleshoot') || contentLower.includes('problem')) return 'Troubleshooting';
+    
+    return 'General';
+  }
+
+  // Enhanced tag generation with more comprehensive keyword detection
+  private generateTags(category: string, content: string): string[] {
+    const tags = [category.toLowerCase()];
+    
+    // Add common tags based on content keywords
+    const contentLower = content.toLowerCase();
+    const gameKeywords = ['character', 'swimsuit', 'skill', 'event', 'gacha', 'item', 'bromide', 'episode'];
+    const actionKeywords = ['guide', 'tutorial', 'tips', 'tricks', 'strategy'];
+    const featureKeywords = ['ui', 'interface', 'database', 'api', 'search', 'filter'];
+    
+    [...gameKeywords, ...actionKeywords, ...featureKeywords].forEach(keyword => {
+      if (contentLower.includes(keyword)) {
+        tags.push(keyword);
+      }
+    });
+    
+    // Add version tags if mentioned
+    const versionMatch = contentLower.match(/version\s+(\d+\.?\d*)/);
+    if (versionMatch) {
+      tags.push(`v${versionMatch[1]}`);
+    }
+    
+    return [...new Set(tags)]; // Remove duplicates
+  }
+
+  async create(document: NewDocument): Promise<ExtendedDocument> {
     try {
       const [result] = await executeQuery(
         `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, is_published, screenshots)
@@ -79,8 +190,7 @@ export class DocumentModel {
         ]
       ) as [any, any];
 
-      const documentId = result.insertId;
-      return this.findById(documentId);
+      return this.findById(result.insertId);
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
         throw new AppError('Document with this unique_key already exists', 409);
@@ -89,7 +199,7 @@ export class DocumentModel {
     }
   }
 
-  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
+  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
     return this.getPaginatedResults(
       'SELECT * FROM documents',
       'SELECT COUNT(*) FROM documents',
@@ -98,21 +208,17 @@ export class DocumentModel {
     );
   }
 
-  // Public method for finding by ID
-  async findById(id: string | number): Promise<Document> {
-    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-    if (isNaN(numericId)) {
-      throw new AppError('Invalid document ID', 400);
+  async findById(id: number): Promise<ExtendedDocument>;
+  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
+  
+  async findById<T = ExtendedDocument>(id: string | number, mapFunction?: (row: any) => T): Promise<T | ExtendedDocument> {
+    if (mapFunction) {
+      return super.findById(id) as Promise<T>;
     }
-    
-    const [rows] = await executeQuery('SELECT * FROM documents WHERE id = ?', [numericId]) as [any[], any];
-    if (rows.length === 0) {
-      throw new AppError('Document not found', 404);
-    }
-    return this.mapDocumentRow(rows[0]);
+    return super.findById(id as number);
   }
 
-  async findByUniqueKey(unique_key: string): Promise<Document> {
+  async findByUniqueKey(unique_key: string): Promise<ExtendedDocument> {
     const [rows] = await executeQuery('SELECT * FROM documents WHERE unique_key = ?', [unique_key]) as [any[], any];
     if (rows.length === 0) {
       throw new AppError('Document not found', 404);
@@ -120,11 +226,11 @@ export class DocumentModel {
     return this.mapDocumentRow(rows[0]);
   }
 
-  async findByKey(key: string): Promise<Document> {
+  async findByKey(key: string): Promise<ExtendedDocument> {
     return this.findByUniqueKey(key);
   }
 
-  async update(id: string | number, updates: Partial<NewDocument>): Promise<Document> {
+  async update(id: number, updates: Partial<NewDocument>): Promise<ExtendedDocument> {
     const setClause: string[] = [];
     const params: any[] = [];
 
@@ -154,92 +260,156 @@ export class DocumentModel {
     }
 
     if (setClause.length === 0) {
-      return this.findById(id);
+      throw new AppError('No updates provided', 400);
     }
 
-    setClause.push(`updated_at = CURRENT_TIMESTAMP`);
-    params.push(typeof id === 'string' ? parseInt(id, 10) : id);
+    // Add timestamp update
+    setClause.push(`updated_at = NOW()`);
+    params.push(id);
 
-    await executeQuery(
-      `UPDATE documents SET ${setClause.join(', ')} WHERE id = ?`,
-      params
-    );
+    try {
+      await executeQuery(
+        `UPDATE documents SET ${setClause.join(', ')} WHERE id = ?`,
+        params
+      );
 
-    return this.findById(id);
+      return this.findById(id);
+    } catch (error: any) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new AppError('Document with this unique_key already exists', 409);
+      }
+      throw new AppError('Failed to update document', 500);
+    }
   }
 
-  async delete(id: string | number): Promise<void> {
-    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-    if (isNaN(numericId)) {
-      throw new AppError('Invalid document ID', 400);
-    }
-    
-    const [result] = await executeQuery('DELETE FROM documents WHERE id = ?', [numericId]) as [any, any];
+  async delete(id: number): Promise<void> {
+    const [result] = await executeQuery('DELETE FROM documents WHERE id = ?', [id]) as [any, any];
     if (result.affectedRows === 0) {
       throw new AppError('Document not found', 404);
     }
   }
 
-  /**
-   * Find only published documents
-   */
-  async findPublished(options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
+  async findPublished(options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
     return this.getPaginatedResults(
-      'SELECT * FROM documents WHERE is_published = true',
-      'SELECT COUNT(*) FROM documents WHERE is_published = true',
+      'SELECT * FROM documents WHERE is_published = TRUE',
+      'SELECT COUNT(*) FROM documents WHERE is_published = TRUE',
       options,
       this.mapDocumentRow
     );
   }
 
   /**
-   * Search documents by title or summary
+   * Override search method to match BaseModel signature
    */
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Document>> {
-    const searchPattern = `%${query}%`;
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<ExtendedDocument>> {
+    return super.search(searchFields, query, options, additionalWhere);
+  }
+
+  /**
+   * Convenience search method for documents
+   */
+  async searchDocuments(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
+    const searchFields = ['title_en', 'summary_en', 'unique_key'];
+    return this.search(searchFields, query, options);
+  }
+
+  async togglePublishStatus(id: number): Promise<ExtendedDocument> {
+    await executeQuery(
+      'UPDATE documents SET is_published = NOT is_published, updated_at = NOW() WHERE id = ?',
+      [id]
+    );
+    return this.findById(id);
+  }
+
+  /**
+   * Enhanced findByCategory with better search logic and performance
+   */
+  async findByCategory(category: string, options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
+    // Use optimized query that searches in multiple fields
+    const searchPattern = `%${category.toLowerCase()}%`;
     return this.getPaginatedResults(
       `SELECT * FROM documents WHERE 
-       (title_en LIKE ? OR summary_en LIKE ?)`,
+       LOWER(unique_key) LIKE ? OR 
+       LOWER(title_en) LIKE ? OR 
+       LOWER(summary_en) LIKE ?`,
       `SELECT COUNT(*) FROM documents WHERE 
-       (title_en LIKE ? OR summary_en LIKE ?)`,
+       LOWER(unique_key) LIKE ? OR 
+       LOWER(title_en) LIKE ? OR 
+       LOWER(summary_en) LIKE ?`,
       options,
       this.mapDocumentRow,
-      [searchPattern, searchPattern]
+      [searchPattern, searchPattern, searchPattern]
     );
   }
 
   /**
-   * Toggle publish status
+   * Get document statistics for analytics
    */
-  async togglePublishStatus(id: string | number): Promise<Document> {
-    const document = await this.findById(id);
-    const newStatus = !document.is_published;
-    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-
-    const query = `
-      UPDATE documents 
-      SET is_published = ?, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ?
-    `;
-
-    await executeQuery(query, [newStatus, numericId]);
-    return this.findById(id);
+  async getDocumentStats(): Promise<{
+    total: number;
+    published: number;
+    unpublished: number;
+    byCategory: Record<string, number>;
+    lastUpdated: string;
+  }> {
+    const [totalRows] = await executeQuery('SELECT COUNT(*) as count FROM documents') as [any[], any];
+    const [publishedRows] = await executeQuery('SELECT COUNT(*) as count FROM documents WHERE is_published = TRUE') as [any[], any];
+    const [lastUpdatedRows] = await executeQuery('SELECT MAX(updated_at) as last_updated FROM documents') as [any[], any];
+    
+    const total = totalRows[0].count;
+    const published = publishedRows[0].count;
+    const unpublished = total - published;
+    
+    // Generate category statistics from all documents
+    const [allDocs] = await executeQuery('SELECT unique_key, title_en, summary_en, content_json_en FROM documents') as [any[], any];
+    const byCategory: Record<string, number> = {};
+    
+    allDocs.forEach((doc: any) => {
+      const content = this.convertTipTapToHtml(doc.content_json_en);
+      const category = this.generateCategory(doc.unique_key, content);
+      byCategory[category] = (byCategory[category] || 0) + 1;
+    });
+    
+    return {
+      total,
+      published,
+      unpublished,
+      byCategory,
+      lastUpdated: lastUpdatedRows[0].last_updated ? new Date(lastUpdatedRows[0].last_updated).toISOString() : new Date().toISOString()
+    };
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
+    let isHealthy = true;
 
     try {
-      await executeQuery('SELECT 1');
-      await executeQuery('SELECT COUNT(*) FROM documents LIMIT 1');
+      // Test basic connectivity
+      await executeQuery('SELECT 1 FROM documents LIMIT 1');
+      
+      // Test performance
+      const startTime = Date.now();
+      await executeQuery('SELECT COUNT(*) FROM documents');
+      const queryTime = Date.now() - startTime;
+      
+      if (queryTime > 1000) {
+        errors.push(`Slow query performance: ${queryTime}ms`);
+      }
+      
     } catch (error) {
-      const errorMsg = `DocumentModel health check failed: ${error instanceof Error ? error.message : error}`;
-      errors.push(errorMsg);
+      errors.push(`Database error: ${error}`);
+      isHealthy = false;
     }
 
     return {
-      isHealthy: errors.length === 0,
-      errors
+      isHealthy,
+      tableName: this.tableName,
+      errors,
     };
   }
 } 

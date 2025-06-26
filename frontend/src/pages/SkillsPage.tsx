@@ -14,7 +14,7 @@ import {
   getLocalizedName
 } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
-import { PageLoadingState, InlinePageLoader, ErrorState } from '@/components/ui';
+import { PageLoadingState, LoadingSpinner } from '@/components/ui';
 import { PageSection } from '@/components/ui/spacing';
 import React from 'react';
 
@@ -253,9 +253,12 @@ export default function SkillsPage() {
             transition={{ delay: 0.2 }}
             className="flex items-center justify-between mb-6"
           >
-            {loading && (
-              <InlinePageLoader message="Đang tải thêm..." size="sm" />
-            )}
+                      {loading && (
+            <div className="flex items-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span className="text-sm text-muted-foreground">Loading more skills...</span>
+            </div>
+          )}
           </motion.div>
 
           {/* Skills Grid */}

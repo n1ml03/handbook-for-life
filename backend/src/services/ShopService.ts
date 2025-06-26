@@ -192,12 +192,6 @@ export class ShopService extends BaseService<ShopListingModel, ShopListing, NewS
     }, 'fetch shop statistics');
   }
 
-  async getShopSummary(): Promise<any> {
-    return this.safeAsyncOperation(async () => {
-      return await this.model.getShopSummary();
-    }, 'fetch shop summary');
-  }
-
   async validateShopListing(listingData: NewShopListing): Promise<{ isValid: boolean; errors: string[] }> {
     return this.safeAsyncOperation(async () => {
       const errors: string[] = [];
@@ -235,7 +229,7 @@ export class ShopService extends BaseService<ShopListingModel, ShopListing, NewS
   // ============================================================================
 
   private validateShopType(shopType: ShopType): void {
-    const validTypes: ShopType[] = ['GENERAL', 'EVENT', 'LIMITED', 'PREMIUM', 'EXCHANGE'];
+    const validTypes: ShopType[] = ['EVENT', 'VIP', 'GENERAL', 'CURRENCY'];
     if (!validTypes.includes(shopType)) {
       throw new Error(`Invalid shop type: ${shopType}. Valid types are: ${validTypes.join(', ')}`);
     }

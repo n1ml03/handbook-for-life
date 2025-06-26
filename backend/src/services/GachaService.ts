@@ -35,7 +35,8 @@ export class GachaService extends BaseService<GachaModel, Gacha, NewGacha> {
   async getGachaById(id: number): Promise<Gacha> {
     return this.safeAsyncOperation(async () => {
       const numericId = this.parseNumericId(id, 'Gacha ID');
-      return await this.model.findById(numericId);
+      const gacha = await this.model.findById(numericId);
+      return gacha;
     }, 'fetch gacha', id);
   }
 
@@ -49,7 +50,8 @@ export class GachaService extends BaseService<GachaModel, Gacha, NewGacha> {
   async getAllGachas(options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
     return this.safeAsyncOperation(async () => {
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.findAll(validatedOptions);
+      const result = await this.model.findAll(validatedOptions);
+      return this.formatPaginatedDatesForResponse(result);
     }, 'fetch all gachas');
   }
 
@@ -95,7 +97,8 @@ export class GachaService extends BaseService<GachaModel, Gacha, NewGacha> {
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search gachas', query);
   }
 
@@ -239,19 +242,12 @@ export class GachaService extends BaseService<GachaModel, Gacha, NewGacha> {
     }, 'validate gacha drop rates', gachaId);
   }
 
-  async getGachaStatistics(gachaId: number): Promise<any> {
-    return this.safeAsyncOperation(async () => {
-      const numericId = this.parseNumericId(gachaId, 'Gacha ID');
-      return await this.gachaPoolModel.getGachaStatistics(numericId);
-    }, 'fetch gacha statistics', gachaId);
-  }
-
   // ============================================================================
   // VALIDATION HELPERS
   // ============================================================================
 
   private validateGachaSubtype(subtype: GachaSubtype): void {
-    const validSubtypes: GachaSubtype[] = ['STANDARD', 'FEATURED', 'LIMITED', 'EVENT'];
+    const validSubtypes: GachaSubtype[] = ['TRENDY', 'NOSTALGIC', 'BIRTHDAY', 'ANNIVERSARY', 'PAID', 'FREE', 'ETC'];
     if (!validSubtypes.includes(subtype)) {
       throw new Error(`Invalid gacha subtype: ${subtype}. Valid subtypes are: ${validSubtypes.join(', ')}`);
     }

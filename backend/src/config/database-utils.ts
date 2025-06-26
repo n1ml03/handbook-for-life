@@ -1,6 +1,5 @@
-import { RowDataPacket, ResultSetHeader, FieldPacket, QueryResult, OkPacket } from 'mysql2';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { executeQuery } from './database';
-import { pool } from './database';
 import logger from './logger';
 import { AppError } from '../middleware/errorHandler';
 

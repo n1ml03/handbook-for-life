@@ -1,15 +1,16 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Skill, NewSkill, SkillCategory } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
+import { logger } from '../config';
 
-export class SkillModel extends BaseModel {
+export class SkillModel extends BaseModel<Skill, NewSkill> {
   constructor() {
     super('skills');
   }
 
-  // Mapper function to convert database row to Skill object
-  private mapSkillRow(row: any): Skill {
+  // Implementation of abstract methods
+  protected mapRow(row: any): Skill {
     return {
       id: row.id,
       unique_key: row.unique_key,
@@ -19,10 +20,34 @@ export class SkillModel extends BaseModel {
       name_tw: row.name_tw,
       name_kr: row.name_kr,
       description_en: row.description_en,
-      skill_category: row.skill_category as SkillCategory,
+      skill_category: row.skill_category,
       effect_type: row.effect_type,
       game_version: row.game_version,
     };
+  }
+
+  protected getCreateFields(): (keyof NewSkill)[] {
+    return [
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'description_en',
+      'skill_category',
+      'effect_type',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewSkill)[] {
+    return this.getCreateFields(); // Same fields can be updated
+  }
+
+  // Mapper function to convert database row to Skill object
+  private mapSkillRow(row: any): Skill {
+    return this.mapRow(row);
   }
 
   async create(skill: NewSkill): Promise<Skill> {
@@ -63,14 +88,8 @@ export class SkillModel extends BaseModel {
     );
   }
 
-  async findById(id: number): Promise<Skill>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = Skill>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Skill> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<Skill>(id as number, this.mapSkillRow);
+  async findById(id: number): Promise<Skill> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Skill> {
@@ -161,20 +180,23 @@ export class SkillModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Skill>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM skills WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM skills WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapSkillRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  // Override search method to match BaseModel signature
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Skill>> {
+    return super.search(searchFields, query, options, additionalWhere);
+  }
+
+  // Convenience search method for skills
+  async searchSkills(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Skill>> {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
   }
 
   async getSkillsByEffectTypes(effect_types: string[]): Promise<Skill[]> {
@@ -191,7 +213,7 @@ export class SkillModel extends BaseModel {
     return this.findByUniqueKey(key);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -204,6 +226,7 @@ export class SkillModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'skills',
       errors
     };
   }

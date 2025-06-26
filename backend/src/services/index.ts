@@ -12,6 +12,7 @@ import { SwimsuitSkillService } from './SwimsuitSkillService';
 import { DatabaseService } from './DatabaseService';
 import { UpdateLogService } from './UpdateLogService';
 import { logger } from '../config';
+import { ServiceHealthStatus } from './BaseService';
 
 // ============================================================================
 // SERVICE INSTANCES
@@ -35,16 +36,7 @@ export const updateLogService = new UpdateLogService();
 // SERVICE TYPES AND INTERFACES
 // ============================================================================
 
-export interface ServiceHealthStatus {
-  serviceName: string;
-  isHealthy: boolean;
-  errors: string[];
-  warnings?: string[];
-  responseTime?: number;
-  timestamp?: string;
-  version?: string;
-  dependencies?: Record<string, string>;
-}
+// Using ServiceHealthStatus from BaseService to avoid duplication
 
 export interface SystemHealthStatus {
   isHealthy: boolean;
@@ -221,7 +213,11 @@ class ServiceRegistry {
             serviceName,
             isHealthy: true,
             errors: [],
-            warnings: ['Health check not implemented']
+            warnings: ['Health check not implemented'],
+            responseTime: 0,
+            timestamp: new Date().toISOString(),
+            version: '1.0.0',
+            dependencies: {}
           });
         }
       } catch (error) {
@@ -231,7 +227,10 @@ class ServiceRegistry {
           isHealthy: false,
           errors: [error instanceof Error ? error.message : 'Unknown error'],
           warnings: [],
-          timestamp: new Date().toISOString()
+          responseTime: 0,
+          timestamp: new Date().toISOString(),
+          version: '1.0.0',
+          dependencies: {}
         });
       }
     }
@@ -366,4 +365,132 @@ export {
 // DEFAULT EXPORT
 // ============================================================================
 
-export default serviceRegistry; 
+export default serviceRegistry;
+
+// Service Factory Pattern for efficient service management
+export class ServiceFactory {
+  private static instance: ServiceFactory;
+  private services: Map<string, any> = new Map();
+
+  private constructor() {
+    this.initializeServices();
+  }
+
+  public static getInstance(): ServiceFactory {
+    if (!ServiceFactory.instance) {
+      ServiceFactory.instance = new ServiceFactory();
+    }
+    return ServiceFactory.instance;
+  }
+
+  private initializeServices(): void {
+    // Initialize all services as singletons
+    this.services.set('character', new CharacterService());
+    this.services.set('document', new DocumentService());
+    this.services.set('swimsuit', new SwimsuitService());
+    this.services.set('skill', new SkillService());
+    this.services.set('item', new ItemService());
+    this.services.set('bromide', new BromideService());
+    this.services.set('episode', new EpisodeService());
+    this.services.set('event', new EventService());
+    this.services.set('gacha', new GachaService());
+    this.services.set('shop', new ShopService());
+    this.services.set('updateLog', new UpdateLogService());
+    this.services.set('swimsuitSkill', new SwimsuitSkillService());
+  }
+
+  public getService<T>(serviceName: string): T {
+    const service = this.services.get(serviceName);
+    if (!service) {
+      throw new Error(`Service '${serviceName}' not found`);
+    }
+    return service as T;
+  }
+
+  public getAllServices(): Map<string, any> {
+    return new Map(this.services);
+  }
+
+  // Centralized health check for all services
+  public async getSystemHealthCheck(): Promise<{
+    isHealthy: boolean;
+    services: ServiceHealthStatus[];
+    summary: {
+      total: number;
+      healthy: number;
+      unhealthy: number;
+      averageResponseTime: number;
+    };
+    timestamp: string;
+  }> {
+    const startTime = Date.now();
+    const serviceHealthChecks: ServiceHealthStatus[] = [];
+    
+    // Run all health checks in parallel for better performance
+    const healthCheckPromises = Array.from(this.services.entries()).map(async ([name, service]) => {
+      try {
+        if (typeof service.healthCheck === 'function') {
+          return await service.healthCheck();
+        }
+        return {
+          serviceName: name,
+          isHealthy: true,
+          errors: [],
+          warnings: [],
+          responseTime: 0,
+          timestamp: new Date().toISOString(),
+          version: '1.0.0',
+          dependencies: {},
+        };
+      } catch (error) {
+        return {
+          serviceName: name,
+          isHealthy: false,
+          errors: [`Health check failed: ${error}`],
+          warnings: [],
+          responseTime: Date.now() - startTime,
+          timestamp: new Date().toISOString(),
+          version: '1.0.0',
+          dependencies: {},
+        };
+      }
+    });
+
+    const results = await Promise.all(healthCheckPromises);
+    serviceHealthChecks.push(...results);
+
+    const healthy = serviceHealthChecks.filter(s => s.isHealthy).length;
+    const unhealthy = serviceHealthChecks.length - healthy;
+    const averageResponseTime = serviceHealthChecks.reduce((sum, s) => sum + s.responseTime, 0) / serviceHealthChecks.length;
+
+    return {
+      isHealthy: unhealthy === 0,
+      services: serviceHealthChecks,
+      summary: {
+        total: serviceHealthChecks.length,
+        healthy,
+        unhealthy,
+        averageResponseTime,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Get performance metrics from all services
+  public getSystemPerformanceMetrics(): {
+    serviceName: string;
+    metrics: any[];
+  }[] {
+    return Array.from(this.services.entries()).map(([name, service]) => {
+      return {
+        serviceName: name,
+        metrics: typeof service.getPerformanceMetrics === 'function' 
+          ? service.getPerformanceMetrics() 
+          : [],
+      };
+    });
+  }
+}
+
+// Service factory for advanced usage
+export const serviceFactory = ServiceFactory.getInstance(); 

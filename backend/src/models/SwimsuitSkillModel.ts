@@ -1,20 +1,38 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { SwimsuitSkill, NewSwimsuitSkill, SkillSlot } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 
-export class SwimsuitSkillModel extends BaseModel {
+export class SwimsuitSkillModel extends BaseModel<SwimsuitSkill, NewSwimsuitSkill> {
   constructor() {
     super('swimsuit_skills');
   }
 
-  // Mapper function to convert database row to SwimsuitSkill object
-  private mapSwimsuitSkillRow(row: any): SwimsuitSkill {
+  // Implementation of abstract methods
+  protected mapRow(row: any): SwimsuitSkill {
     return {
+      id: row.id || (row.swimsuit_id * 1000 + row.skill_id), // Generate synthetic ID for composite key
       swimsuit_id: row.swimsuit_id,
       skill_id: row.skill_id,
       skill_slot: row.skill_slot as SkillSlot,
     };
+  }
+
+  protected getCreateFields(): (keyof NewSwimsuitSkill)[] {
+    return [
+      'swimsuit_id',
+      'skill_id',
+      'skill_slot'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewSwimsuitSkill)[] {
+    return ['skill_id']; // Only skill_id can be updated for a specific slot
+  }
+
+  // Mapper function to convert database row to SwimsuitSkill object
+  private mapSwimsuitSkillRow(row: any): SwimsuitSkill {
+    return this.mapRow(row);
   }
 
   async create(swimsuitSkill: NewSwimsuitSkill): Promise<SwimsuitSkill> {
@@ -152,31 +170,20 @@ export class SwimsuitSkillModel extends BaseModel {
     );
   }
 
-  async update(swimsuitId: number, skillSlot: SkillSlot, updates: { skill_id: number }): Promise<SwimsuitSkill> {
-    try {
-      await executeQuery(
-        `UPDATE swimsuit_skills SET skill_id = ? WHERE swimsuit_id = ? AND skill_slot = ?`,
-        [updates.skill_id, swimsuitId, skillSlot]
-      );
-
-      return this.findByCompositeKey(swimsuitId, skillSlot);
-    } catch (error: any) {
-      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-        throw new AppError('Referenced skill does not exist', 400);
-      }
-      throw new AppError('Failed to update swimsuit skill link', 500);
+  async update(id: number, updates: Partial<NewSwimsuitSkill>): Promise<SwimsuitSkill> {
+    // For composite key model, use the first swimsuit found
+    const skills = await this.findBySwimsuitId(id);
+    if (skills.data.length === 0) {
+      throw new AppError('Swimsuit skill not found', 404);
     }
+    
+    const firstSkill = skills.data[0];
+    return this.updateByComposite(firstSkill.swimsuit_id, firstSkill.skill_slot, { skill_id: updates.skill_id! });
   }
 
-  async delete(swimsuitId: number, skillSlot: SkillSlot): Promise<void> {
-    const [result] = await executeQuery(
-      `DELETE FROM swimsuit_skills WHERE swimsuit_id = ? AND skill_slot = ?`,
-      [swimsuitId, skillSlot]
-    ) as [any, any];
-
-    if (result.affectedRows === 0) {
-      throw new AppError('Swimsuit skill link not found', 404);
-    }
+  async delete(id: number): Promise<void> {
+    // For composite key model, delete all skills for the swimsuit
+    await this.deleteBySwimsuitId(id);
   }
 
   async deleteBySwimsuitId(swimsuitId: number): Promise<void> {
@@ -192,7 +199,7 @@ export class SwimsuitSkillModel extends BaseModel {
       return [];
     }
 
-    return this.withTransaction(async (connection) => {
+    return super.withTransaction(async (connection) => {
       const results: SwimsuitSkill[] = [];
       
       for (const swimsuitSkill of swimsuitSkills) {
@@ -215,7 +222,7 @@ export class SwimsuitSkillModel extends BaseModel {
   }
 
   async replaceSwimsuitSkills(swimsuitId: number, newSkills: Omit<NewSwimsuitSkill, 'swimsuit_id'>[]): Promise<SwimsuitSkill[]> {
-    return this.withTransaction(async (connection) => {
+    return super.withTransaction(async (connection) => {
       // Delete existing skills for this swimsuit
       await connection.execute('DELETE FROM swimsuit_skills WHERE swimsuit_id = ?', [swimsuitId]);
 
@@ -345,7 +352,7 @@ export class SwimsuitSkillModel extends BaseModel {
     return skills.data[0];
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -358,7 +365,36 @@ export class SwimsuitSkillModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'swimsuit_skills',
       errors
     };
+  }
+
+  // Composite key methods
+  async updateByComposite(swimsuitId: number, skillSlot: SkillSlot, updates: { skill_id: number }): Promise<SwimsuitSkill> {
+    try {
+      await executeQuery(
+        `UPDATE swimsuit_skills SET skill_id = ? WHERE swimsuit_id = ? AND skill_slot = ?`,
+        [updates.skill_id, swimsuitId, skillSlot]
+      );
+
+      return this.findByCompositeKey(swimsuitId, skillSlot);
+    } catch (error: any) {
+      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        throw new AppError('Referenced skill does not exist', 400);
+      }
+      throw new AppError('Failed to update swimsuit skill link', 500);
+    }
+  }
+
+  async deleteByComposite(swimsuitId: number, skillSlot: SkillSlot): Promise<void> {
+    const [result] = await executeQuery(
+      `DELETE FROM swimsuit_skills WHERE swimsuit_id = ? AND skill_slot = ?`,
+      [swimsuitId, skillSlot]
+    ) as [any, any];
+
+    if (result.affectedRows === 0) {
+      throw new AppError('Swimsuit skill link not found', 404);
+    }
   }
 }

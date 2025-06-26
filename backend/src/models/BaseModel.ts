@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
-import pool, { executeQuery } from '@config/database';
-import logger from '@config/logger';
-import { AppError } from '@middleware/errorHandler';
+import pool, { executeQuery } from '../config/database';
+import logger from '../config/logger';
+import { AppError } from '../middleware/errorHandler';
 import { QueryOptimizer } from '../services/QueryOptimizer';
 
 export interface PaginationOptions {
@@ -23,7 +23,16 @@ export interface PaginatedResult<T> {
   };
 }
 
-export abstract class BaseModel {
+export interface BaseEntity {
+  id: number;
+  [key: string]: any;
+}
+
+export interface NewBaseEntity {
+  [key: string]: any;
+}
+
+export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends NewBaseEntity> {
   protected pool: mysql.Pool;
   protected tableName: string;
 
@@ -31,6 +40,11 @@ export abstract class BaseModel {
     this.pool = pool;
     this.tableName = tableName;
   }
+
+  // Abstract methods that must be implemented by child classes
+  protected abstract mapRow(row: any): TEntity;
+  protected abstract getCreateFields(): (keyof TNewEntity)[];
+  protected abstract getUpdateFields(): (keyof TNewEntity)[];
 
   // Helper method for transactions
   protected async withTransaction<T>(callback: (connection: mysql.PoolConnection) => Promise<T>): Promise<T> {
@@ -49,7 +63,7 @@ export abstract class BaseModel {
     }
   }
 
-  // Helper method for pagination (MySQL syntax)
+  // Optimized pagination query builder
   protected buildPaginationQuery(baseQuery: string, options: PaginationOptions): string {
     const { page = 1, limit = 10, sortBy, sortOrder = 'asc' } = options;
     const offset = (page - 1) * limit;
@@ -57,40 +71,48 @@ export abstract class BaseModel {
     let query = baseQuery;
 
     if (sortBy) {
-      query += ` ORDER BY ${sortBy} ${sortOrder.toUpperCase()}`;
+      // Validate sortBy to prevent SQL injection
+      const safeColumnName = sortBy.replace(/[^a-zA-Z0-9_]/g, '');
+      query += ` ORDER BY ${safeColumnName} ${sortOrder.toUpperCase()}`;
+    } else {
+      query += ` ORDER BY id ${sortOrder.toUpperCase()}`;
     }
 
     query += ` LIMIT ${limit} OFFSET ${offset}`;
-
     return query;
   }
 
-  protected async getPaginatedResults<T>(
+  // Generic paginated results with performance tracking
+  protected async getPaginatedResults<T = TEntity>(
     baseQuery: string,
     countQuery: string,
     options: PaginationOptions,
-    mapFunction: (row: any) => T,
+    mapFunction?: (row: any) => T,
     params: any[] = []
   ): Promise<PaginatedResult<T>> {
     const { page = 1, limit = 10 } = options;
+    const mapper = mapFunction || this.mapRow;
 
     try {
       const startTime = Date.now();
 
-      // Get total count
-      const [countRows] = await executeQuery(countQuery, params) as [any[], any];
-      const total = countRows[0]['COUNT(*)'] || countRows[0].count || 0;
+      // Execute both queries in parallel for better performance
+      const [countResult, dataResult] = await Promise.all([
+        executeQuery(countQuery, params) as Promise<[any[], any]>,
+        executeQuery(this.buildPaginationQuery(baseQuery, options), params) as Promise<[any[], any]>
+      ]);
 
-      // Get paginated data
-      const paginatedQuery = this.buildPaginationQuery(baseQuery, options);
-      const [dataRows] = await executeQuery(paginatedQuery, params) as [any[], any];
-      const data = dataRows.map(mapFunction);
+      const [countRows] = countResult;
+      const [dataRows] = dataResult;
+
+      const total = countRows[0]['COUNT(*)'] || countRows[0].count || 0;
+      const data = dataRows.map(mapper as (row: any) => T);
 
       const executionTime = Date.now() - startTime;
 
       // Log slow queries for optimization
       if (executionTime > 1000) {
-        QueryOptimizer.logSlowQuery(paginatedQuery, params, executionTime);
+        QueryOptimizer.logSlowQuery(baseQuery, params, executionTime);
       }
 
       const totalPages = Math.ceil(total / limit);
@@ -112,37 +134,92 @@ export abstract class BaseModel {
     }
   }
 
-  // Generic CRUD operations
-  public async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T> {
+  // Generic CRUD operations with type safety
+  public async findById(id: string | number): Promise<TEntity> {
     const [rows] = await executeQuery(`SELECT * FROM ${this.tableName} WHERE id = ?`, [id]) as [any[], any];
     if (rows.length === 0) {
       throw new AppError(`${this.tableName} not found`, 404);
     }
-    return mapFunction(rows[0]);
+    return this.mapRow(rows[0]);
   }
 
-  protected async deleteById(id: string | number): Promise<void> {
+  public async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<TEntity>> {
+    return this.getPaginatedResults(
+      `SELECT * FROM ${this.tableName}`,
+      `SELECT COUNT(*) FROM ${this.tableName}`,
+      options
+    );
+  }
+
+  // Generic create with dynamic field mapping
+  public async create(entity: TNewEntity): Promise<TEntity> {
+    const fields = this.getCreateFields();
+    const fieldNames = fields.map(f => String(f)).join(', ');
+    const placeholders = fields.map(() => '?').join(', ');
+    const values = fields.map(field => entity[field as keyof TNewEntity]);
+
+    try {
+      const [result] = await executeQuery(
+        `INSERT INTO ${this.tableName} (${fieldNames}) VALUES (${placeholders})`,
+        values
+      ) as [any, any];
+
+      return this.findById(result.insertId);
+    } catch (error: any) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new AppError(`${this.tableName} with this key already exists`, 409);
+      }
+      throw new AppError(`Failed to create ${this.tableName}`, 500);
+    }
+  }
+
+  // Generic update with dynamic field mapping
+  public async update(id: number, updates: Partial<TNewEntity>): Promise<TEntity> {
+    const fields = this.getUpdateFields();
+    const setClause: string[] = [];
+    const params: any[] = [];
+
+    // Build dynamic SET clause
+    fields.forEach(field => {
+      if (updates[field as keyof TNewEntity] !== undefined) {
+        setClause.push(`${String(field)} = ?`);
+        params.push(updates[field as keyof TNewEntity]);
+      }
+    });
+
+    if (setClause.length === 0) {
+      return this.findById(id);
+    }
+
+    params.push(id);
+
+    await executeQuery(
+      `UPDATE ${this.tableName} SET ${setClause.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    return this.findById(id);
+  }
+
+  public async delete(id: string | number): Promise<void> {
     const [result] = await executeQuery(`DELETE FROM ${this.tableName} WHERE id = ?`, [id]) as [any, any];
     if (result.affectedRows === 0) {
       throw new AppError(`${this.tableName} not found`, 404);
     }
   }
 
-  protected async exists(id: string | number): Promise<boolean> {
+  public async exists(id: string | number): Promise<boolean> {
     const [rows] = await executeQuery(`SELECT 1 FROM ${this.tableName} WHERE id = ? LIMIT 1`, [id]) as [any[], any];
     return rows.length > 0;
   }
 
-  /**
-   * Optimized search method using QueryOptimizer
-   */
-  protected async getOptimizedSearchResults<T>(
+  // Optimized search method
+  public async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions,
-    mapFunction: (row: any) => T,
+    options: PaginationOptions = {},
     additionalWhere?: string
-  ): Promise<PaginatedResult<T>> {
+  ): Promise<PaginatedResult<TEntity>> {
     const { searchQuery, countQuery, params } = QueryOptimizer.buildOptimizedSearchQuery(
       this.tableName,
       searchFields,
@@ -150,41 +227,14 @@ export abstract class BaseModel {
       additionalWhere
     );
 
-    return this.getPaginatedResults(searchQuery, countQuery, options, mapFunction, params);
+    return this.getPaginatedResults(searchQuery, countQuery, options, undefined, params);
   }
 
-  /**
-   * Optimized date range search
-   */
-  protected async getDateRangeResults<T>(
-    dateField: string,
-    startDate: Date | undefined,
-    endDate: Date | undefined,
-    options: PaginationOptions,
-    mapFunction: (row: any) => T,
-    additionalWhere?: string
-  ): Promise<PaginatedResult<T>> {
-    const { query, countQuery, params } = QueryOptimizer.buildDateRangeQuery(
-      this.tableName,
-      dateField,
-      startDate,
-      endDate,
-      additionalWhere
-    );
-
-    return this.getPaginatedResults(query, countQuery, options, mapFunction, params);
-  }
-
-  /**
-   * Batch operations for better performance
-   */
-  protected async batchInsert<T>(
-    records: T[],
-    fields: (keyof T)[],
-    batchSize: number = 100
-  ): Promise<void> {
+  // Batch operations for better performance
+  public async batchCreate(records: TNewEntity[], batchSize: number = 100): Promise<void> {
     if (records.length === 0) return;
 
+    const fields = this.getCreateFields();
     const fieldNames = fields.map(f => String(f)).join(', ');
     const placeholders = fields.map(() => '?').join(', ');
 
@@ -194,7 +244,7 @@ export abstract class BaseModel {
       const query = `INSERT INTO ${this.tableName} (${fieldNames}) VALUES ${values}`;
 
       const params = batch.flatMap(record =>
-        fields.map(field => record[field])
+        fields.map(field => record[field as keyof TNewEntity])
       );
 
       await executeQuery(query, params);
@@ -216,27 +266,7 @@ export abstract class BaseModel {
     return { isHealthy, tableName: this.tableName, errors };
   }
 
-  /**
-   * Process and normalize pagination options
-   */
-  protected processPaginationOptions(options: PaginationOptions = {}): {
-    offset: number;
-    limit: number;
-    sortBy: string;
-    sortOrder: 'ASC' | 'DESC';
-  } {
-    const page = Math.max(1, options.page || 1);
-    const limit = Math.min(100, Math.max(1, options.limit || 10));
-    const offset = (page - 1) * limit;
-    const sortBy = options.sortBy || 'id';
-    const sortOrder = (options.sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC') as 'ASC' | 'DESC';
-
-    return { offset, limit, sortBy, sortOrder };
-  }
-
-  /**
-   * Build a paginated result object
-   */
+  // Utility methods
   protected buildPaginatedResult<T>(
     data: T[],
     total: number,

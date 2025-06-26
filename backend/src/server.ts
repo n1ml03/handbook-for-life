@@ -7,9 +7,9 @@ import { Server } from 'http';
 // Load environment variables
 config();
 
-import logger from '@config/logger';
-import { testConnection, closeDatabase } from '@config/database';
-import { errorHandler, notFound } from '@middleware/errorHandler';
+import logger  from './config/logger';
+import { testConnection, closeDatabase } from './config/database';
+import { errorHandler, notFound } from './middleware/errorHandler';
 
 // Import routes
 import healthRoutes from '@routes/health';

@@ -1,12 +1,50 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Episode, NewEpisode, EpisodeType } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 import { logger } from '../config';
 
-export class EpisodeModel extends BaseModel {
+export class EpisodeModel extends BaseModel<Episode, NewEpisode> {
   constructor() {
     super('episodes');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): Episode {
+    return {
+      id: row.id,
+      unique_key: row.unique_key,
+      title_jp: row.title_jp,
+      title_en: row.title_en,
+      title_cn: row.title_cn,
+      title_tw: row.title_tw,
+      title_kr: row.title_kr,
+      unlock_condition_en: row.unlock_condition_en,
+      episode_type: row.episode_type,
+      related_entity_type: row.related_entity_type,
+      related_entity_id: row.related_entity_id,
+      game_version: row.game_version,
+    };
+  }
+
+  protected getCreateFields(): (keyof NewEpisode)[] {
+    return [
+      'unique_key',
+      'title_jp',
+      'title_en',
+      'title_cn',
+      'title_tw',
+      'title_kr',
+      'unlock_condition_en',
+      'episode_type',
+      'related_entity_type',
+      'related_entity_id',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewEpisode)[] {
+    return this.getCreateFields(); // Same fields can be updated
   }
 
   // Mapper function to convert database row to Episode object
@@ -72,9 +110,9 @@ export class EpisodeModel extends BaseModel {
   
   async findById<T = Episode>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Episode> {
     if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
+      return super.findById(id) as Promise<T>;
     }
-    return super.findById<Episode>(id as number, this.mapEpisodeRow);
+    return super.findById(id as number);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Episode> {
@@ -170,20 +208,22 @@ export class EpisodeModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM episodes WHERE 
-       title_jp LIKE ? OR title_en LIKE ? OR title_cn LIKE ? OR title_tw LIKE ? OR title_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM episodes WHERE 
-       title_jp LIKE ? OR title_en LIKE ? OR title_cn LIKE ? OR title_tw LIKE ? OR title_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapEpisodeRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Episode>> {
+    return super.search(searchFields, query, options, additionalWhere);
+  }
+
+  // Convenience search method for episodes
+  async searchEpisodes(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
+    const searchFields = ['title_jp', 'title_en', 'title_cn', 'title_tw', 'title_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
   }
 
   async getMainStoryEpisodes(options: PaginationOptions = {}): Promise<PaginatedResult<Episode>> {
@@ -204,7 +244,7 @@ export class EpisodeModel extends BaseModel {
     );
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -223,6 +263,7 @@ export class EpisodeModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'episodes',
       errors
     };
   }

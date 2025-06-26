@@ -12,8 +12,8 @@ import {
   Diamond,
   Zap
 } from 'lucide-react';
-import { type Event, type SortDirection } from '@/types';
-import { eventsApi } from '@/services/api';
+import { type Event, type Gacha, type SortDirection } from '@/types';
+import { gachasApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { PageLoadingState } from '@/components/ui';
@@ -24,18 +24,20 @@ interface GachaReward {
   name: string;
 }
 
-// Extend Event interface for gacha-specific properties
-interface GachaEvent extends Event {
-  eventType?: string; // Make optional since base Event doesn't have this
+// Extend Gacha interface for display properties
+interface GachaEvent extends Gacha {
   bannerImage?: string;
   description?: string;
   rewards?: GachaReward[];
-  // Event interface already includes:
+  // Gacha interface already includes:
   // id: number
+  // unique_key: string
   // name_en: string
   // name_jp: string 
   // start_date: string
   // end_date: string
+  // gacha_subtype: GachaSubtype
+  // pools?: GachaPool[]
 }
 
 function GachaCard({ gacha }: { gacha: GachaEvent }) {
@@ -208,27 +210,26 @@ export default function GachaPage() {
   });
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchGachas = async () => {
       try {
         setLoading(true);
-        const response = await eventsApi.getEvents({ limit: 1000 });
-        // Convert Event[] to GachaEvent[] by adding missing properties
-        const gachaEvents: GachaEvent[] = (response.data as Event[]).map(event => ({
-          ...event,
-          eventType: 'gacha', // Add the missing eventType property
+        const response = await gachasApi.getGachas({ limit: 1000 });
+        // Convert Gacha[] to GachaEvent[] by adding display properties
+        const gachaEvents: GachaEvent[] = (response.data as Gacha[]).map(gacha => ({
+          ...gacha,
           bannerImage: '💎', // Default banner image
-          description: `${event.name_en || event.name_jp} gacha event`, // Default description
-          rewards: [] // Default empty rewards
+          description: `${gacha.name_en || gacha.name_jp} - ${gacha.gacha_subtype} gacha`, // Default description
+          rewards: [] // Default empty rewards - can be populated from pools later
         }));
         setEvents(gachaEvents);
       } catch (err) {
-        console.error('Failed to fetch events:', err);
+        console.error('Failed to fetch gachas:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEvents();
+    fetchGachas();
   }, []);
 
   const itemsPerPage = 8;

@@ -16,10 +16,16 @@
     "db:migrate": "bun run src/database/migrations/run-migrations.ts",
     "db:seed": "bun run src/database/seeds/run-seeds.ts",
     "db:reset": "bun run db:migrate && bun run db:seed",
+    "db:csv:import": "bun run src/database/csv-import.ts",
+    "db:csv:validate": "bun run src/database/csv-import.ts --validate-only",
+    "db:csv:help": "bun run src/database/csv-import.ts --help",
+    "db:status": "bun run src/database/migrations/run-migrations.ts --status && bun run src/database/seeds/run-seeds.ts --status",
+    "db:setup": "echo 'Setting up database...' && bun run db:migrate && bun run db:seed && echo 'Database setup complete!'",
     "health": "curl -f http://localhost:3001/api/health || exit 1"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "mysql2": "^3.14.1",

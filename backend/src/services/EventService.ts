@@ -41,8 +41,8 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
 
   async getEventById(id: string | number): Promise<Event> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Event ID');
-      return await this.model.findById(id);
+      const numericId = this.parseNumericId(id, 'Event ID');
+      return await this.model.findById(numericId);
     }, 'fetch event', id);
   }
 
@@ -86,7 +86,7 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
 
   async updateEvent(id: string | number, updates: Partial<NewEvent>): Promise<Event> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Event ID');
+      const numericId = this.parseNumericId(id, 'Event ID');
       this.validateOptionalString(updates.name_en, 'Event name');
 
       if (updates.start_date && updates.end_date) {
@@ -95,7 +95,7 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
 
       this.logOperationStart('Updating', id, { updates });
 
-      const event = await this.model.update(id, updates);
+      const event = await this.model.update(numericId, updates);
 
       this.logOperationSuccess('Updated', event.name_en, { id: event.id });
       return event;
@@ -104,13 +104,13 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
 
   async deleteEvent(id: string | number): Promise<void> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Event ID');
+      const numericId = this.parseNumericId(id, 'Event ID');
 
       // Check if event exists before deletion
-      await this.model.findById(id);
+      await this.model.findById(numericId);
 
       this.logOperationStart('Deleting', id);
-      await this.model.delete(id);
+      await this.model.delete(numericId);
       this.logOperationSuccess('Deleted', id);
     }, 'delete event', id);
   }
@@ -119,7 +119,8 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search events', query);
   }
 
@@ -128,7 +129,7 @@ export class EventService extends BaseService<EventModel, Event, NewEvent> {
   // ============================================================================
 
   private validateEventType(type: string): EventType {
-    const validTypes: EventType[] = ['REGULAR', 'LIMITED', 'SEASONAL', 'COLLABORATION', 'ANNIVERSARY'];
+    const validTypes: EventType[] = ['FESTIVAL_RANKING', 'FESTIVAL_CUMULATIVE', 'TOWER', 'ROCK_CLIMBING', 'BUTT_BATTLE', 'LOGIN_BONUS', 'STORY'];
     
     if (!validTypes.includes(type as EventType)) {
       throw new Error(`Invalid event type: ${type}. Valid types are: ${validTypes.join(', ')}`);

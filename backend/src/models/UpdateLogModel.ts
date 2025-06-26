@@ -1,12 +1,36 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { UpdateLog, NewUpdateLog } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
-import logger from '@config/logger';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
+import logger from '../config/logger';
 
-export class UpdateLogModel extends BaseModel {
+export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
   constructor() {
     super('update_logs');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): UpdateLog {
+    return this.mapUpdateLogRow(row);
+  }
+
+  protected getCreateFields(): (keyof NewUpdateLog)[] {
+    return [
+      'unique_key',
+      'version', 
+      'title',
+      'content',
+      'description',
+      'date',
+      'tags',
+      'is_published',
+      'screenshots',
+      'metrics'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewUpdateLog)[] {
+    return this.getCreateFields();
   }
 
   // Mapper function to convert database row to UpdateLog object
@@ -106,51 +130,46 @@ export class UpdateLogModel extends BaseModel {
     );
   }
 
-  // Overload signatures
-  async findById(id: string | number): Promise<UpdateLog>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-
-  // Implementation
-  async findById<T = UpdateLog>(id: string | number, mapFunction?: (row: any) => T): Promise<T | UpdateLog> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<UpdateLog>(id, this.mapUpdateLogRow.bind(this));
+  // Override findById to use proper typing
+  async findById(id: number): Promise<UpdateLog> {
+    return super.findById(id);
   }
 
-  async findByUniqueKey(uniqueKey: string): Promise<UpdateLog> {
-    const [rows] = await executeQuery(
-      `SELECT * FROM update_logs WHERE unique_key = ?`,
-      [uniqueKey]
-    ) as [any[], any];
-    
+  async findByUniqueKey(unique_key: string): Promise<UpdateLog> {
+    const [rows] = await executeQuery('SELECT * FROM update_logs WHERE unique_key = ?', [unique_key]) as [any[], any];
     if (rows.length === 0) {
       throw new AppError('Update log not found', 404);
     }
-    
     return this.mapUpdateLogRow(rows[0]);
   }
 
-  async findByVersion(version: string): Promise<UpdateLog[]> {
-    const [rows] = await executeQuery(
-      `SELECT * FROM update_logs WHERE version = ? ORDER BY date DESC`,
+  async findByVersion(version: string, options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM update_logs WHERE version = ?',
+      'SELECT COUNT(*) FROM update_logs WHERE version = ?',
+      options,
+      this.mapUpdateLogRow,
       [version]
-    ) as [any[], any];
-    
-    return rows.map(this.mapUpdateLogRow.bind(this));
+    );
   }
 
-  async update(id: string | number, updates: Partial<NewUpdateLog>): Promise<UpdateLog> {
+  async findRecent(days: number = 30, options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM update_logs WHERE date >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+      'SELECT COUNT(*) FROM update_logs WHERE date >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+      options,
+      this.mapUpdateLogRow,
+      [days]
+    );
+  }
+
+  async update(id: number, updates: Partial<NewUpdateLog>): Promise<UpdateLog> {
     const setClause: string[] = [];
     const params: any[] = [];
 
     if (updates.unique_key !== undefined) {
       setClause.push(`unique_key = ?`);
       params.push(updates.unique_key);
-    }
-    if (updates.version !== undefined) {
-      setClause.push(`version = ?`);
-      params.push(updates.version);
     }
     if (updates.title !== undefined) {
       setClause.push(`title = ?`);
@@ -163,6 +182,10 @@ export class UpdateLogModel extends BaseModel {
     if (updates.description !== undefined) {
       setClause.push(`description = ?`);
       params.push(updates.description);
+    }
+    if (updates.version !== undefined) {
+      setClause.push(`version = ?`);
+      params.push(updates.version);
     }
     if (updates.date !== undefined) {
       setClause.push(`date = ?`);
@@ -191,24 +214,16 @@ export class UpdateLogModel extends BaseModel {
 
     params.push(id);
 
-    try {
-      await executeQuery(
-        `UPDATE update_logs SET ${setClause.join(', ')} WHERE id = ?`,
-        params
-      );
+    await executeQuery(
+      `UPDATE update_logs SET ${setClause.join(', ')} WHERE id = ?`,
+      params
+    );
 
-      return this.findById(id);
-    } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError('Update log with this unique_key already exists', 409);
-      }
-      logger.error('Failed to update update log:', error);
-      throw new AppError('Failed to update update log', 500);
-    }
+    return this.findById(id);
   }
 
-  async delete(id: string | number): Promise<void> {
-    await this.deleteById(id);
+  async delete(id: number): Promise<void> {
+    return super.delete(id);
   }
 
   // Additional query methods
@@ -246,7 +261,7 @@ export class UpdateLogModel extends BaseModel {
     return this.findByUniqueKey(key);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -259,6 +274,7 @@ export class UpdateLogModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'update_logs',
       errors
     };
   }

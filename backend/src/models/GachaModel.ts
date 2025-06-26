@@ -1,11 +1,48 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Gacha, NewGacha, GachaSubtype } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
+import logger from '../config/logger';
 
-export class GachaModel extends BaseModel {
+export class GachaModel extends BaseModel<Gacha, NewGacha> {
   constructor() {
     super('gachas');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): Gacha {
+    return {
+      id: row.id,
+      unique_key: row.unique_key,
+      name_jp: row.name_jp,
+      name_en: row.name_en,
+      name_cn: row.name_cn,
+      name_tw: row.name_tw,
+      name_kr: row.name_kr,
+      gacha_subtype: row.gacha_subtype,
+      start_date: new Date(row.start_date),
+      end_date: new Date(row.end_date),
+      game_version: row.game_version,
+    };
+  }
+
+  protected getCreateFields(): (keyof NewGacha)[] {
+    return [
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'gacha_subtype',
+      'start_date',
+      'end_date',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewGacha)[] {
+    return this.getCreateFields(); // Same fields can be updated
   }
 
   // Mapper function to convert database row to Gacha object
@@ -63,16 +100,9 @@ export class GachaModel extends BaseModel {
     );
   }
 
-  // Overload signatures
-  async findById(id: number): Promise<Gacha>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  // Implementation
-  async findById<T = Gacha>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Gacha> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<Gacha>(id as number, this.mapGachaRow);
+  // Override findById to use proper typing
+  async findById(id: number): Promise<Gacha> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Gacha> {
@@ -81,6 +111,25 @@ export class GachaModel extends BaseModel {
       throw new AppError('Gacha not found', 404);
     }
     return this.mapGachaRow(rows[0]);
+  }
+
+  async findByType(gacha_type: string, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM gachas WHERE gacha_type = ?',
+      'SELECT COUNT(*) FROM gachas WHERE gacha_type = ?',
+      options,
+      this.mapGachaRow,
+      [gacha_type]
+    );
+  }
+
+  async findActive(options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM gachas WHERE is_active = TRUE',
+      'SELECT COUNT(*) FROM gachas WHERE is_active = TRUE',
+      options,
+      this.mapGachaRow
+    );
   }
 
   async update(id: number, updates: Partial<NewGacha>): Promise<Gacha> {
@@ -119,14 +168,6 @@ export class GachaModel extends BaseModel {
       setClause.push(`game_version = ?`);
       params.push(updates.game_version);
     }
-    if (updates.start_date !== undefined) {
-      setClause.push(`start_date = ?`);
-      params.push(updates.start_date);
-    }
-    if (updates.end_date !== undefined) {
-      setClause.push(`end_date = ?`);
-      params.push(updates.end_date);
-    }
 
     if (setClause.length === 0) {
       return this.findById(id);
@@ -139,33 +180,28 @@ export class GachaModel extends BaseModel {
       params
     );
 
+    logger.info(`Gacha updated: ${id}`);
     return this.findById(id);
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM gachas WHERE 
-       (name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?)`,
-      `SELECT COUNT(*) FROM gachas WHERE 
-       (name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?)`,
-      options,
-      this.mapGachaRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  // Override search method to match BaseModel signature
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Gacha>> {
+    return super.search(searchFields, query, options, additionalWhere);
   }
 
-  async findActive(options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
-    return this.getPaginatedResults(
-      `SELECT * FROM gachas WHERE NOW() BETWEEN start_date AND end_date`,
-      `SELECT COUNT(*) FROM gachas WHERE NOW() BETWEEN start_date AND end_date`,
-      options,
-      this.mapGachaRow
-    );
+  // Convenience search method for gachas
+  async searchGachas(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
   }
 
   async findBySubtype(subtype: GachaSubtype, options: PaginationOptions = {}): Promise<PaginatedResult<Gacha>> {
@@ -192,7 +228,7 @@ export class GachaModel extends BaseModel {
     return this.findByUniqueKey(key);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -205,6 +241,7 @@ export class GachaModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'gachas',
       errors
     };
   }

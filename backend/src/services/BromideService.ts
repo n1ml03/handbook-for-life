@@ -87,7 +87,8 @@ export class BromideService extends BaseService<BromideModel, Bromide, NewBromid
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search bromides', query);
   }
 

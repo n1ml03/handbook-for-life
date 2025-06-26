@@ -374,114 +374,7 @@ export interface SortOption {
   label: string;
 }
 
-// ============================================================================
-// LEGACY COMPATIBILITY TYPES (for gradual migration)
-// ============================================================================
 
-// Legacy Girl interface (mapped from Character + Swimsuit)
-export interface Girl {
-  id: string;
-  name: string;
-  type: 'pow' | 'tec' | 'stm';
-  level: number;
-  stats: {
-    pow: number;
-    tec: number;
-    stm: number;
-    apl: number;
-  };
-  maxStats: {
-    pow: number;
-    tec: number;
-    stm: number;
-    apl: number;
-  };
-  birthday: string;
-  swimsuitId?: string;
-  swimsuit?: Swimsuit;
-  accessories: Accessory[];
-  profile?: CharacterProfile;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Legacy Accessory interface (mapped from Item with category ACCESSORY)
-export interface Accessory {
-  id: string;
-  name: string;
-  rarity: 'SSR' | 'SR' | 'R';
-  type: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Legacy Memory interface (mapped from Episode)
-export interface Memory {
-  id: string;
-  name: string;
-  description: string;
-  type: 'photo' | 'video' | 'story' | 'scene';
-  date: string;
-  characters: string[];
-  tags: string[];
-  thumbnail: string;
-  favorite: boolean;
-  unlocked: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Character profile interfaces
-export interface CharacterProfile {
-  age?: number;
-  height?: string;
-  bloodType?: string;
-  cv?: string;
-  occupation?: string;
-  favoriteColor?: string;
-  measurements?: {
-    bust: number;
-    waist: number;
-    hips: number;
-  };
-  hobbies?: string[];
-  favoriteFood?: string[];
-  personality?: string[];
-  images?: {
-    portrait?: string;
-    gallery?: string[];
-  };
-  story?: {
-    title: string;
-    content: string;
-    image?: string;
-  };
-}
-
-// Shop types (legacy)
-export type ShopSection = 'owner' | 'event' | 'venus' | 'vip';
-export type ShopItemType = 'swimsuit' | 'accessory' | 'decoration' | 'currency' | 'booster';
-export type ShopItemRarity = 'common' | 'rare' | 'epic' | 'legendary';
-export type Currency = 'coins' | 'gems' | 'tickets';
-
-export interface ShopItem {
-  id: string;
-  name: string;
-  description: string;
-  type: ShopItemType;
-  category: string;
-  section: ShopSection;
-  price: number;
-  currency: Currency;
-  rarity: ShopItemRarity;
-  image: string;
-  inStock: boolean;
-  isNew: boolean;
-  discount?: number;
-  limitedTime?: boolean;
-  featured?: boolean;
-}
 
 // ============================================================================
 // COMPONENT PROP TYPES
@@ -498,23 +391,8 @@ export interface CharacterCardProps {
   onClick?: () => void;
 }
 
-export interface GirlCardProps {
-  girl: Girl;
-  onClick?: () => void;
-}
-
-export interface MemoryCardProps {
-  memory: Memory;
-  onToggleFavorite: (id: string) => void;
-}
-
 export interface SkillCardProps {
   skill: Skill;
-  onClick?: () => void;
-}
-
-export interface AccessoryCardProps {
-  accessory: Accessory;
   onClick?: () => void;
 }
 
@@ -523,10 +401,7 @@ export interface BromideCardProps {
   onClick?: () => void;
 }
 
-export interface ShopItemCardProps {
-  item: ShopItem;
-  onPurchase?: (item: ShopItem) => void;
-}
+
 
 export interface EventCardProps {
   event: Event;
@@ -739,6 +614,23 @@ export interface ComponentTheme {
   shadows: Record<string, string>;
 }
 
+// Memory types for episodes page
+export interface Memory {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  thumbnail: string;
+  characters: string[];
+  tags: string[];
+  favorite?: boolean;
+}
+
+export interface MemoryCardProps {
+  memory: Memory;
+  onToggleFavorite?: (id: string) => void;
+}
+
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -771,66 +663,7 @@ export function getLocalizedName(entity: { name_jp: string; name_en: string; nam
   }
 }
 
-// Helper function to convert database entities to legacy format for gradual migration
-export function characterToGirl(character: Character, swimsuit?: Swimsuit): Girl {
-  return {
-    id: character.id.toString(),
-    name: character.name_en,
-    type: swimsuit?.suit_type?.toLowerCase() as 'pow' | 'tec' | 'stm' || 'pow',
-    level: 1,
-    stats: {
-      pow: swimsuit?.total_stats_awakened || 0,
-      tec: swimsuit?.total_stats_awakened || 0,
-      stm: swimsuit?.total_stats_awakened || 0,
-      apl: swimsuit?.total_stats_awakened || 0,
-    },
-    maxStats: {
-      pow: swimsuit?.total_stats_awakened || 0,
-      tec: swimsuit?.total_stats_awakened || 0,
-      stm: swimsuit?.total_stats_awakened || 0,
-      apl: swimsuit?.total_stats_awakened || 0,
-    },
-    birthday: character.birthday || '',
-    swimsuitId: swimsuit?.id.toString(),
-    swimsuit,
-    accessories: [],
-    profile: {
-      height: character.height?.toString(),
-      bloodType: character.blood_type,
-      cv: character.voice_actor_jp,
-      measurements: character.measurements ? {
-        bust: parseInt(character.measurements.split('-')[0]) || 0,
-        waist: parseInt(character.measurements.split('-')[1]) || 0,
-        hips: parseInt(character.measurements.split('-')[2]) || 0,
-      } : undefined,
-    }
-  };
-}
 
-export function itemToAccessory(item: Item): Accessory {
-  return {
-    id: item.id.toString(),
-    name: item.name_en,
-    rarity: item.rarity as 'SSR' | 'SR' | 'R',
-    type: item.item_category,
-    description: item.description_en,
-  };
-}
-
-export function episodeToMemory(episode: Episode): Memory {
-  return {
-    id: episode.id.toString(),
-    name: episode.title_en,
-    description: episode.unlock_condition_en || '',
-    type: 'story',
-    date: new Date().toISOString(),
-    characters: [],
-    tags: [episode.episode_type],
-    thumbnail: '',
-    favorite: false,
-    unlocked: true,
-  };
-}
 
 // Add ItemType enum for unified items
 export type ItemType = 'swimsuit' | 'accessory' | 'skill' | 'bromide';

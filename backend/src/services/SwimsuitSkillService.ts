@@ -77,7 +77,7 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
         { newSkillId: numericSkillId }
       );
 
-      const swimsuitSkill = await this.model.update(numericSwimsuitId, skillSlot, { skill_id: numericSkillId });
+      const swimsuitSkill = await this.model.updateByComposite(numericSwimsuitId, skillSlot, { skill_id: numericSkillId });
 
       this.logOperationSuccess('Updated swimsuit skill', swimsuitSkill.skill_id);
       return swimsuitSkill;
@@ -98,7 +98,7 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
         `from slot ${skillSlot} for swimsuit ${numericId}`
       );
 
-      await this.model.delete(numericId, skillSlot);
+      await this.model.deleteByComposite(numericId, skillSlot);
       
       this.logOperationSuccess('Removed skill', `${numericId}:${skillSlot}`);
     }, 'remove skill from swimsuit');
@@ -217,9 +217,10 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
     const errors: string[] = [];
 
     try {
-      // Check if slot is already occupied
-      const existingSkills = await this.model.findBySwimsuitId(swimsuitSkillData.swimsuit_id);
-      const slotTaken = existingSkills.some(skill => skill.skill_slot === swimsuitSkillData.skill_slot);
+      // Check if slot is already occupied - need to get data from paginated result
+      const existingSkillsResult = await this.model.findBySwimsuitId(swimsuitSkillData.swimsuit_id);
+      const existingSkills = existingSkillsResult.data;
+      const slotTaken = existingSkills.some((skill: SwimsuitSkill) => skill.skill_slot === swimsuitSkillData.skill_slot);
       
       if (slotTaken) {
         errors.push(`Skill slot ${swimsuitSkillData.skill_slot} is already occupied`);
@@ -243,9 +244,10 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
     const errors: string[] = [];
 
     try {
-      // Check if the slot exists for this swimsuit
-      const existingSkills = await this.model.findBySwimsuitId(swimsuitId);
-      const slotExists = existingSkills.some(skill => skill.skill_slot === skillSlot);
+      // Check if the slot exists for this swimsuit - need to get data from paginated result
+      const existingSkillsResult = await this.model.findBySwimsuitId(swimsuitId);
+      const existingSkills = existingSkillsResult.data;
+      const slotExists = existingSkills.some((skill: SwimsuitSkill) => skill.skill_slot === skillSlot);
       
       if (!slotExists) {
         errors.push(`No skill found in slot ${skillSlot} for swimsuit ${swimsuitId}`);
@@ -269,9 +271,10 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
     const errors: string[] = [];
 
     try {
-      // Check if the slot exists for this swimsuit
-      const existingSkills = await this.model.findBySwimsuitId(swimsuitId);
-      const slotExists = existingSkills.some(skill => skill.skill_slot === skillSlot);
+      // Check if the slot exists for this swimsuit - need to get data from paginated result
+      const existingSkillsResult = await this.model.findBySwimsuitId(swimsuitId);
+      const existingSkills = existingSkillsResult.data;
+      const slotExists = existingSkills.some((skill: SwimsuitSkill) => skill.skill_slot === skillSlot);
       
       if (!slotExists) {
         errors.push(`No skill found in slot ${skillSlot} for swimsuit ${swimsuitId}`);
@@ -320,7 +323,7 @@ export class SwimsuitSkillService extends BaseService<SwimsuitSkillModel, Swimsu
   }
 
   private isValidSkillSlot(slot: SkillSlot): boolean {
-    const validSlots: SkillSlot[] = ['MAIN', 'SUB1', 'SUB2', 'POTENTIAL1', 'POTENTIAL2'];
+    const validSlots: SkillSlot[] = ['ACTIVE', 'PASSIVE_1', 'PASSIVE_2', 'POTENTIAL_1', 'POTENTIAL_2', 'POTENTIAL_3', 'POTENTIAL_4'];
     return validSlots.includes(slot);
   }
 

@@ -1,12 +1,50 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Bromide, NewBromide, BromideType, BromideRarity } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 import { logger } from '../config';
 
-export class BromideModel extends BaseModel {
+export class BromideModel extends BaseModel<Bromide, NewBromide> {
   constructor() {
     super('bromides');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): Bromide {
+    return {
+      id: row.id,
+      unique_key: row.unique_key,
+      name_jp: row.name_jp,
+      name_en: row.name_en,
+      name_cn: row.name_cn,
+      name_tw: row.name_tw,
+      name_kr: row.name_kr,
+      bromide_type: row.bromide_type,
+      rarity: row.rarity,
+      skill_id: row.skill_id,
+      art_url: row.art_url,
+      game_version: row.game_version,
+    };
+  }
+
+  protected getCreateFields(): (keyof NewBromide)[] {
+    return [
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'bromide_type',
+      'rarity',
+      'skill_id',
+      'art_url',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewBromide)[] {
+    return this.getCreateFields(); // Same fields can be updated
   }
 
   // Mapper function to convert database row to Bromide object
@@ -75,9 +113,9 @@ export class BromideModel extends BaseModel {
   
   async findById<T = Bromide>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Bromide> {
     if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
+      return super.findById(id) as Promise<T>;
     }
-    return super.findById<Bromide>(id as number, this.mapBromideRow);
+    return super.findById(id as number);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Bromide> {
@@ -89,17 +127,18 @@ export class BromideModel extends BaseModel {
   }
 
   async findByType(bromide_type: BromideType, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
-    const { offset, limit, sortBy, sortOrder } = this.processPaginationOptions(options);
-
     // Validate the type is a valid BromideType
     if (!['DECO', 'OWNER'].includes(bromide_type)) {
       throw new AppError(`Invalid bromide type: ${bromide_type}`, 400);
     }
 
-    const whereClause = 'WHERE bromide_type = ?';
-    const values = [bromide_type];
-
-    return this.findWithPagination(whereClause, values, { offset, limit, sortBy, sortOrder });
+    return this.getPaginatedResults(
+      'SELECT * FROM bromides WHERE bromide_type = ?',
+      'SELECT COUNT(*) FROM bromides WHERE bromide_type = ?',
+      options,
+      this.mapBromideRow,
+      [bromide_type]
+    );
   }
 
   async findByRarity(rarity: BromideRarity, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
@@ -177,52 +216,45 @@ export class BromideModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM bromides WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM bromides WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapBromideRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  // Override search method to match BaseModel signature
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Bromide>> {
+    return super.search(searchFields, query, options, additionalWhere);
+  }
+
+  // Convenience search method for bromides
+  async searchBromides(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Bromide>> {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
   }
 
   // ============================================================================
   // HELPER METHODS
   // ============================================================================
 
-  private async findWithPagination(
-    whereClause: string,
-    values: any[],
-    options: PaginationOptions = {}
-  ): Promise<PaginatedResult<Bromide>> {
-    const { offset, limit, sortBy, sortOrder } = this.processPaginationOptions(options);
+  protected processPaginationOptions(options: PaginationOptions): {
+    offset: number;
+    limit: number;
+    sortBy: string;
+    sortOrder: string;
+  } {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const offset = (page - 1) * limit;
+    const sortBy = options.sortBy || 'id';
+    const sortOrder = (options.sortOrder || 'asc').toUpperCase();
 
-    // Count total records
-    const countSql = `SELECT COUNT(*) as total FROM bromides ${whereClause}`;
-    const [countRows] = await executeQuery(countSql, values);
-    const total = (countRows as any[])[0].total;
-
-    // Fetch paginated data
-    const dataSql = `
-      SELECT * FROM bromides 
-      ${whereClause}
-      ORDER BY ${sortBy} ${sortOrder}
-      LIMIT ? OFFSET ?
-    `;
-    const dataValues = [...values, limit, offset];
-    const [dataRows] = await executeQuery(dataSql, dataValues);
-
-    return this.buildPaginatedResult(dataRows as Bromide[], total, options);
+    return { offset, limit, sortBy, sortOrder };
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -241,6 +273,7 @@ export class BromideModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'bromides',
       errors
     };
   }

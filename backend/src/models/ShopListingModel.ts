@@ -1,15 +1,15 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { ShopListing, NewShopListing, ShopType } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 
-export class ShopListingModel extends BaseModel {
+export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
   constructor() {
     super('shop_listings');
   }
 
-  // Mapper function to convert database row to ShopListing object
-  private mapShopListingRow(row: any): ShopListing {
+  // Implementation of abstract methods
+  protected mapRow(row: any): ShopListing {
     return {
       id: row.id,
       shop_type: row.shop_type as ShopType,
@@ -19,6 +19,26 @@ export class ShopListingModel extends BaseModel {
       start_date: row.start_date,
       end_date: row.end_date,
     };
+  }
+
+  protected getCreateFields(): (keyof NewShopListing)[] {
+    return [
+      'shop_type',
+      'item_id',
+      'cost_currency_item_id',
+      'cost_amount',
+      'start_date',
+      'end_date'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewShopListing)[] {
+    return this.getCreateFields();
+  }
+
+  // Mapper function to convert database row to ShopListing object
+  private mapShopListingRow(row: any): ShopListing {
+    return this.mapRow(row);
   }
 
   async create(shopListing: NewShopListing): Promise<ShopListing> {
@@ -54,16 +74,9 @@ export class ShopListingModel extends BaseModel {
     );
   }
 
-  // Overload signatures
-  async findById(id: number): Promise<ShopListing>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  // Implementation
-  async findById<T = ShopListing>(id: string | number, mapFunction?: (row: any) => T): Promise<T | ShopListing> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<ShopListing>(id as number, this.mapShopListingRow);
+  // Override findById to use proper typing
+  async findById(id: number): Promise<ShopListing> {
+    return super.findById(id);
   }
 
   async findByShopType(shopType: ShopType, options: PaginationOptions = {}): Promise<PaginatedResult<ShopListing>> {
@@ -268,7 +281,7 @@ export class ShopListingModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
   async bulkCreate(shopListings: NewShopListing[]): Promise<ShopListing[]> {
@@ -330,7 +343,7 @@ export class ShopListingModel extends BaseModel {
     return this.findById(numericId);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -343,6 +356,7 @@ export class ShopListingModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'shop_listings',
       errors
     };
   }

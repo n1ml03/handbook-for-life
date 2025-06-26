@@ -3,45 +3,26 @@ import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight,
-  Search,
   ShoppingCart,
-  Coins,
-  Tag,
-  Gem,
-  Loader2
+  Coins
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageLoadingState } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
-import { type ShopItem, type ShopItemCardProps, type ShopItemType, type Currency, type ShopItemRarity } from '@/types';
-import { shopItemsApi } from '@/services/api';
+import { type ShopListing } from '@/types';
+import { shopListingsApi } from '@/services/api';
 import React from 'react';
 
-// Memoized shop item card component
-const ShopItemCard = React.memo(function ShopItemCard({ item }: ShopItemCardProps) {
-  const getCurrencyIcon = useCallback((currency: string) => {
-    switch (currency) {
-      case 'coins': return <Coins className="w-4 h-4" />;
-      case 'gems': return <Gem className="w-4 h-4" />;
-      case 'tickets': return <Tag className="w-4 h-4" />;
-      default: return <Coins className="w-4 h-4" />;
-    }
-  }, []);
+// Shop Listing Card Component
+interface ShopListingCardProps {
+  listing: ShopListing;
+  onClick?: () => void;
+}
 
-  const getCurrencyColor = useCallback((currency: string) => {
-    switch (currency) {
-      case 'coins': return 'text-yellow-400';
-      case 'gems': return 'text-purple-400';
-      case 'tickets': return 'text-green-400';
-      default: return 'text-yellow-400';
-    }
-  }, []);
-
-  const finalPrice = useMemo(() => 
-    item.discount ? Math.floor(item.price * (1 - item.discount / 100)) : item.price,
-    [item.discount, item.price]
-  );
+const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopListingCardProps) {
+  const itemName = listing.item?.name_en || listing.item?.name_jp || 'Unknown Item';
+  const costItemName = listing.cost_currency_item?.name_en || listing.cost_currency_item?.name_jp || 'Unknown Currency';
 
   return (
     <motion.div
@@ -57,49 +38,45 @@ const ShopItemCard = React.memo(function ShopItemCard({ item }: ShopItemCardProp
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-white text-lg truncate">{item.name}</h3>
+              <h3 className="font-bold text-white text-lg truncate">{itemName}</h3>
+            </div>
+            <div className="text-xs text-gray-400">
+              Shop Type: {listing.shop_type}
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20">
-              <span className="text-2xl">{item.image || '📦'}</span>
+              <span className="text-2xl">🛍️</span>
             </div>
           </div>
         </div>
 
-        {/* Description */}
+        {/* Item Details */}
         <div className="mb-4">
-          <p className="text-sm text-gray-300 leading-relaxed line-clamp-2">
-            {item.description || 'No description available'}
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {listing.item?.description_en || 'Shop listing item'}
           </p>
+          {listing.item?.item_category && (
+            <p className="text-xs text-gray-400 mt-1">Category: {listing.item.item_category}</p>
+          )}
         </div>
 
-        {/* Type and Category */}
-        <div className="flex items-center gap-2 mb-4">
-          <ShoppingCart className="w-4 h-4 text-accent-cyan" />
-          <span className="text-xs text-gray-400">
-            {item.type?.charAt(0).toUpperCase() + item.type?.slice(1) || item.category || 'Item'} • {item.category || item.type}
-          </span>
-        </div>
-
-        {/* Price */}
+        {/* Cost */}
         <div className="mb-4">
           <div className="bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-xl p-3 border border-accent-cyan/20">
-            <p className="text-xs font-bold text-accent-cyan mb-2">Price</p>
+            <p className="text-xs font-bold text-accent-cyan mb-2">Cost</p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={getCurrencyColor(item.currency || 'coins')}>
-                  {getCurrencyIcon(item.currency || 'coins')}
+                <div className="text-accent-gold">
+                  <Coins className="w-4 h-4" />
                 </div>
                 <div className="flex items-center gap-2">
-                  {item.discount && (
-                    <span className="text-xs text-gray-400 line-through">
-                      {item.price || 100}
-                    </span>
-                  )}
-                  <span className={`text-lg font-bold ${getCurrencyColor(item.currency || 'coins')}`}>
-                    {finalPrice}
+                  <span className="text-lg font-bold text-accent-gold">
+                    {listing.cost_amount}
+                  </span>
+                  <span className="text-sm text-gray-400">
+                    {costItemName}
                   </span>
                 </div>
               </div>
@@ -107,31 +84,35 @@ const ShopItemCard = React.memo(function ShopItemCard({ item }: ShopItemCardProp
           </div>
         </div>
 
-        {/* Features/Tags */}
+        {/* Availability */}
         <div className="mb-4">
           <div className="flex flex-wrap gap-1">
-            {item.featured && (
-              <span className="text-xs bg-yellow-500/20 px-2 py-1 rounded-sm border border-yellow-500/30 text-yellow-400">
-                ⭐Featured
+            {listing.start_date && (
+              <span className="text-xs bg-blue-500/20 px-2 py-1 rounded-sm border border-blue-500/30 text-blue-400">
+                📅 Available from {new Date(listing.start_date).toLocaleDateString()}
               </span>
             )}
-            {item.isNew && (
-              <span className="text-xs bg-green-500/20 px-2 py-1 rounded-sm border border-green-500/30 text-green-400">
-                🆕New
-              </span>
-            )}
-            {item.discount && (
-              <span className="text-xs bg-red-500/20 px-2 py-1 rounded-sm border border-red-500/30 text-red-400">
-                🔥-{item.discount}%
-              </span>
-            )}
-            {item.limitedTime && (
+            {listing.end_date && (
               <span className="text-xs bg-orange-500/20 px-2 py-1 rounded-sm border border-orange-500/30 text-orange-400">
-                ⏰Limited
+                ⏰ Until {new Date(listing.end_date).toLocaleDateString()}
               </span>
             )}
-            <span className="text-xs bg-accent-pink/20 px-2 py-1 rounded-sm border border-accent-pink/30 text-accent-pink">
-              #{item.rarity || 'Common'}
+            {listing.item?.rarity && (
+              <span className="text-xs bg-accent-pink/20 px-2 py-1 rounded-sm border border-accent-pink/30 text-accent-pink">
+                ★ {listing.item.rarity}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Shop ID */}
+        <div className="pt-3 border-t border-dark-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
+              #{listing.id}
+            </span>
+            <span className="text-xs text-gray-400">
+              {listing.shop_type}
             </span>
           </div>
         </div>
@@ -140,495 +121,295 @@ const ShopItemCard = React.memo(function ShopItemCard({ item }: ShopItemCardProp
   );
 });
 
-// Helper functions for dynamic styling - memoized
-const getActiveIconClasses = (sectionKey: string) => {
-  switch (sectionKey) {
-    case 'owner': return 'bg-blue-400/20 shadow-md shadow-blue-400/20';
-    case 'event': return 'bg-purple-400/20 shadow-md shadow-purple-400/20';
-    case 'venus': return 'bg-emerald-400/20 shadow-md shadow-emerald-400/20';
-    case 'vip': return 'bg-yellow-400/20 shadow-md shadow-yellow-400/20';
-    default: return 'bg-gray-700/50';
-  }
-};
-
-const getActiveTextColor = (sectionKey: string) => {
-  switch (sectionKey) {
-    case 'owner': return 'text-blue-400';
-    case 'event': return 'text-purple-400';
-    case 'venus': return 'text-emerald-400';
-    case 'vip': return 'text-yellow-400';
-    default: return 'text-white';
-  }
-};
-
-const getActiveIndicatorColor = (sectionKey: string) => {
-  switch (sectionKey) {
-    case 'owner': return 'bg-blue-400 shadow-sm shadow-blue-400/50';
-    case 'event': return 'bg-purple-400 shadow-sm shadow-purple-400/50';
-    case 'venus': return 'bg-emerald-400 shadow-sm shadow-emerald-400/50';
-    case 'vip': return 'bg-yellow-400 shadow-sm shadow-yellow-400/50';
-    default: return 'bg-gray-400';
-  }
-};
+ShopListingCard.displayName = 'ShopListingCard';
 
 export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [activeSection, setActiveSection] = useState<'owner' | 'event' | 'venus' | 'vip'>('owner');
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
-  // Optimized filter state management
+  // Filter state management
   const [filterValues, setFilterValues] = useState({
     search: '',
-    type: '',
+    shop_type: '',
     rarity: '',
-    currency: '',
-    inStock: false,
-    isNew: false,
-    hasDiscount: false,
-    featured: false,
-    priceMin: '',
-    priceMax: ''
+    item_category: '',
+    available_only: false,
   });
 
-  // API state with better organization
+  // API state
   const [shopData, setShopData] = useState({
-    items: [] as ShopItem[],
+    listings: [] as ShopListing[],
     loading: false,
     error: null as string | null,
-    totalItems: 0,
-    availableTypes: [] as string[]
+    totalListings: 0,
   });
 
-  const itemsPerPage = 8;
-
-  // Optimized load function with better error handling
-  const loadShopItems = useCallback(async () => {
-    setShopData(prev => ({ ...prev, loading: true, error: null }));
-    
+  // Fetch shop listings
+  const fetchShopListings = useCallback(async () => {
     try {
-      const params = {
+      setShopData(prev => ({ ...prev, loading: true, error: null }));
+      
+      // Build query parameters
+      const params: Record<string, any> = {
         page: currentPage,
-        limit: itemsPerPage,
+        limit: 24,
         sortBy: sortBy,
-        sortOrder: sortDirection,
-        ...(filterValues.search && { search: filterValues.search }),
-        ...(filterValues.type && { category: filterValues.type }),
-        ...(filterValues.rarity && { rarity: filterValues.rarity }),
+        sortDirection: sortDirection,
       };
 
-      const response = await shopItemsApi.getShopItems(params);
+      // Add filters
+      if (filterValues.search) params.search = filterValues.search;
+      if (filterValues.shop_type) params.shop_type = filterValues.shop_type;
+      if (filterValues.rarity) params.rarity = filterValues.rarity;
+      if (filterValues.item_category) params.item_category = filterValues.item_category;
+      if (filterValues.available_only) params.available_only = filterValues.available_only;
+
+      const response = await shopListingsApi.getShopListings(params);
       
-      // Transform items to shop item format with better type safety
-      const transformedItems: ShopItem[] = (response.data || []).map((item: Record<string, unknown>) => {
-        let shopType: ShopItemType = 'currency';
-        const category = String(item.category || item.item_category || '');
-        
-        if (category === 'ACCESSORY') shopType = 'accessory';
-        else if (category === 'CURRENCY') shopType = 'currency';
-        else if (String(item.type) === 'decoration') shopType = 'decoration';
-        else if (String(item.type) === 'booster') shopType = 'booster';
-
-        let shopRarity: ShopItemRarity = 'common';
-        const itemRarity = String(item.rarity || '').toLowerCase();
-        if (itemRarity === 'rare' || itemRarity === 'r') shopRarity = 'rare';
-        else if (itemRarity === 'epic' || itemRarity === 'sr') shopRarity = 'epic';
-        else if (itemRarity === 'legendary' || itemRarity === 'ssr') shopRarity = 'legendary';
-
-        return {
-          id: String(item.id || item.unique_key || ''),
-          name: String(item.name_en || item.name || ''),
-          description: String(item.description_en || item.description || ''),
-          type: shopType,
-          category: category,
-          section: activeSection,
-          rarity: shopRarity,
-          price: Number(item.price || 0),
-          currency: (item.currency || 'coins') as Currency,
-          image: String(item.image || '📦'),
-          inStock: Boolean(item.in_stock !== false), // Default to true if not specified
-          featured: Boolean(item.featured),
-          isNew: Boolean(item.is_new),
-          discount: Number(item.discount || 0) || undefined,
-          limitedTime: Boolean(item.limited_time)
-        };
+      setShopData({
+        listings: response.data || [],
+        loading: false,
+        error: null,
+        totalListings: response.pagination?.total || 0
       });
 
-      setShopData(prev => ({
-        ...prev,
-        items: transformedItems,
-        totalItems: response.pagination?.total || transformedItems.length,
-        loading: false,
-        error: null
-      }));
-
-      // Extract unique types for filter options
-      const types = [...new Set(transformedItems.map(item => item.type))];
-      setShopData(prev => ({ ...prev, availableTypes: types }));
-
     } catch (err) {
-      console.error('Failed to load shop items:', err);
+      console.error('Failed to fetch shop listings:', err);
       setShopData(prev => ({
         ...prev,
         loading: false,
-        error: 'Failed to load shop items'
+        error: 'Failed to fetch shop listings. Please try again.'
       }));
     }
-  }, [currentPage, sortBy, sortDirection, filterValues.search, filterValues.type, filterValues.rarity, activeSection]);
+  }, [currentPage, sortBy, sortDirection, filterValues]);
 
-  // Load shop items when dependencies change
   useEffect(() => {
-    loadShopItems();
-  }, [loadShopItems]);
+    fetchShopListings();
+  }, [fetchShopListings]);
 
-  // Optimized filter change handler
-  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filtering
-  }, []);
-
-  // Optimized sort change handler
-  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(newDirection);
-    setCurrentPage(1); // Reset to first page when sorting
-  }, []);
-
-  // Optimized clear filters
-  const clearFilters = useCallback(() => {
-    setFilterValues({
-      search: '',
-      type: '',
-      rarity: '',
-      currency: '',
-      inStock: false,
-      isNew: false,
-      hasDiscount: false,
-      featured: false,
-      priceMin: '',
-      priceMax: ''
-    });
-    setCurrentPage(1);
-  }, []);
-
-  // Shop sections configuration
-  const sections = useMemo(() => [
-    { key: 'owner' as const, label: 'Owner Room', icon: '🏠' },
-    { key: 'event' as const, label: 'Event Shop', icon: '🎪' },
-    { key: 'venus' as const, label: 'Venus Shop', icon: '💎' },
-    { key: 'vip' as const, label: 'VIP Shop', icon: '👑' }
-  ], []);
-
-  // Memoized filter configuration
+  // Filter configuration
   const filterFields: FilterField[] = useMemo(() => [
     {
       key: 'search',
-      label: 'Search',
+      label: 'Search Shop Items',
       type: 'text',
-      placeholder: 'Search shop items...',
-      icon: <Search className="w-3 h-3 mr-1" />,
+      placeholder: 'Search by item name...',
+      gridCols: 2
     },
     {
-      key: 'type',
-      label: 'Type',
+      key: 'shop_type',
+      label: 'Shop Type',
       type: 'select',
-      placeholder: 'All Types',
-      options: shopData.availableTypes.map(type => ({ 
-        value: type, 
-        label: type.charAt(0).toUpperCase() + type.slice(1) 
-      })),
-      icon: <Tag className="w-3 h-3 mr-1" />,
+      options: [
+        { value: '', label: 'All Shop Types' },
+        { value: 'event', label: 'Event Shop' },
+        { value: 'general', label: 'General Shop' },
+        { value: 'vip', label: 'VIP Shop' },
+        { value: 'special', label: 'Special Shop' }
+      ]
+    },
+    {
+      key: 'item_category',
+      label: 'Item Category',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Categories' },
+        { value: 'ACCESSORY', label: 'Accessories' },
+        { value: 'CURRENCY', label: 'Currency' },
+        { value: 'CONSUMABLE', label: 'Consumables' },
+        { value: 'DECORATION', label: 'Decorations' }
+      ]
     },
     {
       key: 'rarity',
       label: 'Rarity',
       type: 'select',
-      placeholder: 'All Rarities',
       options: [
-        { value: 'common', label: 'Common' },
-        { value: 'rare', label: 'Rare' },
-        { value: 'epic', label: 'Epic' },
-        { value: 'legendary', label: 'Legendary' }
-      ],
+        { value: '', label: 'All Rarities' },
+        { value: 'R', label: 'R (Common)' },
+        { value: 'SR', label: 'SR (Rare)' },
+        { value: 'SSR', label: 'SSR (Super Rare)' }
+      ]
     },
     {
-      key: 'currency',
-      label: 'Currency',
-      type: 'select',
-      placeholder: 'All Currencies',
-      options: [
-        { value: 'coins', label: 'Coins' },
-        { value: 'gems', label: 'Gems' },
-        { value: 'tickets', label: 'Tickets' }
-      ],
-      icon: <Coins className="w-3 h-3 mr-1" />,
-    },
-    {
-      key: 'inStock',
-      label: 'In Stock Only',
-      type: 'checkbox',
-    },
-    {
-      key: 'featured',
-      label: 'Featured Only',
-      type: 'checkbox',
-    },
-    {
-      key: 'isNew',
-      label: 'New Items Only',
-      type: 'checkbox',
-    },
-    {
-      key: 'hasDiscount',
-      label: 'On Sale',
-      type: 'checkbox',
+      key: 'available_only',
+      label: 'Available Only',
+      type: 'checkbox'
     }
-  ], [shopData.availableTypes]);
-
-  // Memoized sort options
-  const sortOptions: SortOption[] = useMemo(() => [
-    { key: 'name', label: 'Name' },
-    { key: 'price', label: 'Price' },
-    { key: 'rarity', label: 'Rarity' },
-    { key: 'type', label: 'Type' }
   ], []);
 
-  // Memoized filtered items for better performance
-  const filteredItems = useMemo(() => {
-    return shopData.items.filter(item => {
-      if (filterValues.featured && !item.featured) return false;
-      if (filterValues.hasDiscount && !item.discount) return false;
-      if (filterValues.inStock && !item.inStock) return false;
-      if (filterValues.isNew && !item.isNew) return false;
-      if (filterValues.currency && item.currency !== filterValues.currency) return false;
-      return true;
-    });
-  }, [shopData.items, filterValues.featured, filterValues.hasDiscount, filterValues.inStock, filterValues.isNew, filterValues.currency]);
+  const sortOptions: SortOption[] = useMemo(() => [
+    { key: 'name', label: 'Item Name' },
+    { key: 'cost_amount', label: 'Cost' },
+    { key: 'start_date', label: 'Start Date' },
+    { key: 'end_date', label: 'End Date' }
+  ], []);
 
-  // Memoized pagination calculations
-  const paginationData = useMemo(() => {
-    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentItems = filteredItems.slice(startIndex, endIndex);
-    
-    return {
-      totalPages,
-      currentItems,
-      hasNextPage: currentPage < totalPages,
-      hasPrevPage: currentPage > 1
-    };
-  }, [filteredItems, currentPage, itemsPerPage]);
-
-  // Page navigation handlers
-  const handleNextPage = useCallback(() => {
-    if (paginationData.hasNextPage) {
-      setCurrentPage(prev => prev + 1);
-    }
-  }, [paginationData.hasNextPage]);
-
-  const handlePrevPage = useCallback(() => {
-    if (paginationData.hasPrevPage) {
-      setCurrentPage(prev => prev - 1);
-    }
-  }, [paginationData.hasPrevPage]);
+  // Pagination
+  const itemsPerPage = 24;
+  const totalPages = Math.ceil(shopData.totalListings / itemsPerPage);
 
   return (
-    <PageLoadingState 
-      isLoading={shopData.loading && shopData.items.length === 0} 
-      message="Loading shop items..."
-    >
+    <PageLoadingState isLoading={shopData.loading} message="Loading shop listings...">
       <div className="modern-page">
-        <div className="modern-container-md">
+        <div className="modern-container-xl">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="modern-page-header"
+            className="mb-8"
           >
-            <h1 className="modern-page-title">Shop</h1>
-            <p className="modern-page-subtitle">
-              Showing {shopData.totalItems} items
-            </p>
-          </motion.div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-4xl font-bold text-white mb-2">
+                  Shop Collection
+                </h1>
+                <p className="text-gray-400">
+                  Browse and discover all available shop items • {shopData.listings.length} of {shopData.totalListings} listings
+                </p>
+              </div>
+            </div>
 
-          {/* Search and Filter Controls */}
-          <div className="mb-4">
+            {/* Filters */}
             <UnifiedFilter
               showFilters={showFilters}
               setShowFilters={setShowFilters}
               filterFields={filterFields}
               sortOptions={sortOptions}
               filterValues={filterValues}
-              onFilterChange={handleFilterChange}
-              onClearFilters={clearFilters}
+              onFilterChange={(key, value) => {
+                setFilterValues(prev => ({ ...prev, [key]: value }));
+                setCurrentPage(1);
+              }}
+              onClearFilters={() => {
+                setFilterValues({
+                  search: '',
+                  shop_type: '',
+                  rarity: '',
+                  item_category: '',
+                  available_only: false,
+                });
+                setCurrentPage(1);
+              }}
               sortBy={sortBy}
               sortDirection={sortDirection}
-              onSortChange={handleSortChange}
-              resultCount={filteredItems.length}
-              totalCount={shopData.totalItems}
-              itemLabel="shop items"
-              accentColor="accent-cyan"
-              secondaryColor="accent-purple"
-              headerIcon={<ShoppingCart className="w-4 h-4" />}
+              onSortChange={(sortBy, sortDirection) => {
+                setSortBy(sortBy);
+                setSortDirection(sortDirection);
+                setCurrentPage(1);
+              }}
+              resultCount={shopData.listings.length}
+              totalCount={shopData.totalListings}
+              itemLabel="shop listings"
+              searchAriaLabel="Search shop items"
             />
-          </div>
+          </motion.div>
 
-          {/* Shop Sections */}
+          {/* Shop Listings Display */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
           >
-            <div className="flex flex-wrap gap-2 justify-between md:justify-evenly">
-              {sections.map((section) => (
-                <motion.button
-                  key={section.key}
-                  onClick={() => setActiveSection(section.key)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`shop-section-card relative group px-4 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 flex items-center gap-3 flex-1 min-w-[140px] max-w-[200px] ${
-                    activeSection === section.key
-                      ? `active-${section.key}`
-                      : 'bg-dark-card/40 border-dark-border/30 hover:border-gray-600/50'
-                  }`}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+              {shopData.listings.map((listing, index) => (
+                <motion.div
+                  key={listing.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Icon */}
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all duration-300 flex-shrink-0 ${
-                      activeSection === section.key
-                        ? getActiveIconClasses(section.key)
-                        : 'bg-gray-700/50 group-hover:bg-gray-600/50'
-                    }`}>
-                      {section.icon}
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="text-left flex-1 min-w-0">
-                      <h3 className={`font-medium text-sm transition-colors duration-300 truncate ${
-                        activeSection === section.key
-                          ? getActiveTextColor(section.key)
-                          : 'text-white group-hover:text-gray-200'
-                      }`}>
-                        {section.label}
-                      </h3>
-                    </div>
-                    
-                    {/* Active Indicator */}
-                    {activeSection === section.key && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className={`w-2 h-2 rounded-full flex-shrink-0 ${getActiveIndicatorColor(section.key)}`}
-                      />
-                    )}
-                  </div>
-                </motion.button>
+                  <ShopListingCard listing={listing} />
+                </motion.div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center justify-center gap-2 mb-8"
+              >
+                <Button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="sm"
+                  className="border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className={currentPage === pageNum 
+                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white" 
+                          : "border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
+                        }
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="sm"
+                  className="border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Empty State */}
+            {shopData.listings.length === 0 && !shopData.loading && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-12"
+              >
+                <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
+                  <ShoppingCart className="w-12 h-12 text-accent-cyan/60" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-3">No shop listings found</h3>
+                <p className="text-muted-foreground mb-6">
+                  Try adjusting your search criteria or reset filters to see all listings.
+                </p>
+                <Button 
+                  onClick={() => {
+                    setFilterValues({
+                      search: '',
+                      shop_type: '',
+                      rarity: '',
+                      item_category: '',
+                      available_only: false,
+                    });
+                    setCurrentPage(1);
+                  }}
+                  className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white"
+                >
+                  Reset Filters
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
-
-          {/* Notice about shop functionality */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6"
-          >
-            <div className="flex items-center gap-3 text-blue-400">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="font-medium">
-                Shop system is integrated with the items catalog. Items shown are from the unified items database.
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Error State */}
-          {shopData.error && !shopData.loading && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-3 text-red-400 mb-2">
-                <ShoppingCart className="w-5 h-5" />
-                <span className="font-medium">Failed to load shop items</span>
-              </div>
-              <p className="text-red-300 text-sm">{shopData.error}</p>
-              <Button
-                onClick={loadShopItems}
-                className="mt-3 bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30"
-                size="sm"
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-
-          {/* Items Grid */}
-          {!shopData.loading && !shopData.error && paginationData.currentItems.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
-            >
-              {paginationData.currentItems.map((item) => (
-                <ShopItemCard key={item.id} item={item} />
-              ))}
-            </motion.div>
-          )}
-
-          {/* Empty State */}
-          {!shopData.loading && !shopData.error && paginationData.currentItems.length === 0 && (
-            <div className="text-center py-12">
-              <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-300 mb-2">No items found</h3>
-              <p className="text-gray-400">
-                {filterValues.search || Object.values(filterValues).some(v => v) 
-                  ? 'No items match your search criteria.' 
-                  : 'No shop items available.'}
-              </p>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {shopData.loading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
-              <span className="ml-3 text-gray-300">Loading shop items...</span>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {paginationData.totalPages > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center gap-2"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevPage}
-                disabled={!paginationData.hasPrevPage || shopData.loading}
-                className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              
-              <span className="px-4 py-2 text-sm text-gray-300">
-                Page {currentPage} of {paginationData.totalPages}
-              </span>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={!paginationData.hasNextPage || shopData.loading}
-                className="bg-dark-card/50 border-dark-border/30 text-gray-300 hover:border-accent-cyan/30 hover:text-accent-cyan"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </motion.div>
-          )}
         </div>
       </div>
     </PageLoadingState>
   );
-}
+} 

@@ -1,23 +1,43 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { GachaPool, NewGachaPool, PoolItemType } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
+import { logger } from '../config';
 
-export class GachaPoolModel extends BaseModel {
+export class GachaPoolModel extends BaseModel<GachaPool, NewGachaPool> {
   constructor() {
     super('gacha_pools');
   }
 
-  // Mapper function to convert database row to GachaPool object
-  private mapGachaPoolRow(row: any): GachaPool {
+  // Implementation of abstract methods
+  protected mapRow(row: any): GachaPool {
     return {
       id: row.id,
       gacha_id: row.gacha_id,
-      pool_item_type: row.pool_item_type as PoolItemType,
+      pool_item_type: row.pool_item_type,
       item_id: row.item_id,
-      drop_rate: parseFloat(row.drop_rate),
+      drop_rate: row.drop_rate,
       is_featured: Boolean(row.is_featured),
     };
+  }
+
+  protected getCreateFields(): (keyof NewGachaPool)[] {
+    return [
+      'gacha_id',
+      'pool_item_type',
+      'item_id',
+      'drop_rate',
+      'is_featured'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewGachaPool)[] {
+    return this.getCreateFields(); // Same fields can be updated
+  }
+
+  // Mapper function to convert database row to GachaPool object
+  private mapGachaPoolRow(row: any): GachaPool {
+    return this.mapRow(row);
   }
 
   async create(gachaPool: NewGachaPool): Promise<GachaPool> {
@@ -52,16 +72,9 @@ export class GachaPoolModel extends BaseModel {
     );
   }
 
-  // Overload signatures
-  async findById(id: number): Promise<GachaPool>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  // Implementation
-  async findById<T = GachaPool>(id: string | number, mapFunction?: (row: any) => T): Promise<T | GachaPool> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<GachaPool>(id as number, this.mapGachaPoolRow);
+  // Override findById to use proper typing
+  async findById(id: number): Promise<GachaPool> {
+    return super.findById(id);
   }
 
   async findByGachaId(gachaId: number, options: PaginationOptions = {}): Promise<PaginatedResult<GachaPool>> {
@@ -170,7 +183,7 @@ export class GachaPoolModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
   async deleteByGachaId(gachaId: number): Promise<void> {
@@ -182,7 +195,7 @@ export class GachaPoolModel extends BaseModel {
       return [];
     }
 
-    return this.withTransaction(async (connection) => {
+    return super.withTransaction(async (connection) => {
       const results: GachaPool[] = [];
       
       for (const gachaPool of gachaPools) {
@@ -252,7 +265,7 @@ export class GachaPoolModel extends BaseModel {
     return this.mapGachaPoolRow(rows[0]);
   }
 
-  async healthCheck(): Promise<{ isHealthy: boolean; errors: string[] }> {
+  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
     const errors: string[] = [];
 
     try {
@@ -265,6 +278,7 @@ export class GachaPoolModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
+      tableName: 'gacha_pools',
       errors
     };
   }

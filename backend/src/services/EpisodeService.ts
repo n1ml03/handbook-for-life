@@ -96,7 +96,8 @@ export class EpisodeService extends BaseService<EpisodeModel, Episode, NewEpisod
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['title_jp', 'title_en', 'title_cn', 'title_tw', 'title_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search episodes', query);
   }
 
@@ -108,7 +109,7 @@ export class EpisodeService extends BaseService<EpisodeModel, Episode, NewEpisod
     const validTypes: EpisodeType[] = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
     
     if (!validTypes.includes(type as EpisodeType)) {
-      throw this.handleServiceError('validate episode type', type, `Invalid episode type: ${type}. Valid types are: ${validTypes.join(', ')}`);
+      throw new Error(`Invalid episode type: ${type}. Valid types are: ${validTypes.join(', ')}`);
     }
     
     return type as EpisodeType;

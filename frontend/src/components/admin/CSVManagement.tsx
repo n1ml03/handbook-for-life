@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
   Download, Upload, FileDown, FileUp, Settings2, X, 
-  CheckCircle2, BookOpen, FileText, AlertCircle, Zap
+  CheckCircle2, BookOpen, FileText, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +42,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   const [csvImportType, setCsvImportType] = useState<'documents' | 'update-logs'>('documents');
   const [importPage, setImportPage] = useState<string>('all');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [csvData, setCsvData] = useState<string>('');
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [csvPreview, setCsvPreview] = useState<CSVPreviewData | null>(null);
@@ -259,7 +258,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
 
     try {
       const text = await file.text();
-      setCsvData(text);
 
       const preview = parseCSVData(text);
       setCsvPreview(preview);
@@ -437,7 +435,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
   // Clear import data
   const clearImportData = useCallback(() => {
     setUploadedFile(null);
-    setCsvData('');
     setCsvPreview(null);
     setShowPreviewModal(false);
     setColumnMappings([]);

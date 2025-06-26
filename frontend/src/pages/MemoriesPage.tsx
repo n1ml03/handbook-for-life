@@ -6,12 +6,24 @@ import {
   Calendar,
   Camera,
   Loader2} from 'lucide-react';
-import { type Memory, type MemoryCardProps, type SortDirection, type Episode, episodeToMemory } from '@/types';
+import { type Memory, type MemoryCardProps, type SortDirection, type Episode } from '@/types';
 import { episodesApi } from '@/services/api';
 import { PageLoadingState } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createMemoriesFilterConfig, memoriesSortOptions } from '@/components/features/FilterConfigs';
 import React from 'react';
+
+// Helper function to convert Episode to Memory
+const episodeToMemory = (episode: Episode): Memory => ({
+  id: episode.id.toString(),
+  name: episode.title_en || episode.title_jp || 'Untitled Memory',
+  description: episode.unlock_condition_en || '',
+  date: new Date().toISOString(),
+  thumbnail: '📖',
+  characters: [],
+  tags: [episode.episode_type],
+  favorite: false
+});
 
 const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 
@@ -67,7 +79,7 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
             <div className="bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-xl p-3 border border-accent-cyan/20">
               <p className="text-xs font-bold text-accent-cyan mb-2">Characters</p>
               <div className="flex flex-wrap gap-1">
-                {memory.characters.map((character, index) => (
+                {memory.characters.map((character: string, index: number) => (
                   <span 
                     key={index}
                     className="text-xs bg-dark-primary/50 px-2 py-1 rounded-sm border border-dark-border/30 text-gray-300"
@@ -84,7 +96,7 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
         {memory.tags.length > 0 && (
           <div className="mb-4">
             <div className="flex flex-wrap gap-1">
-              {memory.tags.slice(0, 3).map((tag, index) => (
+              {memory.tags.slice(0, 3).map((tag: string, index: number) => (
                 <span 
                   key={index}
                   className="text-xs bg-accent-pink/20 px-2 py-1 rounded-sm border border-accent-pink/30 text-accent-pink"
@@ -128,9 +140,9 @@ export default function MemoriesPage() {
         limit: itemsPerPage,
         sortBy: sortBy,
         sortOrder: sortDirection,
-        ...(filterValues.type && typeof filterValues.type === 'string' && { type: filterValues.type }),
-        ...(filterValues.entityType && typeof filterValues.entityType === 'string' && { entityType: filterValues.entityType }),
-        ...(filterValues.entityId && { entityId: Number(filterValues.entityId) }),
+        ...(filterValues.episode_type && typeof filterValues.episode_type === 'string' && { episode_type: filterValues.episode_type }),
+        ...(filterValues.related_entity_type && typeof filterValues.related_entity_type === 'string' && { related_entity_type: filterValues.related_entity_type }),
+        ...(filterValues.related_entity_id && { related_entity_id: Number(filterValues.related_entity_id) }),
         ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
       };
 
@@ -147,7 +159,7 @@ export default function MemoriesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, sortBy, sortDirection, filterValues.type, filterValues.entityType, filterValues.entityId, filterValues.search]);
+  }, [currentPage, sortBy, sortDirection, filterValues.episode_type, filterValues.related_entity_type, filterValues.related_entity_id, filterValues.search]);
 
   // Fetch episodes on component mount and when dependencies change
   useEffect(() => {
@@ -215,7 +227,7 @@ export default function MemoriesPage() {
   return (
     <PageLoadingState 
       isLoading={loading && memories.length === 0} 
-      message="Đang tải danh sách kỷ niệm..."
+      message="Loading episodes..."
     >
     <div className="modern-page">
       <div className="modern-container-lg">

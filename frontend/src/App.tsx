@@ -13,8 +13,8 @@ import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
 // Main Pages - Lazy loaded for better performance
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const SwimsuitPage = lazy(() => import('@/pages/SwimsuitPage'));
-const GirlListPage = lazy(() => import('@/pages/GirlListPage'));
-const GirlDetailPage = lazy(() => import('@/pages/GirlDetailPage'));
+const CharacterListPage = lazy(() => import('@/pages/CharacterListPage'));
+const CharacterDetailPage = lazy(() => import('@/pages/CharacterDetailPage'));
 const AccessoryPage = lazy(() => import('@/pages/AccessoryPage'));
 const SkillsPage = lazy(() => import('@/pages/SkillsPage'));
 const DecorateBromidePage = lazy(() => import('@/pages/DecorateBromidePage'));
@@ -84,8 +84,10 @@ function App() {
                       <Route path="/" element={<Navigate to="/home" replace />} />
                       <Route path="/home" element={<HomePage />} />
                       <Route path="/swimsuit" element={<SwimsuitPage />} />
-                      <Route path="/girls" element={<GirlListPage />} />
-                      <Route path="/girls/:id" element={<GirlDetailPage />} />
+                      <Route path="/characters" element={<CharacterListPage />} />
+                      <Route path="/characters/:id" element={<CharacterDetailPage />} />
+                      <Route path="/girls" element={<Navigate to="/characters" replace />} />
+                      <Route path="/girls/:id" element={<Navigate to="/characters" replace />} />
                       <Route path="/skills" element={<SkillsPage />} />
                       <Route path="/decorate-bromide" element={<DecorateBromidePage />} />
                       <Route path="/accessory" element={<AccessoryPage />} />

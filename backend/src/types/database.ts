@@ -1,7 +1,7 @@
 // Database entity types matching the MySQL schema
 
 // ============================================================================
-// CORE ENTITIES (Bảng cốt lõi)
+// CORE ENTITIES
 // ============================================================================
 
 export interface Character {
@@ -383,6 +383,7 @@ export interface NewUpdateLog {
 export type SkillSlot = 'ACTIVE' | 'PASSIVE_1' | 'PASSIVE_2' | 'POTENTIAL_1' | 'POTENTIAL_2' | 'POTENTIAL_3' | 'POTENTIAL_4';
 
 export interface SwimsuitSkill {
+  id: number; // Composite ID for consistency with BaseEntity
   swimsuit_id: number; // MEDIUMINT UNSIGNED
   skill_id: number; // INT UNSIGNED
   skill_slot: SkillSlot; // ENUM

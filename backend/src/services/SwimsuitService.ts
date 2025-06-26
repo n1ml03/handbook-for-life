@@ -38,8 +38,8 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
 
   async getSwimsuitById(id: string | number): Promise<Swimsuit> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Swimsuit ID');
-      return await this.model.findById(id);
+      const numericId = this.parseNumericId(id, 'Swimsuit ID');
+      return await this.model.findById(numericId);
     }, 'fetch swimsuit', id);
   }
 
@@ -78,12 +78,12 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
 
   async updateSwimsuit(id: string | number, updates: Partial<NewSwimsuit>): Promise<Swimsuit> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Swimsuit ID');
+      const numericId = this.parseNumericId(id, 'Swimsuit ID');
       this.validateOptionalString(updates.name_en, 'Swimsuit name');
 
       this.logOperationStart('Updating', id, { updates });
 
-      const swimsuit = await this.model.update(id, updates);
+      const swimsuit = await this.model.update(numericId, updates);
 
       this.logOperationSuccess('Updated', swimsuit.name_en, { id: swimsuit.id });
       return swimsuit;
@@ -92,13 +92,13 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
 
   async deleteSwimsuit(id: string | number): Promise<void> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Swimsuit ID');
+      const numericId = this.parseNumericId(id, 'Swimsuit ID');
 
       // Check if swimsuit exists before deletion
-      await this.model.findById(id);
+      await this.model.findById(numericId);
 
       this.logOperationStart('Deleting', id);
-      await this.model.delete(id);
+      await this.model.delete(numericId);
       this.logOperationSuccess('Deleted', id);
     }, 'delete swimsuit', id);
   }
@@ -107,7 +107,7 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      return await this.model.searchSwimsuits(query.trim(), validatedOptions);
     }, 'search swimsuits', query);
   }
 
@@ -116,7 +116,7 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
   // ============================================================================
 
   private validateSwimsuitRarity(rarity: string): SwimsuitRarity {
-    const validRarities: SwimsuitRarity[] = ['N', 'R', 'SR', 'SSR'];
+    const validRarities: SwimsuitRarity[] = ['N', 'R', 'SR', 'SSR', 'SSR+'];
     
     if (!validRarities.includes(rarity as SwimsuitRarity)) {
       throw new Error(`Invalid swimsuit rarity: ${rarity}. Valid rarities are: ${validRarities.join(', ')}`);
@@ -126,7 +126,7 @@ export class SwimsuitService extends BaseService<SwimsuitModel, Swimsuit, NewSwi
   }
 
   private validateSuitType(type: string): SuitType {
-    const validTypes: SuitType[] = ['OFFENSIVE', 'DEFENSIVE', 'SUPPORTER'];
+    const validTypes: SuitType[] = ['POW', 'TEC', 'STM', 'APL', 'N/A'];
     
     if (!validTypes.includes(type as SuitType)) {
       throw new Error(`Invalid suit type: ${type}. Valid types are: ${validTypes.join(', ')}`);

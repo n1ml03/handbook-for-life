@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
+import { characterSchemas } from '../utils/ValidationSchemas';
 import { asyncHandler } from '../middleware/errorHandler';
-import { CharacterModel } from '../models/CharacterModel';
+import { characterService } from '../services';
 import logger from '../config/logger';
 
 const router = Router();
-const characterModel = new CharacterModel();
 
 // GET /api/characters - Get all characters with pagination
 router.get('/',
@@ -13,7 +13,7 @@ router.get('/',
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
-    const result = await characterModel.findAll({
+    const result = await characterService.getCharacters({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -21,12 +21,7 @@ router.get('/',
     });
 
     logger.info(`Retrieved ${result.data.length} characters for page ${page}`);
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -36,14 +31,10 @@ router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
     
-    const character = await characterModel.findByUniqueKey(unique_key);
+    const character = await characterService.getCharacterByKey(unique_key);
     
     logger.info(`Retrieved character: ${character.name_en}`);
-
-    res.json({
-      success: true,
-      data: character
-    });
+    res.success(character);
   })
 );
 
@@ -52,14 +43,10 @@ router.get('/birthdays',
   asyncHandler(async (req, res) => {
     const { days = 7 } = req.query;
     
-    const characters = await characterModel.findUpcomingBirthdays(Number(days));
+    const characters = await characterService.getUpcomingBirthdays(Number(days));
     
     logger.info(`Retrieved ${characters.length} characters with upcoming birthdays`);
-
-    res.json({
-      success: true,
-      data: characters
-    });
+    res.success(characters);
   })
 );
 
@@ -70,14 +57,11 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      res.status(400).json({
-        success: false,
-        message: 'Search query is required'
-      });
+      res.error('Search query is required', 400);
       return;
     }
 
-    const result = await characterModel.search(q as string, {
+    const result = await characterService.searchCharacters(q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -85,12 +69,7 @@ router.get('/search',
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} characters`);
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -98,16 +77,10 @@ router.get('/search',
 router.get('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-    
-    const character = await characterModel.findById(id);
+    const character = await characterService.getCharacterById(req.params.id);
     
     logger.info(`Retrieved character: ${character.name_en}`);
-
-    res.json({
-      success: true,
-      data: character
-    });
+    res.success(character);
   })
 );
 
@@ -115,15 +88,21 @@ router.get('/:id',
 router.post('/',
   validate(schemas.createCharacter),
   asyncHandler(async (req, res) => {
-    const character = await characterModel.create(req.body);
+    const character = await characterService.createCharacter(req.body);
     
     logger.info(`Created character: ${character.name_en}`);
+    res.status(201).success(character, 'Character created successfully');
+  })
+);
 
-    res.status(201).json({
-      success: true,
-      data: character,
-      message: 'Character created successfully'
-    });
+// POST /api/characters/batch - Create multiple characters
+router.post('/batch',
+  validate(characterSchemas.batchCreate),
+  asyncHandler(async (req, res) => {
+    await characterService.createMultipleCharacters(req.body);
+    
+    logger.info(`Created ${req.body.length} characters in batch`);
+    res.status(201).success({ created: req.body.length }, 'Characters created successfully');
   })
 );
 
@@ -132,45 +111,21 @@ router.put('/:id',
   validateParams(schemas.idParam),
   validate(schemas.updateCharacter),
   asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-    
-    const character = await characterModel.update(id, req.body);
+    const character = await characterService.updateCharacter(req.params.id, req.body);
     
     logger.info(`Updated character: ${character.name_en}`);
-
-    res.json({
-      success: true,
-      data: character,
-      message: 'Character updated successfully'
-    });
+    res.success(character, 'Character updated successfully');
   })
 );
 
-// GET /api/characters/:id/skills - Get character skills
-router.get('/:id/skills',
+// DELETE /api/characters/:id - Delete character
+router.delete('/:id',
   validateParams(schemas.idParam),
-  validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-
-    // First verify character exists
-    await characterModel.findById(id);
-
-    const result = await characterModel.getCharacterSkills(id, {
-      page: Number(page),
-      limit: Number(limit),
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
-    });
-
-    logger.info(`Retrieved ${result.data.length} skills for character ${id}`);
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    await characterService.deleteCharacter(req.params.id);
+    
+    logger.info(`Deleted character with ID: ${req.params.id}`);
+    res.success({ deleted: true }, 'Character deleted successfully');
   })
 );
 
@@ -179,43 +134,17 @@ router.get('/:id/swimsuits',
   validateParams(schemas.idParam),
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
 
-    // First verify character exists
-    await characterModel.findById(id);
-
-    const result = await characterModel.getCharacterSwimsuits(id, {
+    const result = await characterService.getCharacterSwimsuits(req.params.id, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
       sortOrder: sortOrder as 'asc' | 'desc'
     });
 
-    logger.info(`Retrieved ${result.data.length} swimsuits for character ${id}`);
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
-  })
-);
-
-// DELETE /api/characters/:id - Delete character
-router.delete('/:id',
-  validateParams(schemas.idParam),
-  asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-
-    await characterModel.delete(id);
-
-    logger.info(`Deleted character with ID: ${id}`);
-
-    res.json({
-      success: true,
-      message: 'Character deleted successfully'
-    });
+    logger.info(`Retrieved ${result.data.length} swimsuits for character ${req.params.id}`);
+    res.paginated(result);
   })
 );
 

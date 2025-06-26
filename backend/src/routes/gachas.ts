@@ -212,8 +212,8 @@ router.get('/:id/featured',
   })
 );
 
-// GET /api/gachas/:id/statistics - Get gacha statistics
-router.get('/:id/statistics',
+// GET /api/gachas/:id/validate-rates - Validate gacha drop rates
+router.get('/:id/validate-rates',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
 
@@ -225,13 +225,13 @@ router.get('/:id/statistics',
       return;
     }
     
-    const statistics = await gachaService.getGachaStatistics(id);
+    const validation = await gachaService.validateGachaDropRates(id);
 
-    logger.info(`Retrieved statistics for gacha ${id}`);
+    logger.info(`Validated drop rates for gacha ${id}: ${validation.message}`);
 
     res.json({
       success: true,
-      data: statistics
+      data: validation
     });
   })
 );

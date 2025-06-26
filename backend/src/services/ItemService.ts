@@ -31,8 +31,8 @@ export class ItemService extends BaseService<ItemModel, Item, NewItem> {
 
   async getItemById(id: string | number): Promise<Item> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Item ID');
-      return await this.model.findById(id);
+      const numericId = this.parseNumericId(id, 'Item ID');
+      return await this.model.findById(numericId);
     }, 'fetch item', id);
   }
 
@@ -63,12 +63,12 @@ export class ItemService extends BaseService<ItemModel, Item, NewItem> {
 
   async updateItem(id: string | number, updates: Partial<NewItem>): Promise<Item> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Item ID');
+      const numericId = this.parseNumericId(id, 'Item ID');
       this.validateOptionalString(updates.name_en, 'Item name');
 
       this.logOperationStart('Updating', id, { updates });
 
-      const item = await this.model.update(id, updates);
+      const item = await this.model.update(numericId, updates);
 
       this.logOperationSuccess('Updated', item.name_en, { id: item.id });
       return item;
@@ -77,13 +77,13 @@ export class ItemService extends BaseService<ItemModel, Item, NewItem> {
 
   async deleteItem(id: string | number): Promise<void> {
     return this.safeAsyncOperation(async () => {
-      this.validateId(id, 'Item ID');
+      const numericId = this.parseNumericId(id, 'Item ID');
 
       // Check if item exists before deletion
-      await this.model.findById(id);
+      await this.model.findById(numericId);
 
       this.logOperationStart('Deleting', id);
-      await this.model.delete(id);
+      await this.model.delete(numericId);
       this.logOperationSuccess('Deleted', id);
     }, 'delete item', id);
   }
@@ -92,7 +92,8 @@ export class ItemService extends BaseService<ItemModel, Item, NewItem> {
     return this.safeAsyncOperation(async () => {
       this.validateSearchQuery(query);
       const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.search(query.trim(), validatedOptions);
+      const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+      return await this.model.search(searchFields, query.trim(), validatedOptions);
     }, 'search items', query);
   }
 

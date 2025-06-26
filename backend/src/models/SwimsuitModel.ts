@@ -1,15 +1,15 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Swimsuit, NewSwimsuit, SwimsuitRarity, SuitType } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 
-export class SwimsuitModel extends BaseModel {
+export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
   constructor() {
     super('swimsuits');
   }
 
-  // Mapper function to convert database row to Swimsuit object
-  private mapSwimsuitRow(row: any): Swimsuit {
+  // Implementation of abstract methods
+  protected mapRow(row: any): Swimsuit {
     return {
       id: row.id,
       character_id: row.character_id,
@@ -28,6 +28,35 @@ export class SwimsuitModel extends BaseModel {
       release_date_gl: row.release_date_gl,
       game_version: row.game_version,
     };
+  }
+
+  protected getCreateFields(): (keyof NewSwimsuit)[] {
+    return [
+      'character_id',
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'description_en',
+      'rarity',
+      'suit_type',
+      'total_stats_awakened',
+      'has_malfunction',
+      'is_limited',
+      'release_date_gl',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewSwimsuit)[] {
+    return this.getCreateFields();
+  }
+
+  // Mapper function to convert database row to Swimsuit object
+  private mapSwimsuitRow(row: any): Swimsuit {
+    return this.mapRow(row);
   }
 
   async create(swimsuit: NewSwimsuit): Promise<Swimsuit> {
@@ -76,14 +105,9 @@ export class SwimsuitModel extends BaseModel {
     );
   }
 
-  async findById(id: number): Promise<Swimsuit>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = Swimsuit>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Swimsuit> {
-    if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
-    }
-    return super.findById<Swimsuit>(id as number, this.mapSwimsuitRow);
+  // Override findById to use proper typing
+  async findById(id: number): Promise<Swimsuit> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Swimsuit> {
@@ -222,20 +246,23 @@ export class SwimsuitModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM swimsuits WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM swimsuits WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapSwimsuitRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  // Override search method to match BaseModel signature
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Swimsuit>> {
+    return super.search(searchFields, query, options, additionalWhere);
+  }
+
+  // Convenience search method for swimsuits
+  async searchSwimsuits(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
   }
 
   async getTopStatsSwimsuits(limit: number = 10): Promise<Swimsuit[]> {
@@ -272,7 +299,7 @@ export class SwimsuitModel extends BaseModel {
 
     return {
       isHealthy: errors.length === 0,
-      tableName: this.tableName,
+      tableName: 'swimsuits',
       errors
     };
   }

@@ -1,12 +1,49 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Event, NewEvent, EventType } from '../types/database';
-import { executeQuery } from '@config/database';
-import { AppError } from '@middleware/errorHandler';
+import { executeQuery } from '../config/database';
+import { AppError } from '../middleware/errorHandler';
 import { logger } from '../config';
 
-export class EventModel extends BaseModel {
+export class EventModel extends BaseModel<Event, NewEvent> {
   constructor() {
     super('events');
+  }
+
+  // Implementation of abstract methods
+  protected mapRow(row: any): Event {
+    return {
+      id: row.id,
+      unique_key: row.unique_key,
+      name_jp: row.name_jp,
+      name_en: row.name_en,
+      name_cn: row.name_cn,
+      name_tw: row.name_tw,
+      name_kr: row.name_kr,
+      type: row.type,
+      start_date: new Date(row.start_date),
+      end_date: new Date(row.end_date),
+      is_active: Boolean(row.is_active),
+      game_version: row.game_version,
+    };
+  }
+
+  protected getCreateFields(): (keyof NewEvent)[] {
+    return [
+      'unique_key',
+      'name_jp',
+      'name_en',
+      'name_cn',
+      'name_tw',
+      'name_kr',
+      'type',
+      'start_date',
+      'end_date',
+      'game_version'
+    ];
+  }
+
+  protected getUpdateFields(): (keyof NewEvent)[] {
+    return this.getCreateFields(); // Same fields can be updated
   }
 
   // Mapper function to convert database row to Event object
@@ -71,9 +108,9 @@ export class EventModel extends BaseModel {
   
   async findById<T = Event>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Event> {
     if (mapFunction) {
-      return super.findById<T>(id, mapFunction);
+      return super.findById(id) as Promise<T>;
     }
-    return super.findById<Event>(id as number, this.mapEventRow);
+    return super.findById(id as number);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Event> {
@@ -173,20 +210,16 @@ export class EventModel extends BaseModel {
   }
 
   async delete(id: number): Promise<void> {
-    await this.deleteById(id);
+    return super.delete(id);
   }
 
-  async search(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
-    const searchPattern = `%${query}%`;
-    return this.getPaginatedResults(
-      `SELECT * FROM events WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      `SELECT COUNT(*) FROM events WHERE 
-       name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ? OR unique_key LIKE ?`,
-      options,
-      this.mapEventRow,
-      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+  async search(
+    searchFields: string[],
+    query: string,
+    options: PaginationOptions = {},
+    additionalWhere?: string
+  ): Promise<PaginatedResult<Event>> {
+    return super.search(searchFields, query, options, additionalWhere);
   }
 
   async findByKey(key: string): Promise<Event> {
@@ -257,5 +290,27 @@ export class EventModel extends BaseModel {
       tableName: this.tableName,
       errors
     };
+  }
+
+  // Convenience search method for events
+  async searchEvents(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Event>> {
+    const searchFields = ['title_jp', 'title_en', 'title_cn', 'title_tw', 'title_kr', 'unique_key'];
+    return this.search(searchFields, query, options);
+  }
+
+  // Helper method for processing pagination options
+  protected processPaginationOptions(options: PaginationOptions): {
+    offset: number;
+    limit: number;
+    sortBy: string;
+    sortOrder: string;
+  } {
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const offset = (page - 1) * limit;
+    const sortBy = options.sortBy || 'id';
+    const sortOrder = (options.sortOrder || 'asc').toUpperCase();
+
+    return { offset, limit, sortBy, sortOrder };
   }
 } 

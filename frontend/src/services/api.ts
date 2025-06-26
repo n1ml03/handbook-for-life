@@ -1,4 +1,4 @@
-import { Document, UpdateLog, Character, Swimsuit, Skill, Accessory, Event, Bromide, Girl, Memory } from '@/types';
+import { Document, UpdateLog, Character, Swimsuit, Skill, Event, Bromide } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +19,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     },
     ...options,
   };
+
+  // Remove Content-Type for FormData to let browser set it with boundary
+  if (options.body instanceof FormData) {
+    const headers = { ...config.headers };
+    delete (headers as any)['Content-Type'];
+    config.headers = headers;
+  }
 
   try {
     const response = await fetch(url, config);
@@ -660,112 +667,371 @@ export const bromidesApi = {
   },
 };
 
-// Legacy APIs for backward compatibility (will be deprecated)
-// Accessories API - now redirects to items
-export const accessoriesApi = {
-  async getAccessories(params?: any): Promise<{ data: Accessory[]; pagination: any }> {
-    // Map to items API with category filter for accessories
-    return itemsApi.getItems({ ...params, category: 'accessory' });
+// Shop Listings API
+export const shopListingsApi = {
+  // Get all shop listings
+  async getShopListings(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    shop_type?: string;
+    rarity?: string;
+    item_category?: string;
+    available_only?: boolean;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/shop-listings${queryString ? `?${queryString}` : ''}`);
   },
 
-  async getAccessory(id: string): Promise<Accessory> {
-    return itemsApi.getItem(id);
+  // Get a specific shop listing by ID
+  async getShopListing(id: string): Promise<any> {
+    return apiRequest(`/shop-listings/${id}`);
   },
 
-  async getAccessoryGirls(_id: string): Promise<Character[]> {
-    // This might need special handling or removal
-    return [];
+  // Get active shop listings
+  async getActiveShopListings(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/shop-listings/active${queryString ? `?${queryString}` : ''}`);
   },
 
-  async createAccessory(accessory: any): Promise<Accessory> {
-    return itemsApi.createItem({ ...accessory, category: 'accessory' });
+  // Get shop listings by type
+  async getShopListingsByType(shopType: string, params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/shop-listings/type/${shopType}${queryString ? `?${queryString}` : ''}`);
   },
 
-  async updateAccessory(id: string, updates: any): Promise<Accessory> {
-    return itemsApi.updateItem(id, updates);
+  // Get shop statistics
+  async getShopStatistics(): Promise<any> {
+    return apiRequest('/shop-listings/statistics');
   },
 
-  async deleteAccessory(id: string): Promise<void> {
-    return itemsApi.deleteItem(id);
+  // Get shop summary
+  async getShopSummary(): Promise<any> {
+    return apiRequest('/shop-listings/summary');
   },
 };
 
-// Girls API - now redirects to characters
-export const girlsApi = {
-  async getGirls(params?: any): Promise<{ data: Girl[]; pagination: any }> {
-    return charactersApi.getCharacters(params) as any;
+// Gachas API
+export const gachasApi = {
+  // Get all gachas
+  async getGachas(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas${queryString ? `?${queryString}` : ''}`);
   },
 
-  async getGirl(id: string): Promise<Girl> {
-    return charactersApi.getCharacter(id) as any;
+  // Get active gachas
+  async getActiveGachas(params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas/active${queryString ? `?${queryString}` : ''}`);
   },
 
-  async getGirlSkills(id: string): Promise<Skill[]> {
-    return charactersApi.getCharacterSkills(id);
+  // Get gacha by ID
+  async getGacha(id: string): Promise<any> {
+    return apiRequest(`/gachas/${id}`);
   },
 
-  async getGirlSwimsuits(id: string): Promise<Swimsuit[]> {
-    return charactersApi.getCharacterSwimsuits(id);
+  // Get gacha by unique key
+  async getGachaByKey(uniqueKey: string): Promise<any> {
+    return apiRequest(`/gachas/key/${uniqueKey}`);
+  },
+
+  // Get gachas by subtype
+  async getGachasBySubtype(subtype: string, params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas/subtype/${subtype}${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Get gacha pool
+  async getGachaPool(id: string, params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas/${id}/pool${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Get featured items
+  async getFeaturedItems(id: string, params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas/${id}/featured${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Search gachas
+  async searchGachas(query: string, params?: {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('q', query);
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/gachas/search?${queryString}`);
+  },
+
+  // Validate gacha rates
+  async validateGachaRates(id: string): Promise<any> {
+    return apiRequest(`/gachas/${id}/validate-rates`);
+  },
+
+  // Create gacha
+  async createGacha(gacha: any): Promise<any> {
+    return apiRequest('/gachas', {
+      method: 'POST',
+      body: JSON.stringify(gacha),
+    });
+  },
+
+  // Update gacha
+  async updateGacha(id: string, updates: any): Promise<any> {
+    return apiRequest(`/gachas/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  // Delete gacha
+  async deleteGacha(id: string): Promise<void> {
+    return apiRequest(`/gachas/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Add pool item
+  async addPoolItem(id: string, poolItem: any): Promise<any> {
+    return apiRequest(`/gachas/${id}/pool`, {
+      method: 'POST',
+      body: JSON.stringify(poolItem),
+    });
+  },
+
+  // Bulk add pool items
+  async bulkAddPoolItems(id: string, items: any[]): Promise<any> {
+    return apiRequest(`/gachas/${id}/pool/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    });
+  },
+
+  // Remove pool item
+  async removePoolItem(id: string, poolId: string): Promise<void> {
+    return apiRequest(`/gachas/${id}/pool/${poolId}`, {
+      method: 'DELETE',
+    });
   },
 };
 
-// Memories API - deprecated, no backend support
-export const memoriesApi = {
-  async getMemories(_params?: any): Promise<{ data: Memory[]; pagination: any }> {
-    console.warn('Memories API is deprecated - no backend support');
-    return { data: [], pagination: { total: 0, totalPages: 0, currentPage: 1, limit: 10 } };
-  },
-
-  async getMemory(_id: string): Promise<Memory> {
-    throw new Error('Memories API is deprecated - no backend support');
-  },
-
-  async createMemory(_memory: any): Promise<Memory> {
-    throw new Error('Memories API is deprecated - no backend support');
-  },
-
-  async updateMemory(_id: string, _updates: any): Promise<Memory> {
-    throw new Error('Memories API is deprecated - no backend support');
-  },
-
-  async toggleMemoryFavorite(_id: string, _favorite: boolean): Promise<Memory> {
-    throw new Error('Memories API is deprecated - no backend support');
-  },
-
-  async deleteMemory(_id: string): Promise<void> {
-    throw new Error('Memories API is deprecated - no backend support');
+// Statistics API
+export const statsApi = {
+  // Get system statistics for admin dashboard
+  async getSystemStats(): Promise<any> {
+    return apiRequest('/health/stats');
   },
 };
 
-// Shop Items API - now redirects to items
-export const shopItemsApi = {
-  async getShopItems(params?: any): Promise<{ data: any[]; pagination: any }> {
-    // Map shop-specific parameters to items API
-    const itemsParams = {
-      page: params?.page,
-      limit: params?.limit,
-      sortBy: params?.sort,
-      sortOrder: params?.order,
-      category: params?.type,
-      rarity: params?.rarity,
-    };
-    return itemsApi.getItems(itemsParams);
+// File Upload API
+export const uploadApi = {
+  // Upload single file
+  async uploadFile(file: File, category?: string): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (category) {
+      formData.append('category', category);
+    }
+
+    return apiRequest('/upload', {
+      method: 'POST',
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+      },
+      body: formData,
+    });
   },
 
-  async getShopItem(id: string): Promise<any> {
-    return itemsApi.getItem(id);
+  // Upload multiple files
+  async uploadMultipleFiles(files: File[], category?: string): Promise<any> {
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append(`files`, file);
+    });
+    if (category) {
+      formData.append('category', category);
+    }
+
+    return apiRequest('/upload/bulk', {
+      method: 'POST',
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+      },
+      body: formData,
+    });
   },
 
-  async createShopItem(shopItem: any): Promise<any> {
-    return itemsApi.createItem(shopItem);
+  // Upload CSV file for import
+  async uploadCSV(file: File, entity: string): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('entity', entity);
+
+    return apiRequest('/upload/csv', {
+      method: 'POST',
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+      },
+      body: formData,
+    });
   },
 
-  async updateShopItem(id: string, updates: any): Promise<any> {
-    return itemsApi.updateItem(id, updates);
+  // Get upload history
+  async getUploadHistory(params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: any[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/upload/history${queryString ? `?${queryString}` : ''}`);
   },
 
-  async deleteShopItem(id: string): Promise<void> {
-    return itemsApi.deleteItem(id);
+  // Delete uploaded file
+  async deleteFile(filename: string): Promise<void> {
+    return apiRequest(`/upload/${filename}`, {
+      method: 'DELETE',
+    });
   },
 };
 
@@ -779,9 +1045,8 @@ export default {
   bromidesApi,
   itemsApi,
   episodesApi,
-  // Legacy APIs
-  accessoriesApi,
-  girlsApi,
-  memoriesApi,
-  shopItemsApi
+  shopListingsApi,
+  gachasApi,
+  statsApi,
+  uploadApi
 }; 

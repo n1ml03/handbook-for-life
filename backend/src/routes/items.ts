@@ -92,7 +92,8 @@ router.get('/search',
       return;
     }
 
-    const result = await itemModel.search(q as string, {
+    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
+    const result = await itemModel.search(searchFields, q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,

@@ -40,7 +40,8 @@ export class UpdateLogService extends BaseService<UpdateLogModel, UpdateLog, New
   async getUpdateLogById(id: string): Promise<UpdateLog> {
     return this.safeAsyncOperation(async () => {
       this.validateId(id, 'Update log ID');
-      return await this.model.findById(id);
+      const numericId = this.parseNumericId(id, 'Update log ID');
+      return await this.model.findById(numericId);
     }, 'fetch update log', id);
   }
 
@@ -51,23 +52,25 @@ export class UpdateLogService extends BaseService<UpdateLogModel, UpdateLog, New
     }, 'fetch update log by unique key', uniqueKey);
   }
 
-  async getUpdateLogsByVersion(version: string): Promise<UpdateLog[]> {
+  async getUpdateLogsByVersion(version: string, options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
     return this.safeAsyncOperation(async () => {
       this.validateRequiredString(version, 'Version');
-      return await this.model.findByVersion(version);
+      const validatedOptions = this.validatePaginationOptions(options);
+      return await this.model.findByVersion(version, validatedOptions);
     }, 'fetch update logs by version', version);
   }
 
   async updateUpdateLog(id: string, updates: Partial<NewUpdateLog>): Promise<UpdateLog> {
     return this.safeAsyncOperation(async () => {
       this.validateId(id, 'Update log ID');
+      const numericId = this.parseNumericId(id, 'Update log ID');
       this.validateOptionalString(updates.title, 'Update log title');
       this.validateOptionalString(updates.version, 'Update log version');
       this.validateOptionalString(updates.content, 'Update log content');
 
       this.logOperationStart('Updating', id, { updates });
 
-      const updateLog = await this.model.update(id, updates);
+      const updateLog = await this.model.update(numericId, updates);
 
       this.logOperationSuccess('Updated', updateLog.title, { id: updateLog.id });
       return updateLog;
@@ -77,12 +80,13 @@ export class UpdateLogService extends BaseService<UpdateLogModel, UpdateLog, New
   async deleteUpdateLog(id: string): Promise<void> {
     return this.safeAsyncOperation(async () => {
       this.validateId(id, 'Update log ID');
+      const numericId = this.parseNumericId(id, 'Update log ID');
 
       // Check if update log exists first
-      await this.model.findById(id);
+      await this.model.findById(numericId);
 
       this.logOperationStart('Deleting', id);
-      await this.model.delete(id);
+      await this.model.delete(numericId);
       this.logOperationSuccess('Deleted', id);
     }, 'delete update log', id);
   }
