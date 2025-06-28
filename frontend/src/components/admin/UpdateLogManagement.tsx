@@ -54,9 +54,6 @@ export const UpdateLogManagement: React.FC<UpdateLogManagementProps> = ({
                         {log.version}
                       </Badge>
                       <h3 className="text-lg font-semibold">{log.title}</h3>
-                      {!log.isPublished && (
-                        <Badge variant="secondary" className="text-xs">Draft</Badge>
-                      )}
                     </div>
                     <p className="text-muted-foreground mb-3 line-clamp-2">
                       {log.description || log.content.split('\n').find(line => line.trim() && !line.startsWith('#'))?.slice(0, 150)}

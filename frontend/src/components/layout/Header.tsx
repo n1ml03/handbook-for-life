@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
-import ThemeToggle from '@/components/ThemeToggle';
+import ThemeToggle from './ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,

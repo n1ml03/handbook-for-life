@@ -156,8 +156,14 @@ export default function DecorateBromidePage() {
     const fetchBromides = async () => {
       try {
         setLoading(true);
-        const response = await bromidesApi.getBromides({ limit: 1000 });
-        setBromides(response.data as any[]);
+        const response = await bromidesApi.getBromides({ limit: 100, page: 1 });
+        const responseData = response?.data || [];
+        if (!Array.isArray(responseData)) {
+          console.warn('Expected array from bromides API, received:', responseData);
+          setBromides([]);
+          return;
+        }
+        setBromides(responseData);
       } catch (err) {
         console.error('Failed to fetch bromides:', err);
       } finally {
@@ -224,12 +230,12 @@ export default function DecorateBromidePage() {
 
       switch (sortBy) {
         case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+          aValue = (a.name || '').toLowerCase();
+          bValue = (b.name || '').toLowerCase();
           break;
         case 'type':
-          aValue = a.category.toLowerCase();
-          bValue = b.category.toLowerCase();
+          aValue = (a.category || '').toLowerCase();
+          bValue = (b.category || '').toLowerCase();
           break;
         case 'rarity': {
           const rarityOrder = { 'UR': 5, 'SSR': 4, 'SR': 3, 'R': 2, 'N': 1 };
@@ -246,12 +252,12 @@ export default function DecorateBromidePage() {
           bValue = ((b.source ?? b.category) || '').toLowerCase();
           break;
         case 'id':
-          aValue = a.id;
-          bValue = b.id;
+          aValue = a.id || '';
+          bValue = b.id || '';
           break;
         default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+          aValue = (a.name || '').toLowerCase();
+          bValue = (b.name || '').toLowerCase();
       }
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {

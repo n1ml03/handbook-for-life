@@ -433,10 +433,10 @@ export const bromideSortOptions: SortOption[] = [
 ];
 
 export const memoriesSortOptions: SortOption[] = [
-  { key: 'title', label: 'Title' },
+  { key: 'title_en', label: 'Title' },
   { key: 'episode_type', label: 'Type' },
   { key: 'related_entity_type', label: 'Entity Type' },
-  { key: 'date', label: 'Date' },
+  { key: 'game_version', label: 'Version' },
 ];
 
 export const festivalSortOptions: SortOption[] = [

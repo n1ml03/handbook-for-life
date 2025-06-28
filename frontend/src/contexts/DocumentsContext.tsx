@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Document } from '@/types';
 import { documentsApi, ApiError } from '@/services/api';
+import { safeExtractArrayData, safeIdCompare, safeNormalizeTags } from '@/services/utils';
 
 interface DocumentsContextType {
   documents: Document[];
@@ -29,19 +30,23 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      // Load all documents (including drafts) for admin functionality
+      // Load all documents for admin functionality
       const response = await documentsApi.getDocuments({
         sortBy: 'updated_at',
         sortOrder: 'desc',
         limit: 100
       });
-      // Ensure isPublished property is synchronized with is_published for UI compatibility
-      const documentsWithSyncedProps = response.data.map(doc => ({
+      
+      // Safely handle the response data
+      const responseData = safeExtractArrayData<Document>(response, 'documents API');
+      
+      // Ensure consistent data structure
+      const documentsWithDefaults = responseData.map(doc => ({
         ...doc,
-        isPublished: doc.is_published,
-        screenshots: doc.screenshots || [] // Ensure screenshots array exists
+        screenshots: doc.screenshots || [], // Ensure screenshots array exists
+        tags: safeNormalizeTags(doc.tags) // Ensure tags is always a safe array
       }));
-      setDocuments(documentsWithSyncedProps);
+      setDocuments(documentsWithDefaults);
     } catch (error) {
       console.error('Error loading documents:', error);
       setError(error instanceof ApiError ? error.message : 'Failed to load documents');
@@ -54,14 +59,14 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const addDocument = useCallback(async (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<Document> => {
     try {
       const newDocument = await documentsApi.createDocument(document);
-      // Ensure isPublished property is synchronized with is_published for UI compatibility
-      const documentWithSyncedProps = {
+      // Ensure consistent data structure
+      const documentWithDefaults = {
         ...newDocument,
-        isPublished: newDocument.is_published,
-        screenshots: newDocument.screenshots || [] // Ensure screenshots array exists
+        screenshots: newDocument.screenshots || [], // Ensure screenshots array exists
+        tags: safeNormalizeTags(newDocument.tags) // Ensure tags is always a safe array
       };
-      setDocuments(prev => [documentWithSyncedProps, ...prev]);
-      return documentWithSyncedProps;
+      setDocuments(prev => [documentWithDefaults, ...prev]);
+      return documentWithDefaults;
     } catch (error) {
       console.error('Error adding document:', error);
       throw error;
@@ -71,16 +76,16 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const updateDocument = useCallback(async (id: string, updates: Partial<Document>): Promise<Document> => {
     try {
       const updatedDocument = await documentsApi.updateDocument(id, updates);
-      // Ensure isPublished property is synchronized with is_published for UI compatibility
-      const documentWithSyncedProps = {
+      // Ensure consistent data structure
+      const documentWithDefaults = {
         ...updatedDocument,
-        isPublished: updatedDocument.is_published,
-        screenshots: updatedDocument.screenshots || [] // Ensure screenshots array exists
+        screenshots: updatedDocument.screenshots || [], // Ensure screenshots array exists
+        tags: safeNormalizeTags(updatedDocument.tags) // Ensure tags is always a safe array
       };
       setDocuments(prev => prev.map(doc =>
-        doc.id === parseInt(id) ? documentWithSyncedProps : doc
+        safeIdCompare(doc.id, id) ? documentWithDefaults : doc
       ));
-      return documentWithSyncedProps;
+      return documentWithDefaults;
     } catch (error) {
       console.error('Error updating document:', error);
       throw error;
@@ -90,7 +95,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const deleteDocument = useCallback(async (id: string): Promise<void> => {
     try {
       await documentsApi.deleteDocument(id);
-      setDocuments(prev => prev.filter(doc => doc.id !== parseInt(id)));
+      setDocuments(prev => prev.filter(doc => !safeIdCompare(doc.id, id)));
     } catch (error) {
       console.error('Error deleting document:', error);
       throw error;

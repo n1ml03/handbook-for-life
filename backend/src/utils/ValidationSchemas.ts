@@ -30,7 +30,7 @@ const multiLanguageNames = z.object({
 
 const paginationSchema = z.object({
   page: z.coerce.number().int().min(1, 'Page must be at least 1').optional(),
-  limit: z.coerce.number().int().min(1, 'Limit must be at least 1').max(100, 'Limit cannot exceed 100').optional(),
+  limit: z.coerce.number().int().min(1, 'Limit must be at least 1').max(1000, 'Limit cannot exceed 1000').optional(),
   sortBy: z.string().max(50, 'Sort field name too long').regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid sort field format').optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });
@@ -193,7 +193,6 @@ const documentBase = z.object({
   title_en: z.string().min(1, 'Title is required').max(255, 'Title too long').trim(),
   summary_en: z.string().max(1000, 'Summary too long').optional(),
   content_json_en: tiptapContentSchema.optional(),
-  is_published: z.boolean().default(false),
   screenshots: z.array(z.string().url().max(500, 'Screenshot URL too long'))
     .max(20, 'Cannot have more than 20 screenshots')
     .optional(),
@@ -203,7 +202,6 @@ export const documentSchemas = {
   create: documentBase,
   update: documentBase.partial(),
   query: paginationSchema.merge(searchSchema).merge(z.object({
-    is_published: z.coerce.boolean().optional(),
     category: z.string().max(50).optional(),
   })),
 };
@@ -314,7 +312,6 @@ const updateLogBase = z.object({
   description: z.string().max(1000).optional(),
   date: z.string().datetime(),
   tags: z.array(z.string().max(50)).max(10, 'Too many tags').optional(),
-  is_published: z.boolean().default(true),
   screenshots: z.array(z.string().url().max(500)).max(20, 'Too many screenshots').optional(),
   metrics: z.object({
     performanceImprovement: z.string().max(100),
@@ -327,7 +324,6 @@ export const updateLogSchemas = {
   create: updateLogBase,
   update: updateLogBase.partial(),
   query: paginationSchema.merge(searchSchema).merge(dateRangeSchema).merge(z.object({
-    is_published: z.coerce.boolean().optional(),
     version: z.string().max(50).optional(),
   })),
 };

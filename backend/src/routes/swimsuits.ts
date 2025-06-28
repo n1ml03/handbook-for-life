@@ -53,7 +53,7 @@ router.get('/',
         sortOrder: sortOrder as 'asc' | 'desc'
       });
     } else {
-      result = await swimsuitModel.findAll({
+      result = await swimsuitModel.findAllWithCharacters({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,

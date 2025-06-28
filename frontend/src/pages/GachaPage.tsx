@@ -12,7 +12,7 @@ import {
   Diamond,
   Zap
 } from 'lucide-react';
-import { type Event, type Gacha, type SortDirection } from '@/types';
+import { type Gacha, type SortDirection } from '@/types';
 import { gachasApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
@@ -213,9 +213,15 @@ export default function GachaPage() {
     const fetchGachas = async () => {
       try {
         setLoading(true);
-        const response = await gachasApi.getGachas({ limit: 1000 });
+        const response = await gachasApi.getGachas({ limit: 100, page: 1 });
         // Convert Gacha[] to GachaEvent[] by adding display properties
-        const gachaEvents: GachaEvent[] = (response.data as Gacha[]).map(gacha => ({
+        const responseData = response?.data || [];
+        if (!Array.isArray(responseData)) {
+          console.warn('Expected array from gachas API, received:', responseData);
+          setEvents([]);
+          return;
+        }
+        const gachaEvents: GachaEvent[] = responseData.map(gacha => ({
           ...gacha,
           bannerImage: '💎', // Default banner image
           description: `${gacha.name_en || gacha.name_jp} - ${gacha.gacha_subtype} gacha`, // Default description

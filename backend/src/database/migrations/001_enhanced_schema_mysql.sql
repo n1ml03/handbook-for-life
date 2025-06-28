@@ -135,7 +135,7 @@ CREATE TABLE events (
     game_version VARCHAR(30) NULL COMMENT 'Game version associated with the event',
     start_date DATETIME NOT NULL COMMENT 'Start time',
     end_date DATETIME NOT NULL COMMENT 'End time',
-    is_active BOOLEAN GENERATED ALWAYS AS (NOW() BETWEEN start_date AND end_date) STORED COMMENT 'Automatically calculates if the event is currently active',
+    is_active BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether the event is currently active (needs to be updated programmatically)',
     INDEX idx_active_date (is_active, start_date DESC) COMMENT 'Optimized for fetching active events',
     INDEX idx_game_version (game_version)
 ) ENGINE=InnoDB COMMENT='Event data, used for the FestivalPage/EventsPage.';
@@ -175,11 +175,10 @@ CREATE TABLE documents (
     title_en VARCHAR(255) NOT NULL COMMENT 'Main title of the document (English)',
     summary_en TEXT COMMENT 'Summary of the document (English)',
     content_json_en JSON NULL COMMENT 'Document content in English, stored as JSON from Tiptap',
-    is_published BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Flag for pre-publication drafting',
     screenshots JSON COMMENT 'Screenshots array for visual documentation',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
-    INDEX idx_published_key (is_published, unique_key) COMMENT 'Optimized for accessing published documents'
+    INDEX idx_unique_key (unique_key) COMMENT 'Optimized for accessing documents by unique key'
 ) ENGINE=InnoDB COMMENT='Manages documents and guide articles.';
 
 CREATE TABLE update_logs (
@@ -191,14 +190,13 @@ CREATE TABLE update_logs (
     description TEXT COMMENT 'Additional description',
     date DATETIME NOT NULL COMMENT 'Update release date',
     tags JSON COMMENT 'Tags array for categorization',
-    is_published BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether the update log is published',
     screenshots JSON COMMENT 'Screenshots array',
     metrics JSON COMMENT 'Performance metrics object',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
-    INDEX idx_published_date (is_published, date DESC) COMMENT 'Optimized for fetching published updates by date',
+    INDEX idx_date (date DESC) COMMENT 'Optimized for fetching updates by date',
     INDEX idx_version (version) COMMENT 'Index for version lookups'
-) ENGINE=InnoDB COMMENT='Manages application update logs and release notes.';
+) ENGINE=InnoDB COMMENT='Stores update logs and changelogs.';
 
 -- ============================================================================
 -- 3. LINKING TABLES
@@ -237,5 +235,3 @@ UNION ALL
     SELECT 'GACHA' AS type, unique_key, start_date AS activity_date, name_en AS title FROM gachas
 )
 ORDER BY activity_date DESC;
-
-COMMENT ON VIEW v_timeline IS 'A virtual table that creates an update timeline for the HomePage.';

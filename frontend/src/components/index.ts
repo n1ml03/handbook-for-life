@@ -2,16 +2,12 @@
 export * from '../components/ui'
 
 // Layout Components
-export { default as Header, type HeaderProps } from './layout/Header'
-export * from './layout/AccessibilityProvider'
+export * from './layout'
 
 // Feature Components
 export * from './features/FilterConfigs'
 export { default as UnifiedFilter, type UnifiedFilterProps } from './features/UnifiedFilter'
 export { default as TiptapEditor, type TiptapEditorProps } from './features/TiptapEditor'
-
-// Remaining Components
-export { default as ThemeToggle, type ThemeToggleProps } from './ThemeToggle'
 
 // Admin Components
 export * from './admin'

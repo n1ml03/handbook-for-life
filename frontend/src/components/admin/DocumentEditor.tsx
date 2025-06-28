@@ -53,7 +53,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   }, [isPreviewMode]);
 
   const handleSaveDraft = () => {
-    const draftDocument = { ...document, isPublished: false };
+    const draftDocument = { ...document };
     onDocumentChange(draftDocument);
     onSave(draftDocument);
   };
@@ -240,39 +240,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </FormGroup>
 
               {/* Publication Status */}
-              <FormGroup 
-                label="Publication Status"
-                description="Control whether this document is visible to the public"
-              >
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/20 to-muted/10 border-2 border-border rounded-xl transition-all duration-200 focus-within:border-accent-cyan/50">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="admin-published"
-                      checked={document.isPublished}
-                      onChange={(e) => onDocumentChange({ ...document, isPublished: e.target.checked })}
-                      className="w-5 h-5 rounded-md border-2 border-border transition-all duration-200 focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden checked:bg-accent-cyan checked:border-accent-cyan"
-                    />
-                    <label htmlFor="admin-published" className="text-sm font-semibold text-foreground cursor-pointer">
-                      Publish Document
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      {document.isPublished ? 'Document is live and visible to users' : 'Document is saved as draft'}
-                    </span>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {document.isPublished ? (
-                      <StatusBadge status="success" className="text-xs font-medium">
-                        Published
-                      </StatusBadge>
-                    ) : (
-                      <StatusBadge status="warning" className="text-xs font-medium">
-                        Draft
-                      </StatusBadge>
-                    )}
-                  </div>
-                </div>
-              </FormGroup>
+              
 
               {/* Tags */}
               <TagInput
@@ -416,15 +384,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               <div className="flex items-center gap-3">
                 <div className="w-1 h-1 bg-muted-foreground rounded-full hidden sm:block"></div>
                 <span className="text-sm text-muted-foreground">Status:</span>
-                {document.isPublished ? (
-                  <StatusBadge status="success" className="text-xs font-medium">
-                    Published & Live
-                  </StatusBadge>
-                ) : (
-                  <StatusBadge status="warning" className="text-xs font-medium">
-                    Draft
-                  </StatusBadge>
-                )}
+                <StatusBadge status="success" className="text-xs font-medium">
+                  Active
+                </StatusBadge>
               </div>
             </div>
 

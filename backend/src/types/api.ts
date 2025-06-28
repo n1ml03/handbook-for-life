@@ -150,7 +150,7 @@ export interface EpisodeQueryParams extends PaginationQuery, SearchQuery {
 }
 
 export interface DocumentQueryParams extends PaginationQuery, SearchQuery {
-  is_published?: string;
+  category?: string;
 }
 
 // ============================================================================
@@ -528,7 +528,6 @@ export interface DocumentApiResponse {
   title_en: string;
   summary_en?: string;
   content_json_en?: Record<string, unknown>;
-  is_published: boolean;
   screenshots?: string[];
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
@@ -538,7 +537,6 @@ export interface DocumentApiResponse {
   category: string; // Computed category
   tags: string[]; // Computed tags
   author: string; // Default author
-  isPublished: boolean; // Maps to is_published
 }
 
 // ============================================================================

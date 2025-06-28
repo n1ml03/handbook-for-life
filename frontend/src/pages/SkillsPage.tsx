@@ -7,6 +7,7 @@ import {
   Shield,
   Sparkles} from 'lucide-react';
 import { skillsApi } from '@/services/api';
+import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 import { 
   type Skill,
   type SortDirection,
@@ -134,9 +135,13 @@ export default function SkillsPage() {
 
       const response = await skillsApi.getSkills(params);
       
-      setSkills(response.data);
-      setTotalPages(response.pagination.totalPages);
-      setTotalItems(response.pagination.total);
+      // Safely extract data and pagination
+      const responseData = safeExtractArrayData<Skill>(response, 'skills API');
+      const paginationData = safeExtractPaginationData(response, responseData.length);
+      
+      setSkills(responseData);
+      setTotalPages(paginationData.totalPages);
+      setTotalItems(paginationData.total);
     } catch (err) {
       console.error('Failed to fetch skills:', err);
     } finally {

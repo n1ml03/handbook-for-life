@@ -8,6 +8,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { charactersApi } from '@/services/api';
+import { safeExtractArrayData } from '@/services/utils';
 import { type Character, type SortDirection } from '@/types';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
@@ -190,8 +191,17 @@ export default function CharacterListPage() {
   const fetchCharacters = useCallback(async () => {
     try {
       setCharactersData(prev => ({ ...prev, loading: true, error: null }));
-      const response = await charactersApi.getCharacters({ limit: 1000 });
-      setCharactersData(prev => ({ ...prev, characters: response.data, loading: false }));
+      
+      // Use safer parameters to avoid 400 Bad Request
+      const response = await charactersApi.getCharacters({
+        page: 1,
+        limit: 100,
+        sortBy: 'name_en',
+        sortOrder: 'asc'
+      });
+      
+      const responseData = safeExtractArrayData<Character>(response, 'characters API');
+      setCharactersData(prev => ({ ...prev, characters: responseData, loading: false }));
     } catch (err) {
       console.error('Failed to fetch characters:', err);
       setCharactersData(prev => ({

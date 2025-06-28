@@ -20,6 +20,7 @@ import TiptapEditor from '@/components/features/TiptapEditor';
 import { Container, Section, Stack, Inline, StatusBadge } from '@/components/ui/spacing';
 import { SaveButton } from '@/components/ui/loading';
 import { useDocuments } from '@/hooks';
+import { safeNormalizeTags, safeToString } from '@/services/utils';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 
 type ViewMode = DocumentViewMode;
@@ -63,20 +64,22 @@ export default function DocumentPage() {
   // Filter documents based on active section
   const getSectionDocuments = useCallback(() => {
     return documents.filter(doc => {
+      const tags = safeNormalizeTags(doc.tags);
+      
       if (activeSection === 'checklist-creation') {
-        return doc.tags.some((tag: string) => 
-          tag.toLowerCase().includes('checklist') || 
-          tag.toLowerCase().includes('creation') ||
-          tag.toLowerCase().includes('guide') ||
-          doc.category === 'checklist-creation'
-        );
+        return tags.some(tag => {
+          const tagStr = safeToString(tag).toLowerCase();
+          return tagStr.includes('checklist') || 
+                 tagStr.includes('creation') ||
+                 tagStr.includes('guide');
+        }) || doc.category === 'checklist-creation';
       } else if (activeSection === 'checking-guide') {
-        return doc.tags.some((tag: string) => 
-          tag.toLowerCase().includes('checking') || 
-          tag.toLowerCase().includes('verification') ||
-          tag.toLowerCase().includes('validation') ||
-          doc.category === 'checking-guide'
-        );
+        return tags.some(tag => {
+          const tagStr = safeToString(tag).toLowerCase();
+          return tagStr.includes('checking') || 
+                 tagStr.includes('verification') ||
+                 tagStr.includes('validation');
+        }) || doc.category === 'checking-guide';
       }
       return false;
     });
@@ -85,11 +88,13 @@ export default function DocumentPage() {
   const filteredDocuments = useMemo(() => {
     const sectionDocuments = getSectionDocuments();
     const filtered = sectionDocuments.filter(doc => {
+      const tags = safeNormalizeTags(doc.tags);
+      
       const searchTerm = String(filterValues.search || '').toLowerCase();
       const matchesSearch = !searchTerm ||
         doc.title.toLowerCase().includes(searchTerm) ||
         doc.content.toLowerCase().includes(searchTerm) ||
-        doc.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm));
+        tags.some(tag => safeToString(tag).toLowerCase().includes(searchTerm));
       
       const matchesCategory = !filterValues.category || filterValues.category === 'all' || doc.category === filterValues.category;
       const matchesStatus = !filterValues.status || filterValues.status === 'all' ||

@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../utils/ValidationSchemas';
+import { validate, validateQuery } from '../middleware/validation';
+import { schemas } from '../utils/ValidationSchemas';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 import { DocumentService } from '../services/DocumentService';
 import logger from '../config/logger';

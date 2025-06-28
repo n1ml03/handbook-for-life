@@ -11,11 +11,20 @@ const episodeModel = new EpisodeModel();
 router.get('/', 
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder, type, entityType, entityId } = req.query;
+    const { page = 1, limit = 10, sortBy, sortOrder, type, entityType, entityId, search } = req.query;
     
     let result;
     
-    if (type) {
+    if (search) {
+      // Handle search queries
+      const searchFields = ['title_jp', 'title_en', 'title_cn', 'title_tw', 'title_kr', 'unique_key'];
+      result = await episodeModel.search(searchFields, search as string, {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      });
+    } else if (type) {
       result = await episodeModel.findByType(type as any, {
         page: Number(page),
         limit: Number(limit),
@@ -38,7 +47,7 @@ router.get('/',
       });
     }
 
-    logger.info(`Retrieved ${result.data.length} episodes for page ${page}`);
+    logger.info(`Retrieved ${result.data.length} episodes for page ${page}${search ? ` (search: "${search}")` : ''}`);
 
     res.json({
       success: true,

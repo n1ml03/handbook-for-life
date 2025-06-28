@@ -3,6 +3,7 @@ import { BookOpen, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/services/utils';
 import { StatusBadge } from '@/components/ui/spacing';
 import { Document } from '@/types';
+import { safeNormalizeTags, safeToString } from '@/services/utils';
 
 interface DocumentSectionCardsProps {
   documents: Document[];
@@ -17,23 +18,25 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
 }) => {
   const getChecklistCreationCount = () => {
     return documents.filter(doc => {
-      return doc.tags.some(tag => 
-        tag.toLowerCase().includes('checklist') || 
-        tag.toLowerCase().includes('creation') ||
-        tag.toLowerCase().includes('guide') ||
-        doc.category === 'checklist-creation'
-      );
+      const tags = safeNormalizeTags(doc.tags);
+      return tags.some(tag => {
+        const tagStr = safeToString(tag).toLowerCase();
+        return tagStr.includes('checklist') || 
+               tagStr.includes('creation') ||
+               tagStr.includes('guide');
+      }) || doc.category === 'checklist-creation';
     }).length;
   };
 
   const getCheckingGuideCount = () => {
     return documents.filter(doc => {
-      return doc.tags.some(tag => 
-        tag.toLowerCase().includes('checking') || 
-        tag.toLowerCase().includes('verification') ||
-        tag.toLowerCase().includes('validation') ||
-        doc.category === 'checking-guide'
-      );
+      const tags = safeNormalizeTags(doc.tags);
+      return tags.some(tag => {
+        const tagStr = safeToString(tag).toLowerCase();
+        return tagStr.includes('checking') || 
+               tagStr.includes('verification') ||
+               tagStr.includes('validation');
+      }) || doc.category === 'checking-guide';
     }).length;
   };
 

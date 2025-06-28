@@ -48,7 +48,7 @@ export const validateQuery = (schema: ZodSchema<any>) => {
       });
       return;
     }
-    req.query = result.data;
+    Object.assign(req.query, result.data);
     next();
   };
 };
@@ -88,7 +88,8 @@ export const sanitizeInput = (req: Request, _res: Response, next: NextFunction):
 
   // Sanitize query parameters
   if (req.query) {
-    req.query = sanitizeObject(req.query);
+    const sanitized = sanitizeObject(req.query);
+    Object.assign(req.query, sanitized);
   }
 
   next();
@@ -322,7 +323,7 @@ export const schemas = {
   }),
   pagination: z.object({
     page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(10),
+    limit: z.coerce.number().int().min(1).max(1000).default(10),
     sortBy: z.string().optional(),
     sortOrder: z.enum(['asc', 'desc']).default('asc')
   }),

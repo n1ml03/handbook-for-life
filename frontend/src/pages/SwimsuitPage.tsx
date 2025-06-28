@@ -16,6 +16,7 @@ import {
 import { type Swimsuit } from '@/types';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { swimsuitsApi } from '@/services/api';
+import { safeExtractArrayData } from '@/services/utils';
 import { PageLoadingState } from '@/components/ui';
 import UnifiedFilter, { SortDirection } from '@/components/features/UnifiedFilter';
 import { createSwimsuitFilterConfig, swimsuitSortOptions } from '@/components/features/FilterConfigs';
@@ -90,7 +91,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
   const stats = swimsuit.stats || { pow: 0, tec: 0, stm: 0, apl: 0 };
   const maxStat = Math.max(stats.pow, stats.tec, stats.stm, stats.apl);
   const swimsuitName = swimsuit.name || swimsuit.name_en;
-  const characterName = swimsuit.character || (swimsuit.character as any)?.name_en || 'Unknown';
+  const characterName = (swimsuit.character as any)?.name_en || 'Unknown';
   const releaseDate = swimsuit.release_date_gl || 'Unknown';
   
   // Character Avatar Generator with swimsuit-themed colors
@@ -121,7 +122,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit, viewMode = 'ga
         
         {/* Character initial */}
         <div className="absolute bottom-1 right-1 w-6 h-6 bg-black/30 rounded-full flex items-center justify-center">
-          <span className="text-xs font-bold text-white">{characterName[0]}</span>
+          <span className="text-xs font-bold text-white">{characterName?.[0] || '?'}</span>
         </div>
         
         {/* Subtle shine effect */}
@@ -454,8 +455,11 @@ export default function SwimsuitPage() {
     const fetchSwimsuits = async () => {
       try {
         setLoading(true);
-        const response = await swimsuitsApi.getSwimsuits({ limit: 1000 });
-        setSwimsuits(response.data || []);
+        const response = await swimsuitsApi.getSwimsuits({ limit: 100, page: 1 });
+        console.log('Raw API response:', response);
+        const responseData = safeExtractArrayData<Swimsuit>(response, 'swimsuits API');
+        console.log('Extracted swimsuits data:', responseData);
+        setSwimsuits(responseData);
       } catch (err) {
         console.error('Error fetching swimsuits:', err);
         setSwimsuits([]);
@@ -473,9 +477,33 @@ export default function SwimsuitPage() {
       ...swimsuit,
       id: String(swimsuit.id),
       name: swimsuit.name_en || `Swimsuit ${swimsuit.id}`,
-      description: swimsuit.description_en
+      description: swimsuit.description_en,
+      // Use existing character data from API response
+      character: swimsuit.character || { name_en: `Character ${swimsuit.character_id}` },
+      // Add stats based on suit_type and total_stats_awakened
+      stats: (() => {
+        const total = swimsuit.total_stats_awakened || 0;
+        const base = Math.floor(total / 4);
+        switch (swimsuit.suit_type) {
+          case 'POW':
+            return { pow: Math.floor(total * 0.4), tec: base, stm: base, apl: base };
+          case 'TEC':
+            return { pow: base, tec: Math.floor(total * 0.4), stm: base, apl: base };
+          case 'STM':
+            return { pow: base, tec: base, stm: Math.floor(total * 0.4), apl: base };
+          case 'APL':
+            return { pow: base, tec: base, stm: base, apl: Math.floor(total * 0.4) };
+          default:
+            return { pow: base, tec: base, stm: base, apl: base };
+        }
+      })(),
+      // Add empty skills array
+      skills: []
     }));
-    return addTranslationsToItems(transformedSwimsuits);
+    console.log('Transformed swimsuits:', transformedSwimsuits);
+    const result = addTranslationsToItems(transformedSwimsuits);
+    console.log('Final multiLanguageSwimsuits:', result);
+    return result;
   }, [swimsuits]);
 
   const filteredAndSortedSwimsuits = useMemo(() => {
@@ -586,8 +614,6 @@ export default function SwimsuitPage() {
     setCurrentPage(1);
   };
 
-
-
   return (
     <PageLoadingState isLoading={loading} message="Đang tải danh sách đồ bơi...">
     
@@ -629,19 +655,28 @@ export default function SwimsuitPage() {
           secondaryColor="accent-purple"
         />
 
-        {/* Swimsuit Display */}
+        {/* Swimsuit Gallery Section */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
+          className="mt-8"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+
+          {/* Gallery Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 mb-12">
             {paginatedSwimsuits.map((swimsuit: any, index: number) => (
               <motion.div
                 key={swimsuit.id}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  delay: 0.05 * index,
+                  duration: 0.4,
+                  ease: "easeOut"
+                }}
+                whileHover={{ y: -4 }}
+                className="relative"
               >
                 <SwimsuitCard swimsuit={swimsuit} viewMode="showcase" />
               </motion.div>
@@ -654,7 +689,8 @@ export default function SwimsuitPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center space-x-2 mt-8"
+            transition={{ delay: 0.4 }}
+            className="flex items-center justify-center space-x-2 mt-16 mb-8"
           >
             <motion.button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -704,7 +740,8 @@ export default function SwimsuitPage() {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            transition={{ delay: 0.3 }}
+            className="text-center py-20 mt-8"
           >
             <motion.div
               className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"

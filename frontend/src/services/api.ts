@@ -39,7 +39,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     }
 
     const data = await response.json();
-    return data.data || data;
+    return data;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -500,6 +500,7 @@ export const episodesApi = {
     type?: string;
     entityType?: string;
     entityId?: number;
+    search?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {

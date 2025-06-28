@@ -23,7 +23,6 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       'description',
       'date',
       'tags',
-      'is_published',
       'screenshots',
       'metrics'
     ];
@@ -44,7 +43,6 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       description: row.description || '',
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
-      is_published: Boolean(row.is_published),
       screenshots: this.parseJSONField(row.screenshots, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',
@@ -82,8 +80,8 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       const [result] = await executeQuery(
         `INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          is_published, screenshots, metrics
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          screenshots, metrics
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           uniqueKey,
           updateLog.version,
@@ -92,7 +90,6 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
           updateLog.description || '',
           updateLog.date,
           JSON.stringify(updateLog.tags || []),
-          updateLog.is_published !== undefined ? updateLog.is_published : true,
           JSON.stringify(updateLog.screenshots || []),
           JSON.stringify(updateLog.metrics || {
             performanceImprovement: '0%',
@@ -121,14 +118,7 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
     );
   }
 
-  async findPublished(options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM update_logs WHERE is_published = TRUE',
-      'SELECT COUNT(*) FROM update_logs WHERE is_published = TRUE',
-      options,
-      this.mapUpdateLogRow.bind(this)
-    );
-  }
+
 
   // Override findById to use proper typing
   async findById(id: number): Promise<UpdateLog> {
@@ -194,10 +184,6 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
     if (updates.tags !== undefined) {
       setClause.push(`tags = ?`);
       params.push(JSON.stringify(updates.tags));
-    }
-    if (updates.is_published !== undefined) {
-      setClause.push(`is_published = ?`);
-      params.push(updates.is_published);
     }
     if (updates.screenshots !== undefined) {
       setClause.push(`screenshots = ?`);

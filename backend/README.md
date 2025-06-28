@@ -4,6 +4,50 @@ A modern, high-performance backend API for the DOAXVV Handbook, built with Bun, 
 
 ---
 
+## 🟢 For Absolute Beginners: Quick Setup Guide
+
+If you don't know anything about code, just follow these steps exactly. Copy and paste each command into your terminal (one at a time):
+
+1. **Install Bun (if you haven't):**
+   - Visit https://bun.sh/docs/installation and follow the instructions for your operating system.
+
+2. **Go to the backend folder:**
+   ```sh
+   cd backend
+   ```
+
+3. **Install all required packages:**
+   ```sh
+   bun install
+   ```
+
+4. **Set up the database (create tables and sample data):**
+   ```sh
+   bun run setup
+   ```
+
+5. **(Optional) Import data from CSV files:**
+   ```sh
+   bun run import-csv
+   ```
+
+6. **Check if the server is running correctly:**
+   ```sh
+   bun run health-check
+   ```
+
+7. **Start the server in development mode:**
+   ```sh
+   bun run dev
+   ```
+
+8. **If you want to reset everything (delete and recreate all data):**
+   ```sh
+   bun run reset
+   ```
+
+---
+
 ## 📋 Table of Contents
 - [DOAXVV Handbook Backend API](#doaxvv-handbook-backend-api)
   - [📋 Table of Contents](#-table-of-contents)

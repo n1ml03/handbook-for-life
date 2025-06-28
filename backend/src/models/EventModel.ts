@@ -280,6 +280,9 @@ export class EventModel extends BaseModel<Event, NewEvent> {
     try {
       await executeQuery('SELECT 1');
       await executeQuery('SELECT COUNT(*) FROM events LIMIT 1');
+      
+      // Update is_active status for all events
+      await this.updateActiveStatus();
     } catch (error) {
       const errorMsg = `EventModel health check failed: ${error instanceof Error ? error.message : error}`;
       errors.push(errorMsg);
@@ -290,6 +293,34 @@ export class EventModel extends BaseModel<Event, NewEvent> {
       tableName: this.tableName,
       errors
     };
+  }
+
+  /**
+   * Update the is_active status for all events based on current timestamp
+   */
+  async updateActiveStatus(): Promise<{ updated: number }> {
+    try {
+      // Set is_active = TRUE for events that are currently running
+      const [activeResult] = await executeQuery(
+        'UPDATE events SET is_active = TRUE WHERE NOW() BETWEEN start_date AND end_date AND is_active = FALSE'
+      ) as [any, any];
+
+      // Set is_active = FALSE for events that are no longer running
+      const [inactiveResult] = await executeQuery(
+        'UPDATE events SET is_active = FALSE WHERE (NOW() < start_date OR NOW() > end_date) AND is_active = TRUE'
+      ) as [any, any];
+
+      const totalUpdated = activeResult.affectedRows + inactiveResult.affectedRows;
+      
+      if (totalUpdated > 0) {
+        logger.info(`Updated is_active status for ${totalUpdated} events`);
+      }
+
+      return { updated: totalUpdated };
+    } catch (error: any) {
+      logger.error('Failed to update event active status', { error });
+      throw new AppError('Failed to update event active status', 500);
+    }
   }
 
   // Convenience search method for events

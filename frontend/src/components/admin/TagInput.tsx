@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { FormGroup } from '@/components/ui/spacing';
 import { cn } from '@/services/utils';
+import { safeToString } from '@/services/utils';
 
 export interface TagInputProps {
   tags: string[];
@@ -34,14 +35,14 @@ export const TagInput: React.FC<TagInputProps> = ({
     const inputLower = input.toLowerCase();
     return suggestions
       .filter(tag =>
-        tag.toLowerCase().includes(inputLower) &&
-        !tags.includes(tag)
+        safeToString(tag).toLowerCase().includes(inputLower) &&
+        !tags.includes(safeToString(tag))
       )
       .slice(0, 8);
   }, [suggestions, tags]);
 
   const addTag = useCallback((tag: string) => {
-    const trimmedTag = tag.trim().toLowerCase();
+    const trimmedTag = safeToString(tag).trim().toLowerCase();
     if (trimmedTag && !tags.includes(trimmedTag)) {
       onTagsChange([...tags, trimmedTag]);
     }

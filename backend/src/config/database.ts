@@ -19,7 +19,6 @@ export interface DatabaseConfig {
     key?: string;
   };
   connectionLimit?: number;
-  acquireTimeout?: number;
   timeout?: number;
   reconnect?: boolean;
   charset?: string;
@@ -57,7 +56,6 @@ const config: DatabaseConfig = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   connectionLimit: 10, // Reduced for local development
-  acquireTimeout: 10000,
   timeout: 20000,
   reconnect: true,
   charset: 'utf8mb4',
@@ -117,11 +115,22 @@ export async function initializePool(): Promise<void> {
       // Setup connection monitoring
       setupConnectionMonitoring();
       
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Database connection attempt ${connectionAttempts} failed:`, error);
+      
+      // Check if this is a "database doesn't exist" error
+      if (error.code === 'ER_BAD_DB_ERROR' && error.errno === 1049) {
+        logger.error(`Database '${config.database}' does not exist!`);
+        logger.error('Please run "bun run db:setup" to create the database and tables.');
+        throw new Error(`Database '${config.database}' does not exist. Run 'bun run db:setup' to initialize the database.`);
+      }
       
       if (connectionAttempts >= maxConnectionAttempts) {
         logger.error('Max connection attempts reached. Database initialization failed.');
+        logger.error('Possible solutions:');
+        logger.error('1. Make sure MySQL server is running');
+        logger.error('2. Check database credentials in .env file');
+        logger.error('3. Run "bun run db:setup" to create database and tables');
         throw new Error('Failed to initialize database connection pool');
       }
       
@@ -153,6 +162,7 @@ async function verifyDatabaseSchema(connection: mysql.PoolConnection): Promise<v
     
     if (missingTables.length > 0) {
       logger.warn('Some expected tables are missing from database:', { missingTables });
+      logger.warn('You may need to run migrations: bun run db:migrate');
     } else {
       logger.info('Database schema verification passed');
     }
@@ -206,7 +216,7 @@ function setupConnectionMonitoring(): void {
 export function getPoolStats(): ConnectionPoolStats {
   const poolInfo = pool as any;
   return {
-    totalConnections: poolInfo.config.connectionLimit || 0,
+    totalConnections: poolInfo.config?.connectionLimit || config.connectionLimit || 0,
     allConnections: poolInfo._allConnections?.length || 0,
     freeConnections: poolInfo._freeConnections?.length || 0,
     acquiredConnections: poolInfo._acquiredConnections?.length || 0,
@@ -228,7 +238,7 @@ export async function performHealthCheck(): Promise<DatabaseHealthCheck> {
 
     // Test query with timeout
     await Promise.race([
-      pool.execute('SELECT 1 as health_check, NOW() as current_time'),
+      pool.execute('SELECT 1 as health_check, NOW() as server_time'),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Health check timeout')), 5000)
       )
@@ -341,6 +351,16 @@ export async function getConnection(): Promise<mysql.PoolConnection> {
 export async function testConnection(): Promise<boolean> {
   try {
     const healthCheck = await performHealthCheck();
+    if (!healthCheck.isHealthy) {
+      logger.error('Database health check failed:', { 
+        error: healthCheck.error,
+        responseTime: healthCheck.responseTime
+      });
+    } else {
+      logger.info('Database health check passed:', {
+        responseTime: healthCheck.responseTime
+      });
+    }
     return healthCheck.isHealthy;
   } catch (error) {
     logger.error('Database connection test failed:', error);

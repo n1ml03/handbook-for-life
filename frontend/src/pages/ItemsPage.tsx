@@ -37,7 +37,8 @@ import {
   type MultiLanguageItem,
   getDisplayName,
   getDisplayDescription} from '@/services/multiLanguageSearch';
-import { useMultiLanguageSearch } from '@/services/useMultiLanguageSearch';
+import { safeExtractArrayData } from '@/services/utils';
+import { useMultiLanguageSearch } from '@/services/multiLanguageSearch';
 import React from 'react';
 import { PageLoadingState } from '@/components/ui';
 
@@ -125,8 +126,11 @@ const languageInfo = {
 
 // Optimized ItemCard component
 const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & MultiLanguageItem }) {
-  const displayName = useMemo(() => getDisplayName(item, 'EN'), [item]);
-  const displayDescription = useMemo(() => getDisplayDescription(item, 'EN'), [item]);
+  const displayName = useMemo(() => String(getDisplayName(item, 'EN') || item.name || 'Unknown'), [item]);
+  const displayDescription = useMemo(() => {
+    const desc = getDisplayDescription(item, 'EN');
+    return typeof desc === 'string' ? desc : undefined;
+  }, [item]);
   const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
   const typeColor = useMemo(() => getTypeColor(item.type), [item.type]);
   const rarityColor = useMemo(() => item.rarity ? getRarityColor(item.rarity) : '', [item.rarity]);
@@ -233,7 +237,7 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
                       </span>
                     </div>
                     <span className="text-sm font-medium text-foreground/90 flex-1 min-w-0 truncate">
-                      {langName}
+                      {typeof langName === 'string' ? langName : String(langName || 'N/A')}
                     </span>
                   </div>
                 );
@@ -247,7 +251,7 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
           {item.character && (
             <div className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg border border-border/10">
               <User className="w-4 h-4 text-accent-cyan" />
-              <span className="text-sm font-medium text-foreground">{item.character}</span>
+              <span className="text-sm font-medium text-foreground">{String(item.character)}</span>
             </div>
           )}
 
@@ -321,18 +325,24 @@ export default function ItemsPage() {
       setItemsData(prev => ({ ...prev, loading: true, error: null }));
       
       const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
-        swimsuitsApi.getSwimsuits({ limit: 1000 }),
-        itemsApi.getItems({ category: 'ACCESSORY', limit: 1000 }),
-        skillsApi.getSkills({ limit: 1000 }),
-        bromidesApi.getBromides({ limit: 1000 })
+        swimsuitsApi.getSwimsuits({ limit: 100, page: 1 }),
+        itemsApi.getItems({ category: 'ACCESSORY', limit: 100, page: 1 }),
+        skillsApi.getSkills({ limit: 100, page: 1 }),
+        bromidesApi.getBromides({ limit: 100, page: 1 })
       ]);
 
+      // Safely extract data from all responses
+      const swimsuitsData = safeExtractArrayData<Swimsuit>(swimsuitsRes, 'swimsuits API');
+      const accessoriesData = safeExtractArrayData<Item>(accessoriesRes, 'accessories API');
+      const skillsData = safeExtractArrayData<Skill>(skillsRes, 'skills API');
+      const bromidesData = safeExtractArrayData<Bromide>(bromidesRes, 'bromides API');
+      
       setItemsData(prev => ({
         ...prev,
-        swimsuits: swimsuitsRes.data,
-        accessories: accessoriesRes.data,
-        skills: skillsRes.data,
-        bromides: bromidesRes.data,
+        swimsuits: swimsuitsData,
+        accessories: accessoriesData,
+        skills: skillsData,
+        bromides: bromidesData,
         loading: false
       }));
     } catch (err) {
@@ -354,25 +364,33 @@ export default function ItemsPage() {
   const rawUnifiedItems = useMemo(() => {
     const items: (MultiLanguageItem & UnifiedItem)[] = [];
 
-    // Add swimsuits
-    itemsData.swimsuits.forEach((swimsuit: Swimsuit) => {
-      items.push(convertToMultiLanguageItem(swimsuit, 'swimsuit'));
-    });
+    // Add swimsuits (safely)
+    if (Array.isArray(itemsData.swimsuits)) {
+      itemsData.swimsuits.forEach((swimsuit: Swimsuit) => {
+        items.push(convertToMultiLanguageItem(swimsuit, 'swimsuit'));
+      });
+    }
 
-    // Add accessories
-            itemsData.accessories.forEach((accessory: Item) => {
-          items.push(convertToMultiLanguageItem(accessory, 'accessory'));
-        });
+    // Add accessories (safely)
+    if (Array.isArray(itemsData.accessories)) {
+      itemsData.accessories.forEach((accessory: Item) => {
+        items.push(convertToMultiLanguageItem(accessory, 'accessory'));
+      });
+    }
 
-    // Add skills
-    itemsData.skills.forEach((skill: Skill) => {
-      items.push(convertToMultiLanguageItem(skill, 'skill'));
-    });
+    // Add skills (safely)
+    if (Array.isArray(itemsData.skills)) {
+      itemsData.skills.forEach((skill: Skill) => {
+        items.push(convertToMultiLanguageItem(skill, 'skill'));
+      });
+    }
 
-    // Add bromides
-    itemsData.bromides.forEach((bromide: Bromide) => {
-      items.push(convertToMultiLanguageItem(bromide, 'bromide'));
-    });
+    // Add bromides (safely)
+    if (Array.isArray(itemsData.bromides)) {
+      itemsData.bromides.forEach((bromide: Bromide) => {
+        items.push(convertToMultiLanguageItem(bromide, 'bromide'));
+      });
+    }
 
     return items;
   }, [itemsData.swimsuits, itemsData.accessories, itemsData.skills, itemsData.bromides]);
@@ -555,8 +573,8 @@ export default function ItemsPage() {
             </motion.button>
           </motion.div>
         ) : (
-          filteredAndSortedItems.map((item) => (
-            <ItemCard key={item.id} item={item} />
+          filteredAndSortedItems.map((item, index) => (
+            <ItemCard key={`${item.type}-${item.id}-${index}`} item={item} />
           ))
         )}
       </Grid>

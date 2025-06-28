@@ -324,7 +324,6 @@ export interface Document {
   title_en: string; // VARCHAR(255)
   summary_en?: string; // TEXT
   content_json_en?: any; // JSON - TipTap editor content
-  is_published: boolean; // BOOLEAN DEFAULT FALSE
   screenshots?: string[]; // JSON - Array of screenshot URLs
   created_at: Date; // TIMESTAMP
   updated_at: Date; // TIMESTAMP
@@ -335,7 +334,6 @@ export interface NewDocument {
   title_en: string;
   summary_en?: string;
   content_json_en?: any; // TipTap JSON content
-  is_published?: boolean;
   screenshots?: string[]; // Array of screenshot URLs
 }
 
@@ -348,7 +346,6 @@ export interface UpdateLog {
   description?: string; // TEXT
   date: Date; // DATETIME
   tags: string[]; // JSON
-  is_published: boolean; // BOOLEAN DEFAULT TRUE
   screenshots: string[]; // JSON
   metrics: {
     performanceImprovement: string;
@@ -367,7 +364,6 @@ export interface NewUpdateLog {
   description?: string;
   date: Date;
   tags?: string[];
-  is_published?: boolean;
   screenshots?: string[];
   metrics?: {
     performanceImprovement: string;

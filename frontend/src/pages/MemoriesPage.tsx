@@ -8,6 +8,7 @@ import {
   Loader2} from 'lucide-react';
 import { type Memory, type MemoryCardProps, type SortDirection, type Episode } from '@/types';
 import { episodesApi } from '@/services/api';
+import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 import { PageLoadingState } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createMemoriesFilterConfig, memoriesSortOptions } from '@/components/features/FilterConfigs';
@@ -124,7 +125,7 @@ export default function MemoriesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('title');
+  const [sortBy, setSortBy] = useState<string>('title_en');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterValues, setFilterValues] = useState<Record<string, string | boolean | number>>({});
 
@@ -140,20 +141,21 @@ export default function MemoriesPage() {
         limit: itemsPerPage,
         sortBy: sortBy,
         sortOrder: sortDirection,
-        ...(filterValues.episode_type && typeof filterValues.episode_type === 'string' && { episode_type: filterValues.episode_type }),
-        ...(filterValues.related_entity_type && typeof filterValues.related_entity_type === 'string' && { related_entity_type: filterValues.related_entity_type }),
-        ...(filterValues.related_entity_id && { related_entity_id: Number(filterValues.related_entity_id) }),
+        ...(filterValues.episode_type && typeof filterValues.episode_type === 'string' && { type: filterValues.episode_type }),
+        ...(filterValues.related_entity_type && typeof filterValues.related_entity_type === 'string' && { entityType: filterValues.related_entity_type }),
+        ...(filterValues.related_entity_id && { entityId: Number(filterValues.related_entity_id) }),
         ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
       };
 
       const response = await episodesApi.getEpisodes(params);
-      const episodeData = response.data || [];
+      const episodeData = safeExtractArrayData<Episode>(response, 'episodes API');
       
       // Convert episodes to memories
       const memoryData = episodeData.map((episode: Episode) => episodeToMemory(episode));
       setMemories(memoryData);
       
-      setTotalPages(response.pagination?.totalPages || 1);
+              const paginationData = safeExtractPaginationData(response, episodeData.length);
+        setTotalPages(paginationData.totalPages);
     } catch (err) {
       console.error('Error fetching episodes:', err);
     } finally {

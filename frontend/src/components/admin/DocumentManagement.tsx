@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Document, DocumentCategory } from '@/types';
 import { DocumentSectionCards } from './DocumentSectionCards';
+import { safeNormalizeTags, safeToString } from '@/services/utils';
 
 export interface DocumentManagementProps {
   documents: Document[];
@@ -32,20 +33,22 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
       return documents;
     }
     return documents.filter(doc => {
+      const tags = safeNormalizeTags(doc.tags);
+      
       if (activeDocumentSection === 'checklist-creation') {
-        return doc.tags.some(tag => 
-          tag.toLowerCase().includes('checklist') || 
-          tag.toLowerCase().includes('creation') ||
-          tag.toLowerCase().includes('guide') ||
-          doc.category === 'checklist-creation'
-        );
+        return tags.some(tag => {
+          const tagStr = safeToString(tag).toLowerCase();
+          return tagStr.includes('checklist') || 
+                 tagStr.includes('creation') ||
+                 tagStr.includes('guide');
+        }) || doc.category === 'checklist-creation';
       } else if (activeDocumentSection === 'checking-guide') {
-        return doc.tags.some(tag => 
-          tag.toLowerCase().includes('checking') || 
-          tag.toLowerCase().includes('verification') ||
-          tag.toLowerCase().includes('validation') ||
-          doc.category === 'checking-guide'
-        );
+        return tags.some(tag => {
+          const tagStr = safeToString(tag).toLowerCase();
+          return tagStr.includes('checking') || 
+                 tagStr.includes('verification') ||
+                 tagStr.includes('validation');
+        }) || doc.category === 'checking-guide';
       }
       return false;
     });
@@ -82,9 +85,6 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold">{document.title}</h3>
-                        {!document.isPublished && (
-                          <Badge variant="secondary" className="text-xs">Draft</Badge>
-                        )}
                         <Badge variant="outline" className="text-xs">
                           {documentCategories.find(cat => cat.id === document.category)?.name || document.category}
                         </Badge>
@@ -94,17 +94,24 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
                         {document.content.length > 150 && '...'}
                       </p>
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {document.tags.slice(0, 3).map(tag => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            <Tags className="w-3 h-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                        {document.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{document.tags.length - 3} more
-                          </Badge>
-                        )}
+                        {(() => {
+                          const tags = safeNormalizeTags(document.tags);
+                          return (
+                            <>
+                              {tags.slice(0, 3).map((tag, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  <Tags className="w-3 h-3 mr-1" />
+                                  {safeToString(tag)}
+                                </Badge>
+                              ))}
+                              {tags.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{tags.length - 3} more
+                                </Badge>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Last updated: {document.updated_at} by {document.author}

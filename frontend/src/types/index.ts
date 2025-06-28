@@ -214,7 +214,6 @@ export interface Document {
   title_en: string;
   summary_en?: string;
   content_json_en?: Record<string, unknown>; // TipTap JSON content
-  is_published: boolean;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
   // Extended properties for UI compatibility
@@ -223,7 +222,6 @@ export interface Document {
   category: string; // Category based on tags or type
   tags: string[]; // Generated from category and type
   author: string; // Default or computed author
-  isPublished: boolean; // Maps to is_published for DocumentEditor compatibility
   screenshots: string[]; // Screenshot URLs for visual documentation
 }
 
@@ -374,8 +372,6 @@ export interface SortOption {
   label: string;
 }
 
-
-
 // ============================================================================
 // COMPONENT PROP TYPES
 // ============================================================================
@@ -400,8 +396,6 @@ export interface BromideCardProps {
   bromide: Bromide;
   onClick?: () => void;
 }
-
-
 
 export interface EventCardProps {
   event: Event;
@@ -461,7 +455,6 @@ export interface UpdateLog {
   description: string;
   date: string;
   tags: string[];
-  isPublished: boolean;
   screenshots: string[];
   metrics?: {
     performanceImprovement: string;
@@ -662,8 +655,6 @@ export function getLocalizedName(entity: { name_jp: string; name_en: string; nam
     default: return entity.name_en;
   }
 }
-
-
 
 // Add ItemType enum for unified items
 export type ItemType = 'swimsuit' | 'accessory' | 'skill' | 'bromide';

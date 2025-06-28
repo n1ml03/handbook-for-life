@@ -84,7 +84,7 @@ export class SkillModel extends BaseModel<Skill, NewSkill> {
       'SELECT * FROM skills',
       'SELECT COUNT(*) FROM skills',
       options,
-      this.mapSkillRow
+      this.mapSkillRow.bind(this)
     );
   }
 

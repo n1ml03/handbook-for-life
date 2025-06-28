@@ -72,7 +72,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     { csvColumn: '', dbField: 'category', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'tags', isRequired: false, dataType: 'array' },
     { csvColumn: '', dbField: 'author', isRequired: false, dataType: 'string' },
-    { csvColumn: '', dbField: 'isPublished', isRequired: false, dataType: 'boolean' },
     { csvColumn: '', dbField: 'createdAt', isRequired: false, dataType: 'date' },
     { csvColumn: '', dbField: 'updatedAt', isRequired: false, dataType: 'date' }
   ], []);
@@ -83,8 +82,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
     { csvColumn: '', dbField: 'description', isRequired: false, dataType: 'string' },
     { csvColumn: '', dbField: 'content', isRequired: true, dataType: 'string' },
     { csvColumn: '', dbField: 'date', isRequired: true, dataType: 'date' },
-    { csvColumn: '', dbField: 'tags', isRequired: false, dataType: 'array' },
-    { csvColumn: '', dbField: 'isPublished', isRequired: false, dataType: 'boolean' }
+    { csvColumn: '', dbField: 'tags', isRequired: false, dataType: 'array' }
   ], []);
 
   // Notification system
@@ -347,7 +345,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
               unique_key: doc.unique_key as string || `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
               title_en: doc.title as string || doc.title_en as string || '',
               content_json_en: doc.content_json_en as Record<string, unknown> || undefined,
-              is_published: doc.isPublished as boolean || false,
               created_at: doc.createdAt as string || new Date().toISOString(),
               updated_at: doc.updatedAt as string || new Date().toISOString(),
               // Extended properties for UI compatibility
@@ -356,7 +353,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
               category: doc.category as string || (importPage !== 'all' ? importPage : ''),
               tags: doc.tags as string[] || [],
               author: doc.author as string || 'Admin',
-              isPublished: doc.isPublished as boolean || false,
               screenshots: doc.screenshots as string[] || []
             };
 
@@ -379,7 +375,6 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
               content: log.content as string || '',
               date: log.date as string || new Date().toISOString().split('T')[0],
               tags: log.tags as string[] || [],
-              isPublished: log.isPublished as boolean || false,
               screenshots: log.screenshots as string[] || [],
               metrics: log.metrics as {
                 performanceImprovement: string;

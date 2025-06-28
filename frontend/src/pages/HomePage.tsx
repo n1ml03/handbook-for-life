@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { PageSection } from '@/components/ui/spacing';
 import { InlinePageLoader } from '@/components/ui';
 import { useUpdateLogs } from '@/hooks';
+import { safeNormalizeTags, safeToString } from '@/services/utils';
 import React from 'react';
 
 // Enhanced Update Log Component with performance optimizations
@@ -32,9 +33,10 @@ const UpdateLog = React.memo(function UpdateLog() {
     
     const searchLower = debouncedSearchTerm.toLowerCase();
     return publishedUpdateLogs.filter(update => {
+      const tags = safeNormalizeTags(update.tags);
       return update.title.toLowerCase().includes(searchLower) ||
         update.description.toLowerCase().includes(searchLower) ||
-        update.tags.some(tag => tag.toLowerCase().includes(searchLower));
+        tags.some(tag => safeToString(tag).toLowerCase().includes(searchLower));
     });
   }, [publishedUpdateLogs, debouncedSearchTerm]);
 
@@ -178,9 +180,9 @@ const UpdateCard = React.memo(function UpdateCard({
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2">
-                  {update.tags.map((tag: string) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      #{tag}
+                  {safeNormalizeTags(update.tags).map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      #{safeToString(tag)}
                     </Badge>
                   ))}
                 </div>

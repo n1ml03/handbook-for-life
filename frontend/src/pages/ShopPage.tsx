@@ -12,6 +12,7 @@ import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
 import { type ShopListing } from '@/types';
 import { shopListingsApi } from '@/services/api';
+import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 import React from 'react';
 
 // Shop Listing Card Component
@@ -154,10 +155,14 @@ export default function ShopPage() {
       // Build query parameters
       const params: Record<string, any> = {
         page: currentPage,
-        limit: 24,
-        sortBy: sortBy,
-        sortDirection: sortDirection,
+        limit: 24
       };
+      
+      // Only add sortBy if it's a valid field (not 'name' which doesn't exist)
+      if (sortBy && sortBy !== 'name') {
+        params.sortBy = sortBy;
+        params.sortOrder = sortDirection; // Backend expects sortOrder, not sortDirection
+      }
 
       // Add filters
       if (filterValues.search) params.search = filterValues.search;
@@ -168,11 +173,15 @@ export default function ShopPage() {
 
       const response = await shopListingsApi.getShopListings(params);
       
+      // Safely extract data and pagination
+      const responseData = safeExtractArrayData<ShopListing>(response, 'shop listings API');
+      const paginationData = safeExtractPaginationData(response, responseData.length);
+      
       setShopData({
-        listings: response.data || [],
+        listings: responseData,
         loading: false,
         error: null,
-        totalListings: response.pagination?.total || 0
+        totalListings: paginationData.total
       });
 
     } catch (err) {
@@ -241,7 +250,7 @@ export default function ShopPage() {
   ], []);
 
   const sortOptions: SortOption[] = useMemo(() => [
-    { key: 'name', label: 'Item Name' },
+    { key: 'id', label: 'ID' },
     { key: 'cost_amount', label: 'Cost' },
     { key: 'start_date', label: 'Start Date' },
     { key: 'end_date', label: 'End Date' }

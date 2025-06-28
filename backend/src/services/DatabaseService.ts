@@ -56,28 +56,26 @@ export class DatabaseService {
 
   async getPublishedUpdateLogs(options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
     try {
-      const {
-        page = 1,
-        limit = 10,
-        sortBy = 'date',
-        sortOrder = 'desc'
-      } = options;
-
+      // Validate and set defaults
+      const page = Math.max(1, options.page || 1);
+      const limit = Math.min(100, Math.max(1, options.limit || 10));
+      const sortBy = options.sortBy && ['date', 'version', 'title'].includes(options.sortBy) ? options.sortBy : 'date';
+      const sortOrder = options.sortOrder === 'asc' ? 'ASC' : 'DESC';
       const offset = (page - 1) * limit;
-      const validSortColumns = ['date', 'title', 'version', 'created_at', 'updated_at'];
-      const safeSort = validSortColumns.includes(sortBy) ? sortBy : 'date';
-      const safeOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+      // Safety check for SQL injection
+      const safeSort = sortBy.replace(/[^a-zA-Z_]/g, '');
+      const safeOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
       // Get total count
       const [countResult] = await executeQuery(`
-        SELECT COUNT(*) as total FROM update_logs WHERE isPublished = true
+        SELECT COUNT(*) as total FROM update_logs
       `);
       const total = (countResult as RowDataPacket[])[0].total;
 
       // Get data
       const [rows] = await executeQuery(`
         SELECT * FROM update_logs
-        WHERE isPublished = true
         ORDER BY ${safeSort} ${safeOrder}
         LIMIT ? OFFSET ?
       `, [limit, offset]);
@@ -96,8 +94,8 @@ export class DatabaseService {
         }
       };
     } catch (error) {
-      logger.error('Failed to fetch published update logs', { error: error instanceof Error ? error.message : error });
-      throw new AppError('Failed to fetch published update logs', 500);
+      logger.error('Failed to fetch update logs', { error: error instanceof Error ? error.message : error });
+      throw new AppError('Failed to fetch update logs', 500);
     }
   }
 
@@ -143,8 +141,8 @@ export class DatabaseService {
       const [result] = await executeQuery(`
         INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          is_published, screenshots, metrics
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          screenshots, metrics
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         uniqueKey,
         updateLogData.version,
@@ -153,7 +151,6 @@ export class DatabaseService {
         updateLogData.description || '',
         updateLogData.date,
         JSON.stringify(updateLogData.tags || []),
-        updateLogData.is_published !== undefined ? updateLogData.is_published : true,
         JSON.stringify(updateLogData.screenshots || []),
         JSON.stringify(updateLogData.metrics || this.getDefaultMetrics())
       ]);
@@ -225,10 +222,6 @@ export class DatabaseService {
         updateFields.push('tags = ?');
         updateValues.push(JSON.stringify(updates.tags));
       }
-      if (updates.is_published !== undefined) {
-        updateFields.push('is_published = ?');
-        updateValues.push(updates.is_published);
-      }
       if (updates.screenshots !== undefined) {
         updateFields.push('screenshots = ?');
         updateValues.push(JSON.stringify(updates.screenshots));
@@ -297,7 +290,6 @@ export class DatabaseService {
       description: row.description || '',
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
-      is_published: Boolean(row.is_published),
       screenshots: this.parseJSONField(row.screenshots, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',

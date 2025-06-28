@@ -90,7 +90,7 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       'SELECT * FROM items',
       'SELECT COUNT(*) FROM items',
       options,
-      this.mapItemRow
+      this.mapItemRow.bind(this)
     );
   }
 
@@ -112,7 +112,7 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       'SELECT * FROM items WHERE item_category = ?',
       'SELECT COUNT(*) FROM items WHERE item_category = ?',
       options,
-      this.mapItemRow,
+      this.mapItemRow.bind(this),
       [category]
     );
   }
@@ -122,7 +122,7 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       'SELECT * FROM items WHERE rarity = ?',
       'SELECT COUNT(*) FROM items WHERE rarity = ?',
       options,
-      this.mapItemRow,
+      this.mapItemRow.bind(this),
       [rarity]
     );
   }

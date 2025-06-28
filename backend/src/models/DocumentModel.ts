@@ -9,7 +9,6 @@ export interface UpdateDocument {
   title_en?: string;
   summary_en?: string;
   content_json_en?: any;
-  is_published?: boolean;
   screenshots?: string[];
 }
 
@@ -20,7 +19,6 @@ export interface ExtendedDocument extends Document {
   category: string; // Generated category
   tags: string[]; // Generated tags
   author: string; // Default author
-  isPublished: boolean; // Maps to is_published
   createdAt: string; // Maps to created_at
   updatedAt: string; // Maps to updated_at
 }
@@ -41,7 +39,6 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       'title_en',
       'summary_en',
       'content_json_en',
-      'is_published',
       'screenshots'
     ];
   }
@@ -67,7 +64,6 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       title_en: row.title_en,
       summary_en: row.summary_en,
       content_json_en: row.content_json_en,
-      is_published: Boolean(row.is_published),
       screenshots: row.screenshots ? JSON.parse(row.screenshots) : [],
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
@@ -77,7 +73,6 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       category,
       tags,
       author: 'System Admin', // Default author
-      isPublished: Boolean(row.is_published),
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
     };
@@ -178,14 +173,13 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
   async create(document: NewDocument): Promise<ExtendedDocument> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, is_published, screenshots)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, screenshots)
+         VALUES (?, ?, ?, ?, ?)`,
         [
           document.unique_key,
           document.title_en,
           document.summary_en,
           document.content_json_en ? JSON.stringify(document.content_json_en) : null,
-          document.is_published ?? false,
           document.screenshots ? JSON.stringify(document.screenshots) : null,
         ]
       ) as [any, any];
@@ -250,10 +244,6 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       setClause.push(`content_json_en = ?`);
       params.push(updates.content_json_en ? JSON.stringify(updates.content_json_en) : null);
     }
-    if (updates.is_published !== undefined) {
-      setClause.push(`is_published = ?`);
-      params.push(updates.is_published);
-    }
     if (updates.screenshots !== undefined) {
       setClause.push(`screenshots = ?`);
       params.push(updates.screenshots ? JSON.stringify(updates.screenshots) : null);
@@ -289,14 +279,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     }
   }
 
-  async findPublished(options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM documents WHERE is_published = TRUE',
-      'SELECT COUNT(*) FROM documents WHERE is_published = TRUE',
-      options,
-      this.mapDocumentRow
-    );
-  }
+
 
   /**
    * Override search method to match BaseModel signature
@@ -318,13 +301,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     return this.search(searchFields, query, options);
   }
 
-  async togglePublishStatus(id: number): Promise<ExtendedDocument> {
-    await executeQuery(
-      'UPDATE documents SET is_published = NOT is_published, updated_at = NOW() WHERE id = ?',
-      [id]
-    );
-    return this.findById(id);
-  }
+
 
   /**
    * Enhanced findByCategory with better search logic and performance
@@ -352,18 +329,13 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
    */
   async getDocumentStats(): Promise<{
     total: number;
-    published: number;
-    unpublished: number;
     byCategory: Record<string, number>;
     lastUpdated: string;
   }> {
     const [totalRows] = await executeQuery('SELECT COUNT(*) as count FROM documents') as [any[], any];
-    const [publishedRows] = await executeQuery('SELECT COUNT(*) as count FROM documents WHERE is_published = TRUE') as [any[], any];
     const [lastUpdatedRows] = await executeQuery('SELECT MAX(updated_at) as last_updated FROM documents') as [any[], any];
     
     const total = totalRows[0].count;
-    const published = publishedRows[0].count;
-    const unpublished = total - published;
     
     // Generate category statistics from all documents
     const [allDocs] = await executeQuery('SELECT unique_key, title_en, summary_en, content_json_en FROM documents') as [any[], any];
@@ -377,8 +349,6 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     
     return {
       total,
-      published,
-      unpublished,
       byCategory,
       lastUpdated: lastUpdatedRows[0].last_updated ? new Date(lastUpdatedRows[0].last_updated).toISOString() : new Date().toISOString()
     };

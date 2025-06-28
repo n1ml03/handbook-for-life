@@ -12,6 +12,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { type Event, type SortDirection } from '@/types';
+import { eventsApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { PageLoadingState } from '@/components/ui';
@@ -133,7 +134,9 @@ function FestivalCard({ festival }: { festival: any }) {
 }
 
 export default function FestivalPage() {
-  const [allEvents] = useState<Event[]>([]);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -147,6 +150,38 @@ export default function FestivalPage() {
   });
 
   const itemsPerPage = 8;
+
+  // Load festivals data from API
+  useEffect(() => {
+    const loadFestivals = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Get all events and filter festivals on frontend
+        const response = await eventsApi.getEvents({
+          limit: 1000, // Get all events
+          sortBy: 'start_date',
+          sortOrder: 'desc'
+        });
+        
+        // Filter only festival events
+        const festivalEvents = response.data.filter(event => 
+          event.type === 'FESTIVAL_RANKING' || event.type === 'FESTIVAL_CUMULATIVE'
+        );
+        
+        setAllEvents(festivalEvents);
+        console.log('Loaded festivals:', festivalEvents);
+      } catch (err) {
+        console.error('Error loading festivals:', err);
+        setError('Failed to load festivals. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFestivals();
+  }, []);
 
   // Filter fields configuration
   const filterFields: FilterField[] = [
@@ -278,8 +313,8 @@ export default function FestivalPage() {
 
   return (
     <PageLoadingState 
-      isLoading={false} 
-      message="Loading festivals..."
+      isLoading={isLoading} 
+      message={error || "Loading festivals..."}
     >
     <div className="modern-page">
       <div className="modern-container-lg">

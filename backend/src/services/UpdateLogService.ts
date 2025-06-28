@@ -30,12 +30,7 @@ export class UpdateLogService extends BaseService<UpdateLogModel, UpdateLog, New
     }, 'fetch update logs');
   }
 
-  async getPublishedUpdateLogs(options: PaginationOptions = {}): Promise<PaginatedResult<UpdateLog>> {
-    return this.safeAsyncOperation(async () => {
-      const validatedOptions = this.validatePaginationOptions(options);
-      return await this.model.findPublished(validatedOptions);
-    }, 'fetch published update logs');
-  }
+
 
   async getUpdateLogById(id: string): Promise<UpdateLog> {
     return this.safeAsyncOperation(async () => {

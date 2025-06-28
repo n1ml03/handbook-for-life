@@ -209,3 +209,173 @@ export const VIEW_MODES = ['gallery', 'showcase', 'minimal', 'list', 'card', 'ta
 export const LANGUAGES = ['EN', 'CN', 'TW', 'KO', 'JP'] as const;
 export const SIZES = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
 export const THEME_VARIANTS = ['light', 'dark', 'auto'] as const;
+
+// =============================================================================
+// API UTILITIES - Consolidated from apiHelpers.ts
+// =============================================================================
+
+/**
+ * Safely extracts array data from API responses
+ */
+export function safeExtractArrayData<T>(
+  response: any, 
+  apiName: string = 'API'
+): T[] {
+  const responseData = response?.data || [];
+  
+  if (!Array.isArray(responseData)) {
+    console.warn(`Expected array from ${apiName}, received:`, responseData);
+    return [];
+  }
+  
+  return responseData;
+}
+
+/**
+ * Safely extracts single object data from API responses
+ */
+export function safeExtractObjectData<T>(
+  response: any, 
+  apiName: string = 'API'
+): T | null {
+  if (!response?.data) {
+    console.warn(`Expected data from ${apiName}, received:`, response);
+    return null;
+  }
+  
+  return response.data;
+}
+
+/**
+ * Safely converts any value to string for text operations
+ */
+export function safeToString(value: any): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  
+  if (typeof value === 'string') {
+    return value;
+  }
+  
+  if (typeof value === 'object') {
+    // If it's an object with name property, use that
+    if (value.name && typeof value.name === 'string') {
+      return value.name;
+    }
+    // If it's an object with title property, use that
+    if (value.title && typeof value.title === 'string') {
+      return value.title;
+    }
+    // If it's an object with id property, use that
+    if (value.id) {
+      return String(value.id);
+    }
+    // Otherwise, try to stringify
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  
+  return String(value);
+}
+
+/**
+ * Safely normalizes tags array to ensure all elements are strings
+ */
+export function safeNormalizeTags(tags: any): string[] {
+  if (!tags) {
+    return [];
+  }
+  
+  // If it's already an array, normalize each element to string
+  if (Array.isArray(tags)) {
+    return tags.map(tag => safeToString(tag)).filter(tag => tag.length > 0);
+  }
+  
+  // If it's a single value, convert to string and wrap in array
+  const stringValue = safeToString(tags);
+  return stringValue.length > 0 ? [stringValue] : [];
+}
+
+/**
+ * Safely converts ID to string for comparison
+ */
+export function safeIdToString(id: any): string {
+  return String(id);
+}
+
+/**
+ * Safely compares two IDs that might be strings or numbers
+ */
+export function safeIdCompare(id1: any, id2: any): boolean {
+  return safeIdToString(id1) === safeIdToString(id2);
+}
+
+/**
+ * Safely extracts pagination data from API responses
+ */
+export function safeExtractPaginationData(
+  response: any, 
+  dataLength: number = 0
+): {
+  totalPages: number;
+  total: number;
+  currentPage?: number;
+  limit?: number;
+} {
+  const paginationData = response?.pagination || {};
+  
+  return {
+    totalPages: paginationData.totalPages || 1,
+    total: paginationData.total || dataLength,
+    currentPage: paginationData.currentPage,
+    limit: paginationData.limit,
+  };
+}
+
+// =============================================================================
+// PAGINATION UTILITIES - Consolidate common pagination patterns
+// =============================================================================
+
+/**
+ * Calculate total pages from item count and items per page
+ */
+export function calculateTotalPages(totalItems: number, itemsPerPage: number): number {
+  return Math.ceil(totalItems / itemsPerPage);
+}
+
+/**
+ * Get paginated slice of items
+ */
+export function getPaginatedItems<T>(
+  items: T[], 
+  currentPage: number, 
+  itemsPerPage: number
+): T[] {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return items.slice(startIndex, endIndex);
+}
+
+/**
+ * Create pagination metadata
+ */
+export function createPaginationMetadata(
+  totalItems: number,
+  currentPage: number,
+  itemsPerPage: number
+): PaginatedData<never> {
+  const totalPages = calculateTotalPages(totalItems, itemsPerPage);
+  
+  return {
+    items: [],
+    totalItems,
+    currentPage,
+    totalPages,
+    hasNextPage: currentPage < totalPages,
+    hasPrevPage: currentPage > 1
+  };
+}

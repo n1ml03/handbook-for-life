@@ -140,8 +140,6 @@ const AdminPage = () => {
       category: 'game-mechanics', // Default category
       tags: [], // Empty tags array
       author: 'Admin', // Default author
-      // Additional UI compatibility property
-      isPublished: false, // Maps to is_published for DocumentEditor compatibility
       screenshots: [] // Empty screenshots array
     };
     setEditingDocument(newDocument);
@@ -153,11 +151,9 @@ const AdminPage = () => {
       // Check if this is an existing document (has a valid ID) or a new one
       const isExistingDocument = editingDocument?.id && editingDocument.id > 0;
 
-      // Ensure both is_published and isPublished are synchronized
+      // Prepare document for saving
       const documentToSave = {
-        ...document,
-        is_published: document.isPublished,
-        isPublished: document.isPublished
+        ...document
       };
 
       if (isExistingDocument) {
@@ -223,7 +219,6 @@ const AdminPage = () => {
       description: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
-      isPublished: false,
       tags: [],
       screenshots: [],
       metrics: {

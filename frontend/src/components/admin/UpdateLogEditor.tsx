@@ -55,7 +55,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   }, [isPreviewMode]);
 
   const handleSaveDraft = () => {
-    const draftLog = { ...updateLog, isPublished: false };
+    const draftLog = { ...updateLog };
     onUpdateLogChange(draftLog);
     onSave(draftLog);
   };
@@ -257,34 +257,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                 />
               </FormGroup>
 
-              {/* Status */}
-              <FormGroup label="Publication Status">
-                <div className="flex items-center gap-3 p-3 bg-muted/30 border-2 border-border rounded-xl transition-all duration-200 focus-within:border-accent-pink/50">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="publish-log"
-                      checked={updateLog.isPublished}
-                      onChange={(e) => onUpdateLogChange({ ...updateLog, isPublished: e.target.checked })}
-                      className="w-4 h-4 rounded-md border-2 border-border transition-all duration-200 focus:ring-2 focus:ring-accent-pink/20 focus:outline-hidden checked:bg-accent-pink checked:border-accent-pink"
-                    />
-                    <label htmlFor="publish-log" className="text-sm font-medium text-foreground cursor-pointer">
-                      Publish Update Log
-                    </label>
-                  </div>
-                  <div className="flex-1 flex justify-end">
-                    {updateLog.isPublished ? (
-                      <StatusBadge status="success" className="text-xs font-medium">
-                        Published
-                      </StatusBadge>
-                    ) : (
-                      <StatusBadge status="warning" className="text-xs font-medium">
-                        Draft
-                      </StatusBadge>
-                    )}
-                  </div>
-                </div>
-              </FormGroup>
+
 
               {/* Tags */}
               <TagInput
@@ -428,15 +401,9 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
             <div className="flex items-center gap-3">
               <div className="w-1 h-1 bg-muted-foreground rounded-full hidden sm:block"></div>
               <span className="text-sm text-muted-foreground">Status:</span>
-              {updateLog.isPublished ? (
-                <StatusBadge status="success" className="text-xs font-medium">
-                  Published & Live
-                </StatusBadge>
-              ) : (
-                <StatusBadge status="warning" className="text-xs font-medium">
-                  Draft
-                </StatusBadge>
-              )}
+              <StatusBadge status="success" className="text-xs font-medium">
+                Active
+              </StatusBadge>
             </div>
           </div>
 

@@ -54,11 +54,6 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     return this.getCreateFields();
   }
 
-  // Mapper function to convert database row to Swimsuit object
-  private mapSwimsuitRow(row: any): Swimsuit {
-    return this.mapRow(row);
-  }
-
   async create(swimsuit: NewSwimsuit): Promise<Swimsuit> {
     try {
       const [result] = await executeQuery(
@@ -100,9 +95,37 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     return this.getPaginatedResults(
       'SELECT * FROM swimsuits',
       'SELECT COUNT(*) FROM swimsuits',
-      options,
-      this.mapSwimsuitRow
+      options
     );
+  }
+
+  // New method to get swimsuits with character information
+  async findAllWithCharacters(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    const query = `
+      SELECT 
+        s.*,
+        c.name_en as character_name_en,
+        c.name_jp as character_name_jp,
+        c.unique_key as character_unique_key
+      FROM swimsuits s
+      LEFT JOIN characters c ON s.character_id = c.id
+    `;
+    
+    const countQuery = 'SELECT COUNT(*) FROM swimsuits s LEFT JOIN characters c ON s.character_id = c.id';
+    
+    return this.getPaginatedResults(query, countQuery, options, this.mapRowWithCharacter.bind(this));
+  }
+
+  // Map row with character data
+  protected mapRowWithCharacter(row: any): any {
+    return {
+      ...this.mapRow(row),
+      character: {
+        name_en: row.character_name_en || 'Unknown Character',
+        name_jp: row.character_name_jp || '',
+        unique_key: row.character_unique_key || ''
+      }
+    };
   }
 
   // Override findById to use proper typing
@@ -115,7 +138,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     if (rows.length === 0) {
       throw new AppError('Swimsuit not found', 404);
     }
-    return this.mapSwimsuitRow(rows[0]);
+    return this.mapRow(rows[0]);
   }
 
   async findByCharacterId(character_id: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
@@ -123,7 +146,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       'SELECT * FROM swimsuits WHERE character_id = ?',
       'SELECT COUNT(*) FROM swimsuits WHERE character_id = ?',
       options,
-      this.mapSwimsuitRow,
+      undefined,
       [character_id]
     );
   }
@@ -133,7 +156,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       'SELECT * FROM swimsuits WHERE rarity = ?',
       'SELECT COUNT(*) FROM swimsuits WHERE rarity = ?',
       options,
-      this.mapSwimsuitRow,
+      undefined,
       [rarity]
     );
   }
@@ -143,7 +166,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       'SELECT * FROM swimsuits WHERE suit_type = ?',
       'SELECT COUNT(*) FROM swimsuits WHERE suit_type = ?',
       options,
-      this.mapSwimsuitRow,
+      undefined,
       [suit_type]
     );
   }
@@ -152,8 +175,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     return this.getPaginatedResults(
       'SELECT * FROM swimsuits WHERE is_limited = TRUE',
       'SELECT COUNT(*) FROM swimsuits WHERE is_limited = TRUE',
-      options,
-      this.mapSwimsuitRow
+      options
     );
   }
 
@@ -161,8 +183,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     return this.getPaginatedResults(
       'SELECT * FROM swimsuits WHERE has_malfunction = TRUE',
       'SELECT COUNT(*) FROM swimsuits WHERE has_malfunction = TRUE',
-      options,
-      this.mapSwimsuitRow
+      options
     );
   }
 
@@ -271,7 +292,7 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       [limit]
     ) as [any[], any];
     
-    return rows.map(this.mapSwimsuitRow);
+    return rows.map(row => this.mapRow(row));
   }
 
   async findByCharacter(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {

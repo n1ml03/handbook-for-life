@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { UpdateLog } from '@/types';
 import { updateLogsApi, ApiError } from '@/services/api';
+import { safeExtractArrayData, safeIdCompare } from '@/services/utils';
 
 interface UpdateLogsContextType {
   updateLogs: UpdateLog[];
@@ -24,9 +25,9 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Computed value for published logs only
+  // All update logs are now considered "published" since we removed the published flag
   const publishedUpdateLogs = useMemo(() => 
-    updateLogs.filter(log => log.isPublished), 
+    updateLogs || [], 
     [updateLogs]
   );
 
@@ -39,12 +40,17 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await updateLogsApi.getPublishedUpdateLogs({
+      // Load all update logs for full admin functionality
+      const response = await updateLogsApi.getUpdateLogs({
         sortBy: 'date',
         sortOrder: 'desc',
         limit: 100
       });
-      setUpdateLogs(response.data);
+      
+      // Safely handle the response data
+      const responseData = safeExtractArrayData<UpdateLog>(response, 'update logs API');
+      
+      setUpdateLogs(responseData);
     } catch (error) {
       console.error('Error loading update logs:', error);
       setError(error instanceof ApiError ? error.message : 'Failed to load update logs');
@@ -68,7 +74,9 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   const updateUpdateLog = async (id: string, updates: Partial<UpdateLog>): Promise<UpdateLog> => {
     try {
       const updatedLog = await updateLogsApi.updateUpdateLog(id, updates);
-      setUpdateLogs(prev => prev.map(log => log.id === id ? updatedLog : log));
+      setUpdateLogs(prev => prev.map(log => 
+        safeIdCompare(log.id, id) ? updatedLog : log
+      ));
       return updatedLog;
     } catch (error) {
       console.error('Error updating update log:', error);
@@ -79,7 +87,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   const deleteUpdateLog = async (id: string): Promise<void> => {
     try {
       await updateLogsApi.deleteUpdateLog(id);
-      setUpdateLogs(prev => prev.filter(log => log.id !== id));
+      setUpdateLogs(prev => prev.filter(log => !safeIdCompare(log.id, id)));
     } catch (error) {
       console.error('Error deleting update log:', error);
       throw error;

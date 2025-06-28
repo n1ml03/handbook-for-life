@@ -8,7 +8,10 @@ export * from './useLocalStorage'
 export * from './useDebounce'
 export * from './useLoadingState'
 
-// Complex search hook remains in services
-export { useMultiLanguageSearch } from '@/services/useMultiLanguageSearch'
+// Pagination hooks
+export { usePagination, usePaginationWithFilters } from './usePagination'
+
+// Complex search hooks remain in services
+export { useMultiLanguageSearch, useMultiLanguageSearchWithPagination } from '@/services/multiLanguageSearch'
 
 // Custom hooks can be added here as the application grows 

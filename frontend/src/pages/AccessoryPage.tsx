@@ -165,7 +165,13 @@ export default function AccessoryPage() {
         });
         
         // Transform the data to match expected accessory format
-        const transformedData: ExtendedAccessory[] = response.data.map((item: Item) => ({
+        const responseData = response?.data || [];
+        if (!Array.isArray(responseData)) {
+          console.warn('Expected array from items API, received:', responseData);
+          setAccessories([]);
+          return;
+        }
+        const transformedData: ExtendedAccessory[] = responseData.map((item: Item) => ({
           id: item.id.toString(),
           name: item.name_en || item.name_jp,
           name_en: item.name_en,
