@@ -98,7 +98,7 @@ export default function NotFoundPage() {
             <span className="text-sm font-medium">What you can do:</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

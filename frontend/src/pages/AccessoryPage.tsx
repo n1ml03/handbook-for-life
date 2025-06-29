@@ -91,7 +91,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
 
         {/* Stats */}
         {accessory.stats && (
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-2 gap-responsive mb-4">
             {Object.entries(accessory.stats).map(([stat, value]) => (
               value > 0 && (
                 <motion.div 
@@ -131,13 +131,6 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
             <p className="text-xs text-gray-300 leading-relaxed">{accessory.skill || accessory.description}</p>
           </div>
         )}
-
-        {/* ID */}
-        <div className="mt-4 pt-3 border-t border-dark-border/30">
-          <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
-            {accessory.id}
-          </span>
-        </div>
       </div>
     </motion.div>
   );
@@ -333,8 +326,9 @@ export default function AccessoryPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
+          className="mt-8"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          <div className="grid-responsive-cards mb-8">
             {paginatedAccessories.map((accessory, index) => (
               <motion.div
                 key={accessory.id}

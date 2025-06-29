@@ -29,6 +29,7 @@ export interface Character {
   voice_actor_jp?: string;
   profile_image_url?: string;
   is_active: boolean;
+  game_version?: string;
 }
 
 // Swimsuit types and enums
@@ -54,6 +55,14 @@ export interface Swimsuit {
   // Populated fields from joins
   character?: Character;
   skills?: SwimsuitSkill[];
+  // Binary image data fields (matching backend)
+  image_before_data?: string; // Base64 encoded image data
+  image_before_mime_type?: string;
+  image_after_data?: string; // Base64 encoded image data
+  image_after_mime_type?: string;
+  // Legacy URL fields for backward compatibility (computed from binary data)
+  image_before_url?: string;
+  image_after_url?: string;
 }
 
 // Skill types and enums
@@ -96,6 +105,10 @@ export interface Item {
   source_description_en?: string;
   item_category: ItemCategory;
   rarity: ItemRarity;
+  // Binary image data fields (matching backend)
+  icon_data?: string; // Base64 encoded image data
+  icon_mime_type?: string;
+  // Legacy URL field for backward compatibility (computed from binary data)
   icon_url?: string;
 }
 
@@ -114,6 +127,10 @@ export interface Bromide {
   bromide_type: BromideType;
   rarity: BromideRarity;
   skill_id?: number;
+  // Binary image data fields (matching backend)
+  art_data?: string; // Base64 encoded image data
+  art_mime_type?: string;
+  // Legacy URL field for backward compatibility (computed from binary data)
   art_url?: string;
   // Populated fields from joins
   skill?: Skill;
@@ -216,12 +233,15 @@ export interface Document {
   content_json_en?: Record<string, unknown>; // TipTap JSON content
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
+  // Binary screenshot data (matching backend)
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
   // Extended properties for UI compatibility
   title: string; // Maps to title_en
   content: string; // Maps to content_json_en converted to HTML
   category: string; // Category based on tags or type
   tags: string[]; // Generated from category and type
   author: string; // Default or computed author
+  // Legacy field for backward compatibility (computed from screenshots_data)
   screenshots: string[]; // Screenshot URLs for visual documentation
 }
 
@@ -247,9 +267,12 @@ export interface ApiSuccess<T = unknown> {
 export interface ApiError {
   success: false;
   error: string;
+  errorId?: string; // Added to match backend error response format
   details?: Record<string, unknown>;
   timestamp: string;
   statusCode?: number;
+  // Development-only fields (may be present in development mode)
+  stack?: string;
 }
 
 export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
@@ -337,7 +360,6 @@ export interface EpisodeQueryParams extends PaginationQuery, SearchQuery {
 }
 
 export interface DocumentQueryParams extends PaginationQuery, SearchQuery {
-  is_published?: string;
 }
 
 // ============================================================================
@@ -455,6 +477,9 @@ export interface UpdateLog {
   description: string;
   date: string;
   tags: string[];
+  // Binary screenshot data (matching backend)
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
+  // Legacy field for backward compatibility (computed from screenshots_data)
   screenshots: string[];
   metrics?: {
     performanceImprovement: string;
@@ -611,6 +636,11 @@ export interface ComponentTheme {
 export interface Memory {
   id: string;
   name: string;
+  name_jp?: string;
+  name_en?: string;
+  name_cn?: string;
+  name_tw?: string;
+  name_kr?: string;
   description: string;
   date: string;
   thumbnail: string;

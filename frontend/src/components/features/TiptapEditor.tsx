@@ -285,10 +285,10 @@ const TiptapEditor = ({
         <DialogHeader>
           <DialogTitle>Keyboard Shortcuts</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-2 gap-responsive mt-4">
           <div className="space-y-2">
             <h3 className="font-semibold">Text Formatting</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-responsive-sm text-sm">
               <span>Bold</span>
               <span className="text-muted-foreground">Ctrl + B</span>
               <span>Italic</span>
@@ -301,7 +301,7 @@ const TiptapEditor = ({
           </div>
           <div className="space-y-2">
             <h3 className="font-semibold">Structure</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-responsive-sm text-sm">
               <span>Heading 1</span>
               <span className="text-muted-foreground">Ctrl + Alt + 1</span>
               <span>Heading 2</span>
@@ -340,7 +340,7 @@ const TiptapEditor = ({
         exit={{ opacity: 0, y: 10 }}
         className="p-3 bg-background border border-border rounded-lg shadow-lg"
       >
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-6 gap-responsive-sm">
           {colors.map((color) => (
             <TooltipProvider key={color.value}>
               <Tooltip>

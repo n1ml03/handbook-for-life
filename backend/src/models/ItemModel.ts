@@ -23,7 +23,8 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       source_description_en: row.source_description_en,
       item_category: row.item_category,
       rarity: row.rarity,
-      icon_url: row.icon_url,
+      icon_data: row.icon_data,
+      icon_mime_type: row.icon_mime_type,
       game_version: row.game_version,
     };
   }
@@ -40,7 +41,8 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       'source_description_en',
       'item_category',
       'rarity',
-      'icon_url',
+      'icon_data',
+      'icon_mime_type',
       'game_version'
     ];
   }
@@ -58,8 +60,8 @@ export class ItemModel extends BaseModel<Item, NewItem> {
     try {
       const [result] = await executeQuery(
         `INSERT INTO items (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, source_description_en, item_category, rarity, icon_url, game_version)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description_en, source_description_en, item_category, rarity, icon_data, icon_mime_type, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           item.unique_key,
           item.name_jp,
@@ -71,7 +73,8 @@ export class ItemModel extends BaseModel<Item, NewItem> {
           item.source_description_en,
           item.item_category,
           item.rarity,
-          item.icon_url,
+          item.icon_data,
+          item.icon_mime_type,
           item.game_version,
         ]
       ) as [any, any];
@@ -171,9 +174,13 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       setClause.push(`rarity = ?`);
       params.push(updates.rarity);
     }
-    if (updates.icon_url !== undefined) {
-      setClause.push(`icon_url = ?`);
-      params.push(updates.icon_url);
+    if (updates.icon_data !== undefined) {
+      setClause.push(`icon_data = ?`);
+      params.push(updates.icon_data);
+    }
+    if (updates.icon_mime_type !== undefined) {
+      setClause.push(`icon_mime_type = ?`);
+      params.push(updates.icon_mime_type);
     }
     if (updates.game_version !== undefined) {
       setClause.push(`game_version = ?`);

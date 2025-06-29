@@ -202,7 +202,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
             <div className="space-y-4">
               {/* Version and Date in responsive grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
                 <FormGroup
                   label="Version"
                   description="Semantic version number (e.g., v2.1.0)"
@@ -223,7 +223,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                 >
                   <Input
                     type="date"
-                    value={updateLog.date}
+                    value={updateLog.date ? updateLog.date.split('T')[0] : ''}
                     onChange={(e) => onUpdateLogChange({ ...updateLog, date: e.target.value })}
                     className="font-medium h-10 px-3 border-2 border-border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-hidden"
                   />

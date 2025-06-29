@@ -1,18 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
   Image,
-  Palette,
-  Search
-} from 'lucide-react';
+  Search,
+  Camera} from 'lucide-react';
 import { bromidesApi } from '@/services/api';
 import { type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
-import { Grid } from '@/components/ui/spacing';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
+import { useDebounce } from '@/hooks';
 
 const bromideTypes = ['Character', 'Scene', 'Event', 'Special'] as const;
 const decorationTypes = ['Frame', 'Background', 'Sticker', 'Effect'] as const;
@@ -30,7 +29,7 @@ function BromideCard({ bromide }: { bromide: any }) {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const _getTypeColor = (type: string) => {
     switch (type) {
       case 'Character': return 'text-accent-pink';
       case 'Scene': return 'text-accent-cyan';
@@ -44,91 +43,52 @@ function BromideCard({ bromide }: { bromide: any }) {
     }
   };
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative modern-card overflow-hidden group"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Image Preview */}
-        <div className="aspect-video bg-gradient-to-br from-dark-primary/50 to-dark-secondary/50 relative">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Image className="w-16 h-16 text-gray-400" />
-          </div>
-          {/* Rarity Badge */}
-          <div className="absolute top-3 left-3">
-            <motion.div
-              className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${getRarityColor(bromide.rarity)} text-white shadow-lg`}
-              whileHover={{ scale: 1.1 }}
-            >
-              {bromide.rarity}
-            </motion.div>
-          </div>
-          {/* Type Badge */}
-          <div className="absolute top-3 right-3">
-            <motion.div
-              className={`px-3 py-1 rounded-full text-xs font-bold bg-dark-card/80 backdrop-blur-sm ${getTypeColor(bromide.category)} border border-dark-border/50`}
-              whileHover={{ scale: 1.1 }}
-            >
-              {bromide.category}
-            </motion.div>
-          </div>
+  const names: MultiLanguageNames = {
+    name_jp: bromide.name_jp || '',
+    name_en: bromide.name_en || bromide.name || '',
+    name_cn: bromide.name_cn || '',
+    name_tw: bromide.name_tw || '',
+    name_kr: bromide.name_kr || ''
+  };
+
+  const header = (
+    <div className="relative">
+      {/* Image Preview */}
+      <div className="aspect-video bg-gradient-to-br from-dark-primary/50 to-dark-secondary/50 relative rounded-lg overflow-hidden mb-3">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Image className="w-12 h-12 text-gray-400" />
         </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="font-bold text-white text-lg mb-2">{bromide.name}</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">{bromide.description}</p>
-          </div>
-
-          {/* Effects */}
-          {(bromide.effects && bromide.effects.length > 0) && (
-            <div>
-              <p className="text-xs font-bold text-accent-cyan mb-3 flex items-center">
-                <Palette className="w-3 h-3 mr-1" />
-                Effects
-              </p>
-              <div className="space-y-2">
-                {bromide.effects?.map((effect: any, index: number) => (
-                  <div key={index} className="p-3 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-                    <div className="flex flex-col space-y-1">
-                      <span className="text-xs text-gray-300 leading-relaxed">{effect.description}</span>
-                      {effect.value && (
-                        <span className="text-xs font-bold text-accent-cyan">
-                          +{effect.value}{effect.type === 'percentage' ? '%' : ''}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Character Associated */}
-          {bromide.character && (
-            <div className="p-3 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-xl border border-accent-cyan/20">
-              <p className="text-xs font-bold text-accent-gold mb-2 flex items-center">
-                <Palette className="w-3 h-3 mr-1" />
-                Featured Character
-              </p>
-              <p className="text-sm text-white font-medium">{bromide.character}</p>
-            </div>
-          )}
-
-          {/* Source & ID */}
-          <div className="flex items-center justify-between text-xs pt-3 border-t border-dark-border/30">
-            <span className="text-gray-400">{bromide.source ?? bromide.category}</span>
-            <span className="text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">{bromide.id}</span>
-          </div>
+        {/* Rarity Badge */}
+        <div className="absolute top-2 left-2">
+          <motion.div
+            className={`px-2 py-1 rounded text-xs font-bold bg-gradient-to-r ${getRarityColor(bromide.rarity)} text-white shadow-lg`}
+            whileHover={{ scale: 1.1 }}
+          >
+            {bromide.rarity}
+          </motion.div>
         </div>
       </div>
-    </motion.div>
+
+      {/* Category and ID */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Camera className="w-3 h-3 text-accent-cyan" />
+          <span className="text-xs text-accent-cyan font-medium">Bromide</span>
+        </div>
+        <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
+          #{bromide.id}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="expanded"
+      header={header}
+    />
   );
 }
 
@@ -137,7 +97,7 @@ export default function DecorateBromidePage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [filter, setFilter] = useState({
     search: '',
@@ -145,27 +105,43 @@ export default function DecorateBromidePage() {
     rarity: '',
     character: '',
     source: '',
-    version: '',
     hasEffects: false,
-    hasCharacter: false
+    hasCharacter: false,
+    version: ''
   });
 
-  const itemsPerPage = 8;
+  const itemsPerPage = 12;
+  
+  // Debounce search to improve performance
+  const debouncedSearch = useDebounce(filter.search, 500);
+
+  // Memoized filter values that include debounced search
+  const filterValuesWithDebouncedSearch = useMemo(() => ({
+    ...filter,
+    search: debouncedSearch
+  }), [filter, debouncedSearch]);
 
   useEffect(() => {
     const fetchBromides = async () => {
       try {
         setLoading(true);
-        const response = await bromidesApi.getBromides({ limit: 100, page: 1 });
-        const responseData = response?.data || [];
-        if (!Array.isArray(responseData)) {
-          console.warn('Expected array from bromides API, received:', responseData);
+        const response = await bromidesApi.getBromides({
+          limit: 500, // Get a reasonable batch size
+          sortBy: 'name',
+          sortOrder: 'asc'
+        });
+        
+        const bromideData = response?.data || [];
+        if (!Array.isArray(bromideData)) {
+          console.warn('Expected array from bromides API, received:', bromideData);
           setBromides([]);
           return;
         }
-        setBromides(responseData);
+        
+        setBromides(bromideData);
       } catch (err) {
         console.error('Failed to fetch bromides:', err);
+        setBromides([]);
       } finally {
         setLoading(false);
       }
@@ -186,11 +162,13 @@ export default function DecorateBromidePage() {
     [allTypes, allRarities, allCharacters, allSources]
   );
 
+  // Optimized filtering and sorting with memoization
   const filteredAndSortedBromides = useMemo(() => {
     const filtered = bromides.filter(bromide => {
       // Search filter - search across name, description, character, and source
-      if (filter.search) {
-        const searchTerm = filter.search.toLowerCase();
+      const searchValue = String(filterValuesWithDebouncedSearch.search || '');
+      if (searchValue) {
+        const searchTerm = searchValue.toLowerCase();
         const searchableText = [
           bromide.name,
           bromide.description,
@@ -202,100 +180,115 @@ export default function DecorateBromidePage() {
       }
 
       // Type filter
-      if (filter.type && (bromide.category !== filter.type)) return false;
+      const typeValue = String(filterValuesWithDebouncedSearch.type || '');
+      if (typeValue && (bromide.category !== typeValue)) return false;
 
       // Rarity filter
-      if (filter.rarity && bromide.rarity !== filter.rarity) return false;
+      const rarityValue = String(filterValuesWithDebouncedSearch.rarity || '');
+      if (rarityValue && bromide.rarity !== rarityValue) return false;
 
       // Character filter
-      if (filter.character && bromide.character !== filter.character) return false;
+      const characterValue = String(filterValuesWithDebouncedSearch.character || '');
+      if (characterValue && bromide.character !== characterValue) return false;
 
       // Source filter
-      if (filter.source && (bromide.source ?? bromide.category) !== filter.source) return false;
+      const sourceValue = String(filterValuesWithDebouncedSearch.source || '');
+      if (sourceValue && (bromide.source ?? bromide.category) !== sourceValue) return false;
 
       // Effects filter
-      if (filter.hasEffects && (!bromide.effects || bromide.effects.length === 0)) return false;
+      if (filterValuesWithDebouncedSearch.hasEffects && (!bromide.effects || bromide.effects.length === 0)) return false;
 
       // Character presence filter
-      if (filter.hasCharacter && !bromide.character) return false;
+      if (filterValuesWithDebouncedSearch.hasCharacter && !bromide.character) return false;
 
       // Version filter (check if ID contains version)
-      if (filter.version && !bromide.id.includes(filter.version)) return false;
+      const versionValue = String(filterValuesWithDebouncedSearch.version || '');
+      if (versionValue && !bromide.id.includes(versionValue)) return false;
 
       return true;
     });
 
+    // Sort filtered results
     return filtered.sort((a, b) => {
       let aValue: string | number, bValue: string | number;
-
+      
       switch (sortBy) {
         case 'name':
           aValue = (a.name || '').toLowerCase();
           bValue = (b.name || '').toLowerCase();
           break;
-        case 'type':
-          aValue = (a.category || '').toLowerCase();
-          bValue = (b.category || '').toLowerCase();
-          break;
-        case 'rarity': {
-          const rarityOrder = { 'UR': 5, 'SSR': 4, 'SR': 3, 'R': 2, 'N': 1 };
+        case 'rarity':
+          const rarityOrder = { 'SSR': 4, 'SR': 3, 'R': 2, 'N': 1 };
           aValue = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
           bValue = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
           break;
-        }
         case 'character':
           aValue = (a.character || '').toLowerCase();
           bValue = (b.character || '').toLowerCase();
           break;
         case 'source':
-          aValue = ((a.source ?? a.category) || '').toLowerCase();
-          bValue = ((b.source ?? b.category) || '').toLowerCase();
-          break;
-        case 'id':
-          aValue = a.id || '';
-          bValue = b.id || '';
+          aValue = (a.source || a.category || '').toLowerCase();
+          bValue = (b.source || b.category || '').toLowerCase();
           break;
         default:
           aValue = (a.name || '').toLowerCase();
           bValue = (b.name || '').toLowerCase();
       }
-
+      
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      return sortDirection === 'asc' ? (aValue as number) - (bValue as number) : (bValue as number) - (aValue as number);
+      return sortDirection === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
     });
-  }, [bromides, filter, sortBy, sortDirection]);
+  }, [bromides, filterValuesWithDebouncedSearch, sortBy, sortDirection]);
 
-  const totalPages = Math.ceil(filteredAndSortedBromides.length / itemsPerPage);
-  const paginatedBromides = filteredAndSortedBromides.slice(
+  // Memoized pagination
+  const totalPages = useMemo(() => Math.ceil(filteredAndSortedBromides.length / itemsPerPage), [filteredAndSortedBromides.length, itemsPerPage]);
+  const paginatedBromides = useMemo(() => filteredAndSortedBromides.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
-  );
+  ), [filteredAndSortedBromides, currentPage, itemsPerPage]);
 
-  const handleSortChange = (newSortBy: string, direction: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(direction);
-  };
+  // Memoized filter options
+  const _filterOptions = useMemo(() => {
+    const types = [...new Set(bromides.map(b => b.category))].filter(Boolean).sort();
+    const rarities = [...new Set(bromides.map(b => b.rarity))].filter(Boolean).sort();
+    const characters = [...new Set(bromides.map(b => b.character))].filter(Boolean).sort();
+    const sources = [...new Set(bromides.map(b => b.source ?? b.category))].filter(Boolean).sort();
+    const versions = ['1.0', '1.5', '2.0', '2.5', '3.0'];
+    
+    return { types, rarities, characters, sources, versions };
+  }, [bromides]);
 
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
     setFilter(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, []);
 
-  const clearFilters = () => {
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
+    setCurrentPage(1); // Reset to first page when sort changes
+  }, []);
+
+  const clearFilters = useCallback(() => {
     setFilter({
       search: '',
       type: '',
       rarity: '',
       character: '',
       source: '',
-      version: '',
       hasEffects: false,
-      hasCharacter: false
+      hasCharacter: false,
+      version: ''
     });
     setCurrentPage(1);
-  };
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   return (
     <PageLoadingState 
@@ -310,10 +303,10 @@ export default function DecorateBromidePage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="modern-page-title">
+          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
             Bromide & Decoration Collection
           </h1>
-          <p className="modern-page-subtitle">
+          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
             Browse and customize your collection of {bromides.length} bromides and decorations
           </p>
         </motion.div>
@@ -324,7 +317,7 @@ export default function DecorateBromidePage() {
         setShowFilters={setShowFilters}
         filterFields={filterFields}
         sortOptions={bromideSortOptions}
-        filterValues={filter}
+        filterValues={filterValuesWithDebouncedSearch}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
         sortBy={sortBy}
@@ -338,7 +331,7 @@ export default function DecorateBromidePage() {
       />
 
         {/* Bromides Display */}
-        <Grid cols={3} gap="lg" className="mb-8">
+        <div className="grid-responsive-cards mt-8 mb-8">
           {paginatedBromides.map((bromide, index) => (
             <motion.div
               key={bromide.id}
@@ -349,7 +342,7 @@ export default function DecorateBromidePage() {
               <BromideCard bromide={bromide} />
             </motion.div>
           ))}
-        </Grid>
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -359,7 +352,7 @@ export default function DecorateBromidePage() {
             className="flex items-center justify-center space-x-2 mt-8"
           >
             <motion.button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -374,7 +367,7 @@ export default function DecorateBromidePage() {
                 return (
                   <motion.button
                     key={page}
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => handlePageChange(page)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
@@ -390,7 +383,7 @@ export default function DecorateBromidePage() {
             </div>
             
             <motion.button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

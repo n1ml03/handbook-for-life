@@ -144,7 +144,7 @@ export const PageSection = ({ children, className }: SpacingProps) => (
 );
 
 export const PageCard = ({ children, className, hover = true }: SpacingProps & { hover?: boolean }) => (
-  <div className={cn('doax-card p-6', hover && 'hover:shadow-lg transition-shadow', className)}>{children}</div>
+  <div className={cn('doax-card p-6', hover ? 'hover:shadow-lg transition-shadow' : '', className)}>{children}</div>
 );
 
 // Standard page layout replacement

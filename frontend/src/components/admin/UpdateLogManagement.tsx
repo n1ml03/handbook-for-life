@@ -56,19 +56,19 @@ export const UpdateLogManagement: React.FC<UpdateLogManagementProps> = ({
                       <h3 className="text-lg font-semibold">{log.title}</h3>
                     </div>
                     <p className="text-muted-foreground mb-3 line-clamp-2">
-                      {log.description || log.content.split('\n').find(line => line.trim() && !line.startsWith('#'))?.slice(0, 150)}
-                      {(log.description || log.content).length > 150 && '...'}
+                      {log.description || log.content?.split('\n').find(line => line.trim() && !line.startsWith('#'))?.slice(0, 150) || 'No description available'}
+                      {(log.description || log.content || '').length > 150 && '...'}
                     </p>
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {log.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">
+                      {(log.tags || []).slice(0, 3).map((tag, index) => (
+                        <Badge key={`${log.id}-tag-${index}`} variant="outline" className="text-xs">
                           <Tags className="w-3 h-3 mr-1" />
                           {tag}
                         </Badge>
                       ))}
-                      {log.tags.length > 3 && (
+                      {(log.tags || []).length > 3 && (
                         <Badge variant="outline" className="text-xs">
-                          +{log.tags.length - 3} more
+                          +{(log.tags || []).length - 3} more
                         </Badge>
                       )}
                     </div>

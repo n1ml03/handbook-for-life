@@ -31,24 +31,7 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
     });
   }
 
-  /**
-   * Get published documents only
-   */
-  async getPublishedDocuments(options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
-    return this.trackPerformance('getPublishedDocuments', async () => {
-      this.logOperationStart('Get published documents', undefined, { options });
-      
-      const validatedOptions = this.validatePaginationOptions(options);
-      const result = await this.model.findPublished(validatedOptions);
-      
-      this.logOperationSuccess('Get published documents', undefined, { 
-        count: result.data.length,
-        total: result.pagination.total 
-      });
-      
-      return this.formatPaginatedDatesForResponse(result);
-    });
-  }
+
 
   /**
    * Get documents by category with validation
@@ -223,30 +206,7 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
     });
   }
 
-  /**
-   * Toggle publish status with performance tracking
-   */
-  async togglePublishStatus(id: string | number): Promise<ExtendedDocument> {
-    return this.trackPerformance('togglePublishStatus', async () => {
-      const numericId = this.parseNumericId(id, 'Document ID');
-      
-      this.logOperationStart('Toggle publish status', numericId);
-      
-      try {
-        const document = await this.model.togglePublishStatus(numericId);
-        
-        this.logOperationSuccess('Toggle publish status', numericId, { 
-          newStatus: document.is_published ? 'published' : 'unpublished',
-          title: document.title_en 
-        });
-        
-        return this.formatResponse(document).data;
-      } catch (error) {
-        this.handleServiceError('Toggle publish status', numericId, error);
-        throw error;
-      }
-    });
-  }
+
 
   /**
    * Delete document with proper validation
@@ -273,23 +233,20 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
    */
   async getDocumentStats(): Promise<{
     total: number;
-    published: number;
-    unpublished: number;
     byCategory: Record<string, number>;
     lastUpdated: string;
   }> {
     return this.trackPerformance('getDocumentStats', async () => {
       this.logOperationStart('Get document statistics');
-      
+
       try {
         const stats = await this.model.getDocumentStats();
-        
-        this.logOperationSuccess('Get document statistics', undefined, { 
+
+        this.logOperationSuccess('Get document statistics', undefined, {
           total: stats.total,
-          published: stats.published,
           categories: Object.keys(stats.byCategory).length
         });
-        
+
         return stats;
       } catch (error) {
         this.handleServiceError('Get document statistics', undefined, error);
@@ -338,16 +295,9 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
       this.validateTipTapContent(data.content_json_en, 'Content');
     }
     
-    // Validate is_published
-    if (data.is_published !== undefined) {
-      if (typeof data.is_published !== 'boolean') {
-        throw new AppError('Published status must be a boolean', 400);
-      }
-    }
-    
-    // Validate screenshots array
-    if (data.screenshots !== undefined) {
-      this.validateScreenshots(data.screenshots);
+    // Validate screenshots_data array
+    if (data.screenshots_data !== undefined) {
+      this.validateScreenshots(data.screenshots_data);
     }
   }
 
@@ -399,31 +349,32 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
   }
 
   /**
-   * Validate screenshots array
+   * Validate screenshots_data array
    */
   private validateScreenshots(screenshots: any): void {
     if (!Array.isArray(screenshots)) {
       throw new AppError('Screenshots must be an array', 400);
     }
-    
+
     if (screenshots.length > 20) {
       throw new AppError('Cannot have more than 20 screenshots', 400);
     }
-    
+
     screenshots.forEach((screenshot, index) => {
-      if (typeof screenshot !== 'string') {
-        throw new AppError(`Screenshot ${index + 1} must be a string URL`, 400);
+      if (typeof screenshot !== 'object' || !screenshot) {
+        throw new AppError(`Screenshot ${index + 1} must be an object`, 400);
       }
-      
-      if (screenshot.length > 500) {
-        throw new AppError(`Screenshot ${index + 1} URL is too long (max 500 characters)`, 400);
+
+      if (!screenshot.data || typeof screenshot.data !== 'string') {
+        throw new AppError(`Screenshot ${index + 1} must have valid data field`, 400);
       }
-      
-      // Basic URL validation
-      try {
-        new URL(screenshot);
-      } catch {
-        throw new AppError(`Screenshot ${index + 1} must be a valid URL`, 400);
+
+      if (!screenshot.mimeType || typeof screenshot.mimeType !== 'string') {
+        throw new AppError(`Screenshot ${index + 1} must have valid mimeType field`, 400);
+      }
+
+      if (!screenshot.filename || typeof screenshot.filename !== 'string') {
+        throw new AppError(`Screenshot ${index + 1} must have valid filename field`, 400);
       }
     });
   }

@@ -64,7 +64,27 @@ router.get('/key/:unique_key',
   })
 );
 
-// GET /api/bromides/search - Search bromides
+/**
+ * @swagger
+ * /api/bromides/search:
+ *   get:
+ *     tags: [Bromides]
+ *     summary: Search bromides
+ *     description: Search bromides by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -96,7 +116,23 @@ router.get('/search',
   })
 );
 
-// GET /api/bromides/:id - Get bromide by ID
+/**
+ * @swagger
+ * /api/bromides/{id}:
+ *   get:
+ *     tags: [Bromides]
+ *     summary: Get bromide by ID
+ *     description: Retrieve a specific bromide by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
@@ -136,7 +172,31 @@ router.post('/',
   })
 );
 
-// PUT /api/bromides/:id - Update bromide
+/**
+ * @swagger
+ * /api/bromides/{id}:
+ *   put:
+ *     tags: [Bromides]
+ *     summary: Update bromide
+ *     description: Update an existing bromide
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validate(schemas.updateBromide),
   asyncHandler(async (req, res) => {
@@ -162,7 +222,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/bromides/:id - Delete bromide
+/**
+ * @swagger
+ * /api/bromides/{id}:
+ *   delete:
+ *     tags: [Bromides]
+ *     summary: Delete bromide
+ *     description: Delete an existing bromide
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);

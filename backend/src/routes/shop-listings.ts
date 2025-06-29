@@ -155,7 +155,23 @@ router.get('/statistics',
   })
 );
 
-// GET /api/shop-listings/:id - Get shop listing by ID
+/**
+ * @swagger
+ * /api/shop-listings/{id}:
+ *   get:
+ *     tags: [Shop Listings]
+ *     summary: Get shop listing by ID
+ *     description: Retrieve a specific shop listing by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
@@ -228,7 +244,31 @@ router.post('/validate',
   })
 );
 
-// PUT /api/shop-listings/:id - Update shop listing
+/**
+ * @swagger
+ * /api/shop-listings/{id}:
+ *   put:
+ *     tags: [Shop Listings]
+ *     summary: Update shop listing
+ *     description: Update an existing shop listing
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validate(schemas.updateShopListing),
   asyncHandler(async (req, res) => {
@@ -254,7 +294,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/shop-listings/:id - Delete shop listing
+/**
+ * @swagger
+ * /api/shop-listings/{id}:
+ *   delete:
+ *     tags: [Shop Listings]
+ *     summary: Delete shop listing
+ *     description: Delete an existing shop listing
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);

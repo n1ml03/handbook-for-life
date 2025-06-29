@@ -104,7 +104,27 @@ router.get('/top-stats',
   })
 );
 
-// GET /api/swimsuits/search - Search swimsuits
+/**
+ * @swagger
+ * /api/swimsuits/search:
+ *   get:
+ *     tags: [Swimsuits]
+ *     summary: Search swimsuits
+ *     description: Search swimsuits by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -136,7 +156,23 @@ router.get('/search',
   })
 );
 
-// GET /api/swimsuits/:id - Get swimsuit by ID
+/**
+ * @swagger
+ * /api/swimsuits/{id}:
+ *   get:
+ *     tags: [Swimsuits]
+ *     summary: Get swimsuit by ID
+ *     description: Retrieve a specific swimsuit by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
@@ -169,7 +205,31 @@ router.post('/',
   })
 );
 
-// PUT /api/swimsuits/:id - Update swimsuit
+/**
+ * @swagger
+ * /api/swimsuits/{id}:
+ *   put:
+ *     tags: [Swimsuits]
+ *     summary: Update swimsuit
+ *     description: Update an existing swimsuit
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validateParams(schemas.idParam),
   validate(schemas.updateSwimsuit),
@@ -188,7 +248,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/swimsuits/:id - Delete swimsuit
+/**
+ * @swagger
+ * /api/swimsuits/{id}:
+ *   delete:
+ *     tags: [Swimsuits]
+ *     summary: Delete swimsuit
+ *     description: Delete an existing swimsuit
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {

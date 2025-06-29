@@ -11,7 +11,7 @@ export class ApiError extends Error {
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
@@ -29,11 +29,12 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
   try {
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      // Handle backend error response format: { success: false, error: string, errorId?: string, timestamp: string }
       throw new ApiError(
-        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`,
         response.status
       );
     }
@@ -55,7 +56,6 @@ export const documentsApi = {
     page?: number;
     limit?: number;
     category?: string;
-    published?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Document[]; pagination: any }> {
@@ -118,7 +118,6 @@ export const updateLogsApi = {
   async getUpdateLogs(params?: {
     page?: number;
     limit?: number;
-    published?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: UpdateLog[]; pagination: any }> {
@@ -136,26 +135,7 @@ export const updateLogsApi = {
     return apiRequest(`/update-logs${queryString ? `?${queryString}` : ''}`);
   },
 
-  // Get only published update logs
-  async getPublishedUpdateLogs(params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: UpdateLog[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/update-logs/published${queryString ? `?${queryString}` : ''}`);
-  },
+
 
   // Get a specific update log by ID
   async getUpdateLog(id: string): Promise<UpdateLog> {
@@ -210,7 +190,7 @@ export const charactersApi = {
   },
 
   // Get a specific character by ID
-  async getCharacter(id: string): Promise<Character> {
+  async getCharacter(id: string): Promise<{ data: Character }> {
     return apiRequest(`/characters/${id}`);
   },
 
@@ -306,6 +286,8 @@ export const skillsApi = {
   async getSkills(params?: {
     page?: number;
     limit?: number;
+    search?: string;
+    category?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Skill[]; pagination: any }> {
@@ -326,6 +308,29 @@ export const skillsApi = {
   // Get a specific skill by ID
   async getSkill(id: string): Promise<Skill> {
     return apiRequest(`/skills/${id}`);
+  },
+
+  // Search skills
+  async searchSkills(query: string, params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: Skill[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('q', query); // Backend expects 'q' parameter
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/skills/search?${queryString}`);
   },
 
   // Create a new skill
@@ -395,6 +400,29 @@ export const eventsApi = {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
+  },
+
+  // Search events
+  async searchEvents(query: string, params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ data: Event[]; pagination: any }> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('q', query);
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    return apiRequest(`/events/search?${queryString}`);
   },
 
   // Delete an event
@@ -955,6 +983,20 @@ export const statsApi = {
 
 // File Upload API
 export const uploadApi = {
+  // Upload screenshot (matches backend /upload/screenshot endpoint)
+  async uploadScreenshot(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return apiRequest('/upload/screenshot', {
+      method: 'POST',
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+      },
+      body: formData,
+    });
+  },
+
   // Upload single file
   async uploadFile(file: File, category?: string): Promise<any> {
     const formData = new FormData();
@@ -975,7 +1017,7 @@ export const uploadApi = {
   // Upload multiple files
   async uploadMultipleFiles(files: File[], category?: string): Promise<any> {
     const formData = new FormData();
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       formData.append(`files`, file);
     });
     if (category) {

@@ -15,8 +15,7 @@ router.get('/',
       page = 1,
       limit = 10,
       sortBy = 'date',
-      sortOrder = 'desc',
-      published
+      sortOrder = 'desc'
     } = req.query;
 
     const options = {
@@ -26,12 +25,7 @@ router.get('/',
       sortOrder: sortOrder as 'asc' | 'desc'
     };
 
-    let result;
-    if (published === 'true') {
-      result = await updateLogService.getPublishedUpdateLogs(options);
-    } else {
-      result = await updateLogService.getUpdateLogs(options);
-    }
+    const result = await updateLogService.getUpdateLogs(options);
 
     logger.info(`Retrieved ${result.data.length} update logs for page ${page}`);
 
@@ -43,35 +37,7 @@ router.get('/',
   })
 );
 
-// GET /api/update-logs/published - Get only published update logs
-router.get('/published', 
-  validateQuery(schemas.pagination),
-  asyncHandler(async (req, res) => {
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = 'date',
-      sortOrder = 'desc'
-    } = req.query;
 
-    const options = {
-      page: parseInt(page as string),
-      limit: parseInt(limit as string),
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
-    };
-
-    const result = await updateLogService.getPublishedUpdateLogs(options);
-    
-    logger.info(`Retrieved ${result.data.length} published update logs`);
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
-  })
-);
 
 // GET /api/update-logs/:id - Get a specific update log
 router.get('/:id', 
@@ -99,7 +65,6 @@ router.post('/',
       description,
       date,
       tags,
-      is_published,
       technical_details,
       bug_fixes,
       screenshots,
@@ -121,7 +86,6 @@ router.post('/',
       description: description || '',
       date: new Date(date),
       tags: tags || [],
-      is_published: is_published !== undefined ? is_published : true,
       technical_details: technical_details || [],
       bug_fixes: bug_fixes || [],
       screenshots: screenshots || [],
@@ -144,7 +108,31 @@ router.post('/',
   })
 );
 
-// PUT /api/update-logs/:id - Update an update log
+/**
+ * @swagger
+ * /api/update-logs/{id}:
+ *   put:
+ *     tags: [Update Logs]
+ *     summary: Update update log
+ *     description: Update an existing update log
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id', 
   validate(schemas.updateUpdateLog),
   asyncHandler(async (req, res) => {
@@ -168,7 +156,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/update-logs/:id - Delete an update log
+/**
+ * @swagger
+ * /api/update-logs/{id}:
+ *   delete:
+ *     tags: [Update Logs]
+ *     summary: Delete update log
+ *     description: Delete an existing update log
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;

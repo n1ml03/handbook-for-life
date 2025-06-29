@@ -29,12 +29,7 @@ pids/
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
 
-# nyc test coverage
-.nyc_output
 
 # ESLint cache
 .eslintcache
@@ -108,9 +103,3 @@ certs/
 # TypeScript cache
 *.tsbuildinfo
 
-# Jest coverage
-coverage/
-
-# Testing
-test-results/
-playwright-report/ 

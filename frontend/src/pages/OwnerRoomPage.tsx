@@ -181,7 +181,7 @@ export default function OwnerRoomPage() {
         </div>
       </motion.div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-responsive lg:grid-cols-3">
         {/* Room Preview */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -312,7 +312,7 @@ export default function OwnerRoomPage() {
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
+            <CardContent className="grid grid-cols-2 gap-responsive">
               <Button size="sm" variant="outline">
                 <Download className="w-4 h-4 mr-2" />
                 Export
@@ -336,7 +336,7 @@ export default function OwnerRoomPage() {
 
       {/* Customization Tabs */}
       <Tabs defaultValue="themes" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 xs:grid-cols-4">
           <TabsTrigger value="themes">Themes</TabsTrigger>
           <TabsTrigger value="furniture">Furniture</TabsTrigger>
           <TabsTrigger value="layouts">Layouts</TabsTrigger>
@@ -345,7 +345,7 @@ export default function OwnerRoomPage() {
 
         {/* Themes Tab */}
         <TabsContent value="themes" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid-responsive-cards">
             {ROOM_THEMES.map((theme) => (
               <motion.div
                 key={theme.id}

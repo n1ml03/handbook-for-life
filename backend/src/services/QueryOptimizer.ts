@@ -1,9 +1,26 @@
 import { logger } from '../config';
 
 /**
- * Query optimization utilities and recommendations
+ * Enhanced query optimization utilities with performance monitoring
  */
 export class QueryOptimizer {
+  private static queryStats: Map<string, {
+    count: number;
+    totalTime: number;
+    avgTime: number;
+    maxTime: number;
+    minTime: number;
+    lastExecuted: Date;
+  }> = new Map();
+
+  private static nPlusOneDetector: Map<string, {
+    queries: string[];
+    timestamp: number;
+    context?: string;
+  }> = new Map();
+
+  private static readonly STATS_CLEANUP_INTERVAL = 3600000; // 1 hour
+  private static readonly N_PLUS_ONE_DETECTION_WINDOW = 1000; // 1 second
   
   /**
    * Optimized search query builder that uses FULLTEXT indexes when available
@@ -186,11 +203,10 @@ export class QueryOptimizer {
       'CREATE INDEX idx_events_search ON events(name_en, name_jp, unique_key);',
       
       // Documents table optimizations
-      'CREATE INDEX idx_documents_published ON documents(is_published);',
       'CREATE INDEX idx_documents_search ON documents(title_en, unique_key);',
-      
+
       // Update logs optimizations
-      'CREATE INDEX idx_update_logs_published_date ON update_logs(is_published, date DESC);',
+      'CREATE INDEX idx_update_logs_date ON update_logs(date DESC);',
       'CREATE INDEX idx_update_logs_version ON update_logs(version);',
       
       // Shop listings optimizations
@@ -238,17 +254,183 @@ export class QueryOptimizer {
   }
 
   /**
-   * Log slow query analysis
+   * Enhanced query performance tracking
+   */
+  static trackQueryPerformance(query: string, executionTime: number, context?: string): void {
+    const queryHash = this.hashQuery(query);
+    const existing = this.queryStats.get(queryHash);
+
+    if (existing) {
+      existing.count++;
+      existing.totalTime += executionTime;
+      existing.avgTime = existing.totalTime / existing.count;
+      existing.maxTime = Math.max(existing.maxTime, executionTime);
+      existing.minTime = Math.min(existing.minTime, executionTime);
+      existing.lastExecuted = new Date();
+    } else {
+      this.queryStats.set(queryHash, {
+        count: 1,
+        totalTime: executionTime,
+        avgTime: executionTime,
+        maxTime: executionTime,
+        minTime: executionTime,
+        lastExecuted: new Date()
+      });
+    }
+
+    // Check for N+1 queries
+    this.detectNPlusOneQuery(query, context);
+
+    // Log slow queries
+    if (executionTime > 1000) {
+      this.logSlowQuery(query, [], executionTime);
+    }
+  }
+
+  /**
+   * Detect potential N+1 query patterns
+   */
+  static detectNPlusOneQuery(query: string, context?: string): void {
+    const now = Date.now();
+    const queryPattern = this.extractQueryPattern(query);
+
+    // Clean up old entries
+    for (const [key, value] of this.nPlusOneDetector.entries()) {
+      if (now - value.timestamp > this.N_PLUS_ONE_DETECTION_WINDOW) {
+        this.nPlusOneDetector.delete(key);
+      }
+    }
+
+    const contextKey = context || 'unknown';
+    const existing = this.nPlusOneDetector.get(contextKey);
+
+    if (existing) {
+      existing.queries.push(queryPattern);
+
+      // Check for repeated similar queries
+      const patternCounts = new Map<string, number>();
+      existing.queries.forEach(pattern => {
+        patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
+      });
+
+      // Alert if we see the same pattern multiple times
+      for (const [pattern, count] of patternCounts.entries()) {
+        if (count >= 3) {
+          logger.warn('Potential N+1 query detected', {
+            pattern,
+            count,
+            context: contextKey,
+            timeWindow: `${this.N_PLUS_ONE_DETECTION_WINDOW}ms`,
+            suggestion: 'Consider using JOIN or batch loading to reduce query count'
+          });
+
+          // Reset to avoid spam
+          this.nPlusOneDetector.delete(contextKey);
+          break;
+        }
+      }
+    } else {
+      this.nPlusOneDetector.set(contextKey, {
+        queries: [queryPattern],
+        timestamp: now,
+        context
+      });
+    }
+  }
+
+  /**
+   * Extract query pattern for N+1 detection
+   */
+  private static extractQueryPattern(query: string): string {
+    return query
+      .replace(/\s+/g, ' ')
+      .replace(/\b\d+\b/g, '?') // Replace numbers with placeholders
+      .replace(/'[^']*'/g, '?') // Replace string literals with placeholders
+      .replace(/\?+/g, '?') // Normalize multiple placeholders
+      .trim()
+      .toLowerCase();
+  }
+
+  /**
+   * Generate hash for query tracking
+   */
+  private static hashQuery(query: string): string {
+    const pattern = this.extractQueryPattern(query);
+    let hash = 0;
+    for (let i = 0; i < pattern.length; i++) {
+      const char = pattern.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }
+
+  /**
+   * Enhanced slow query logging with performance stats
    */
   static logSlowQuery(query: string, params: any[], executionTime: number): void {
     const suggestions = this.analyzeQueryPerformance(query, executionTime);
-    
+    const queryHash = this.hashQuery(query);
+    const stats = this.queryStats.get(queryHash);
+
     logger.warn('Slow query detected', {
       query: query.substring(0, 200) + (query.length > 200 ? '...' : ''),
       executionTime,
       paramCount: params?.length || 0,
-      suggestions
+      suggestions,
+      stats: stats ? {
+        executionCount: stats.count,
+        avgTime: Math.round(stats.avgTime),
+        maxTime: stats.maxTime,
+        minTime: stats.minTime
+      } : undefined
     });
+  }
+
+  /**
+   * Get performance statistics for all tracked queries
+   */
+  static getPerformanceStats(): Array<{
+    queryHash: string;
+    count: number;
+    avgTime: number;
+    maxTime: number;
+    totalTime: number;
+    lastExecuted: Date;
+  }> {
+    return Array.from(this.queryStats.entries()).map(([hash, stats]) => ({
+      queryHash: hash,
+      ...stats
+    })).sort((a, b) => b.totalTime - a.totalTime); // Sort by total time desc
+  }
+
+  /**
+   * Clear old performance statistics
+   */
+  static cleanupStats(): void {
+    const cutoff = new Date(Date.now() - this.STATS_CLEANUP_INTERVAL);
+
+    for (const [hash, stats] of this.queryStats.entries()) {
+      if (stats.lastExecuted < cutoff) {
+        this.queryStats.delete(hash);
+      }
+    }
+
+    logger.info('Query performance stats cleanup completed', {
+      remainingEntries: this.queryStats.size
+    });
+  }
+
+  /**
+   * Initialize periodic cleanup
+   */
+  static initializePerformanceMonitoring(): void {
+    // Clean up stats every hour
+    setInterval(() => {
+      this.cleanupStats();
+    }, this.STATS_CLEANUP_INTERVAL);
+
+    logger.info('Query performance monitoring initialized');
   }
 }
 

@@ -141,7 +141,7 @@ export class DatabaseService {
       const [result] = await executeQuery(`
         INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          screenshots, metrics
+          screenshots_data, metrics
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         uniqueKey,
@@ -151,7 +151,7 @@ export class DatabaseService {
         updateLogData.description || '',
         updateLogData.date,
         JSON.stringify(updateLogData.tags || []),
-        JSON.stringify(updateLogData.screenshots || []),
+        JSON.stringify(updateLogData.screenshots_data || []),
         JSON.stringify(updateLogData.metrics || this.getDefaultMetrics())
       ]);
 
@@ -222,9 +222,9 @@ export class DatabaseService {
         updateFields.push('tags = ?');
         updateValues.push(JSON.stringify(updates.tags));
       }
-      if (updates.screenshots !== undefined) {
-        updateFields.push('screenshots = ?');
-        updateValues.push(JSON.stringify(updates.screenshots));
+      if (updates.screenshots_data !== undefined) {
+        updateFields.push('screenshots_data = ?');
+        updateValues.push(JSON.stringify(updates.screenshots_data));
       }
       if (updates.metrics !== undefined) {
         updateFields.push('metrics = ?');
@@ -290,7 +290,7 @@ export class DatabaseService {
       description: row.description || '',
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
-      screenshots: this.parseJSONField(row.screenshots, []),
+      screenshots_data: this.parseJSONField(row.screenshots_data, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',
         userSatisfaction: '0%',
@@ -362,10 +362,10 @@ export class DatabaseService {
     }
 
     // Screenshots validation
-    if (data.screenshots && Array.isArray(data.screenshots)) {
-      for (const screenshot of data.screenshots) {
-        if (typeof screenshot !== 'string' || !this.isValidUrl(screenshot)) {
-          throw new AppError('All screenshots must be valid URLs', 400);
+    if (data.screenshots_data && Array.isArray(data.screenshots_data)) {
+      for (const screenshot of data.screenshots_data) {
+        if (!screenshot.data || !screenshot.mimeType || !screenshot.filename) {
+          throw new AppError('All screenshots must have data, mimeType, and filename', 400);
         }
       }
     }

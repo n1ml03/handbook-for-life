@@ -9,8 +9,7 @@ import {
   Package,
   Star,
   Tag,
-  Search
-} from 'lucide-react';
+  Search} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
 import { Grid } from '@/components/ui/spacing';
@@ -34,13 +33,11 @@ import { useDebounce } from '@/hooks/useDebounce';
 // Import multi-language search functionality
 import { 
   addTranslationsToItems, 
-  type MultiLanguageItem,
-  getDisplayName,
-  getDisplayDescription} from '@/services/multiLanguageSearch';
+  type MultiLanguageItem} from '@/services/multiLanguageSearch';
 import { safeExtractArrayData } from '@/services/utils';
 import { useMultiLanguageSearch } from '@/services/multiLanguageSearch';
 import React from 'react';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 
 // Memoized helper functions outside component
 const getTypeIcon = (type: ItemType) => {
@@ -115,174 +112,85 @@ const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageIte
   };
 };
 
-// Language info constant - updated to match multi-language search format
-const languageInfo = {
-  EN: { flag: '🇺🇸', name: 'EN' },
-  CN: { flag: '🇨🇳', name: 'CN' },
-  TW: { flag: '🇹🇼', name: 'TW' },
-  KO: { flag: '🇰🇷', name: 'KO' },
-  JP: { flag: '🇯🇵', name: 'JP' }
-};
+
 
 // Optimized ItemCard component
 const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & MultiLanguageItem }) {
-  const displayName = useMemo(() => String(getDisplayName(item, 'EN') || item.name || 'Unknown'), [item]);
-  const displayDescription = useMemo(() => {
-    const desc = getDisplayDescription(item, 'EN');
-    return typeof desc === 'string' ? desc : undefined;
-  }, [item]);
   const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
   const typeColor = useMemo(() => getTypeColor(item.type), [item.type]);
-  const rarityColor = useMemo(() => item.rarity ? getRarityColor(item.rarity) : '', [item.rarity]);
   const statsEntries = useMemo(() => item.stats ? Object.entries(item.stats).slice(0, 4) : [], [item.stats]);
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-card/80 backdrop-blur-sm border border-border/30 rounded-xl p-6 mt-2 overflow-hidden group cursor-pointer"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header Section */}
-        <div className="flex items-start gap-4 mb-6">
-          {/* Enhanced Item Icon */}
-          <div className="relative">
-            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-muted/60 to-muted/40 shrink-0 border-2 border-border/20 flex items-center justify-center group-hover:border-accent-cyan/20 transition-all duration-200">
-              {item.image ? (
-                <img
-                  src={item.image}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div
-                className={cn(
-                  'w-full h-full flex items-center justify-center text-muted-foreground',
-                  item.image ? 'hidden' : 'flex'
-                )}
-              >
-                {typeIcon}
-              </div>
-            </div>
-            
-            {/* Rarity badge - positioned as overlay */}
-            {item.rarity && (
-              <div className="absolute -top-2 -right-2">
-                <Badge className={cn('text-xs font-bold shadow-lg', rarityColor)}>
-                  <Star className="w-3 h-3 mr-1" />
-                  {item.rarity}
-                </Badge>
-              </div>
-            )}
-          </div>
+  // Extract multi-language names from translations
+  const names: MultiLanguageNames = useMemo(() => {
+    const translations = item.translations || {};
+    return {
+      name_jp: (translations as any)?.JP?.name || '',
+      name_en: (translations as any)?.EN?.name || item.name || '',
+      name_cn: (translations as any)?.CN?.name || '',
+      name_tw: (translations as any)?.TW?.name || '',
+      name_kr: (translations as any)?.KO?.name || ''
+    };
+  }, [item.translations, item.name]);
 
-          {/* Item Type Badge */}
-          <div className="flex-1 min-w-0">
-            <Badge variant="outline" className={cn('text-xs mb-3 shadow-xs', typeColor)}>
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {/* Enhanced Item Icon */}
+        <div className="relative">
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-muted/60 to-muted/40 shrink-0 border border-border/20 flex items-center justify-center">
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={names.name_en}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
               {typeIcon}
-              <span className="ml-1 capitalize font-medium">{item.type}</span>
-            </Badge>
-          </div>
-        </div>
-
-        {/* Name Section - Enhanced Visual */}
-        <div className="mb-6">
-          {/* Primary Name with modern styling */}
-          <div className="mb-4 p-4 bg-gradient-to-r from-accent-cyan/5 via-accent-cyan/10 to-transparent rounded-lg border border-accent-cyan/10 group-hover:border-accent-cyan/15 transition-all duration-200">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
-              <span className="text-xs font-medium text-accent-cyan/80 uppercase tracking-wider">
-                Primary (EN)
-              </span>
             </div>
-            <h3 className="font-bold text-foreground text-lg leading-tight">
-              {displayName}
-            </h3>
           </div>
           
-          {/* All Language Translations - Enhanced Cards */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Other Languages
-              </span>
+          {/* Rarity badge - positioned as overlay */}
+          {/* {item.rarity && (
+            <div className="absolute -top-2 -right-2">
+              <Badge className={cn('text-xs font-bold shadow-lg', rarityColor)}>
+                <Star className="w-3 h-3 mr-1" />
+                {item.rarity}
+              </Badge>
             </div>
-            
-            <div className="grid grid-cols-1 gap-2">
-              {Object.entries(languageInfo).map(([lang, info]) => {
-                const langName = getDisplayName(item, lang as keyof typeof languageInfo);
-                
-                // Skip if it's the same as the primary name to avoid duplication
-                if (lang === 'EN') return null;
-                
-                return (
-                  <div 
-                    key={lang} 
-                    className="flex items-center gap-3 p-3 bg-card/40 rounded-lg border border-border/20 hover:bg-card/50 transition-colors duration-200"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm shrink-0">{info.flag}</span>
-                      <span className="text-xs font-medium text-muted-foreground/60 bg-muted/30 px-2 py-1 rounded-md">
-                        {info.name}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-foreground/90 flex-1 min-w-0 truncate">
-                      {typeof langName === 'string' ? langName : String(langName || 'N/A')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          )} */}
         </div>
 
-        {/* Character & Description */}
-        <div className="space-y-3 mb-6">
-          {item.character && (
-            <div className="flex items-center gap-2 p-3 bg-muted/20 rounded-lg border border-border/10">
-              <User className="w-4 h-4 text-accent-cyan" />
-              <span className="text-sm font-medium text-foreground">{String(item.character)}</span>
-            </div>
-          )}
-
-          {displayDescription && (
-            <div className="p-3 bg-muted/10 rounded-lg border border-border/10">
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                {displayDescription}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Stats Section - Enhanced */}
-        {item.stats && (
-          <div className="p-4 bg-gradient-to-br from-accent-cyan/5 to-transparent rounded-lg border border-accent-cyan/10">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-accent-cyan" />
-              <span className="text-sm font-semibold text-foreground">Stats</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {statsEntries.map(([stat, value]) => (
-                <div key={stat} className="flex justify-between items-center p-2 bg-card/40 rounded-md border border-border/10">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat}</span>
-                  <span className="font-bold text-accent-cyan text-sm">{String(value || 0)}</span>
-                </div>
-              ))}
-            </div>
+        <div className="flex-1">
+          {/* Item Type Badge */}
+          <Badge variant="outline" className={cn('text-xs mb-2 shadow-xs', typeColor)}>
+            {typeIcon}
+            <span className="ml-1 capitalize font-medium">{item.type}</span>
+          </Badge>
+          
+          {/* Item ID */}
+          <div className="text-xs text-gray-400">
+            ID: {item.id}
           </div>
-        )}
+        </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="expanded"
+      header={header}
+    >
+    </MultiLanguageCard>
   );
 });
 
@@ -430,8 +338,6 @@ export default function ItemsPage() {
     sortState.sortDirection
   );
 
-
-
   // Create filter configuration
   const filterFields: FilterField[] = useMemo(() => [
     {
@@ -548,7 +454,7 @@ export default function ItemsPage() {
       />
 
       {/* Items Grid */}
-      <Grid cols={3} gap="md" className="pt-2">
+      <Grid cols={2} gap="md" className="mt-8">
         {filteredAndSortedItems.length === 0 && !itemsData.loading ? (
           <motion.div
             initial={{ opacity: 0, y: 40 }}

@@ -27,6 +27,10 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       is_limited: Boolean(row.is_limited),
       release_date_gl: row.release_date_gl,
       game_version: row.game_version,
+      image_before_data: row.image_before_data,
+      image_before_mime_type: row.image_before_mime_type,
+      image_after_data: row.image_after_data,
+      image_after_mime_type: row.image_after_mime_type,
     };
   }
 
@@ -46,7 +50,11 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
       'has_malfunction',
       'is_limited',
       'release_date_gl',
-      'game_version'
+      'game_version',
+      'image_before_data',
+      'image_before_mime_type',
+      'image_after_data',
+      'image_after_mime_type',
     ];
   }
 
@@ -58,8 +66,9 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     try {
       const [result] = await executeQuery(
         `INSERT INTO swimsuits (character_id, unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, rarity, suit_type, total_stats_awakened, has_malfunction, is_limited, release_date_gl, game_version)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description_en, rarity, suit_type, total_stats_awakened, has_malfunction, is_limited, release_date_gl, game_version,
+         image_before_data, image_before_mime_type, image_after_data, image_after_mime_type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           swimsuit.character_id,
           swimsuit.unique_key,
@@ -76,6 +85,10 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
           swimsuit.is_limited ?? true,
           swimsuit.release_date_gl,
           swimsuit.game_version,
+          swimsuit.image_before_data,
+          swimsuit.image_before_mime_type,
+          swimsuit.image_after_data,
+          swimsuit.image_after_mime_type,
         ]
       ) as [any, any];
 
@@ -250,6 +263,22 @@ export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
     if (updates.game_version !== undefined) {
       setClause.push(`game_version = ?`);
       params.push(updates.game_version);
+    }
+    if (updates.image_before_data !== undefined) {
+      setClause.push(`image_before_data = ?`);
+      params.push(updates.image_before_data);
+    }
+    if (updates.image_before_mime_type !== undefined) {
+      setClause.push(`image_before_mime_type = ?`);
+      params.push(updates.image_before_mime_type);
+    }
+    if (updates.image_after_data !== undefined) {
+      setClause.push(`image_after_data = ?`);
+      params.push(updates.image_after_data);
+    }
+    if (updates.image_after_mime_type !== undefined) {
+      setClause.push(`image_after_mime_type = ?`);
+      params.push(updates.image_after_mime_type);
     }
 
     if (setClause.length === 0) {

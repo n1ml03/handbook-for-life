@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
-import pool, { executeQuery } from '../config/database';
+import pool, { executeQuery, executeTransaction } from '../config/database';
 import logger from '../config/logger';
-import { AppError } from '../middleware/errorHandler';
+import { AppError, DatabaseError } from '../middleware/errorHandler';
 import { QueryOptimizer } from '../services/QueryOptimizer';
 
 export interface PaginationOptions {
@@ -46,20 +46,25 @@ export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends N
   protected abstract getCreateFields(): (keyof TNewEntity)[];
   protected abstract getUpdateFields(): (keyof TNewEntity)[];
 
-  // Helper method for transactions
-  protected async withTransaction<T>(callback: (connection: mysql.PoolConnection) => Promise<T>): Promise<T> {
-    const connection = await this.pool.getConnection();
+  // Enhanced helper method for transactions using the optimized database transaction handler
+  protected async withTransaction<T>(
+    callback: (connection: mysql.PoolConnection) => Promise<T>,
+    options?: {
+      timeout?: number;
+      isolationLevel?: 'READ UNCOMMITTED' | 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE';
+      retryOnDeadlock?: boolean;
+      maxRetries?: number;
+    }
+  ): Promise<T> {
     try {
-      await connection.beginTransaction();
-      const result = await callback(connection);
-      await connection.commit();
-      return result;
-    } catch (error) {
-      await connection.rollback();
-      logger.error('Transaction failed:', error);
-      throw error;
-    } finally {
-      connection.release();
+      return await executeTransaction(callback, options);
+    } catch (error: any) {
+      // Convert to DatabaseError for better error handling
+      throw new DatabaseError(
+        `Transaction failed in ${this.tableName}`,
+        error,
+        { table: this.tableName, operation: 'transaction' }
+      );
     }
   }
 
@@ -71,15 +76,26 @@ export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends N
     let query = baseQuery;
 
     if (sortBy) {
-      // Validate sortBy to prevent SQL injection
-      const safeColumnName = sortBy.replace(/[^a-zA-Z0-9_]/g, '');
-      query += ` ORDER BY ${safeColumnName} ${sortOrder.toUpperCase()}`;
+      // Map sortBy parameter to actual column name
+      const columnName = this.mapSortColumn(sortBy);
+      if (columnName) {
+        query += ` ORDER BY ${columnName} ${sortOrder.toUpperCase()}`;
+      } else {
+        query += ` ORDER BY id ${sortOrder.toUpperCase()}`;
+      }
     } else {
       query += ` ORDER BY id ${sortOrder.toUpperCase()}`;
     }
 
     query += ` LIMIT ${limit} OFFSET ${offset}`;
     return query;
+  }
+
+  // Override this method in child classes to map sort parameters to actual column names
+  protected mapSortColumn(sortBy: string): string | null {
+    // Default implementation - validate and sanitize column name
+    const safeColumnName = sortBy.replace(/[^a-zA-Z0-9_]/g, '');
+    return safeColumnName;
   }
 
   // Generic paginated results with performance tracking
@@ -128,19 +144,52 @@ export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends N
           hasPrev: page > 1,
         },
       };
-    } catch (error) {
-      logger.error('Pagination query failed:', error);
-      throw new AppError('Failed to fetch paginated results', 500);
+    } catch (error: any) {
+      logger.error('Pagination query failed:', {
+        error: error.message,
+        table: this.tableName,
+        options,
+        baseQuery,
+        countQuery
+      });
+
+      throw new DatabaseError(
+        `Failed to fetch paginated results from ${this.tableName}`,
+        error,
+        { table: this.tableName, options, operation: 'pagination' }
+      );
     }
   }
 
-  // Generic CRUD operations with type safety
+  // Enhanced CRUD operations with better error handling
   public async findById(id: string | number): Promise<TEntity> {
-    const [rows] = await executeQuery(`SELECT * FROM ${this.tableName} WHERE id = ?`, [id]) as [any[], any];
-    if (rows.length === 0) {
-      throw new AppError(`${this.tableName} not found`, 404);
+    try {
+      // Validate ID
+      if (id === null || id === undefined || id === '') {
+        throw new AppError(`Invalid ID provided for ${this.tableName}`, 400);
+      }
+
+      const [rows] = await executeQuery(
+        `SELECT * FROM ${this.tableName} WHERE id = ?`,
+        [id]
+      ) as [any[], any];
+
+      if (rows.length === 0) {
+        throw new AppError(`${this.tableName} with ID ${id} not found`, 404);
+      }
+
+      return this.mapRow(rows[0]);
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new DatabaseError(
+        `Failed to find ${this.tableName} by ID`,
+        error,
+        { table: this.tableName, id, operation: 'findById' }
+      );
     }
-    return this.mapRow(rows[0]);
   }
 
   public async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<TEntity>> {
@@ -151,25 +200,53 @@ export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends N
     );
   }
 
-  // Generic create with dynamic field mapping
+  // Enhanced create with comprehensive error handling
   public async create(entity: TNewEntity): Promise<TEntity> {
-    const fields = this.getCreateFields();
-    const fieldNames = fields.map(f => String(f)).join(', ');
-    const placeholders = fields.map(() => '?').join(', ');
-    const values = fields.map(field => entity[field as keyof TNewEntity]);
-
     try {
+      // Validate entity
+      if (!entity || typeof entity !== 'object') {
+        throw new AppError(`Invalid entity data for ${this.tableName}`, 400);
+      }
+
+      const fields = this.getCreateFields();
+      const fieldNames = fields.map(f => String(f)).join(', ');
+      const placeholders = fields.map(() => '?').join(', ');
+      const values = fields.map(field => entity[field as keyof TNewEntity]);
+
+      // Check for required fields
+      const missingFields = fields.filter(field =>
+        entity[field as keyof TNewEntity] === undefined ||
+        entity[field as keyof TNewEntity] === null
+      );
+
+      if (missingFields.length > 0) {
+        throw new AppError(
+          `Missing required fields for ${this.tableName}: ${missingFields.join(', ')}`,
+          400
+        );
+      }
+
       const [result] = await executeQuery(
         `INSERT INTO ${this.tableName} (${fieldNames}) VALUES (${placeholders})`,
         values
       ) as [any, any];
 
+      logger.info(`Created new ${this.tableName}`, {
+        id: result.insertId,
+        affectedRows: result.affectedRows
+      });
+
       return this.findById(result.insertId);
     } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError(`${this.tableName} with this key already exists`, 409);
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw new AppError(`Failed to create ${this.tableName}`, 500);
+
+      throw new DatabaseError(
+        `Failed to create ${this.tableName}`,
+        error,
+        { table: this.tableName, entity, operation: 'create' }
+      );
     }
   }
 

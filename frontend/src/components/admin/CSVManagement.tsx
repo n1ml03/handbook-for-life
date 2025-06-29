@@ -538,7 +538,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
         </div>
 
         {/* Quick Export Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
           <DownloadButton
             isDownloading={false}
             onClick={() => exportToCSV(documents, 'documents.csv')}
@@ -581,7 +581,7 @@ export const CSVManagement: React.FC<CSVManagementProps> = ({
 
         <div className="space-y-6">
           {/* Import Configuration */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
             <FormGroup label="Import Type" required>
               <Select
                 value={csvImportType}

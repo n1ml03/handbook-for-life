@@ -192,7 +192,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       // Extract filename from URL
       const filename = fileUrl.split('/').pop();
       if (filename) {
-        await fetch(`/api/upload/screenshot/${filename}`, {
+        await fetch(`/api/upload/files/${encodeURIComponent(filename)}?type=screenshots`, {
           method: 'DELETE',
         });
       }
@@ -237,8 +237,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           isDragOver && !disabled 
             ? "border-accent-pink bg-accent-pink/5 scale-[1.02]" 
             : "border-border/30",
-          disabled && "opacity-50 cursor-not-allowed bg-muted/30",
-          !disabled && "cursor-pointer bg-background/50 hover:bg-muted/10"
+          disabled ? "opacity-50 cursor-not-allowed bg-muted/30" : undefined,
+          !disabled ? "cursor-pointer bg-background/50 hover:bg-muted/10" : undefined
         )}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}

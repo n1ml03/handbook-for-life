@@ -131,7 +131,6 @@ const AdminPage = () => {
       title_en: '',
       summary_en: '',
       content_json_en: undefined,
-      is_published: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       // Extended properties required for UI compatibility

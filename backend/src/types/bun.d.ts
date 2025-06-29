@@ -2,6 +2,7 @@
 declare namespace Bun {
   interface ImportMeta {
     dir: string;
+    main: boolean;
   }
 }
 
@@ -9,6 +10,7 @@ declare namespace Bun {
 declare global {
   interface ImportMeta {
     dir: string;
+    main: boolean;
   }
 }
 

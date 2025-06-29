@@ -92,7 +92,7 @@ export const CSVPreviewModal: React.FC<CSVPreviewModalProps> = ({
               <ArrowUpDown className="w-5 h-5 text-accent-cyan" />
               Column Mapping
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
               {columnMappings.map((mapping, index) => (
                 <div key={mapping.dbField} className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2">

@@ -78,7 +78,27 @@ router.get('/currency',
   })
 );
 
-// GET /api/items/search - Search items
+/**
+ * @swagger
+ * /api/items/search:
+ *   get:
+ *     tags: [Items]
+ *     summary: Search items
+ *     description: Search items by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -110,7 +130,23 @@ router.get('/search',
   })
 );
 
-// GET /api/items/:id - Get item by ID
+/**
+ * @swagger
+ * /api/items/{id}:
+ *   get:
+ *     tags: [Items]
+ *     summary: Get item by ID
+ *     description: Retrieve a specific item by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
@@ -150,7 +186,31 @@ router.post('/',
   })
 );
 
-// PUT /api/items/:id - Update item
+/**
+ * @swagger
+ * /api/items/{id}:
+ *   put:
+ *     tags: [Items]
+ *     summary: Update item
+ *     description: Update an existing item
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validate(schemas.updateItem),
   asyncHandler(async (req, res) => {
@@ -176,7 +236,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/items/:id - Delete item
+/**
+ * @swagger
+ * /api/items/{id}:
+ *   delete:
+ *     tags: [Items]
+ *     summary: Delete item
+ *     description: Delete an existing item
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);

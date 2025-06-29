@@ -424,7 +424,7 @@ export const UnifiedFilter = ({
               </div>
 
               {/* Enhanced Main Filter Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              <div className="grid-responsive-cards mb-6">
                 {mainFields.map((field) => (
                   <div key={field.key} className="space-y-2">
                     <label
@@ -480,7 +480,7 @@ export const UnifiedFilter = ({
                         className="overflow-hidden"
                         id="expandable-stats"
                       >
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 rounded-xl modern-glass border border-border/20">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-responsive mb-6 p-responsive rounded-xl modern-glass border border-border/20">
                           {expandableFields.map((field) => (
                             <div key={field.key} className="space-y-2">
                               <label

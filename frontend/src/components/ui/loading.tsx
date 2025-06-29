@@ -122,7 +122,7 @@ export const SkeletonText = ({ lines = 1, className }: SkeletonTextProps) => (
         key={i}
         className={cn(
           'h-4 bg-muted/50 rounded-sm animate-pulse',
-          i === lines - 1 && lines > 1 && 'w-3/4'
+          i === lines - 1 && lines > 1 ? 'w-3/4' : ''
         )}
       />
     ))}

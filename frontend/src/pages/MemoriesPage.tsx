@@ -5,19 +5,28 @@ import {
   ChevronRight,
   Calendar,
   Camera,
-  Loader2} from 'lucide-react';
+  Loader2,
+  Book,
+  Users} from 'lucide-react';
 import { type Memory, type MemoryCardProps, type SortDirection, type Episode } from '@/types';
 import { episodesApi } from '@/services/api';
 import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createMemoriesFilterConfig, memoriesSortOptions } from '@/components/features/FilterConfigs';
 import React from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Helper function to convert Episode to Memory
 const episodeToMemory = (episode: Episode): Memory => ({
   id: episode.id.toString(),
   name: episode.title_en || episode.title_jp || 'Untitled Memory',
+  // Store multi-language titles for MultiLanguageCard
+  name_jp: episode.title_jp || '',
+  name_en: episode.title_en || '',
+  name_cn: episode.title_cn || '',
+  name_tw: episode.title_tw || '',
+  name_kr: episode.title_kr || '',
   description: episode.unlock_condition_en || '',
   date: new Date().toISOString(),
   thumbnail: '📖',
@@ -36,85 +45,78 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
     });
   };
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative modern-card p-6 overflow-hidden group"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-white text-lg truncate">{memory.name}</h3>
-            </div>
+  const names: MultiLanguageNames = {
+    name_jp: memory.name_jp || '',
+    name_en: memory.name_en || '',
+    name_cn: memory.name_cn || '',
+    name_tw: memory.name_tw || '',
+    name_kr: memory.name_kr || ''
+  };
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
+          <span className="text-xl">{memory.thumbnail}</span>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Book className="w-3 h-3 text-accent-cyan" />
+            <span className="text-xs text-accent-cyan font-medium">Episode</span>
           </div>
-          
           <div className="flex items-center gap-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20">
-              <span className="text-2xl">{memory.thumbnail}</span>
-            </div>
+            <Calendar className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-400">{formatDate(memory.date)}</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
 
-        {/* Description */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-300 leading-relaxed line-clamp-2">
+  const memoryDetails = (
+    <div className="space-y-3">
+      {/* Description */}
+      {memory.description && (
+        <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
+          <p className="text-sm text-gray-300 leading-relaxed">
             {memory.description}
           </p>
         </div>
+      )}
 
-        {/* Date */}
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-accent-cyan" />
-          <span className="text-xs text-gray-400">{formatDate(memory.date)}</span>
+      {/* Characters */}
+      {memory.characters.length > 0 && (
+        <div className="bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-lg p-3 border border-accent-cyan/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-3 h-3 text-accent-cyan" />
+            <span className="text-xs font-bold text-accent-cyan">
+              Characters ({memory.characters.length})
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {memory.characters.map((character: string, index: number) => (
+              <span 
+                key={index}
+                className="text-xs bg-dark-primary/50 px-2 py-1 rounded border border-dark-border/30 text-gray-300"
+              >
+                {character}
+              </span>
+            ))}
+          </div>
         </div>
+      )}
+    </div>
+  );
 
-        {/* Characters */}
-        {memory.characters.length > 0 && (
-          <div className="mb-4">
-            <div className="bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-xl p-3 border border-accent-cyan/20">
-              <p className="text-xs font-bold text-accent-cyan mb-2">Characters</p>
-              <div className="flex flex-wrap gap-1">
-                {memory.characters.map((character: string, index: number) => (
-                  <span 
-                    key={index}
-                    className="text-xs bg-dark-primary/50 px-2 py-1 rounded-sm border border-dark-border/30 text-gray-300"
-                  >
-                    {character}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tags */}
-        {memory.tags.length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
-              {memory.tags.slice(0, 3).map((tag: string, index: number) => (
-                <span 
-                  key={index}
-                  className="text-xs bg-accent-pink/20 px-2 py-1 rounded-sm border border-accent-pink/30 text-accent-pink"
-                >
-                  #{tag}
-                </span>
-              ))}
-              {memory.tags.length > 3 && (
-                <span className="text-xs text-gray-400 px-2 py-1">
-                  +{memory.tags.length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="expanded"
+      header={header}
+    >
+      {memoryDetails}
+    </MultiLanguageCard>
   );
 });
 
@@ -123,13 +125,28 @@ export default function MemoriesPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [filterValues, setFilterValues] = useState<{
+    search: string;
+    episode_type: string;
+    related_entity_type: string;
+    related_entity_id: string;
+    favorite: boolean;
+  }>({
+    search: '',
+    episode_type: '',
+    related_entity_type: '',
+    related_entity_id: '',
+    favorite: false
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('title_en');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [filterValues, setFilterValues] = useState<Record<string, string | boolean | number>>({});
 
-  const itemsPerPage = 8;
+  const itemsPerPage = 12;
+
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useDebounce(filterValues.search, 500);
 
   // Fetch episodes from API and convert to memories
   const fetchEpisodes = useCallback(async () => {
@@ -141,10 +158,10 @@ export default function MemoriesPage() {
         limit: itemsPerPage,
         sortBy: sortBy,
         sortOrder: sortDirection,
-        ...(filterValues.episode_type && typeof filterValues.episode_type === 'string' && { type: filterValues.episode_type }),
-        ...(filterValues.related_entity_type && typeof filterValues.related_entity_type === 'string' && { entityType: filterValues.related_entity_type }),
+        ...(filterValues.episode_type && { type: filterValues.episode_type }),
+        ...(filterValues.related_entity_type && { entityType: filterValues.related_entity_type }),
         ...(filterValues.related_entity_id && { entityId: Number(filterValues.related_entity_id) }),
-        ...(filterValues.search && typeof filterValues.search === 'string' && { search: filterValues.search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
       };
 
       const response = await episodesApi.getEpisodes(params);
@@ -154,14 +171,14 @@ export default function MemoriesPage() {
       const memoryData = episodeData.map((episode: Episode) => episodeToMemory(episode));
       setMemories(memoryData);
       
-              const paginationData = safeExtractPaginationData(response, episodeData.length);
-        setTotalPages(paginationData.totalPages);
+      const paginationData = safeExtractPaginationData(response, episodeData.length);
+      setTotalPages(paginationData.totalPages);
     } catch (err) {
       console.error('Error fetching episodes:', err);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, sortBy, sortDirection, filterValues.episode_type, filterValues.related_entity_type, filterValues.related_entity_id, filterValues.search]);
+  }, [currentPage, sortBy, sortDirection, filterValues.episode_type, filterValues.related_entity_type, filterValues.related_entity_id, debouncedSearch]);
 
   // Fetch episodes on component mount and when dependencies change
   useEffect(() => {
@@ -179,28 +196,34 @@ export default function MemoriesPage() {
   }, [memories, filterValues.favorite]);
 
   const episodeTypes = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
-  const characters = useMemo(() => [...new Set(memories.map(m => m.characters).flat())].sort(), [memories]);
-  const versions = useMemo(() => ['1.0', '1.5', '2.0', '2.5', '3.0'], []);
 
-  // Create filter configuration
-  const filterFields = useMemo(() => createMemoriesFilterConfig(episodeTypes, characters, versions), [characters, versions]);
-
-  const handleFilterChange = (key: string, value: string | boolean | number) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | boolean | number) => {
+    if (key === 'favorite') {
+      setFilterValues(prev => ({ ...prev, [key]: Boolean(value) }));
+    } else {
+      setFilterValues(prev => ({ ...prev, [key]: String(value) }));
+    }
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
     setSortBy(newSortBy);
     setSortDirection(newDirection);
-  };
+  }, []);
 
-  const clearFilters = () => {
-    setFilterValues({});
+  const clearFilters = useCallback(() => {
+    setFilterValues({
+      search: '',
+      episode_type: '',
+      related_entity_type: '',
+      related_entity_id: '',
+      favorite: false
+    });
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleToggleFavorite = async (id: string) => {
+  const handleToggleFavorite = useCallback(async (id: string) => {
     try {
       const memory = memories.find(m => m.id === id);
       if (!memory) return;
@@ -222,9 +245,20 @@ export default function MemoriesPage() {
       ));
       console.error('Failed to update favorite status');
     }
-  };
+  }, [memories]);
 
+  // Memoized filter options
+  const memoizedFilterOptions = useMemo(() => {
+    const characters = [...new Set(memories.map(m => m.characters).flat())].sort();
+    const versions = ['1.0', '1.5', '2.0', '2.5', '3.0'];
+    return { characters, versions };
+  }, [memories]);
 
+  // Create filter configuration with memoized options
+  const filterFields = useMemo(() => 
+    createMemoriesFilterConfig(episodeTypes, memoizedFilterOptions.characters, memoizedFilterOptions.versions), 
+    [memoizedFilterOptions.characters, memoizedFilterOptions.versions]
+  );
 
   return (
     <PageLoadingState 
@@ -239,10 +273,10 @@ export default function MemoriesPage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="modern-page-title">
+          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
             Episodes Gallery
           </h1>
-          <p className="modern-page-subtitle">
+          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
             {loading ? 'Loading episodes...' : `Showing ${filteredMemories.length} of ${memories.length} episodes`}
           </p>
         </motion.div>
@@ -269,13 +303,12 @@ export default function MemoriesPage() {
           secondaryColor="accent-cyan"
         />
 
-
-
         {/* Episode Display */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
+          className="mt-8"
         >
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -285,7 +318,7 @@ export default function MemoriesPage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            <div className="grid-responsive-cards mb-8">
               {filteredMemories.map((memory, index) => (
                 <motion.div
                   key={memory.id}

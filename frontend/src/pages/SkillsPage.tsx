@@ -5,27 +5,29 @@ import {
   ChevronRight,
   Zap,
   Shield,
-  Sparkles} from 'lucide-react';
+  Sparkles,
+  Info
+} from 'lucide-react';
 import { skillsApi } from '@/services/api';
 import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 import { 
   type Skill,
   type SortDirection,
-  type SkillCategory,
-  getLocalizedName
+  type SkillCategory
 } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
-import { PageLoadingState, LoadingSpinner } from '@/components/ui';
+import { PageLoadingState, LoadingSpinner, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import { PageSection } from '@/components/ui/spacing';
+import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
 
 const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
   const getCategoryColor = (category: SkillCategory) => {
     switch (category) {
-      case 'ACTIVE': return 'from-red-400 to-pink-500';
-      case 'PASSIVE': return 'from-cyan-400 to-blue-500';
-      case 'POTENTIAL': return 'from-purple-400 to-pink-500';
-      default: return 'from-gray-400 to-gray-600';
+      case 'ACTIVE': return 'bg-gradient-to-r from-red-400 to-pink-500';
+      case 'PASSIVE': return 'bg-gradient-to-r from-cyan-400 to-blue-500';
+      case 'POTENTIAL': return 'bg-gradient-to-r from-purple-400 to-pink-500';
+      default: return 'bg-gradient-to-r from-gray-400 to-gray-600';
     }
   };
 
@@ -38,71 +40,65 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
     }
   };
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative modern-card p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="font-bold text-white text-lg">{getLocalizedName(skill, 'en')}</h3>
-              <motion.div
-                className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${getCategoryColor(skill.skill_category)} text-white shadow-lg flex items-center space-x-1`}
-                whileHover={{ scale: 1.1 }}
-              >
-                {getCategoryIcon(skill.skill_category)}
-                <span>{skill.skill_category}</span>
-              </motion.div>
-            </div>
-          </div>
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20 overflow-hidden">
-            {getCategoryIcon(skill.skill_category)}
-          </div>
+  const names: MultiLanguageNames = {
+    name_jp: skill.name_jp,
+    name_en: skill.name_en,
+    name_cn: skill.name_cn,
+    name_tw: skill.name_tw,
+    name_kr: skill.name_kr
+  };
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
+          {getCategoryIcon(skill.skill_category)}
         </div>
-
-        {/* Description */}
-        {skill.description_en && (
-          <div className="mb-4 p-3 modern-glass rounded-xl border border-border/30">
-            <p className="text-sm text-muted-foreground leading-relaxed">{skill.description_en}</p>
-          </div>
-        )}
-
-        {/* Effect Type */}
-        {skill.effect_type && (
-          <div className="mb-4">
-            <p className="text-xs font-bold text-accent-cyan mb-2 flex items-center">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Effect Type
-            </p>
-            <div className="p-2 modern-glass rounded-lg border border-border/30">
-              <p className="text-xs text-muted-foreground">{skill.effect_type}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ID */}
-        <div className="pt-3 border-t border-border/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-mono modern-glass px-2 py-1 rounded-sm">
-              #{skill.id}
-            </span>
-            <motion.div
-              className="text-xs text-accent-cyan/60 group-hover:text-accent-cyan transition-colors"
-              whileHover={{ scale: 1.1 }}
-            >
-              Click to view details →
-            </motion.div>
+        <div>
+          <div className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg ${getCategoryColor(skill.skill_category)} mb-1`}>
+            {getCategoryIcon(skill.skill_category)}
+            <span>{skill.skill_category}</span>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  const skillDetails = (
+    <div className="space-y-3">
+      {/* Description */}
+      {skill.description_en && (
+        <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
+          <div className="flex items-center gap-2 mb-2">
+            <Info className="w-3 h-3 text-accent-cyan" />
+            <span className="text-xs font-medium text-accent-cyan">Description</span>
+          </div>
+          <p className="text-sm text-gray-300 leading-relaxed">{skill.description_en}</p>
+        </div>
+      )}
+
+      {/* Effect Type */}
+      {skill.effect_type && (
+        <div className="p-3 bg-gradient-to-r from-accent-purple/10 to-accent-pink/10 rounded-lg border border-accent-purple/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-3 h-3 text-accent-purple" />
+            <span className="text-xs font-medium text-accent-purple">Effect Type</span>
+          </div>
+          <span className="text-sm font-bold text-white">{skill.effect_type}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="expanded"
+      header={header}
+    >
+      {skillDetails}
+    </MultiLanguageCard>
   );
 });
 
@@ -112,28 +108,47 @@ export default function SkillsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name_en');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({});
+  const [filterValues, setFilterValues] = useState<{
+    search: string;
+    category: string;
+  }>({
+    search: '',
+    category: ''
+  });
   const [showFilters, setShowFilters] = useState(false);
 
   const itemsPerPage = 12;
+  
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useDebounce(filterValues.search as string, 500);
 
   const fetchSkills = useCallback(async () => {
     try {
       setLoading(true);
       
-      const params: Record<string, unknown> = {
-        page: currentPage,
-        limit: itemsPerPage,
-        sortBy,
-        sortOrder: sortDirection,
-        ...(searchQuery && { search: searchQuery }),
-        ...(filterValues.category && { category: filterValues.category }),
-      };
-
-      const response = await skillsApi.getSkills(params);
+      let response;
+      
+      if (debouncedSearch) {
+        // Use search endpoint when there's a search query
+        response = await skillsApi.searchSkills(debouncedSearch, {
+          page: currentPage,
+          limit: itemsPerPage,
+          sortBy,
+          sortOrder: sortDirection,
+          ...(filterValues.category && { category: filterValues.category }),
+        });
+      } else {
+        // Use regular endpoint with filters
+        response = await skillsApi.getSkills({
+          page: currentPage,
+          limit: itemsPerPage,
+          sortBy,
+          sortOrder: sortDirection,
+          ...(filterValues.category && { category: filterValues.category }),
+        });
+      }
       
       // Safely extract data and pagination
       const responseData = safeExtractArrayData<Skill>(response, 'skills API');
@@ -147,7 +162,7 @@ export default function SkillsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery, sortBy, sortDirection, filterValues.category]);
+  }, [currentPage, debouncedSearch, filterValues.category, sortBy, sortDirection]);
 
   useEffect(() => {
     fetchSkills();
@@ -158,7 +173,7 @@ export default function SkillsPage() {
       key: 'search',
       label: 'Search Skills',
       type: 'text' as const,
-      placeholder: 'Search by name...',
+      placeholder: 'Search by name, description, or effect type...',
       gridCols: 2,
     },
     {
@@ -167,9 +182,9 @@ export default function SkillsPage() {
       type: 'select' as const,
       options: [
         { value: '', label: 'All Categories' },
-        { value: 'ACTIVE', label: 'Active' },
-        { value: 'PASSIVE', label: 'Passive' },
-        { value: 'POTENTIAL', label: 'Potential' },
+        { value: 'ACTIVE', label: 'Active Skills' },
+        { value: 'PASSIVE', label: 'Passive Skills' },
+        { value: 'POTENTIAL', label: 'Potential Skills' },
       ],
     },
   ];
@@ -182,11 +197,10 @@ export default function SkillsPage() {
   ];
 
   const handleFilterChange = (key: string, value: string | number | boolean) => {
-    if (key === 'search') {
-      setSearchQuery(String(value));
-    } else {
-      setFilterValues(prev => ({ ...prev, [key]: value }));
-    }
+    setFilterValues(prev => ({ 
+      ...prev, 
+      [key]: String(value) // Convert all values to string for consistency
+    }));
     setCurrentPage(1);
   };
 
@@ -197,8 +211,10 @@ export default function SkillsPage() {
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setFilterValues({});
+    setFilterValues({
+      search: '',
+      category: ''
+    });
     setSortBy('name_en');
     setSortDirection('asc');
     setCurrentPage(1);
@@ -258,12 +274,21 @@ export default function SkillsPage() {
             transition={{ delay: 0.2 }}
             className="flex items-center justify-between mb-6"
           >
-                      {loading && (
-            <div className="flex items-center gap-2">
-              <LoadingSpinner size="sm" />
-              <span className="text-sm text-muted-foreground">Loading more skills...</span>
+            <div className="flex items-center gap-4">
+              {loading && (
+                <div className="flex items-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <span className="text-sm text-muted-foreground">
+                    {debouncedSearch ? 'Searching skills...' : 'Loading skills...'}
+                  </span>
+                </div>
+              )}
+              {!loading && debouncedSearch && (
+                <div className="text-sm text-muted-foreground">
+                  Search results for: <span className="font-medium text-foreground">"{debouncedSearch}"</span>
+                </div>
+              )}
             </div>
-          )}
           </motion.div>
 
           {/* Skills Grid */}
@@ -271,7 +296,7 @@ export default function SkillsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
+            className="grid-responsive-cards mb-8"
           >
             {skills.map((skill, index) => (
               <motion.div
@@ -299,14 +324,22 @@ export default function SkillsPage() {
               >
                 <Zap className="w-12 h-12 text-accent-cyan/60" />
               </motion.div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">No skills found</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                {debouncedSearch ? `No skills found for "${debouncedSearch}"` : 'No skills found'}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {debouncedSearch ? 
+                  'Try adjusting your search terms or clear the search to see all skills.' : 
+                  'Try adjusting your filters or clear them to see all skills.'
+                }
+              </p>
               <motion.button
                 onClick={clearFilters}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
               >
-                Clear All Filters
+                {debouncedSearch ? 'Clear Search' : 'Clear All Filters'}
               </motion.button>
             </motion.div>
           )}
@@ -329,22 +362,52 @@ export default function SkillsPage() {
               </button>
 
               <div className="flex items-center space-x-2">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(currentPage - 2 + i, totalPages - 4 + i));
-                  return pageNum <= totalPages ? (
+                {(() => {
+                  const maxVisiblePages = 5;
+                  const halfVisible = Math.floor(maxVisiblePages / 2);
+                  
+                  let startPage = Math.max(1, currentPage - halfVisible);
+                  const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  
+                  // Adjust startPage if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+                  
+                  const pages = [];
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`w-10 h-10 rounded-lg font-bold transition-colors ${
+                          currentPage === i
+                            ? 'bg-accent-cyan text-dark-primary'
+                            : 'btn-modern-ghost text-foreground'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+
+                {/* Show ellipsis and last page if needed */}
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <span className="text-muted-foreground px-2">...</span>
+                    )}
                     <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-lg font-bold transition-colors ${
-                        currentPage === pageNum
-                          ? 'bg-accent-cyan text-dark-primary'
-                          : 'btn-modern-ghost text-foreground'
-                      }`}
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="btn-modern-ghost w-10 h-10 rounded-lg font-bold transition-colors text-foreground"
                     >
-                      {pageNum}
+                      {totalPages}
                     </button>
-                  ) : null;
-                })}
+                  </>
+                )}
               </div>
 
               <button

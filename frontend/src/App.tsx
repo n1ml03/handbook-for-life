@@ -8,7 +8,7 @@ import { LoadingProvider } from '@/contexts/LoadingContext';
 import Header from '@/components/layout/Header';
 import { AccessibilityProvider, SkipLink } from '@/components/layout/AccessibilityProvider';
 import { UpdateLogsProvider } from '@/contexts/UpdateLogsContext';
-import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
+import { GlobalLoadingOverlay } from '@/components/ui/global-loading-overlay.tsx';
 
 // Main Pages - Lazy loaded for better performance
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -73,12 +73,12 @@ function App() {
               {/* Main Content */}
               <main 
                 id="main-content"
-                className="flex-1 overflow-x-hidden"
+                className="flex-1 overflow-x-hidden safe-area-inset"
                 style={{
                   scrollBehavior: 'smooth'
                 }}
               >
-                <div className="container mx-auto px-4 py-6">
+                <div className="modern-container py-responsive">
                   <Suspense fallback={<EnhancedLoadingFallback />}>
                     <Routes>
                       <Route path="/" element={<Navigate to="/home" replace />} />

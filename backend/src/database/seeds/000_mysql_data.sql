@@ -27,7 +27,27 @@ INSERT INTO `characters` (
 (9, 'hitomi', 'ひとみ', 'Hitomi', '瞳', '瞳', '히토미', 
  '2000-05-25', 160, 'B90/W58/H85', 'A', 'Kotono Mitsuishi', '/images/chars/hitomi.png', 1, '1.5.0'),
 (10, 'leifang', 'リー・ファン', 'Lei Fang', '李芳', '李芳', '리판', 
- '2000-04-18', 162, 'B83/W53/H82', 'B', 'Yui Horie', '/images/chars/leifang.png', 1, '1.6.0');
+ '2000-04-18', 162, 'B83/W53/H82', 'B', 'Yui Horie', '/images/chars/leifang.png', 1, '1.6.0'),
+(11, 'tina', 'ティナ', 'Tina', '蒂娜', '蒂娜', '티나', 
+ '2000-07-15', 175, 'B98/W61/H93', 'A', 'Eri Kitamura', '/images/chars/tina.png', 1, '2.0.0'),
+(12, 'mila', 'ミラ', 'Mila', '米拉', '米拉', '밀라', 
+ '2000-01-01', 168, 'B86/W56/H87', 'O', 'Saki Fujita', '/images/chars/mila.png', 1, '2.2.0'),
+(13, 'christie', 'クリスティ', 'Christie', '克里斯蒂', '克里斯蒂', '크리스티', 
+ '2000-12-18', 172, 'B91/W58/H88', 'AB', 'Kikuko Inoue', '/images/chars/christie.png', 1, '2.5.0'),
+(14, 'lisa', 'リサ', 'Lisa', '莉萨', '莉薩', '리사', 
+ '2000-03-08', 163, 'B89/W55/H86', 'B', 'Megumi Hayashibara', '/images/chars/lisa.png', 1, '2.8.0'),
+(15, 'rachel', 'レイチェル', 'Rachel', '瑞秋', '瑞秋', '레이첼', 
+ '2000-09-21', 170, 'B95/W59/H91', 'A', 'Houko Kuwashima', '/images/chars/rachel.png', 1, '3.0.0'),
+(16, 'momiji', 'もみじ', 'Momiji', '红叶', '紅葉', '모미지', 
+ '2000-11-29', 158, 'B87/W54/H84', 'AB', 'Kana Hanazawa', '/images/chars/momiji.png', 1, '3.2.0'),
+(17, 'nyotengu', 'にょうてんぐ', 'Nyotengu', '女天狗', '女天狗', '뇨텐구', 
+ '2000-10-10', 165, 'B93/W57/H89', 'O', 'Ai Nonaka', '/images/chars/nyotengu.png', 1, '3.5.0'),
+(18, 'phase4', 'フェーズ4', 'Phase-4', '第四阶段', '第四階段', '페이즈4', 
+ '2000-02-29', 155, 'B80/W52/H80', 'AB', 'Rie Kugimiya', '/images/chars/phase4.png', 1, '3.8.0'),
+(19, 'luna', 'ルナ', 'Luna', '露娜', '露娜', '루나', 
+ '2000-05-05', 161, 'B85/W54/H83', 'A', 'Nana Mizuki', '/images/chars/luna.png', 1, '4.0.0'),
+(20, 'tamaki', 'たまき', 'Tamaki', '环', '環', '타마키', 
+ '2000-08-12', 159, 'B88/W56/H85', 'B', 'Yuka Iguchi', '/images/chars/tamaki.png', 1, '4.2.0');
 
 -- ============================================================================
 -- 2. SKILLS (Core Entity)
@@ -65,7 +85,27 @@ INSERT INTO `skills` (
 (14, 'apl-boost-l', 'アピールアップL', 'Appeal Boost (L)', '魅力提升(大)', '魅力提升(大)', '어필 업(L)', 
  'Increases APL by 15%.', 'POTENTIAL', 'APL_UP', '2.5.0'),
 (15, 'malfunction-master', 'マルファンクションマスター', 'Malfunction Master', '故障大师', '故障大師', '말펑션 마스터', 
- 'Increases all stats by 30% when suit has Malfunction.', 'POTENTIAL', 'ALL_STATS_UP_MALFUNCTION', '4.0.0');
+ 'Increases all stats by 30% when suit has Malfunction.', 'POTENTIAL', 'ALL_STATS_UP_MALFUNCTION', '4.0.0'),
+(16, 'counter-attack-pro', 'カウンターアタックプロ', 'Counter Attack Pro', '反击专家', '反擊專家', '카운터 어택 프로', 
+ 'When receiving damage, 25% chance to counter with double damage.', 'PASSIVE', 'COUNTER_ATTACK', '4.5.0'),
+(17, 'all-round-boost-m', 'オールラウンドアップM', 'All-Round Boost (M)', '全能提升(中)', '全能提升(中)', '올라운드 업(M)', 
+ 'Increases all base stats by 8%.', 'POTENTIAL', 'ALL_STATS_UP', '3.5.0'),
+(18, 'fever-skill-combo', 'コンボフィーバースキル', 'Combo Fever Skill', '连击狂热技能', '連擊狂熱技能', '콤보 피버 스킬', 
+ 'When performing a combo, increases all stats by 35% for this point.', 'ACTIVE', 'COMBO_FEVER', '4.8.0'),
+(19, 'quick-recovery', 'クイックリカバリー', 'Quick Recovery', '快速恢复', '快速恢復', '퀵 리커버리', 
+ 'Stamina regenerates 50% faster between points.', 'POTENTIAL', 'STM_RECOVERY_UP', '2.3.0'),
+(20, 'concentration-master', '集中力マスター', 'Concentration Master', '专注大师', '專注大師', '집중력 마스터', 
+ 'Immune to opponent\'s debuff effects for first 5 attacks.', 'PASSIVE', 'DEBUFF_IMMUNITY', '3.8.0'),
+(21, 'lucky-strike', 'ラッキーストライク', 'Lucky Strike', '幸运一击', '幸運一擊', '럭키 스트라이크', 
+ 'Low chance to instantly win the point regardless of stats.', 'PASSIVE', 'INSTANT_WIN_CHANCE', '4.2.0'),
+(22, 'endurance-training', 'エンデュランストレーニング', 'Endurance Training', '耐力训练', '耐力訓練', '지구력 트레이닝', 
+ 'Reduces all stat decay by 40% throughout the match.', 'POTENTIAL', 'STAT_DECAY_RESIST', '3.0.0'),
+(23, 'team-spirit', 'チームスピリット', 'Team Spirit', '团队精神', '團隊精神', '팀 스피릿', 
+ 'Gains bonus stats based on the number of same-character suits owned.', 'POTENTIAL', 'TEAM_BONUS', '4.0.0'),
+(24, 'victory-rush', 'ビクトリーラッシュ', 'Victory Rush', '胜利冲刺', '勝利衝刺', '빅토리 러시', 
+ 'Each point won increases all stats by 5% (max 50%).', 'PASSIVE', 'MOMENTUM_BUILD', '4.3.0'),
+(25, 'perfect-serve', 'パーフェクトサーブ', 'Perfect Serve', '完美发球', '完美發球', '퍼펙트 서브', 
+ 'First serve of each game has 100% success rate and +20% power.', 'PASSIVE', 'SERVE_PERFECT', '3.3.0');
 
 -- ============================================================================
 -- 3. ITEMS (Core Entity)
@@ -104,7 +144,27 @@ INSERT INTO `items` (
 (14, 'trendy-voucher', 'トレンド券', 'Trendy Voucher', '潮流券', '潮流券', '트렌드 바우처', 
  'Special tickets used for Trendy gacha pulls.', 'Festival events, special promotions', 'CURRENCY', 'SR', '/images/items/trendy-voucher.png', '2.0.0'),
 (15, 'birthday-gift-box', 'バースデーギフトボックス', 'Birthday Gift Box', '生日礼品盒', '生日禮品盒', '생일 선물 상자', 
- 'A special gift box containing random birthday-themed items.', 'Birthday events', 'CONSUMABLE', 'SSR', '/images/items/birthday-gift.png', '1.5.0');
+ 'A special gift box containing random birthday-themed items.', 'Birthday events', 'CONSUMABLE', 'SSR', '/images/items/birthday-gift.png', '1.5.0'),
+(16, 'rainbow-crystal', 'レインボークリスタル', 'Rainbow Crystal', '彩虹水晶', '彩虹水晶', '레인보우 크리스탈', 
+ 'A rare crystal that can be used to upgrade any type of swimsuit.', 'Special events, VIP shop', 'UPGRADE_MATERIAL', 'SSR', '/images/items/rainbow-crystal.png', '3.5.0'),
+(17, 'festival-token-2023', '祭りトークン2023', 'Festival Token 2023', '庆典代币2023', '慶典代幣2023', '페스티벌 토큰 2023', 
+ 'Special currency for summer festival event shop.', 'Summer Festival Event', 'CURRENCY', 'SR', '/images/items/festival-token.png', '4.7.0'),
+(18, 'energy-potion-xl', 'エナジーポーションXL', 'Energy Potion XL', '能量药水XL', '能量藥水XL', '에너지 포션 XL', 
+ 'Restores full FP and provides temporary stat boost.', 'VIP shop, premium rewards', 'CONSUMABLE', 'SSR', '/images/items/energy-potion-xl.png', '2.5.0'),
+(19, 'venus-coin', 'ヴィーナスコイン', 'Venus Coin', '维纳斯硬币', '維納斯硬幣', '비너스 코인', 
+ 'Premium currency for exclusive shop items.', 'Premium purchases, special events', 'CURRENCY', 'SSR', '/images/items/venus-coin.png', '2.0.0'),
+(20, 'skill-book-legendary', 'スキルブック・伝説', 'Legendary Skill Book', '传说技能书', '傳說技能書', '레전더리 스킬북', 
+ 'Contains a random legendary skill for bromide decoration.', 'High-tier event rewards', 'CONSUMABLE', 'SSR', '/images/items/skill-book-legendary.png', '3.8.0'),
+(21, 'pearl-necklace', 'パールネックレス', 'Pearl Necklace', '珍珠项链', '珍珠項鍊', '펄 목걸이', 
+ 'Elegant accessory that enhances character appeal.', 'Shop, special events', 'ACCESSORY', 'SR', '/images/items/pearl-necklace.png', '2.2.0'),
+(22, 'stamina-drink-max', 'スタミナドリンクMAX', 'Stamina Drink MAX', '耐力饮料MAX', '耐力飲料MAX', '스태미너 드링크 MAX', 
+ 'Fully restores stamina and prevents decay for one match.', 'Premium shop, tournament rewards', 'CONSUMABLE', 'SR', '/images/items/stamina-drink-max.png', '2.8.0'),
+(23, 'friendship-bracelet', 'フレンドシップブレスレット', 'Friendship Bracelet', '友谊手链', '友誼手鍊', '프렌드십 브레이슬릿', 
+ 'A gift that increases affection with any character.', 'Events, daily login rewards', 'GIFT', 'R', '/images/items/friendship-bracelet.png', '1.8.0'),
+(24, 'trend-fragment', 'トレンドフラグメント', 'Trend Fragment', '潮流碎片', '潮流碎片', '트렌드 프래그먼트', 
+ 'Can be combined to create trendy vouchers.', 'Daily missions, mini-games', 'UPGRADE_MATERIAL', 'N', '/images/items/trend-fragment.png', '3.0.0'),
+(25, 'lucky-charm-gold', 'ゴールドラッキーチャーム', 'Gold Lucky Charm', '黄金幸运符', '黃金幸運符', '골드 럭키 참', 
+ 'Increases rare item drop rates for 24 hours.', 'VIP shop, anniversary events', 'CONSUMABLE', 'SSR', '/images/items/lucky-charm-gold.png', '4.0.0');
 
 -- ============================================================================
 -- 4. BROMIDES (Core Entity) 
@@ -132,7 +192,27 @@ INSERT INTO `bromides` (
 (9, 'owner-sr-misaki-01', 'みさきオーナーブロマイド01', 'Misaki Owner Bromide 01', '海咲老板写真01', '海咲老闆寫真01', '미사키 오너 브로마이드 01', 
  'OWNER', 'SR', NULL, '/images/bromides/owner-misaki-01.png', '1.0.0'),
 (10, 'deco-ssr-critical-1', 'クリティカルデコブロマイド', 'SSR Critical Bromide', 'SSR暴击写真', 'SSR暴擊寫真', 'SSR 크리티컬 브로마이드', 
- 'DECO', 'SSR', 8, '/images/bromides/deco-ssr-critical-1.png', '2.0.0');
+ 'DECO', 'SSR', 8, '/images/bromides/deco-ssr-critical-1.png', '2.0.0'),
+(11, 'owner-ssr-tina-01', 'ティナオーナーブロマイド01', 'Tina Owner Bromide 01', '蒂娜老板写真01', '蒂娜老闆寫真01', '티나 오너 브로마이드 01', 
+ 'OWNER', 'SSR', NULL, '/images/bromides/owner-tina-01.png', '2.0.0'),
+(12, 'deco-sr-team-spirit', 'チームスピリットデコブロマイド', 'SR Team Spirit Bromide', 'SR团队精神写真', 'SR團隊精神寫真', 'SR 팀 스피릿 브로마이드', 
+ 'DECO', 'SR', 23, '/images/bromides/deco-sr-team-spirit.png', '4.0.0'),
+(13, 'owner-sr-mila-01', 'ミラオーナーブロマイド01', 'Mila Owner Bromide 01', '米拉老板写真01', '米拉老闆寫真01', '밀라 오너 브로마이드 01', 
+ 'OWNER', 'SR', NULL, '/images/bromides/owner-mila-01.png', '2.2.0'),
+(14, 'deco-ssr-victory-rush', 'ビクトリーラッシュデコブロマイド', 'SSR Victory Rush Bromide', 'SSR胜利冲刺写真', 'SSR勝利衝刺寫真', 'SSR 빅토리 러시 브로마이드', 
+ 'DECO', 'SSR', 24, '/images/bromides/deco-ssr-victory-rush.png', '4.3.0'),
+(15, 'owner-ssr-christie-01', 'クリスティオーナーブロマイド01', 'Christie Owner Bromide 01', '克里斯蒂老板写真01', '克里斯蒂老闆寫真01', '크리스티 오너 브로마이드 01', 
+ 'OWNER', 'SSR', NULL, '/images/bromides/owner-christie-01.png', '2.5.0'),
+(16, 'deco-r-quick-recovery', 'クイックリカバリーデコブロマイド', 'R Quick Recovery Bromide', 'R快速恢复写真', 'R快速恢復寫真', 'R 퀵 리커버리 브로마이드', 
+ 'DECO', 'R', 19, '/images/bromides/deco-r-quick-recovery.png', '2.3.0'),
+(17, 'owner-sr-lisa-01', 'リサオーナーブロマイド01', 'Lisa Owner Bromide 01', '莉萨老板写真01', '莉薩老闆寫真01', '리사 오너 브로마이드 01', 
+ 'OWNER', 'SR', NULL, '/images/bromides/owner-lisa-01.png', '2.8.0'),
+(18, 'deco-ssr-perfect-serve', 'パーフェクトサーブデコブロマイド', 'SSR Perfect Serve Bromide', 'SSR完美发球写真', 'SSR完美發球寫真', 'SSR 퍼펙트 서브 브로마이드', 
+ 'DECO', 'SSR', 25, '/images/bromides/deco-ssr-perfect-serve.png', '3.3.0'),
+(19, 'owner-ssr-rachel-01', 'レイチェルオーナーブロマイド01', 'Rachel Owner Bromide 01', '瑞秋老板写真01', '瑞秋老闆寫真01', '레이첼 오너 브로마이드 01', 
+ 'OWNER', 'SSR', NULL, '/images/bromides/owner-rachel-01.png', '3.0.0'),
+(20, 'deco-sr-all-round-boost', 'オールラウンドアップデコブロマイド', 'SR All-Round Boost Bromide', 'SR全能提升写真', 'SR全能提升寫真', 'SR 올라운드 업 브로마이드', 
+ 'DECO', 'SR', 17, '/images/bromides/deco-sr-all-round-boost.png', '3.5.0');
 
 -- ============================================================================
 -- 5. SWIMSUITS (Depends on characters)
@@ -177,7 +257,32 @@ INSERT INTO `swimsuits` (
 (14, 9, 'sr-hitomi-azure-wave', 'アジュールウェーブ', 'Azure Wave', '天蓝波浪', '天藍波浪', '애저 웨이브', 
  'SR', 'STM', 4050, 0, 0, '2022-08-15', '3.3.0'),
 (15, 10, 'ssr-leifang-jade-dragon', 'ジェイドドラゴン', 'Jade Dragon', '翡翠龙', '翡翠龍', '제이드 드래곤', 
- 'SSR', 'POW', 5750, 1, 1, '2023-09-01', '4.13.0');
+ 'SSR', 'POW', 5750, 1, 1, '2023-09-01', '4.13.0'),
+-- Tina swimsuits
+(16, 11, 'ssr-tina-golden-thunder', 'ゴールデンサンダー', 'Golden Thunder', '黄金雷电', '黃金雷電', '골든 썬더', 
+ 'SSR', 'POW', 6100, 1, 1, '2023-10-01', '5.0.0'),
+(17, 11, 'sr-tina-rock-star', 'ロックスター', 'Rock Star', '摇滚明星', '搖滾明星', '록 스타', 
+ 'SR', 'STM', 4300, 0, 0, '2022-12-15', '3.8.0'),
+-- Mila swimsuits
+(18, 12, 'ssr-mila-sambo-champion', 'サンボチャンピオン', 'Sambo Champion', '桑搏冠军', '桑搏冠軍', '삼보 챔피언', 
+ 'SSR', 'STM', 5900, 1, 1, '2023-11-10', '5.1.0'),
+(19, 12, 'sr-mila-combat-gear', 'コンバットギア', 'Combat Gear', '战斗装备', '戰鬥裝備', '컴뱃 기어', 
+ 'SR', 'POW', 4100, 0, 0, '2022-08-20', '3.4.0'),
+-- Christie swimsuits
+(20, 13, 'ssr-christie-shadow-assassin', 'シャドウアサシン', 'Shadow Assassin', '暗影刺客', '暗影刺客', '섀도우 어쌔신', 
+ 'SSR', 'TEC', 5850, 1, 1, '2023-12-01', '5.2.0'),
+(21, 13, 'sr-christie-midnight-silk', 'ミッドナイトシルク', 'Midnight Silk', '午夜丝绸', '午夜絲綢', '미드나이트 실크', 
+ 'SR', 'APL', 4250, 1, 0, '2022-10-05', '3.6.0'),
+-- Lisa swimsuits
+(22, 14, 'ssr-lisa-street-fighter', 'ストリートファイター', 'Street Fighter', '街头霸王', '街頭霸王', '스트리트 파이터', 
+ 'SSR', 'POW', 5950, 1, 1, '2024-01-15', '5.3.0'),
+(23, 14, 'sr-lisa-urban-legend', 'アーバンレジェンド', 'Urban Legend', '都市传说', '都市傳說', '어반 레전드', 
+ 'SR', 'TEC', 4150, 0, 0, '2022-11-12', '3.7.0'),
+-- Rachel swimsuits
+(24, 15, 'ssr-rachel-fiend-hunter', 'フィエンドハンター', 'Fiend Hunter', '恶魔猎手', '惡魔獵手', '피엔드 헌터', 
+ 'SSR', 'APL', 6000, 1, 1, '2024-02-14', '5.4.0'),
+(25, 15, 'sr-rachel-gothic-rose', 'ゴシックローズ', 'Gothic Rose', '哥特玫瑰', '哥德玫瑰', '고딕 로즈', 
+ 'SR', 'TEC', 4200, 1, 0, '2023-01-20', '4.5.0');
 
 -- ============================================================================
 -- 6. EPISODES (Depends on characters, swimsuits, events)
@@ -201,7 +306,27 @@ INSERT INTO `episodes` (
 (7, 'ep-swimsuit-bouquet-plumeria', '花の記憶', 'Memories of Flowers', '花的回忆', '花的回憶', '꽃의 기억', 
  'Obtain the "Bouquet Plumeria" swimsuit for Honoka.', 'SWIMSUIT', 'swimsuits', 4, '3.20.0'),
 (8, 'ep-event-starlight-ocean', '星降る夜の物語', 'Tale of the Starlit Night', '星降之夜的故事', '星降之夜的故事', '별 내리는 밤의 이야기', 
- 'Participate in the Starlight Ocean Festival.', 'EVENT', 'events', 1, '4.5.0');
+ 'Participate in the Starlight Ocean Festival.', 'EVENT', 'events', 1, '4.5.0'),
+(9, 'ep-char-tina-01', 'ティナの挑戦', 'Tina''s Challenge', '蒂娜的挑战', '蒂娜的挑戰', '티나의 도전', 
+ 'Reach Character Level 25 with Tina.', 'CHARACTER', 'characters', 11, '2.0.0'),
+(10, 'ep-char-mila-01', 'ミラの戦い', 'Mila''s Battle', '米拉的战斗', '米拉的戰鬥', '밀라의 싸움', 
+ 'Reach Character Level 30 with Mila.', 'CHARACTER', 'characters', 12, '2.2.0'),
+(11, 'ep-char-christie-01', 'クリスティの秘密', 'Christie''s Secret', '克里斯蒂的秘密', '克里斯蒂的秘密', '크리스티의 비밀', 
+ 'Reach Character Level 35 with Christie.', 'CHARACTER', 'characters', 13, '2.5.0'),
+(12, 'ep-swimsuit-golden-thunder', '雷鳴の記憶', 'Memories of Thunder', '雷鸣的回忆', '雷鳴的回憶', '천둥의 기억', 
+ 'Obtain the "Golden Thunder" swimsuit for Tina.', 'SWIMSUIT', 'swimsuits', 16, '5.0.0'),
+(13, 'ep-swimsuit-shadow-assassin', '影の刺客', 'Shadow Assassin', '影之刺客', '影之刺客', '그림자 암살자', 
+ 'Obtain the "Shadow Assassin" swimsuit for Christie.', 'SWIMSUIT', 'swimsuits', 20, '5.2.0'),
+(14, 'ep-main-chapter-10', 'チャプター10～真実の扉～', 'Chapter 10 ~ Door of Truth ~', '第十章～真相之门～', '第十章～真相之門～', '챕터10 ~진실의 문~', 
+ 'Complete Chapter 9.', 'MAIN', NULL, NULL, '4.0.0'),
+(15, 'ep-char-lisa-01', 'リサの過去', 'Lisa''s Past', '莉萨的过去', '莉薩的過去', '리사의 과거', 
+ 'Reach Character Level 40 with Lisa.', 'CHARACTER', 'characters', 14, '2.8.0'),
+(16, 'ep-char-rachel-01', 'レイチェルの使命', 'Rachel''s Mission', '瑞秋的使命', '瑞秋的使命', '레이첼의 사명', 
+ 'Reach Character Level 45 with Rachel.', 'CHARACTER', 'characters', 15, '3.0.0'),
+(17, 'ep-swimsuit-fiend-hunter', '悪魔狩りの証', 'Proof of Demon Hunting', '恶魔狩猎的证明', '惡魔狩獵的證明', '악마 사냥의 증거', 
+ 'Obtain the "Fiend Hunter" swimsuit for Rachel.', 'SWIMSUIT', 'swimsuits', 24, '5.4.0'),
+(18, 'ep-main-finale', 'フィナーレ～新たなる始まり～', 'Finale ~ A New Beginning ~', '终章～新的开始～', '終章～新的開始～', '피날레 ~새로운 시작~', 
+ 'Complete all previous chapters.', 'MAIN', NULL, NULL, '5.0.0');
 
 -- ============================================================================
 -- 7. EVENTS (Game Content)
@@ -225,7 +350,27 @@ INSERT INTO `events` (
 (7, 'valentine-chocolate-festival', 'バレンタインチョコフェス', 'Valentine Chocolate Festival', '情人节巧克力节', '情人節巧克力節', '발렌타인 초콜릿 페스티벌', 
  'FESTIVAL_CUMULATIVE', '4.6.0', '2023-02-14 04:00:00', '2023-02-21 03:59:59'),
 (8, 'summer-beach-volleyball', 'サマービーチバレーボール', 'Summer Beach Volleyball', '夏季沙滩排球', '夏季沙灘排球', '서머 비치 발리볼', 
- 'FESTIVAL_RANKING', '4.9.0', '2023-07-01 04:00:00', '2023-07-15 03:59:59');
+ 'FESTIVAL_RANKING', '4.9.0', '2023-07-01 04:00:00', '2023-07-15 03:59:59'),
+(9, 'tina-debut-celebration', 'ティナデビュー記念', 'Tina Debut Celebration', '蒂娜出道庆典', '蒂娜出道慶典', '티나 데뷔 기념', 
+ 'LOGIN_BONUS', '2.0.0', '2022-01-01 04:00:00', '2022-01-08 03:59:59'),
+(10, 'halloween-horror-night', 'ハロウィンホラーナイト', 'Halloween Horror Night', '万圣节恐怖之夜', '萬聖節恐怖之夜', '할로윈 호러 나이트', 
+ 'FESTIVAL_CUMULATIVE', '4.10.0', '2023-10-25 04:00:00', '2023-11-02 03:59:59'),
+(11, 'winter-wonderland-festival', 'ウィンターワンダーランド', 'Winter Wonderland Festival', '冬季仙境节', '冬季仙境節', '윈터 원더랜드 페스티벌', 
+ 'FESTIVAL_RANKING', '5.0.0', '2023-12-20 04:00:00', '2024-01-05 03:59:59'),
+(12, 'spring-cherry-blossom', '春の桜祭り', 'Spring Cherry Blossom Festival', '春季樱花节', '春季櫻花節', '봄 벚꽃 축제', 
+ 'FESTIVAL_CUMULATIVE', '5.1.0', '2024-03-20 04:00:00', '2024-04-03 03:59:59'),
+(13, 'mila-combat-tournament', 'ミラコンバットトーナメント', 'Mila Combat Tournament', '米拉格斗锦标赛', '米拉格鬥錦標賽', '밀라 컴뱃 토너먼트', 
+ 'TOWER', '3.4.0', '2022-08-20 04:00:00', '2022-09-05 03:59:59'),
+(14, 'christie-stealth-mission', 'クリスティステルスミッション', 'Christie Stealth Mission', '克里斯蒂潜行任务', '克里斯蒂潛行任務', '크리스티 스텔스 미션', 
+ 'ROCK_CLIMBING', '3.6.0', '2022-10-05 04:00:00', '2022-10-15 03:59:59'),
+(15, 'new-year-celebration-2024', '新年祝賀2024', 'New Year Celebration 2024', '新年庆典2024', '新年慶典2024', '신년 축하 2024', 
+ 'LOGIN_BONUS', '5.3.0', '2024-01-01 04:00:00', '2024-01-07 03:59:59'),
+(16, 'rachel-dark-ritual', 'レイチェルダークリチュアル', 'Rachel Dark Ritual', '瑞秋黑暗仪式', '瑞秋黑暗儀式', '레이첼 다크 리추얼', 
+ 'BUTT_BATTLE', '5.4.0', '2024-02-14 04:00:00', '2024-02-25 03:59:59'),
+(17, 'golden-week-special', 'ゴールデンウィークスペシャル', 'Golden Week Special', '黄金周特别活动', '黃金週特別活動', '골든위크 스페셜', 
+ 'FESTIVAL_RANKING', '5.5.0', '2024-04-29 04:00:00', '2024-05-05 03:59:59'),
+(18, 'summer-solstice-festival', '夏至祭り', 'Summer Solstice Festival', '夏至节', '夏至節', '하지 축제', 
+ 'FESTIVAL_CUMULATIVE', '5.6.0', '2024-06-21 04:00:00', '2024-06-30 03:59:59');
 
 -- ============================================================================
 -- 8. GACHAS (Game Content)
@@ -245,7 +390,27 @@ INSERT INTO `gachas` (
 (5, 'gacha-paid-special-selection', '特選有償ガチャ', 'Special Selection Paid Gacha', '特选付费扭蛋', '特選付費扭蛋', '특선 유료 뽑기', 
  'PAID', '4.8.0', '2023-05-01 04:00:00', '2023-05-31 03:59:59'),
 (6, 'gacha-valentine-love-collection', 'バレンタインラブコレクション', 'Valentine Love Collection', '情人节爱情收藏', '情人節愛情收藏', '발렌타인 러브 콜렉션', 
- 'TRENDY', '4.6.0', '2023-02-14 04:00:00', '2023-02-21 03:59:59');
+ 'TRENDY', '4.6.0', '2023-02-14 04:00:00', '2023-02-21 03:59:59'),
+(7, 'gacha-tina-golden-thunder', 'ゴールデンサンダーガチャ', 'Golden Thunder Gacha', '黄金雷电扭蛋', '黃金雷電扭蛋', '골든 썬더 뽑기', 
+ 'TRENDY', '5.0.0', '2023-10-01 04:00:00', '2023-10-15 03:59:59'),
+(8, 'gacha-halloween-horror', 'ハロウィンホラーガチャ', 'Halloween Horror Gacha', '万圣节恐怖扭蛋', '萬聖節恐怖扭蛋', '할로윈 호러 뽑기', 
+ 'NOSTALGIC', '4.10.0', '2023-10-25 04:00:00', '2023-11-02 03:59:59'),
+(9, 'gacha-winter-wonderland', 'ウィンターワンダーランドガチャ', 'Winter Wonderland Gacha', '冬季仙境扭蛋', '冬季仙境扭蛋', '윈터 원더랜드 뽑기', 
+ 'ANNIVERSARY', '5.0.0', '2023-12-20 04:00:00', '2024-01-05 03:59:59'),
+(10, 'gacha-mila-combat-special', 'ミラコンバットスペシャル', 'Mila Combat Special Gacha', '米拉格斗特别扭蛋', '米拉格鬥特別扭蛋', '밀라 컴뱃 스페셜 뽑기', 
+ 'PAID', '3.4.0', '2022-08-20 04:00:00', '2022-09-05 03:59:59'),
+(11, 'gacha-christie-shadow-collection', 'クリスティシャドウコレクション', 'Christie Shadow Collection', '克里斯蒂暗影收藏', '克里斯蒂暗影收藏', '크리스티 섀도우 콜렉션', 
+ 'BIRTHDAY', '5.2.0', '2023-12-01 04:00:00', '2023-12-08 03:59:59'),
+(12, 'gacha-new-year-2024', '新年記念ガチャ2024', 'New Year Memorial Gacha 2024', '新年纪念扭蛋2024', '新年紀念扭蛋2024', '신년 기념 뽑기 2024', 
+ 'ANNIVERSARY', '5.3.0', '2024-01-01 04:00:00', '2024-01-15 03:59:59'),
+(13, 'gacha-lisa-street-fighter', 'リサストリートファイター', 'Lisa Street Fighter Gacha', '莉萨街头霸王扭蛋', '莉薩街頭霸王扭蛋', '리사 스트리트 파이터 뽑기', 
+ 'TRENDY', '5.3.0', '2024-01-15 04:00:00', '2024-01-29 03:59:59'),
+(14, 'gacha-rachel-fiend-hunter', 'レイチェルフィエンドハンター', 'Rachel Fiend Hunter Gacha', '瑞秋恶魔猎手扭蛋', '瑞秋惡魔獵手扭蛋', '레이첼 피엔드 헌터 뽑기', 
+ 'PAID', '5.4.0', '2024-02-14 04:00:00', '2024-02-28 03:59:59'),
+(15, 'gacha-spring-cherry-blossom', '春の桜ガチャ', 'Spring Cherry Blossom Gacha', '春季樱花扭蛋', '春季櫻花扭蛋', '봄 벚꽃 뽑기', 
+ 'NOSTALGIC', '5.1.0', '2024-03-20 04:00:00', '2024-04-03 03:59:59'),
+(16, 'gacha-golden-week-premium', 'ゴールデンウィークプレミアム', 'Golden Week Premium Gacha', '黄金周高级扭蛋', '黃金週高級扭蛋', '골든위크 프리미엄 뽑기', 
+ 'ANNIVERSARY', '5.5.0', '2024-04-29 04:00:00', '2024-05-05 03:59:59');
 
 -- ============================================================================
 -- 9. DOCUMENTS (Content Management)
@@ -273,6 +438,46 @@ INSERT INTO `documents` (
 ('festival-strategy-advanced', 'Advanced Festival Strategy',
  'Pro tips and advanced strategies for dominating festival events.',
  '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Master-level strategies for festival events and ranking competitions."}]}]}',
+ NOW(), NOW()),
+('tina-character-guide', 'Tina Complete Character Guide',
+ 'Everything you need to know about mastering Tina in combat and events.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Tina is a powerful POW-type character with unique wrestling-based abilities."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Combat Strategy"}]},{"type":"paragraph","content":[{"type":"text","text":"Focus on building her POW stats for maximum damage output."}]}]}',
+ NOW(), NOW()),
+('mila-training-manual', 'Mila Training Manual',
+ 'Advanced combat techniques and build strategies for Mila players.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Mila excels in defensive combat with her Sambo techniques."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Defensive Builds"}]},{"type":"paragraph","content":[{"type":"text","text":"Prioritize STM and defensive skills for optimal performance."}]}]}',
+ NOW(), NOW()),
+('christie-stealth-tactics', 'Christie Stealth Tactics',
+ 'Master the art of stealth and precision with Christie advanced techniques.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Christie specializes in TEC-based stealth attacks and critical hits."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Stealth Mechanics"}]},{"type":"paragraph","content":[{"type":"text","text":"Use her stealth abilities to gain advantage in combat."}]}]}',
+ NOW(), NOW()),
+('skill-synergy-combinations', 'Ultimate Skill Synergy Guide',
+ 'Discover the most powerful skill combinations and synergies in the game.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Learn how to combine different skills for maximum effectiveness."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Top Synergies"}]},{"type":"paragraph","content":[{"type":"text","text":"Fever skills work best when combined with stat boost potentials."}]}]}',
+ NOW(), NOW()),
+('event-farming-efficiency', 'Event Farming Efficiency Guide',
+ 'Maximize your event rewards with these proven farming strategies.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Efficient farming is key to getting the best event rewards."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Farming Routes"}]},{"type":"paragraph","content":[{"type":"text","text":"Plan your farming routes based on event point multipliers."}]}]}',
+ NOW(), NOW()),
+('gacha-investment-strategy', 'Smart Gacha Investment Strategy',
+ 'Make informed decisions about your gacha pulls and resource management.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Strategic gacha pulling can save you significant resources."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Pull Timing"}]},{"type":"paragraph","content":[{"type":"text","text":"Wait for guaranteed SSR events when possible."}]}]}',
+ NOW(), NOW()),
+('bromide-decoration-mastery', 'Bromide Decoration Mastery',
+ 'Complete guide to optimizing bromide decorations for maximum stat gains.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Bromide decorations can significantly boost your performance."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Decoration Strategy"}]},{"type":"paragraph","content":[{"type":"text","text":"Match decoration skills with your character build for best results."}]}]}',
+ NOW(), NOW()),
+('competitive-ranking-guide', 'Competitive Ranking Strategies',
+ 'Advanced tactics for climbing the rankings in competitive events.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Ranking events require specific strategies and timing."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Timing Your Climbs"}]},{"type":"paragraph","content":[{"type":"text","text":"Save your best runs for the final hours of ranking events."}]}]}',
+ NOW(), NOW()),
+('resource-management-mastery', 'Resource Management Mastery',
+ 'Comprehensive guide to managing all in-game currencies and materials efficiently.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Proper resource management is crucial for long-term success."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Priority Spending"}]},{"type":"paragraph","content":[{"type":"text","text":"Invest in upgrade materials before luxury items."}]}]}',
+ NOW(), NOW()),
+('new-player-complete-roadmap', 'New Player Complete Roadmap',
+ 'Step-by-step progression guide for new players from beginner to advanced.',
+ '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"A complete roadmap for new players to progress efficiently."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"First Steps"}]},{"type":"paragraph","content":[{"type":"text","text":"Focus on completing the main story and daily missions first."}]}]}',
  NOW(), NOW());
 
 -- ============================================================================
@@ -305,7 +510,47 @@ INSERT INTO `update_logs` (
 ('v4-6-0-valentine-special', '4.6.0', 'Valentine''s Day Special Update',
  'Love is in the air with Valentine''s themed content, special gacha, and romantic storylines.',
  'Valentine''s Day celebration with themed swimsuits, special events, and romantic character episodes.',
- '2023-02-14 04:00:00', '["valentine", "love", "special", "romance"]', NOW(), NOW());
+ '2023-02-14 04:00:00', '["valentine", "love", "special", "romance"]', NOW(), NOW()),
+('v5-0-0-tina-golden-era', '5.0.0', 'Golden Era Update - Tina''s Ascension',
+ 'Major version update featuring Tina''s Golden Thunder swimsuit and revolutionary combat mechanics.',
+ 'The Golden Era begins with enhanced combat systems, new character abilities, and Tina''s ultimate transformation.',
+ '2023-10-01 04:00:00', '["major-update", "tina", "golden-thunder", "combat"]', NOW(), NOW()),
+('v5-1-0-mila-sambo-master', '5.1.0', 'Sambo Master Update',
+ 'Mila receives her championship swimsuit and introduces new defensive combat mechanics.',
+ 'Celebrate Mila''s mastery with her championship gear and enhanced defensive gameplay systems.',
+ '2023-11-10 04:00:00', '["mila", "sambo", "defensive", "champion"]', NOW(), NOW()),
+('v5-2-0-christie-shadow-arts', '5.2.0', 'Shadow Arts Update',
+ 'Christie''s stealth abilities reach new heights with the Shadow Assassin collection.',
+ 'Master the shadows with Christie''s new stealth mechanics and assassination techniques.',
+ '2023-12-01 04:00:00', '["christie", "stealth", "shadow", "assassin"]', NOW(), NOW()),
+('v5-3-0-lisa-street-legend', '5.3.0', 'Street Legend Update',
+ 'Lisa brings street fighting to Venus Island with her legendary combat style.',
+ 'Experience urban combat with Lisa''s street fighting techniques and legendary reputation.',
+ '2024-01-15 04:00:00', '["lisa", "street-fighter", "urban", "legend"]', NOW(), NOW()),
+('v5-4-0-rachel-demon-hunter', '5.4.0', 'Demon Hunter Chronicles',
+ 'Rachel''s supernatural abilities awaken with the Fiend Hunter transformation.',
+ 'Unleash supernatural powers with Rachel''s demon hunting abilities and mystical transformations.',
+ '2024-02-14 04:00:00', '["rachel", "supernatural", "demon-hunter", "mystical"]', NOW(), NOW()),
+('v4-10-0-halloween-horror', '4.10.0', 'Halloween Horror Spectacular',
+ 'Spooky Halloween event with horror-themed content and special limited swimsuits.',
+ 'Experience the thrill of Halloween with horror-themed events and spine-chilling content.',
+ '2023-10-25 04:00:00', '["halloween", "horror", "spooky", "limited"]', NOW(), NOW()),
+('v5-5-0-golden-week-celebration', '5.5.0', 'Golden Week Celebration',
+ 'Special Japanese holiday celebration with exclusive content and cultural themes.',
+ 'Celebrate Golden Week with traditional Japanese festivities and exclusive cultural content.',
+ '2024-04-29 04:00:00', '["golden-week", "japanese", "cultural", "celebration"]', NOW(), NOW()),
+('v3-4-0-mila-combat-debut', '3.4.0', 'Combat Specialist Debut',
+ 'Mila makes her combat debut with unique Sambo fighting techniques.',
+ 'Welcome the combat specialist with revolutionary fighting mechanics and martial arts expertise.',
+ '2022-08-20 04:00:00', '["mila", "debut", "combat", "sambo"]', NOW(), NOW()),
+('v3-6-0-christie-stealth-intro', '3.6.0', 'Stealth Operations Introduction',
+ 'Christie introduces stealth mechanics and covert operation gameplay.',
+ 'Master the art of stealth with Christie''s introduction of covert operations and tactical gameplay.',
+ '2022-10-05 04:00:00', '["christie", "stealth", "covert", "tactical"]', NOW(), NOW()),
+('v5-6-0-summer-solstice', '5.6.0', 'Summer Solstice Festival',
+ 'Celebrate the longest day of summer with solar-themed events and bright new content.',
+ 'Embrace the summer solstice with sun-themed festivities and radiant new features.',
+ '2024-06-21 04:00:00', '["summer", "solstice", "solar", "festival"]', NOW(), NOW());
 
 -- ============================================================================
 -- 11. LINKING TABLES
@@ -365,7 +610,47 @@ INSERT INTO `swimsuit_skills` (`swimsuit_id`, `skill_id`, `skill_slot`) VALUES
 -- Jade Dragon (Lei Fang, POW SSR)
 (15, 1, 'ACTIVE'),     
 (15, 13, 'POTENTIAL_1'),
-(15, 3, 'POTENTIAL_2');
+(15, 3, 'POTENTIAL_2'),
+-- Golden Thunder (Tina, POW SSR)
+(16, 1, 'ACTIVE'),     
+(16, 16, 'PASSIVE_1'), 
+(16, 13, 'POTENTIAL_1'),
+(16, 18, 'POTENTIAL_2'),
+-- Rock Star (Tina, STM SR)
+(17, 11, 'ACTIVE'),    
+(17, 22, 'POTENTIAL_1'),
+-- Sambo Champion (Mila, STM SSR)
+(18, 11, 'ACTIVE'),    
+(18, 19, 'PASSIVE_1'), 
+(18, 4, 'POTENTIAL_1'),
+(18, 22, 'POTENTIAL_2'),
+-- Combat Gear (Mila, POW SR)
+(19, 1, 'ACTIVE'),     
+(19, 17, 'POTENTIAL_1'),
+-- Shadow Assassin (Christie, TEC SSR)
+(20, 2, 'ACTIVE'),     
+(20, 20, 'PASSIVE_1'), 
+(20, 5, 'POTENTIAL_1'),
+(20, 21, 'POTENTIAL_2'),
+-- Midnight Silk (Christie, APL SR)
+(21, 12, 'ACTIVE'),    
+(21, 14, 'POTENTIAL_1'),
+-- Street Fighter (Lisa, POW SSR)
+(22, 1, 'ACTIVE'),     
+(22, 24, 'PASSIVE_1'), 
+(22, 13, 'POTENTIAL_1'),
+(22, 16, 'POTENTIAL_2'),
+-- Urban Legend (Lisa, TEC SR)
+(23, 2, 'ACTIVE'),     
+(23, 17, 'POTENTIAL_1'),
+-- Fiend Hunter (Rachel, APL SSR)
+(24, 12, 'ACTIVE'),    
+(24, 23, 'PASSIVE_1'), 
+(24, 14, 'POTENTIAL_1'),
+(24, 25, 'POTENTIAL_2'),
+-- Gothic Rose (Rachel, TEC SR)
+(25, 2, 'ACTIVE'),     
+(25, 20, 'POTENTIAL_1');
 
 -- Gacha Pools (Linking gachas to rewards)
 INSERT INTO `gacha_pools` (`gacha_id`, `pool_item_type`, `item_id`, `drop_rate`, `is_featured`) VALUES
@@ -398,7 +683,57 @@ INSERT INTO `gacha_pools` (`gacha_id`, `pool_item_type`, `item_id`, `drop_rate`,
 (6, 'SWIMSUIT', 11, 1.0000, 1),  
 (6, 'SWIMSUIT', 13, 0.8000, 1),  
 (6, 'ITEM', 15, 3.0000, 0),      
-(6, 'BROMIDE', 8, 1.5000, 0);    
+(6, 'BROMIDE', 8, 1.5000, 0),
+-- Golden Thunder Gacha
+(7, 'SWIMSUIT', 16, 0.8000, 1),  
+(7, 'SWIMSUIT', 17, 3.5000, 0),  
+(7, 'ITEM', 16, 5.0000, 0),      
+(7, 'BROMIDE', 11, 2.0000, 0),   
+-- Halloween Horror Gacha
+(8, 'SWIMSUIT', 20, 1.2000, 1),  
+(8, 'SWIMSUIT', 21, 2.8000, 0),  
+(8, 'ITEM', 20, 6.0000, 0),      
+(8, 'BROMIDE', 15, 1.8000, 0),   
+-- Winter Wonderland Gacha
+(9, 'SWIMSUIT', 18, 0.6000, 1),  
+(9, 'SWIMSUIT', 19, 2.2000, 0),  
+(9, 'ITEM', 18, 4.0000, 0),      
+(9, 'BROMIDE', 13, 1.5000, 0),   
+-- Mila Combat Special Gacha
+(10, 'SWIMSUIT', 18, 1.8000, 1), 
+(10, 'SWIMSUIT', 19, 4.0000, 0), 
+(10, 'ITEM', 22, 7.0000, 0),     
+(10, 'BROMIDE', 13, 2.5000, 0),  
+-- Christie Shadow Collection
+(11, 'SWIMSUIT', 20, 1.1000, 1), 
+(11, 'SWIMSUIT', 21, 3.3000, 0), 
+(11, 'ITEM', 21, 5.5000, 0),     
+(11, 'BROMIDE', 15, 2.0000, 0),  
+-- New Year 2024 Gacha
+(12, 'SWIMSUIT', 22, 0.9000, 1), 
+(12, 'SWIMSUIT', 24, 0.7000, 1), 
+(12, 'ITEM', 25, 3.5000, 0),     
+(12, 'BROMIDE', 17, 1.8000, 0),  
+-- Lisa Street Fighter Gacha
+(13, 'SWIMSUIT', 22, 1.0000, 1), 
+(13, 'SWIMSUIT', 23, 3.8000, 0), 
+(13, 'ITEM', 19, 8.0000, 0),     
+(13, 'BROMIDE', 17, 2.2000, 0),  
+-- Rachel Fiend Hunter Gacha
+(14, 'SWIMSUIT', 24, 1.5000, 1), 
+(14, 'SWIMSUIT', 25, 3.0000, 0), 
+(14, 'ITEM', 21, 6.5000, 0),     
+(14, 'BROMIDE', 19, 2.8000, 0),  
+-- Spring Cherry Blossom Gacha
+(15, 'SWIMSUIT', 13, 1.3000, 1), 
+(15, 'SWIMSUIT', 25, 2.7000, 0), 
+(15, 'ITEM', 23, 9.0000, 0),     
+(15, 'BROMIDE', 12, 1.9000, 0),  
+-- Golden Week Premium Gacha
+(16, 'SWIMSUIT', 16, 0.5000, 1), 
+(16, 'SWIMSUIT', 22, 0.6000, 1), 
+(16, 'SWIMSUIT', 24, 0.4000, 1), 
+(16, 'ITEM', 25, 2.5000, 0);     
 
 -- Shop Listings
 INSERT INTO `shop_listings` (`shop_type`, `item_id`, `cost_currency_item_id`, `cost_amount`, `start_date`, `end_date`) VALUES
@@ -414,7 +749,17 @@ INSERT INTO `shop_listings` (`shop_type`, `item_id`, `cost_currency_item_id`, `c
 ('EVENT', 10, 7, 300, '2023-01-15 04:00:00', '2023-02-01 03:59:59'),
 ('VIP', 14, 1, 3000, NULL, NULL),                                   
 ('GENERAL', 13, 2, 1000, NULL, NULL),                               
-('EVENT', 15, 7, 200, '2023-02-14 04:00:00', '2023-02-21 03:59:59');
+('EVENT', 15, 7, 200, '2023-02-14 04:00:00', '2023-02-21 03:59:59'),
+('VIP', 16, 1, 12000, NULL, NULL),                                  
+('GENERAL', 17, 2, 8000, NULL, NULL),                               
+('EVENT', 18, 17, 800, '2024-06-21 04:00:00', '2024-06-30 03:59:59'),
+('VIP', 19, 1, 15000, NULL, NULL),                                  
+('GENERAL', 20, 2, 50000, NULL, NULL),                              
+('EVENT', 21, 17, 400, '2024-06-21 04:00:00', '2024-06-30 03:59:59'),
+('VIP', 22, 1, 6000, NULL, NULL),                                   
+('GENERAL', 23, 2, 3000, NULL, NULL),                               
+('CURRENCY', 24, 2, 500, NULL, NULL),                               
+('EVENT', 25, 19, 1000, '2024-04-29 04:00:00', '2024-05-05 03:59:59');
 
 -- ============================================================================
 -- DATA INSERTION COMPLETE

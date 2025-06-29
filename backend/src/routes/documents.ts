@@ -12,20 +12,13 @@ const documentService = new DocumentService();
 router.get('/', 
   validateQuery(schemas.documentSchemas.query),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder, published, category } = req.query;
+    const { page = 1, limit = 10, sortBy, sortOrder, category } = req.query;
     
     let result;
     
     // Handle different query types with optimized queries
     if (category) {
       result = await documentService.getDocumentsByCategory(category as string, {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (published === 'true') {
-      result = await documentService.getPublishedDocuments({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
@@ -42,7 +35,6 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} documents for page ${page}`, {
       category,
-      published,
       totalItems: result.pagination.total,
       requestId: (req as any).id
     });
@@ -81,32 +73,7 @@ router.get('/key/:unique_key',
   })
 );
 
-// GET /api/documents/published - Get only published documents
-router.get('/published',
-  validateQuery(schemas.documentSchemas.query),
-  asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
-    const result = await documentService.getPublishedDocuments({
-      page: Number(page),
-      limit: Number(limit),
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
-    });
 
-    logger.info(`Retrieved ${result.data.length} published documents`, {
-      totalItems: result.pagination.total,
-      requestId: (req as any).id
-    });
-
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-      timestamp: new Date().toISOString()
-    });
-  })
-);
 
 // GET /api/documents/categories/:category - Get documents by category
 router.get('/categories/:category',
@@ -140,7 +107,27 @@ router.get('/categories/:category',
   })
 );
 
-// GET /api/documents/search - Search documents
+/**
+ * @swagger
+ * /api/documents/search:
+ *   get:
+ *     tags: [Documents]
+ *     summary: Search documents
+ *     description: Search documents by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.documentSchemas.query),
   asyncHandler(async (req, res) => {
@@ -185,7 +172,6 @@ router.get('/stats/summary',
 
     logger.info('Retrieved document statistics', {
       total: stats.total,
-      published: stats.published,
       categories: Object.keys(stats.byCategory).length,
       requestId: (req as any).id
     });
@@ -198,7 +184,23 @@ router.get('/stats/summary',
   })
 );
 
-// GET /api/documents/:id - Get document by ID
+/**
+ * @swagger
+ * /api/documents/{id}:
+ *   get:
+ *     tags: [Documents]
+ *     summary: Get document by ID
+ *     description: Retrieve a specific document by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -248,7 +250,31 @@ router.post('/',
   })
 );
 
-// PUT /api/documents/:id - Update document
+/**
+ * @swagger
+ * /api/documents/{id}:
+ *   put:
+ *     tags: [Documents]
+ *     summary: Update document
+ *     description: Update an existing document
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validate(schemas.documentSchemas.update),
   asyncHandler(async (req, res) => {
@@ -279,35 +305,25 @@ router.put('/:id',
   })
 );
 
-// PATCH /api/documents/:id/publish - Toggle publish status
-router.patch('/:id/publish',
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    
-    const numericId = parseInt(id, 10);
-    if (isNaN(numericId) || numericId <= 0) {
-      throw new AppError('Invalid document ID', 400);
-    }
-    
-    const document = await documentService.togglePublishStatus(numericId);
-    
-    logger.info('Toggled document publish status', {
-      documentId: document.id,
-      newStatus: document.is_published ? 'published' : 'unpublished',
-      title: document.title_en,
-      requestId: (req as any).id
-    });
 
-    res.json({
-      success: true,
-      data: document,
-      message: `Document ${document.is_published ? 'published' : 'unpublished'} successfully`,
-      timestamp: new Date().toISOString()
-    });
-  })
-);
 
-// DELETE /api/documents/:id - Delete document
+/**
+ * @swagger
+ * /api/documents/{id}:
+ *   delete:
+ *     tags: [Documents]
+ *     summary: Delete document
+ *     description: Delete an existing document
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;

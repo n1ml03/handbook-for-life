@@ -1,11 +1,10 @@
-import { createContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 import { UpdateLog } from '@/types';
 import { updateLogsApi, ApiError } from '@/services/api';
 import { safeExtractArrayData, safeIdCompare } from '@/services/utils';
 
 interface UpdateLogsContextType {
   updateLogs: UpdateLog[];
-  publishedUpdateLogs: UpdateLog[];
   isLoading: boolean;
   error: string | null;
   addUpdateLog: (log: Omit<UpdateLog, 'id' | 'createdAt' | 'updatedAt'>) => Promise<UpdateLog>;
@@ -25,11 +24,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // All update logs are now considered "published" since we removed the published flag
-  const publishedUpdateLogs = useMemo(() => 
-    updateLogs || [], 
-    [updateLogs]
-  );
+
 
   // Load update logs on mount
   useEffect(() => {
@@ -100,7 +95,6 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
 
   const value: UpdateLogsContextType = {
     updateLogs,
-    publishedUpdateLogs,
     isLoading,
     error,
     addUpdateLog,

@@ -249,10 +249,10 @@ class DatabaseReset {
 
     try {
       const seedsDir = path.join(import.meta.dir, 'seeds');
-      const consolidatedSeedFile = path.join(seedsDir, '000_consolidated_data.sql');
+      const consolidatedSeedFile = path.join(seedsDir, '000_mysql_data.sql');
 
       if (!fs.existsSync(consolidatedSeedFile)) {
-        throw new Error('Consolidated seed file not found: 000_consolidated_data.sql');
+        throw new Error('Consolidated seed file not found: 000_mysql_data.sql');
       }
 
       logger.info('Running consolidated seed data...');

@@ -565,16 +565,16 @@ export const Header = memo(function Header({ className }: HeaderProps) {
       className={cn("header-nav w-full gpu-accelerated contain-layout", className)}
       role="banner"
     >
-      <div className="container mx-auto px-4" style={{ overflow: 'visible' }}>
-        <div className="flex items-center justify-between h-16 md:h-16" style={{ overflow: 'visible' }}>
+      <div className="modern-container safe-area-inset" style={{ overflow: 'visible' }}>
+        <div className="flex items-center justify-between min-h-[56px] md:min-h-[64px] py-2" style={{ overflow: 'visible' }}>
           {/* Logo */}
-          <Link to="/home" className="header-logo" aria-label="Handbook">
+          <Link to="/home" className="header-logo touch-target" aria-label="Handbook">
             <div className="relative">
-              <Star className="w-7 h-7 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
-              <div className="absolute inset-0 w-7 h-7 text-accent-pink/20 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              <Star className="w-6 h-6 md:w-7 md:h-7 text-accent-pink transition-all duration-200 group-hover:text-accent-cyan" />
+              <div className="absolute inset-0 w-6 h-6 md:w-7 md:h-7 text-accent-pink/20 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </div>
-            <div className="hidden sm:block">
-              <span className="font-bold text-lg text-foreground group-hover:text-accent-pink transition-colors duration-200">
+            <div className="hidden xs:block">
+              <span className="font-bold text-responsive-lg text-foreground group-hover:text-accent-pink transition-colors duration-200">
                 Handbook
               </span>
             </div>

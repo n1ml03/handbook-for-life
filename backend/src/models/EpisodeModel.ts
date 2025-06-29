@@ -47,6 +47,28 @@ export class EpisodeModel extends BaseModel<Episode, NewEpisode> {
     return this.getCreateFields(); // Same fields can be updated
   }
 
+  // Override mapSortColumn to handle frontend sort parameters
+  protected mapSortColumn(sortBy: string): string | null {
+    const columnMapping: Record<string, string> = {
+      'created_at': 'id', // Map created_at to id since we don't have created_at column
+      'title': 'title_en', // Default to English title for 'title' parameter
+      'title_en': 'title_en',
+      'title_jp': 'title_jp',
+      'title_cn': 'title_cn', 
+      'title_tw': 'title_tw',
+      'title_kr': 'title_kr',
+      'type': 'episode_type',
+      'episode_type': 'episode_type',
+      'id': 'id',
+      'unique_key': 'unique_key',
+      'game_version': 'game_version',
+      'related_entity_type': 'related_entity_type',
+      'related_entity_id': 'related_entity_id'
+    };
+
+    return columnMapping[sortBy] || null;
+  }
+
   // Mapper function to convert database row to Episode object
   private mapEpisodeRow(row: any): Episode {
     return {

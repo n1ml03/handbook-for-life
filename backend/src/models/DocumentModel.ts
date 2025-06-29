@@ -9,7 +9,7 @@ export interface UpdateDocument {
   title_en?: string;
   summary_en?: string;
   content_json_en?: any;
-  screenshots?: string[];
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
 }
 
 // Extended Document type that matches frontend expectations
@@ -39,7 +39,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       'title_en',
       'summary_en',
       'content_json_en',
-      'screenshots'
+      'screenshots_data'
     ];
   }
 
@@ -64,7 +64,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       title_en: row.title_en,
       summary_en: row.summary_en,
       content_json_en: row.content_json_en,
-      screenshots: row.screenshots ? JSON.parse(row.screenshots) : [],
+      screenshots_data: row.screenshots_data ? JSON.parse(row.screenshots_data) : [],
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
       // Extended fields for frontend compatibility
@@ -173,14 +173,14 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
   async create(document: NewDocument): Promise<ExtendedDocument> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, screenshots)
+        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, screenshots_data)
          VALUES (?, ?, ?, ?, ?)`,
         [
           document.unique_key,
           document.title_en,
           document.summary_en,
           document.content_json_en ? JSON.stringify(document.content_json_en) : null,
-          document.screenshots ? JSON.stringify(document.screenshots) : null,
+          document.screenshots_data ? JSON.stringify(document.screenshots_data) : null,
         ]
       ) as [any, any];
 
@@ -244,9 +244,9 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       setClause.push(`content_json_en = ?`);
       params.push(updates.content_json_en ? JSON.stringify(updates.content_json_en) : null);
     }
-    if (updates.screenshots !== undefined) {
-      setClause.push(`screenshots = ?`);
-      params.push(updates.screenshots ? JSON.stringify(updates.screenshots) : null);
+    if (updates.screenshots_data !== undefined) {
+      setClause.push(`screenshots_data = ?`);
+      params.push(updates.screenshots_data ? JSON.stringify(updates.screenshots_data) : null);
     }
 
     if (setClause.length === 0) {

@@ -5,7 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Calendar
+  Calendar,
+  Mic
 } from 'lucide-react';
 import { charactersApi } from '@/services/api';
 import { safeExtractArrayData } from '@/services/utils';
@@ -13,8 +14,7 @@ import { type Character, type SortDirection } from '@/types';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
 
@@ -35,118 +35,85 @@ const CharacterCard = React.memo(function CharacterCard({ character, onClick }: 
     }
   }, []);
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className="relative modern-card p-6 overflow-hidden group cursor-pointer transition-all duration-300 hover:border-accent-cyan/50"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="font-bold text-white text-lg">{character.name_en || character.name_jp}</h3>
-              {character.is_active && (
-                <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs">
-                  Active
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-gray-400">
-              <span className="flex items-center">
-                <User className="w-4 h-4 mr-1 text-accent-cyan" />
-                ID: {character.id}
-              </span>
-              {character.birthday && (
-                <span className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1 text-accent-pink" />
-                  {formatBirthday(character.birthday)}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20">
-            {character.profile_image_url ? (
-              <img
-                src={character.profile_image_url}
-                alt={character.name_en}
-                className="w-full h-full object-cover rounded-xl"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  target.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <User className="w-8 h-8 text-accent-cyan hidden" />
-          </div>
-        </div>
+  const names: MultiLanguageNames = {
+    name_jp: character.name_jp,
+    name_en: character.name_en,
+    name_cn: character.name_cn,
+    name_tw: character.name_tw,
+    name_kr: character.name_kr
+  };
 
-        {/* Character Details */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {character.height && (
-            <div className="flex justify-between items-center p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <span className="uppercase font-bold text-xs text-accent-cyan">Height</span>
-              <span className="font-bold text-white text-sm">{character.height}cm</span>
-            </div>
-          )}
-          
-          {character.blood_type && (
-            <div className="flex justify-between items-center p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <span className="uppercase font-bold text-xs text-accent-pink">Blood</span>
-              <span className="font-bold text-white text-sm">{character.blood_type}</span>
-            </div>
-          )}
-          
-          {character.voice_actor_jp && (
-            <div className="col-span-2 flex justify-between items-center p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <span className="uppercase font-bold text-xs text-accent-purple">Voice Actor</span>
-              <span className="font-bold text-white text-sm truncate ml-2">{character.voice_actor_jp}</span>
-            </div>
-          )}
-          
-          {character.measurements && (
-            <div className="col-span-2 flex justify-between items-center p-2 bg-dark-primary/30 rounded-lg border border-dark-border/30">
-              <span className="uppercase font-bold text-xs text-accent-gold">Measurements</span>
-              <span className="font-bold text-white text-sm">{character.measurements}</span>
-            </div>
-          )}
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
+          {character.profile_image_url ? (
+            <img
+              src={character.profile_image_url}
+              alt={character.name_en}
+              className="w-full h-full object-cover rounded-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <User className="w-6 h-6 text-accent-cyan hidden" />
         </div>
-
-        {/* Multi-language names preview */}
-        <div className="bg-dark-primary/50 rounded-xl p-3 border border-dark-border/30 mb-4">
-          <p className="text-xs font-bold text-accent-cyan mb-2 flex items-center">
-            <span className="mr-1">🌐</span>
-            Multi-language
-          </p>
-          <div className="text-xs text-gray-300 space-y-1">
-            {character.name_jp && <div><span className="text-gray-400">JP:</span> {character.name_jp}</div>}
-            {character.name_cn && <div><span className="text-gray-400">CN:</span> {character.name_cn}</div>}
-          </div>
-        </div>
-
-        {/* ID and Click Indicator */}
-        <div className="pt-3 border-t border-dark-border/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
-              {character.unique_key}
-            </span>
-            <motion.div
-              className="text-xs text-accent-cyan/60 group-hover:text-accent-cyan transition-colors"
-              whileHover={{ scale: 1.1 }}
-            >
-              Click to view details →
-            </motion.div>
-          </div>
+        <div>
+          <span className="text-xs text-gray-400">ID: {character.id}</span>
+          {character.birthday && (
+            <div className="flex items-center text-xs text-gray-400">
+              <Calendar className="w-3 h-3 mr-1 text-accent-pink" />
+              {formatBirthday(character.birthday)}
+            </div>
+          )}
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  const characterInfo = (
+    <div className="space-y-3">
+      {/* Voice actor */}
+      {character.voice_actor_jp && (
+        <div className="p-3 bg-gradient-to-r from-accent-purple/10 to-accent-pink/10 rounded-lg border border-accent-purple/20">
+          <div className="flex items-center space-x-2 mb-1">
+            <Mic className="w-4 h-4 text-accent-purple" />
+            <span className="text-xs font-medium text-accent-purple">Voice Actor</span>
+          </div>
+          <span className="text-sm font-bold text-white">{character.voice_actor_jp}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  const footer = (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
+        {character.unique_key}
+      </span>
+      <motion.div
+        className="text-xs text-accent-cyan/60 group-hover:text-accent-cyan transition-colors"
+        whileHover={{ scale: 1.05 }}
+      >
+        View Details →
+      </motion.div>
+    </div>
+  );
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="expanded"
+      onClick={onClick}
+      header={header}
+      footer={footer}
+    >
+      {characterInfo}
+    </MultiLanguageCard>
   );
 });
 
@@ -410,7 +377,7 @@ export default function CharacterListPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid-responsive-cards mb-8">
               {paginationData.paginatedCharacters.map((character, index) => (
                 <motion.div
                   key={character.id}
@@ -418,11 +385,11 @@ export default function CharacterListPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                                  <CharacterCard
+                  <CharacterCard
                   character={character as typeof character & Character}
                   onClick={() => handleCharacterClick((character as typeof character & Character).id)}
                 />
-                </motion.div>
+                </motion.div> 
               ))}
             </div>
 

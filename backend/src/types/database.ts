@@ -17,7 +17,8 @@ export interface Character {
   measurements?: string; // VARCHAR(20)
   blood_type?: string; // VARCHAR(5)
   voice_actor_jp?: string; // VARCHAR(100)
-  profile_image_url?: string; // VARCHAR(255)
+  profile_image_data?: Buffer; // LONGBLOB
+  profile_image_mime_type?: string; // VARCHAR(50)
   is_active: boolean; // BOOLEAN DEFAULT TRUE
   game_version?: string; // VARCHAR(30)
 }
@@ -34,7 +35,8 @@ export interface NewCharacter {
   measurements?: string;
   blood_type?: string;
   voice_actor_jp?: string;
-  profile_image_url?: string;
+  profile_image_data?: Buffer;
+  profile_image_mime_type?: string;
   is_active?: boolean;
   game_version?: string;
 }
@@ -67,6 +69,10 @@ export interface Swimsuit {
   is_limited: boolean; // BOOLEAN DEFAULT TRUE
   release_date_gl?: Date; // DATE
   game_version?: string; // VARCHAR(30)
+  image_before_data?: Buffer; // LONGBLOB
+  image_before_mime_type?: string; // VARCHAR(50)
+  image_after_data?: Buffer; // LONGBLOB
+  image_after_mime_type?: string; // VARCHAR(50)
 }
 
 export interface NewSwimsuit {
@@ -85,6 +91,10 @@ export interface NewSwimsuit {
   is_limited?: boolean;
   release_date_gl?: Date;
   game_version?: string;
+  image_before_data?: Buffer;
+  image_before_mime_type?: string;
+  image_after_data?: Buffer;
+  image_after_mime_type?: string;
 }
 
 // Utility types for swimsuit filtering
@@ -142,7 +152,8 @@ export interface Item {
   source_description_en?: string; // TEXT
   item_category: ItemCategory; // ENUM
   rarity: ItemRarity; // ENUM
-  icon_url?: string; // VARCHAR(255)
+  icon_data?: Buffer; // LONGBLOB
+  icon_mime_type?: string; // VARCHAR(50)
   game_version?: string; // VARCHAR(30)
 }
 
@@ -157,7 +168,8 @@ export interface NewItem {
   source_description_en?: string;
   item_category: ItemCategory;
   rarity: ItemRarity;
-  icon_url?: string;
+  icon_data?: Buffer;
+  icon_mime_type?: string;
   game_version?: string;
 }
 
@@ -175,7 +187,8 @@ export interface Bromide {
   bromide_type: BromideType; // ENUM DEFAULT 'DECO'
   rarity: BromideRarity; // ENUM
   skill_id?: number; // INT UNSIGNED NULL
-  art_url?: string; // VARCHAR(255)
+  art_data?: Buffer; // LONGBLOB
+  art_mime_type?: string; // VARCHAR(50)
   game_version?: string; // VARCHAR(30)
 }
 
@@ -189,7 +202,8 @@ export interface NewBromide {
   bromide_type?: BromideType;
   rarity: BromideRarity;
   skill_id?: number;
-  art_url?: string;
+  art_data?: Buffer;
+  art_mime_type?: string;
   game_version?: string;
 }
 
@@ -324,7 +338,7 @@ export interface Document {
   title_en: string; // VARCHAR(255)
   summary_en?: string; // TEXT
   content_json_en?: any; // JSON - TipTap editor content
-  screenshots?: string[]; // JSON - Array of screenshot URLs
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // JSON - Array of screenshot objects with base64 data
   created_at: Date; // TIMESTAMP
   updated_at: Date; // TIMESTAMP
 }
@@ -334,7 +348,7 @@ export interface NewDocument {
   title_en: string;
   summary_en?: string;
   content_json_en?: any; // TipTap JSON content
-  screenshots?: string[]; // Array of screenshot URLs
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Array of screenshot objects with base64 data
 }
 
 export interface UpdateLog {
@@ -346,7 +360,7 @@ export interface UpdateLog {
   description?: string; // TEXT
   date: Date; // DATETIME
   tags: string[]; // JSON
-  screenshots: string[]; // JSON
+  screenshots_data: Array<{data: string; mimeType: string; filename: string}>; // JSON - Array of screenshot objects with base64 data
   metrics: {
     performanceImprovement: string;
     userSatisfaction: string;
@@ -364,7 +378,7 @@ export interface NewUpdateLog {
   description?: string;
   date: Date;
   tags?: string[];
-  screenshots?: string[];
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
   metrics?: {
     performanceImprovement: string;
     userSatisfaction: string;
@@ -499,6 +513,39 @@ export interface UpdateTrackingFields {
   created_at?: Date;
   updated_at?: Date;
 }
+
+// ============================================================================
+// IMAGE HANDLING TYPES
+// ============================================================================
+
+// Supported image MIME types
+export type ImageMimeType = 'image/jpeg' | 'image/jpg' | 'image/png' | 'image/gif' | 'image/webp';
+
+// Image data structure for API responses
+export interface ImageData {
+  data: string; // Base64 encoded image data
+  mimeType: ImageMimeType;
+  filename?: string;
+  size?: number;
+}
+
+// Image upload structure for API requests
+export interface ImageUpload {
+  data: Buffer | string; // Buffer for server-side, base64 string for client-side
+  mimeType: ImageMimeType;
+  filename?: string;
+}
+
+// Screenshot data structure for documents and update logs
+export interface ScreenshotData {
+  data: string; // Base64 encoded image data
+  mimeType: ImageMimeType;
+  filename: string;
+}
+
+// ============================================================================
+// CSV/DATA IMPORT TYPES
+// ============================================================================
 
 // Export types for CSV/data import
 export interface CSVImportResult<T> {

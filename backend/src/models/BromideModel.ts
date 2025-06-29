@@ -22,7 +22,8 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
       bromide_type: row.bromide_type,
       rarity: row.rarity,
       skill_id: row.skill_id,
-      art_url: row.art_url,
+      art_data: row.art_data,
+      art_mime_type: row.art_mime_type,
       game_version: row.game_version,
     };
   }
@@ -38,13 +39,34 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
       'bromide_type',
       'rarity',
       'skill_id',
-      'art_url',
+      'art_data',
+      'art_mime_type',
       'game_version'
     ];
   }
 
   protected getUpdateFields(): (keyof NewBromide)[] {
     return this.getCreateFields(); // Same fields can be updated
+  }
+
+  // Override mapSortColumn to handle frontend sort parameters
+  protected mapSortColumn(sortBy: string): string | null {
+    const columnMapping: Record<string, string> = {
+      'name': 'name_en', // Default to English name for 'name' parameter
+      'name_en': 'name_en',
+      'name_jp': 'name_jp', 
+      'name_cn': 'name_cn',
+      'name_tw': 'name_tw',
+      'name_kr': 'name_kr',
+      'type': 'bromide_type',
+      'bromide_type': 'bromide_type',
+      'rarity': 'rarity',
+      'id': 'id',
+      'unique_key': 'unique_key',
+      'game_version': 'game_version'
+    };
+
+    return columnMapping[sortBy] || null;
   }
 
   // Mapper function to convert database row to Bromide object
@@ -60,7 +82,8 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
       bromide_type: row.bromide_type as BromideType,
       rarity: row.rarity as BromideRarity,
       skill_id: row.skill_id,
-      art_url: row.art_url,
+      art_data: row.art_data,
+      art_mime_type: row.art_mime_type,
       game_version: row.game_version,
     };
   }
@@ -69,8 +92,8 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
     try {
       const [result] = await executeQuery(
         `INSERT INTO bromides (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         bromide_type, rarity, skill_id, art_url, game_version)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         bromide_type, rarity, skill_id, art_data, art_mime_type, game_version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           bromide.unique_key,
           bromide.name_jp,
@@ -81,7 +104,8 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
           bromide.bromide_type ?? 'DECO',
           bromide.rarity,
           bromide.skill_id,
-          bromide.art_url,
+          bromide.art_data,
+          bromide.art_mime_type,
           bromide.game_version,
         ]
       ) as [any, any];
@@ -191,9 +215,13 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
       setClause.push(`skill_id = ?`);
       params.push(updates.skill_id);
     }
-    if (updates.art_url !== undefined) {
-      setClause.push(`art_url = ?`);
-      params.push(updates.art_url);
+    if (updates.art_data !== undefined) {
+      setClause.push(`art_data = ?`);
+      params.push(updates.art_data);
+    }
+    if (updates.art_mime_type !== undefined) {
+      setClause.push(`art_mime_type = ?`);
+      params.push(updates.art_mime_type);
     }
     if (updates.game_version !== undefined) {
       setClause.push(`game_version = ?`);

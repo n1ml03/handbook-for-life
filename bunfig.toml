@@ -20,9 +20,7 @@ jsx = "automatic"
 minify = true
 sourcemap = "external"
 
-[test]
-# Test configuration
-preload = []
+
 
 [macros]
 # Macro configuration

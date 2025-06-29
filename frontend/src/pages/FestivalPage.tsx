@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -9,13 +9,15 @@ import {
   CheckCircle,
   AlertCircle,
   Music,
-  Sparkles
-} from 'lucide-react';
+  Sparkles,
+  Trophy} from 'lucide-react';
 import { type Event, type SortDirection } from '@/types';
 import { eventsApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
+import { useDebounce } from '@/hooks';
+import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 
 function FestivalCard({ festival }: { festival: any }) {
   const formatDate = (dateString?: string) => {
@@ -41,106 +43,104 @@ function FestivalCard({ festival }: { festival: any }) {
 
   const status = getEventStatus();
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl p-6 overflow-hidden group"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-white text-lg truncate">{festival.name_en}</h3>
-            </div>
-            
-            {/* Status Badge */}
-            <div className="flex items-center gap-2 mb-2">
-              <motion.div
-                className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${
-                  status === 'active' 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : status === 'upcoming'
-                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                }`}
-                whileHover={{ scale: 1.05 }}
-              >
-                {status === 'active' ? (
-                  <CheckCircle className="w-3 h-3" />
-                ) : status === 'upcoming' ? (
-                  <Clock className="w-3 h-3" />
-                ) : (
-                  <AlertCircle className="w-3 h-3" />
-                )}
-                {status.toUpperCase()}
-              </motion.div>
-            </div>
+  const names: MultiLanguageNames = {
+    name_jp: festival.name_jp || '',
+    name_en: festival.name_en || '',
+    name_cn: festival.name_cn || '',
+    name_tw: festival.name_tw || '',
+    name_kr: festival.name_kr || ''
+  };
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-lg flex items-center justify-center border border-yellow-400/20">
+          <Sparkles className="w-6 h-6 text-yellow-400" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy className="w-3 h-3 text-yellow-400" />
+            <span className="text-xs text-yellow-400 font-medium">Festival Event</span>
           </div>
-          
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-yellow-400/20">
-            <Sparkles className="w-8 h-8 text-yellow-400" />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-300 leading-relaxed line-clamp-3">
-            {festival.name_kr || 'Festival event details'}
-          </p>
-        </div>
-
-        {/* Dates */}
-        <div className="grid grid-cols-1 gap-3 mb-4">
-          <motion.div 
-            className="flex justify-between items-center p-3 bg-dark-primary/30 rounded-lg border border-dark-border/30"
-            whileHover={{ scale: 1.02 }}
+          {/* Status Badge */}
+          <div
+            className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${
+              status === 'active' 
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                : status === 'upcoming'
+                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+            }`}
           >
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-green-400" />
-              <span className="text-xs font-medium text-gray-300">Start</span>
-            </div>
-            <span className="text-xs font-bold text-white">{formatDate(festival.start_date)}</span>
-          </motion.div>
-          
-          <motion.div 
-            className="flex justify-between items-center p-3 bg-dark-primary/30 rounded-lg border border-dark-border/30"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-red-400" />
-              <span className="text-xs font-medium text-gray-300">End</span>
-            </div>
-            <span className="text-xs font-bold text-white">{formatDate(festival.end_date)}</span>
-          </motion.div>
-        </div>
-
-        {/* Event Type */}
-        <div className="mb-4">
-          <div className="bg-gradient-to-r from-yellow-400/10 to-orange-500/10 rounded-xl p-3 border border-yellow-400/20">
-            <p className="text-xs font-bold text-yellow-400 flex items-center">
-              <Sparkles className="w-3 h-3 mr-1" />
-              {festival.type.replace('_', ' ')}
-            </p>
+            {status === 'active' ? (
+              <CheckCircle className="w-3 h-3" />
+            ) : status === 'upcoming' ? (
+              <Clock className="w-3 h-3" />
+            ) : (
+              <AlertCircle className="w-3 h-3" />
+            )}
+            {status.toUpperCase()}
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  const festivalDetails = (
+    <div className="space-y-3">
+      {/* Event Dates */}
+      <div className="space-y-2">
+        <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-3 h-3 text-green-400" />
+            <span className="text-xs font-medium text-green-400">Start</span>
+          </div>
+          <span className="text-xs font-bold text-white">{formatDate(festival.start_date)}</span>
+        </div>
+        
+        <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-3 h-3 text-red-400" />
+            <span className="text-xs font-medium text-red-400">End</span>
+          </div>
+          <span className="text-xs font-bold text-white">{formatDate(festival.end_date)}</span>
+        </div>
+      </div>
+
+      {/* Event Information */}
+      <div className="bg-gradient-to-r from-yellow-400/10 to-orange-500/10 rounded-lg p-3 border border-yellow-400/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Music className="w-3 h-3 text-yellow-400" />
+          <span className="text-xs font-bold text-yellow-400">Festival Details</span>
+        </div>
+        <div className="text-xs text-gray-300">
+          <p>Join this exciting festival event and compete with other players!</p>
+          <p className="mt-1">Earn exclusive rewards and climb the rankings.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="compact"
+      header={header}
+    >
+      {festivalDetails}
+    </MultiLanguageCard>
   );
 }
 
 export default function FestivalPage() {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [sortBy, setSortBy] = useState<string>('startDate');
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('startDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filterValues, setFilterValues] = useState({
     search: '',
@@ -150,38 +150,60 @@ export default function FestivalPage() {
   });
 
   const itemsPerPage = 8;
+  
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useDebounce(filterValues.search, 500);
 
-  // Load festivals data from API
-  useEffect(() => {
-    const loadFestivals = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Get all events and filter festivals on frontend
-        const response = await eventsApi.getEvents({
-          limit: 1000, // Get all events
-          sortBy: 'start_date',
-          sortOrder: 'desc'
-        });
-        
-        // Filter only festival events
-        const festivalEvents = response.data.filter(event => 
-          event.type === 'FESTIVAL_RANKING' || event.type === 'FESTIVAL_CUMULATIVE'
-        );
-        
-        setAllEvents(festivalEvents);
-        console.log('Loaded festivals:', festivalEvents);
-      } catch (err) {
-        console.error('Error loading festivals:', err);
-        setError('Failed to load festivals. Please try again.');
-      } finally {
-        setIsLoading(false);
+  // Optimized fetch function with useCallback
+  const fetchEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      let response;
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortBy: sortBy === 'startDate' ? 'start_date' : sortBy === 'endDate' ? 'end_date' : 'name_en',
+        sortOrder: sortDirection,
+        ...(filterValues.status && { status: filterValues.status }),
+        ...(filterValues.version && { version: filterValues.version }),
+      };
+
+      if (debouncedSearch) {
+        // Use search endpoint when there's a search query
+        response = await eventsApi.searchEvents(debouncedSearch, params);
+      } else {
+        // Use regular endpoint with filters
+        response = await eventsApi.getEvents(params);
       }
-    };
+      
+      // Safely extract data and pagination
+      const responseData = safeExtractArrayData<Event>(response, 'events API');
+      const paginationData = safeExtractPaginationData(response, responseData.length);
+      
+      // Use events directly since Event type doesn't have additional display properties
+      setAllEvents(responseData);
+      setTotalPages(paginationData.totalPages);
+      setTotalItems(paginationData.total);
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+      setAllEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, debouncedSearch, filterValues.status, filterValues.version, sortBy, sortDirection]);
 
-    loadFestivals();
-  }, []);
+  // Fetch events when dependencies change
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [debouncedSearch, filterValues.status, filterValues.version]);
 
   // Filter fields configuration
   const filterFields: FilterField[] = [
@@ -189,7 +211,7 @@ export default function FestivalPage() {
       key: 'search',
       label: 'Search',
       type: 'text',
-      placeholder: 'Search festivals...',
+      placeholder: 'Search festivals in all languages...',
       icon: <Search className="w-3 h-3 mr-1" />,
     },
     {
@@ -228,93 +250,32 @@ export default function FestivalPage() {
     { key: 'isActive', label: 'Status' }
   ];
 
-  const filteredAndSortedFestivals = useMemo(() => {
-    const filtered = [...allEvents].filter(event => {
-      if (event.type !== 'FESTIVAL_RANKING' && event.type !== 'FESTIVAL_CUMULATIVE') return false;
-      if (filterValues.search && !event.name_en.toLowerCase().includes(filterValues.search.toLowerCase())) return false;
-      if (filterValues.status) {
-        const now = new Date();
-        const start = event.start_date ? new Date(event.start_date) : null;
-        const end = event.end_date ? new Date(event.end_date) : null;
-        const status = (!start || !end)
-          ? 'unknown'
-          : now < start ? 'upcoming' : now > end ? 'ended' : 'active';
-        if (filterValues.status !== status) return false;
-      }
-      return true;
-    });
+  // Since we're now using server-side filtering and pagination, allEvents is already filtered and paginated
+  const paginatedFestivals = allEvents;
 
-    return filtered.sort((a, b) => {
-      let aValue: string | number | Date, bValue: string | number | Date;
-      
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name_en.toLowerCase();
-          bValue = b.name_en.toLowerCase();
-          break;
-        case 'startDate':
-          aValue = new Date(a.start_date ?? 0).getTime();
-          bValue = new Date(b.start_date ?? 0).getTime();
-          break;
-        case 'endDate':
-          aValue = new Date(a.end_date ?? 0).getTime();
-          bValue = new Date(b.end_date ?? 0).getTime();
-          break;
-        case 'isActive': {
-          const now = new Date();
-          aValue = (a.start_date && a.end_date && new Date(a.start_date) <= now && now <= new Date(a.end_date)) ? 1 : 0;
-          bValue = (b.start_date && b.end_date && new Date(b.start_date) <= now && now <= new Date(b.end_date)) ? 1 : 0;
-          break;
-        }
-        default:
-          aValue = a.name_en.toLowerCase();
-          bValue = b.name_en.toLowerCase();
-      }
-      
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      }
-      const numA = Number(aValue);
-      const numB = Number(bValue);
-      return sortDirection === 'asc' ? numA - numB : numB - numA;
-    });
-  }, [allEvents, filterValues, sortBy, sortDirection]);
-
-  const totalPages = useMemo(() => Math.ceil(filteredAndSortedFestivals.length / itemsPerPage), [filteredAndSortedFestivals.length, itemsPerPage]);
-  
-  // Update totalItems when filtered festivals change
-  useEffect(() => {
-    setTotalItems(filteredAndSortedFestivals.length);
-  }, [filteredAndSortedFestivals.length]);
-  const paginatedFestivals = useMemo(() => filteredAndSortedFestivals.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  ), [filteredAndSortedFestivals, currentPage, itemsPerPage]);
-
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
     setSortBy(newSortBy);
     setSortDirection(newDirection);
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilterValues({
       search: '',
       status: '',
       dateRange: '',
       version: ''
     });
-    setCurrentPage(1);
-  };
+  }, []);
 
   return (
     <PageLoadingState 
-      isLoading={isLoading} 
-      message={error || "Loading festivals..."}
+      isLoading={loading} 
+      message="Loading festivals..."
     >
     <div className="modern-page">
       <div className="modern-container-lg">
@@ -324,11 +285,11 @@ export default function FestivalPage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="modern-page-title">
+          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
             Festival Gallery
           </h1>
-          <p className="modern-page-subtitle">
-            Showing {filteredAndSortedFestivals.length} festivals
+          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
+            Showing {allEvents.length} of {totalItems} festivals
           </p>
         </motion.div>
 
@@ -356,8 +317,9 @@ export default function FestivalPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
+          className="mt-8"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          <div className="grid-responsive-cards mb-8">
             {paginatedFestivals.map((festival, index) => (
               <motion.div
                 key={festival.id}
@@ -422,7 +384,7 @@ export default function FestivalPage() {
         )}
 
         {/* Empty State */}
-        {filteredAndSortedFestivals.length === 0 && (
+        {allEvents.length === 0 && !loading && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}

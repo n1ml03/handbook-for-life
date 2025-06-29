@@ -157,7 +157,8 @@ export const schemas = {
     measurements: z.string().max(20).optional(),
     blood_type: z.string().max(5).optional(),
     voice_actor_jp: z.string().max(100).optional(),
-    profile_image_url: z.string().max(255).optional(),
+    profile_image_data: z.string().optional(), // Base64 encoded image data
+    profile_image_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     is_active: z.boolean().default(true),
     game_version: z.string().max(30).optional()
   }),
@@ -173,7 +174,8 @@ export const schemas = {
     measurements: z.string().max(20).optional(),
     blood_type: z.string().max(5).optional(),
     voice_actor_jp: z.string().max(100).optional(),
-    profile_image_url: z.string().max(255).optional(),
+    profile_image_data: z.string().optional(), // Base64 encoded image data
+    profile_image_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     is_active: z.boolean().optional(),
     game_version: z.string().max(30).optional()
   }),
@@ -216,7 +218,11 @@ export const schemas = {
     has_malfunction: z.boolean().optional(),
     is_limited: z.boolean().optional(),
     release_date_gl: z.coerce.date().optional(),
-    game_version: z.string().max(30).optional()
+    game_version: z.string().max(30).optional(),
+    image_before_data: z.string().optional(), // Base64 encoded image data
+    image_before_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
+    image_after_data: z.string().optional(), // Base64 encoded image data
+    image_after_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional()
   }),
   updateSwimsuit: z.object({
     character_id: z.number().int().positive().optional(),
@@ -233,7 +239,11 @@ export const schemas = {
     has_malfunction: z.boolean().optional(),
     is_limited: z.boolean().optional(),
     release_date_gl: z.coerce.date().optional(),
-    game_version: z.string().max(30).optional()
+    game_version: z.string().max(30).optional(),
+    image_before_data: z.string().optional(), // Base64 encoded image data
+    image_before_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
+    image_after_data: z.string().optional(), // Base64 encoded image data
+    image_after_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional()
   }),
   createGirl: z.object({
     id: z.string(),
@@ -453,7 +463,7 @@ export const schemas = {
     description: z.string().optional(),
     date: z.coerce.date(),
     tags: z.array(z.string()).optional(),
-    is_published: z.boolean().default(true),
+
     technical_details: z.array(z.string()).optional(),
     bug_fixes: z.array(z.string()).optional(),
     screenshots: z.array(z.string()).optional(),
@@ -472,7 +482,7 @@ export const schemas = {
     description: z.string().optional(),
     date: z.coerce.date().optional(),
     tags: z.array(z.string()).optional(),
-    is_published: z.boolean().optional(),
+
     technical_details: z.array(z.string()).optional(),
     bug_fixes: z.array(z.string()).optional(),
     screenshots: z.array(z.string()).optional(),
@@ -491,8 +501,12 @@ export const schemas = {
     title_en: z.string().min(1).max(255),
     summary_en: z.string().optional(),
     content_json_en: z.any().optional(), // TipTap JSON content
-    is_published: z.boolean().default(false),
-    screenshots: z.array(z.string()).optional()
+
+    screenshots_data: z.array(z.object({
+      data: z.string(), // Base64 encoded image data
+      mimeType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']),
+      filename: z.string()
+    })).optional()
   }),
 
   updateDocument: z.object({
@@ -500,8 +514,12 @@ export const schemas = {
     title_en: z.string().min(1).max(255).optional(),
     summary_en: z.string().optional(),
     content_json_en: z.any().optional(), // TipTap JSON content
-    is_published: z.boolean().optional(),
-    screenshots: z.array(z.string()).optional()
+
+    screenshots_data: z.array(z.object({
+      data: z.string(), // Base64 encoded image data
+      mimeType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']),
+      filename: z.string()
+    })).optional()
   }),
 
   // ============================================================================
@@ -581,7 +599,8 @@ export const schemas = {
     source_description_en: z.string().optional(),
     item_category: z.enum(['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL']),
     rarity: z.enum(['N', 'R', 'SR', 'SSR']),
-    icon_url: z.string().max(255).optional(),
+    icon_data: z.string().optional(), // Base64 encoded image data
+    icon_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     game_version: z.string().max(30).optional()
   }),
 
@@ -596,7 +615,8 @@ export const schemas = {
     source_description_en: z.string().optional(),
     item_category: z.enum(['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL']).optional(),
     rarity: z.enum(['N', 'R', 'SR', 'SSR']).optional(),
-    icon_url: z.string().max(255).optional(),
+    icon_data: z.string().optional(), // Base64 encoded image data
+    icon_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     game_version: z.string().max(30).optional()
   }),
 
@@ -613,7 +633,8 @@ export const schemas = {
     bromide_type: z.enum(['DECO', 'OWNER']).default('DECO'),
     rarity: z.enum(['R', 'SR', 'SSR']),
     skill_id: z.number().int().positive().optional(),
-    art_url: z.string().max(255).optional(),
+    art_data: z.string().optional(), // Base64 encoded image data
+    art_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     game_version: z.string().max(30).optional()
   }),
 
@@ -627,7 +648,8 @@ export const schemas = {
     bromide_type: z.enum(['DECO', 'OWNER']).optional(),
     rarity: z.enum(['R', 'SR', 'SSR']).optional(),
     skill_id: z.number().int().positive().optional(),
-    art_url: z.string().max(255).optional(),
+    art_data: z.string().optional(), // Base64 encoded image data
+    art_mime_type: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']).optional(),
     game_version: z.string().max(30).optional()
   })
 };

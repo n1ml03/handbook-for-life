@@ -65,7 +65,27 @@ router.get('/key/:unique_key',
   })
 );
 
-// GET /api/skills/search - Search skills
+/**
+ * @swagger
+ * /api/skills/search:
+ *   get:
+ *     tags: [Skills]
+ *     summary: Search skills
+ *     description: Search skills by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -97,7 +117,23 @@ router.get('/search',
   })
 );
 
-// GET /api/skills/:id - Get skill by ID
+/**
+ * @swagger
+ * /api/skills/{id}:
+ *   get:
+ *     tags: [Skills]
+ *     summary: Get skill by ID
+ *     description: Retrieve a specific skill by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
@@ -130,7 +166,31 @@ router.post('/',
   })
 );
 
-// PUT /api/skills/:id - Update skill
+/**
+ * @swagger
+ * /api/skills/{id}:
+ *   put:
+ *     tags: [Skills]
+ *     summary: Update skill
+ *     description: Update an existing skill
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validateParams(schemas.idParam),
   validate(schemas.updateSkill),
@@ -149,7 +209,23 @@ router.put('/:id',
   })
 );
 
-// DELETE /api/skills/:id - Delete skill
+/**
+ * @swagger
+ * /api/skills/{id}:
+ *   delete:
+ *     tags: [Skills]
+ *     summary: Delete skill
+ *     description: Delete an existing skill
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {

@@ -4,15 +4,20 @@ import {
   ChevronLeft, 
   ChevronRight,
   ShoppingCart,
-  Coins
+  Coins,
+  Calendar,
+  Clock,
+  Tag,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageLoadingState } from '@/components/ui';
+import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
 import { type ShopListing } from '@/types';
 import { shopListingsApi } from '@/services/api';
 import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
+import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
 
 // Shop Listing Card Component
@@ -22,103 +27,111 @@ interface ShopListingCardProps {
 }
 
 const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopListingCardProps) {
-  const itemName = listing.item?.name_en || listing.item?.name_jp || 'Unknown Item';
   const costItemName = listing.cost_currency_item?.name_en || listing.cost_currency_item?.name_jp || 'Unknown Currency';
 
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
-      className="relative bg-dark-card/80 backdrop-blur-sm border border-dark-border/50 rounded-2xl p-8 overflow-hidden group"
-    >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-accent-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-white text-lg truncate">{itemName}</h3>
-            </div>
-            <div className="text-xs text-gray-400">
-              Shop Type: {listing.shop_type}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-xl flex items-center justify-center border border-accent-cyan/20">
-              <span className="text-2xl">🛍️</span>
-            </div>
-          </div>
-        </div>
+  const names: MultiLanguageNames = {
+    name_jp: listing.item?.name_jp || '',
+    name_en: listing.item?.name_en || '',
+    name_cn: listing.item?.name_cn || '',
+    name_tw: listing.item?.name_tw || '',
+    name_kr: listing.item?.name_kr || ''
+  };
 
-        {/* Item Details */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-300 leading-relaxed">
-            {listing.item?.description_en || 'Shop listing item'}
-          </p>
-          {listing.item?.item_category && (
-            <p className="text-xs text-gray-400 mt-1">Category: {listing.item.item_category}</p>
-          )}
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
+          <span className="text-xl">🛍️</span>
         </div>
-
-        {/* Cost */}
-        <div className="mb-4">
-          <div className="bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-xl p-3 border border-accent-cyan/20">
-            <p className="text-xs font-bold text-accent-cyan mb-2">Cost</p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="text-accent-gold">
-                  <Coins className="w-4 h-4" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-accent-gold">
-                    {listing.cost_amount}
-                  </span>
-                  <span className="text-sm text-gray-400">
-                    {costItemName}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Availability */}
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-1">
-            {listing.start_date && (
-              <span className="text-xs bg-blue-500/20 px-2 py-1 rounded-sm border border-blue-500/30 text-blue-400">
-                📅 Available from {new Date(listing.start_date).toLocaleDateString()}
-              </span>
-            )}
-            {listing.end_date && (
-              <span className="text-xs bg-orange-500/20 px-2 py-1 rounded-sm border border-orange-500/30 text-orange-400">
-                ⏰ Until {new Date(listing.end_date).toLocaleDateString()}
-              </span>
-            )}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
             {listing.item?.rarity && (
-              <span className="text-xs bg-accent-pink/20 px-2 py-1 rounded-sm border border-accent-pink/30 text-accent-pink">
-                ★ {listing.item.rarity}
-              </span>
+              <div className="flex items-center gap-1 px-2 py-1 rounded bg-accent-pink/20 border border-accent-pink/30">
+                <Star className="w-3 h-3 text-accent-pink" />
+                <span className="text-xs font-bold text-accent-pink">{listing.item.rarity}</span>
+              </div>
             )}
           </div>
-        </div>
-
-        {/* Shop ID */}
-        <div className="pt-3 border-t border-dark-border/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 font-mono bg-dark-primary/30 px-2 py-1 rounded-sm">
-              #{listing.id}
-            </span>
-            <span className="text-xs text-gray-400">
-              {listing.shop_type}
-            </span>
+          <div className="flex items-center gap-2">
+            <Tag className="w-3 h-3 text-accent-cyan" />
+            <span className="text-xs text-accent-cyan font-medium">{listing.shop_type}</span>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+
+  const itemDetails = (
+    <div className="space-y-3">
+      {/* Item Description */}
+      {listing.item?.description_en && (
+        <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {listing.item.description_en}
+          </p>
+        </div>
+      )}
+
+      {/* Cost Display */}
+      <div className="bg-gradient-to-r from-accent-gold/10 to-accent-gold/20 rounded-lg p-3 border border-accent-gold/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Coins className="w-4 h-4 text-accent-gold" />
+          <span className="text-xs font-medium text-accent-gold">Cost</span>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-accent-gold">
+            {listing.cost_amount}
+          </div>
+          <div className="text-xs text-gray-400">
+            {costItemName}
+          </div>
+        </div>
+      </div>
+
+      {/* Item Category */}
+      {listing.item?.item_category && (
+        <div className="flex items-center gap-2 p-2 bg-dark-primary/20 rounded-lg border border-white/10">
+          <Tag className="w-3 h-3 text-accent-purple" />
+          <span className="text-xs font-medium text-gray-400">Category:</span>
+          <span className="text-xs font-bold text-white">{listing.item.item_category}</span>
+        </div>
+      )}
+
+      {/* Availability */}
+      <div className="space-y-2">
+        {listing.start_date && (
+          <div className="flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <Calendar className="w-3 h-3 text-blue-400" />
+            <span className="text-xs text-blue-400">Available from:</span>
+            <span className="text-xs font-bold text-white">
+              {new Date(listing.start_date).toLocaleDateString()}
+            </span>
+          </div>
+        )}
+        {listing.end_date && (
+          <div className="flex items-center gap-2 p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            <Clock className="w-3 h-3 text-orange-400" />
+            <span className="text-xs text-orange-400">Until:</span>
+            <span className="text-xs font-bold text-white">
+              {new Date(listing.end_date).toLocaleDateString()}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+
+  return (
+    <MultiLanguageCard
+      names={names}
+      primaryLanguage="en"
+      languageVariant="compact"
+      header={header}
+    >
+      {itemDetails}
+    </MultiLanguageCard>
   );
 });
 
@@ -130,14 +143,23 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
-  // Filter state management
-  const [filterValues, setFilterValues] = useState({
+  // Filter state management with improved type safety
+  const [filterValues, setFilterValues] = useState<{
+    search: string;
+    shop_type: string;
+    rarity: string;
+    item_category: string;
+    available_only: boolean;
+  }>({
     search: '',
     shop_type: '',
     rarity: '',
     item_category: '',
     available_only: false,
   });
+
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useDebounce(filterValues.search, 500);
 
   // API state
   const [shopData, setShopData] = useState({
@@ -165,7 +187,7 @@ export default function ShopPage() {
       }
 
       // Add filters
-      if (filterValues.search) params.search = filterValues.search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterValues.shop_type) params.shop_type = filterValues.shop_type;
       if (filterValues.rarity) params.rarity = filterValues.rarity;
       if (filterValues.item_category) params.item_category = filterValues.item_category;
@@ -192,7 +214,7 @@ export default function ShopPage() {
         error: 'Failed to fetch shop listings. Please try again.'
       }));
     }
-  }, [currentPage, sortBy, sortDirection, filterValues]);
+  }, [currentPage, sortBy, sortDirection, debouncedSearch, filterValues.shop_type, filterValues.rarity, filterValues.item_category, filterValues.available_only]);
 
   useEffect(() => {
     fetchShopListings();
@@ -260,6 +282,33 @@ export default function ShopPage() {
   const itemsPerPage = 24;
   const totalPages = Math.ceil(shopData.totalListings / itemsPerPage);
 
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
+    if (key === 'available_only') {
+      setFilterValues(prev => ({ ...prev, [key]: Boolean(value) }));
+    } else {
+      setFilterValues(prev => ({ ...prev, [key]: String(value) }));
+    }
+    setCurrentPage(1);
+  }, []);
+
+  const handleSortChange = useCallback((newSortBy: string, newSortDirection: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(newSortDirection);
+    setCurrentPage(1);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilterValues({
+      search: '',
+      shop_type: '',
+      rarity: '',
+      item_category: '',
+      available_only: false,
+    });
+    setCurrentPage(1);
+  }, []);
+
   return (
     <PageLoadingState isLoading={shopData.loading} message="Loading shop listings...">
       <div className="modern-page">
@@ -291,27 +340,11 @@ export default function ShopPage() {
               filterFields={filterFields}
               sortOptions={sortOptions}
               filterValues={filterValues}
-              onFilterChange={(key, value) => {
-                setFilterValues(prev => ({ ...prev, [key]: value }));
-                setCurrentPage(1);
-              }}
-              onClearFilters={() => {
-                setFilterValues({
-                  search: '',
-                  shop_type: '',
-                  rarity: '',
-                  item_category: '',
-                  available_only: false,
-                });
-                setCurrentPage(1);
-              }}
+              onFilterChange={handleFilterChange}
+              onClearFilters={clearFilters}
               sortBy={sortBy}
               sortDirection={sortDirection}
-              onSortChange={(sortBy, sortDirection) => {
-                setSortBy(sortBy);
-                setSortDirection(sortDirection);
-                setCurrentPage(1);
-              }}
+              onSortChange={handleSortChange}
               resultCount={shopData.listings.length}
               totalCount={shopData.totalListings}
               itemLabel="shop listings"
@@ -325,7 +358,7 @@ export default function ShopPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid-responsive-cards mb-8">
               {shopData.listings.map((listing, index) => (
                 <motion.div
                   key={listing.id}

@@ -11,6 +11,8 @@ import logger  from './config/logger';
 import { testConnection, closeDatabase } from './config/database';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { responseFormatter } from './middleware/responseFormatter';
+import { responseValidator } from './middleware/responseValidator';
+import { swaggerUi, specs } from './config/swagger';
 
 // Import routes
 import healthRoutes from '@routes/health';
@@ -26,6 +28,7 @@ import bromidesRoutes from '@routes/bromides';
 import gachasRoutes from '@routes/gachas';
 import shopListingsRoutes from '@routes/shop-listings';
 import uploadRoutes from '@routes/upload';
+import imageRoutes from '@routes/images';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,17 +45,49 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Response formatting middleware
+// Response formatting and validation middleware
 app.use(responseFormatter);
+app.use(responseValidator({
+  enforceStandardFormat: process.env.NODE_ENV === 'development',
+  logResponses: process.env.NODE_ENV === 'development',
+  validateStatusCodes: true,
+  requireTimestamp: true,
+  requireSuccessField: true
+}));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Static file serving removed - images now served directly from database via /api/images endpoints
 
 // Request ID middleware for tracking
 app.use((req: any, res, next) => {
   req.id = Math.random().toString(36).substring(2, 11);
   res.setHeader('X-Request-ID', req.id);
   next();
+});
+
+// Swagger UI documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'DOAXVV Handbook API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    docExpansion: 'none',
+    filter: true,
+    showExtensions: true,
+    showCommonExtensions: true,
+    defaultModelsExpandDepth: 1,
+    defaultModelExpandDepth: 1,
+    defaultModelRendering: 'example',
+    displayOperationId: false,
+    tryItOutEnabled: true
+  }
+}));
+
+// OpenAPI spec endpoint
+app.get('/api-docs.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json(specs);
 });
 
 // API routes (health check has no additional rate limiting)
@@ -73,6 +108,7 @@ app.use('/api/shop-listings', shopListingsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/update-logs', updateLogsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/images', imageRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {
@@ -81,6 +117,7 @@ app.get('/', (_req, res) => {
     message: 'DOAXVV Handbook API Server',
     version: '2.0.0',
     timestamp: new Date().toISOString(),
+    documentation: '/api-docs',
     endpoints: {
       health: '/api/health',
       characters: '/api/characters',
@@ -94,7 +131,8 @@ app.get('/', (_req, res) => {
       bromides: '/api/bromides',
       gachas: '/api/gachas',
       shopListings: '/api/shop-listings',
-      upload: '/api/upload'
+      upload: '/api/upload',
+      images: '/api/images'
     }
   });
 });

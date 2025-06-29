@@ -22,12 +22,15 @@ import { SaveButton } from '@/components/ui/loading';
 import { useDocuments } from '@/hooks';
 import { safeNormalizeTags, safeToString } from '@/services/utils';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
+import { useAccessibility } from '@/hooks/useAccessibility';
+import { useDebounce } from '@/hooks';
 
 type ViewMode = DocumentViewMode;
 type ActiveSection = DocumentSectionType;
 
 export default function DocumentPage() {
   const { documents, updateDocument } = useDocuments();
+  useAccessibility();
   const [activeSection, setActiveSection] = useState<ActiveSection>('checklist-creation');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -37,12 +40,20 @@ export default function DocumentPage() {
   const [filterValues, setFilterValues] = useState<Record<string, string | number | boolean>>({
     search: '',
     category: '',
-    status: '',
     author: ''
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Debounce search to improve performance
+  const debouncedSearch = useDebounce(filterValues.search, 500);
+
+  // Memoized filter values that include debounced search
+  const filterValuesWithDebouncedSearch = useMemo(() => ({
+    ...filterValues,
+    search: debouncedSearch
+  } as Record<string, string | number | boolean>), [filterValues, debouncedSearch]);
 
   const documentSections: DocumentSectionInfo[] = [
     {
@@ -90,20 +101,17 @@ export default function DocumentPage() {
     const filtered = sectionDocuments.filter(doc => {
       const tags = safeNormalizeTags(doc.tags);
       
-      const searchTerm = String(filterValues.search || '').toLowerCase();
+      const searchTerm = String(filterValuesWithDebouncedSearch.search || '').toLowerCase();
       const matchesSearch = !searchTerm ||
         doc.title.toLowerCase().includes(searchTerm) ||
         doc.content.toLowerCase().includes(searchTerm) ||
         tags.some(tag => safeToString(tag).toLowerCase().includes(searchTerm));
       
-      const matchesCategory = !filterValues.category || filterValues.category === 'all' || doc.category === filterValues.category;
-      const matchesStatus = !filterValues.status || filterValues.status === 'all' ||
-                           (filterValues.status === 'published' && doc.is_published) ||
-                           (filterValues.status === 'draft' && !doc.is_published);
-      const authorValue = String(filterValues.author || '');
+      const matchesCategory = !filterValuesWithDebouncedSearch.category || filterValuesWithDebouncedSearch.category === 'all' || doc.category === filterValuesWithDebouncedSearch.category;
+      const authorValue = String(filterValuesWithDebouncedSearch.author || '');
       const matchesAuthor = !authorValue || doc.author.toLowerCase().includes(authorValue.toLowerCase());
-      
-      return matchesSearch && matchesCategory && matchesStatus && matchesAuthor;
+
+      return matchesSearch && matchesCategory && matchesAuthor;
     });
 
     // Sorting
@@ -129,7 +137,7 @@ export default function DocumentPage() {
     });
 
     return filtered;
-  }, [filterValues, sortBy, sortDirection, getSectionDocuments]);
+  }, [filterValuesWithDebouncedSearch, sortBy, sortDirection, getSectionDocuments]);
 
   const handleDocumentClick = (document: Document) => {
     setSelectedDocument(document);
@@ -175,20 +183,20 @@ export default function DocumentPage() {
     }
   };
 
-  const handleFilterChange = (key: string, value: string | number | boolean) => {
+  // Optimized event handlers with useCallback
+  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
     setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
-  const handleSortChange = (newSortBy: string, newDirection: SortDirection) => {
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
     setSortBy(newSortBy);
     setSortDirection(newDirection);
-  };
+  }, []);
 
   const clearFilters = useCallback(() => {
     setFilterValues({
       search: '',
       category: '',
-      status: '',
       author: ''
     });
   }, []);
@@ -213,18 +221,7 @@ export default function DocumentPage() {
       ],
       icon: <Tags className="w-3 h-3 mr-1" />,
     },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      placeholder: 'All Status',
-      options: [
-        { value: 'all', label: 'All Status' },
-        { value: 'published', label: 'Published' },
-        { value: 'draft', label: 'Draft' }
-      ],
-      icon: <FileText className="w-3 h-3 mr-1" />,
-    },
+
     {
       key: 'author',
       label: 'Author',
@@ -273,7 +270,7 @@ export default function DocumentPage() {
         setShowFilters={setShowFilters}
         filterFields={filterFields}
         sortOptions={sortOptions}
-        filterValues={filterValues}
+        filterValues={filterValuesWithDebouncedSearch}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
         sortBy={sortBy}
@@ -329,9 +326,6 @@ export default function DocumentPage() {
                       <h3 className="text-xl font-semibold text-foreground group-hover:text-accent-pink transition-colors">
                         {document.title}
                       </h3>
-                      {!document.is_published && (
-                        <Badge variant="secondary" className="text-xs">Draft</Badge>
-                      )}
                       <Badge 
                         variant="outline" 
                         className={cn(
@@ -439,9 +433,6 @@ export default function DocumentPage() {
               <h1 className="text-3xl font-bold text-foreground">
                 {selectedDocument?.title}
               </h1>
-              {!selectedDocument?.is_published && (
-                <Badge variant="secondary">Draft</Badge>
-              )}
               {isEditMode && (
                 <StatusBadge status="info">
                   <Edit3 className="w-3 h-3" />

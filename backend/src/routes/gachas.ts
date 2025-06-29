@@ -7,7 +7,47 @@ import logger from '../config/logger';
 const router = Router();
 const gachaService = new GachaService();
 
-// GET /api/gachas - Get all gachas with pagination
+/**
+ * @swagger
+ * /api/gachas:
+ *   get:
+ *     tags: [Gachas]
+ *     summary: Get all gachas with pagination
+ *     description: Retrieve a paginated list of all gachas with optional filtering
+ *     parameters:
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *       - name: gacha_subtype
+ *         in: query
+ *         description: Filter by gacha subtype
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [TRENDY, NOSTALGIC, BIRTHDAY, ANNIVERSARY, PAID, FREE, ETC]
+ *       - $ref: '#/components/parameters/IsActiveParam'
+ *       - $ref: '#/components/parameters/StartDateParam'
+ *       - $ref: '#/components/parameters/EndDateParam'
+ *     responses:
+ *       200:
+ *         description: Gachas retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Gacha'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/', 
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -30,7 +70,57 @@ router.get('/',
   })
 );
 
-// GET /api/gachas/active - Get currently active gachas
+/**
+ * @swagger
+ * /api/gachas/active:
+ *   get:
+ *     tags: [Gachas]
+ *     summary: Get currently active gachas
+ *     description: Retrieve a paginated list of gachas that are currently active (within start and end date)
+ *     parameters:
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         description: Active gachas retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Gacha'
+ *             example:
+ *               success: true
+ *               data: [
+ *                 {
+ *                   id: 201,
+ *                   unique_key: 'summer_festival_2024',
+ *                   name_en: 'Summer Festival Gacha 2024',
+ *                   gacha_subtype: 'TRENDY',
+ *                   start_date: '2024-06-01T00:00:00Z',
+ *                   end_date: '2024-06-30T23:59:59Z',
+ *                   is_active: true
+ *                 }
+ *               ]
+ *               pagination: {
+ *                 page: 1,
+ *                 limit: 10,
+ *                 total: 3,
+ *                 totalPages: 1,
+ *                 hasNext: false,
+ *                 hasPrev: false
+ *               }
+ *               timestamp: '2024-06-28T10:30:00.000Z'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/active',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -93,7 +183,27 @@ router.get('/key/:unique_key',
   })
 );
 
-// GET /api/gachas/search - Search gachas
+/**
+ * @swagger
+ * /api/gachas/search:
+ *   get:
+ *     tags: [Gachas]
+ *     summary: Search gachas
+ *     description: Search gachas by name or other criteria
+ *     parameters:
+ *       - $ref: '#/components/parameters/SearchParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/PaginatedSuccess'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -124,7 +234,23 @@ router.get('/search',
   })
 );
 
-// GET /api/gachas/:id - Get gacha by ID
+/**
+ * @swagger
+ * /api/gachas/{id}:
+ *   get:
+ *     tags: [Gachas]
+ *     summary: Get gacha by ID
+ *     description: Retrieve a specific gacha by their ID
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
@@ -314,7 +440,31 @@ router.post('/:id/pool/bulk',
   })
 );
 
-// PUT /api/gachas/:id - Update gacha
+/**
+ * @swagger
+ * /api/gachas/{id}:
+ *   put:
+ *     tags: [Gachas]
+ *     summary: Update gacha
+ *     description: Update an existing gacha
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.put('/:id',
   validate(schemas.updateGacha),
   asyncHandler(async (req, res) => {
@@ -366,7 +516,23 @@ router.put('/:id/pool/:poolId',
   })
 );
 
-// DELETE /api/gachas/:id - Delete gacha
+/**
+ * @swagger
+ * /api/gachas/{id}:
+ *   delete:
+ *     tags: [Gachas]
+ *     summary: Delete gacha
+ *     description: Delete an existing gacha
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);

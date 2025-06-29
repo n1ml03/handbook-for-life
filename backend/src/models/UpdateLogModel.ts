@@ -17,13 +17,13 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
   protected getCreateFields(): (keyof NewUpdateLog)[] {
     return [
       'unique_key',
-      'version', 
+      'version',
       'title',
       'content',
       'description',
       'date',
       'tags',
-      'screenshots',
+      'screenshots_data',
       'metrics'
     ];
   }
@@ -43,7 +43,7 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       description: row.description || '',
       date: new Date(row.date),
       tags: this.parseJSONField(row.tags, []),
-      screenshots: this.parseJSONField(row.screenshots, []),
+      screenshots_data: this.parseJSONField(row.screenshots_data, []),
       metrics: this.parseJSONField(row.metrics, {
         performanceImprovement: '0%',
         userSatisfaction: '0%',
@@ -80,7 +80,7 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       const [result] = await executeQuery(
         `INSERT INTO update_logs (
           unique_key, version, title, content, description, date, tags,
-          screenshots, metrics
+          screenshots_data, metrics
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           uniqueKey,
@@ -90,7 +90,7 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
           updateLog.description || '',
           updateLog.date,
           JSON.stringify(updateLog.tags || []),
-          JSON.stringify(updateLog.screenshots || []),
+          JSON.stringify(updateLog.screenshots_data || []),
           JSON.stringify(updateLog.metrics || {
             performanceImprovement: '0%',
             userSatisfaction: '0%',
@@ -185,9 +185,9 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
       setClause.push(`tags = ?`);
       params.push(JSON.stringify(updates.tags));
     }
-    if (updates.screenshots !== undefined) {
-      setClause.push(`screenshots = ?`);
-      params.push(JSON.stringify(updates.screenshots));
+    if (updates.screenshots_data !== undefined) {
+      setClause.push(`screenshots_data = ?`);
+      params.push(JSON.stringify(updates.screenshots_data));
     }
     if (updates.metrics !== undefined) {
       setClause.push(`metrics = ?`);
@@ -215,7 +215,7 @@ export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {
   // Additional query methods
   async findRecentUpdates(limit: number = 5): Promise<UpdateLog[]> {
     const [rows] = await executeQuery(
-      `SELECT * FROM update_logs WHERE is_published = TRUE ORDER BY date DESC LIMIT ?`,
+      `SELECT * FROM update_logs ORDER BY date DESC LIMIT ?`,
       [limit]
     ) as [any[], any];
 

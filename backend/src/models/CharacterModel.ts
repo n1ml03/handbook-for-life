@@ -23,7 +23,8 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
       measurements: row.measurements,
       blood_type: row.blood_type,
       voice_actor_jp: row.voice_actor_jp,
-      profile_image_url: row.profile_image_url,
+      profile_image_data: row.profile_image_data,
+      profile_image_mime_type: row.profile_image_mime_type,
       is_active: Boolean(row.is_active),
       game_version: row.game_version,
     };
@@ -42,7 +43,8 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
       'measurements',
       'blood_type',
       'voice_actor_jp',
-      'profile_image_url',
+      'profile_image_data',
+      'profile_image_mime_type',
       'is_active',
       'game_version'
     ];
