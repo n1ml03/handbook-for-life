@@ -40,11 +40,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} items for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -57,10 +53,7 @@ router.get('/key/:unique_key',
     
     logger.info(`Retrieved item: ${item.name_en}`);
 
-    res.json({
-      success: true,
-      data: item
-    });
+    res.success(item);
   })
 );
 
@@ -71,10 +64,7 @@ router.get('/currency',
     
     logger.info(`Retrieved ${items.length} currency items`);
 
-    res.json({
-      success: true,
-      data: items
-    });
+    res.success(items);
   })
 );
 
@@ -122,11 +112,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} items`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -163,10 +149,7 @@ router.get('/:id',
     
     logger.info(`Retrieved item: ${item.name_en}`);
 
-    res.json({
-      success: true,
-      data: item
-    });
+    res.success(item);
   })
 );
 
@@ -228,11 +211,7 @@ router.put('/:id',
     
     logger.info(`Updated item: ${item.name_en}`);
 
-    res.json({
-      success: true,
-      data: item,
-      message: 'Item updated successfully'
-    });
+    res.updated(item, 'Item updated successfully');
   })
 );
 
@@ -269,10 +248,7 @@ router.delete('/:id',
     
     logger.info(`Deleted item with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Item deleted successfully'
-    });
+    res.deleted('Item deleted successfully');
   })
 );
 

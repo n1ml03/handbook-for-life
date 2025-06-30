@@ -78,7 +78,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
           />
 
           <div className="space-y-4">
-            <div className="grid gap-responsive">
+            <div className="grid gap-4">
               {sectionDocuments.map(document => (
                 <div key={document.id} className="doax-card p-6">
                   <div className="flex justify-between items-start">

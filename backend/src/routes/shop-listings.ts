@@ -22,11 +22,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} shop listings for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -45,11 +41,7 @@ router.get('/active',
 
     logger.info(`Retrieved ${result.data.length} active shop listings`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -69,11 +61,7 @@ router.get('/type/:shopType',
 
     logger.info(`Retrieved ${result.data.length} shop listings for type ${shopType}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -101,11 +89,7 @@ router.get('/item/:itemId',
 
     logger.info(`Retrieved ${result.data.length} shop listings for item ${itemId}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -133,11 +117,7 @@ router.get('/currency/:currencyId',
 
     logger.info(`Retrieved ${result.data.length} shop listings for currency ${currencyId}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -148,10 +128,7 @@ router.get('/statistics',
 
     logger.info('Retrieved shop statistics');
 
-    res.json({
-      success: true,
-      data: statistics
-    });
+    res.success(statistics);
   })
 );
 
@@ -188,10 +165,7 @@ router.get('/:id',
     
     logger.info(`Retrieved shop listing: ${listing.id}`);
 
-    res.json({
-      success: true,
-      data: listing
-    });
+    res.success(listing);
   })
 );
 
@@ -237,10 +211,7 @@ router.post('/validate',
 
     logger.info(`Validated shop listing data: ${validation.isValid ? 'valid' : 'invalid'}`);
 
-    res.json({
-      success: true,
-      data: validation
-    });
+    res.success(validation);
   })
 );
 
@@ -286,11 +257,7 @@ router.put('/:id',
 
     logger.info(`Updated shop listing: ${listing.id}`);
 
-    res.json({
-      success: true,
-      data: listing,
-      message: 'Shop listing updated successfully'
-    });
+    res.updated(listing, 'Shop listing updated successfully');
   })
 );
 
@@ -327,10 +294,7 @@ router.delete('/:id',
     
     logger.info(`Deleted shop listing with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Shop listing deleted successfully'
-    });
+    res.deleted('Shop listing deleted successfully');
   })
 );
 

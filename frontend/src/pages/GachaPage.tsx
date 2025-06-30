@@ -399,12 +399,9 @@ export default function GachaPage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
+          <h1 className="modern-page-title">
             Gacha Gallery
           </h1>
-          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
-            Showing {filteredAndSortedGachas.length} gacha events
-          </p>
         </motion.div>
 
         {/* Search and Filter Controls */}
@@ -433,7 +430,7 @@ export default function GachaPage() {
           transition={{ delay: 0.3 }}
           className="mt-8"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-responsive mb-8">
+          <div className="grid-responsive-cards mt-8 mb-8">
             {paginatedGachas.map((gacha, index) => (
               <motion.div
                 key={gacha.id}

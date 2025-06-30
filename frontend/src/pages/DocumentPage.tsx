@@ -1,23 +1,23 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  Search, FileText, Tags, Calendar, User, ArrowLeft, 
-  Edit3, X, Eye, CheckSquare, ListChecks 
+import {
+  Search, FileText, Tags, Calendar, User, ArrowLeft,
+  Edit3, X, Eye, CheckSquare, ListChecks, BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/services/utils';
-import { 
-  documentCategoriesData, 
-  type Document, 
-  type DocumentViewMode, 
-  type DocumentSection as DocumentSectionType, 
+import {
+  documentCategoriesData,
+  type Document,
+  type DocumentViewMode,
+  type DocumentSection as DocumentSectionType,
   type DocumentSectionInfo,
   type SortDirection
 } from '@/types';
 import TiptapEditor from '@/components/features/TiptapEditor';
-import { Container, Section, Stack, Inline, StatusBadge } from '@/components/ui/spacing';
+import { Container, Stack, Inline, StatusBadge, Grid } from '@/components/ui/spacing';
 import { SaveButton } from '@/components/ui/loading';
 import { useDocuments } from '@/hooks';
 import { safeNormalizeTags, safeToString } from '@/services/utils';
@@ -58,16 +58,16 @@ export default function DocumentPage() {
   const documentSections: DocumentSectionInfo[] = [
     {
       id: 'checklist-creation',
-      title: 'Checklist Creation Guide',
+      title: 'Checklist Creation',
       icon: CheckSquare,
-      description: 'Comprehensive guides for creating effective checklists',
+      description: 'Comprehensive guides for creating effective checklists and task management',
       status: 'active'
     },
     {
       id: 'checking-guide',
-      title: 'Checking Guide',
+      title: 'Verification Guide',
       icon: ListChecks,
-      description: 'Step-by-step procedures for verification and validation',
+      description: 'Step-by-step procedures for verification and validation processes',
       status: 'active'
     }
   ];
@@ -261,9 +261,9 @@ export default function DocumentPage() {
     return tempDiv.textContent || tempDiv.innerText || '';
   };
 
-  // List View Component
+  // Enhanced List View Component with better performance and visual hierarchy
   const ListView = () => (
-    <>
+    <Stack spacing="md">
       {/* Unified Filter */}
       <UnifiedFilter
         showFilters={showFilters}
@@ -283,240 +283,251 @@ export default function DocumentPage() {
       />
 
       {/* Document Grid */}
-      <div className="space-y-6">
-        {filteredDocuments.length === 0 ? (
+      {filteredDocuments.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20"
+        >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="w-32 h-32 bg-gradient-to-br from-accent-pink/10 to-accent-purple/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-accent-cyan/20"
+            animate={{ scale: [1, 1.02, 1] }}
+            transition={{ duration: 3, repeat: Infinity }}
           >
-            <motion.div
-              className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <FileText className="w-12 h-12 text-accent-cyan/60" />
-            </motion.div>
-            <h3 className="text-2xl font-bold text-foreground mb-3">No documents found</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              We couldn't find any documents for {documentSections.find(s => s.id === activeSection)?.title}. Try adjusting your search criteria or switch to another section.
-            </p>
-            <motion.button
-              onClick={clearFilters}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
-            >
-              Clear All Filters
-            </motion.button>
+            <FileText className="w-16 h-16 text-accent-cyan/50" />
           </motion.div>
-        ) : (
-          filteredDocuments.map((document) => (
+          <h3 className="text-2xl font-bold text-gray-300 mb-3">No documents found</h3>
+          <Button
+            onClick={clearFilters}
+            className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
+          >
+            Clear All Filters
+          </Button>
+        </motion.div>
+      ) : (
+        <Grid cols={1} gap="lg" className="max-w-none">
+          {filteredDocuments.map((document, index) => (
             <motion.div
               key={document.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="doax-card overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 group"
-              onClick={() => handleDocumentClick(document)}
+              transition={{ delay: index * 0.05 }}
             >
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-xl font-semibold text-foreground group-hover:text-accent-pink transition-colors">
-                        {document.title}
-                      </h3>
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-xs",
-                          documentCategoriesData.find(cat => cat.id === document.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
-                        )}
-                      >
-                        {documentCategoriesData.find(cat => cat.id === document.category)?.name || document.category}
-                      </Badge>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <p className="text-muted-foreground leading-relaxed line-clamp-3">
-                        {extractPlainText(document.content).slice(0, 300)}
-                        {extractPlainText(document.content).length > 300 && '...'}
+              <Card
+                className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-accent-pink/30 overflow-hidden rounded-2xl"
+                onClick={() => handleDocumentClick(document)}
+              >
+                <CardContent className="p-6">
+                  <Inline align="between" className="mb-4">
+                    <div className="flex-1">
+                      <Inline spacing="md" className="mb-3">
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-accent-pink transition-colors">
+                          {document.title}
+                        </h3>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs px-2 py-1",
+                            documentCategoriesData.find(cat => cat.id === document.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
+                          )}
+                        >
+                          {documentCategoriesData.find(cat => cat.id === document.category)?.name || document.category}
+                        </Badge>
+                      </Inline>
+
+                      <p className="text-muted-foreground leading-relaxed text-base mb-4 line-clamp-2">
+                        {extractPlainText(document.content).slice(0, 200)}
+                        {extractPlainText(document.content).length > 200 && '...'}
                       </p>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {document.tags.slice(0, 5).map((tag: string) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          <Tags className="w-3 h-3 mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                      {document.tags.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{document.tags.length - 5} more
-                        </Badge>
+
+                      {document.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {document.tags.slice(0, 3).map((tag: string) => (
+                            <Badge key={tag} variant="outline" className="text-xs bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan">
+                              <Tags className="w-3 h-3 mr-1" />
+                              {tag}
+                            </Badge>
+                          ))}
+                          {document.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs bg-muted/10">
+                              +{document.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
                       )}
+
+                      <Inline spacing="lg" className="text-sm text-muted-foreground">
+                        <Inline spacing="sm">
+                          <User className="w-4 h-4 text-accent-purple" />
+                          <span className="font-medium">{document.author}</span>
+                        </Inline>
+                        <Inline spacing="sm">
+                          <Calendar className="w-4 h-4 text-accent-cyan" />
+                          <span>Updated {document.updated_at}</span>
+                        </Inline>
+                      </Inline>
                     </div>
-                    
-                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>{document.author}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Updated {document.updated_at}</span>
-                      </div>
+
+                    <div className="ml-6 text-accent-cyan group-hover:text-accent-pink transition-colors">
+                      <FileText className="w-6 h-6" />
                     </div>
-                  </div>
-                  
-                  <div className="ml-6 text-accent-cyan group-hover:text-accent-pink transition-colors">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                </div>
-              </div>
+                  </Inline>
+                </CardContent>
+              </Card>
             </motion.div>
-          ))
-        )}
-      </div>
-    </>
+          ))}
+        </Grid>
+      )}
+    </Stack>
   );
 
-  // Document View Component
+  // Enhanced Document View Component with improved visual hierarchy
   const DocumentView = () => (
-    <Container>
-      <Card>
-        <Inline align="between" className="mb-6">
-          <Button
-            onClick={handleBackToList}
-            variant="outline"
-            className="px-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {documentSections.find(s => s.id === activeSection)?.title}
-          </Button>
+    <Stack spacing="md">
+      {/* Header Card with Navigation and Actions */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-6">
+          <Inline align="between" className="mb-4">
+            <Button
+              onClick={handleBackToList}
+              variant="outline"
+              className="px-6 py-3 hover:bg-accent-cyan/10 hover:text-accent-cyan hover:border-accent-cyan/30"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to {documentSections.find(s => s.id === activeSection)?.title}
+            </Button>
 
-          <Inline spacing="sm">
-            {isEditMode ? (
-              <>
-                <SaveButton
-                  isSaving={isSaving}
-                  onClick={handleSaveDocument}
-                >
-                  Save Changes
-                </SaveButton>
+            <Inline spacing="sm">
+              {isEditMode ? (
+                <>
+                  <SaveButton
+                    isSaving={isSaving}
+                    onClick={handleSaveDocument}
+                    className="px-6 py-3"
+                  >
+                    Save Changes
+                  </SaveButton>
+                  <Button
+                    onClick={handleEditToggle}
+                    variant="outline"
+                    disabled={isSaving}
+                    className="px-6 py-3"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              ) : (
                 <Button
                   onClick={handleEditToggle}
                   variant="outline"
-                  disabled={isSaving}
+                  className="px-6 py-3 hover:bg-accent-pink/10 hover:text-accent-pink hover:border-accent-pink/30"
                 >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Document
                 </Button>
-              </>
-            ) : (
-              <Button
-                onClick={handleEditToggle}
-                variant="outline"
-                className="hover:bg-accent-pink/10 hover:text-accent-pink"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit Document
-              </Button>
-            )}
-          </Inline>
-        </Inline>
-
-        <Stack spacing="lg">
-          <div>
-            <Inline spacing="md" className="mb-4">
-              <h1 className="text-3xl font-bold text-foreground">
-                {selectedDocument?.title}
-              </h1>
-              {isEditMode && (
-                <StatusBadge status="info">
-                  <Edit3 className="w-3 h-3" />
-                  Editing
-                </StatusBadge>
               )}
-              <Badge
-                variant="outline"
-                className={cn(
-                  documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
+            </Inline>
+          </Inline>
+
+          {/* Document Header Information */}
+          <Stack spacing="lg">
+            <div>
+              <Inline spacing="md" className="mb-6" wrap>
+                <h1 className="text-4xl font-bold text-foreground bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
+                  {selectedDocument?.title}
+                </h1>
+                {isEditMode && (
+                  <StatusBadge status="info" className="px-3 py-1">
+                    <Edit3 className="w-4 h-4 mr-1" />
+                    Editing Mode
+                  </StatusBadge>
                 )}
-              >
-                {documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.name || selectedDocument?.category}
-              </Badge>
-            </Inline>
-
-            <Inline spacing="sm" wrap className="mb-4">
-              {selectedDocument?.tags.map((tag: string) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  <Tags className="w-3 h-3 mr-1" />
-                  {tag}
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm px-4 py-2 font-medium",
+                    documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
+                  )}
+                >
+                  {documentCategoriesData.find(cat => cat.id === selectedDocument?.category)?.name || selectedDocument?.category}
                 </Badge>
-              ))}
-            </Inline>
+              </Inline>
 
-            <Inline spacing="lg" className="text-sm text-muted-foreground">
-              <Inline spacing="sm">
-                <User className="w-4 h-4" />
-                <span>{selectedDocument?.author}</span>
-              </Inline>
-              <Inline spacing="sm">
-                <Calendar className="w-4 h-4" />
-                <span>Created {selectedDocument?.created_at}</span>
-              </Inline>
-              <Inline spacing="sm">
-                <Calendar className="w-4 h-4" />
-                <span>Updated {selectedDocument?.updated_at}</span>
-              </Inline>
-            </Inline>
-          </div>
-        </Stack>
-      </Card>
+              {selectedDocument?.tags && selectedDocument.tags.length > 0 && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {selectedDocument.tags.map((tag: string) => (
+                    <Badge key={tag} variant="outline" className="text-sm px-3 py-1 bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan">
+                      <Tags className="w-3 h-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
-      <Card className={cn(
-        "overflow-hidden transition-all duration-300",
-        isEditMode ? "p-4" : "p-8"
-      )}>
-        {isEditMode ? (
-          <Stack spacing="md">
-            <Inline align="between" className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground">
-                Edit Document Content
-              </h3>
-              <Inline spacing="sm" className="text-sm text-muted-foreground">
-                <Eye className="w-4 h-4" />
-                <span>Live preview available in editor</span>
+              <Inline spacing="lg" className="text-sm text-muted-foreground" wrap>
+                <Inline spacing="sm">
+                  <User className="w-5 h-5 text-accent-purple" />
+                  <span className="font-medium">By {selectedDocument?.author}</span>
+                </Inline>
+                <Inline spacing="sm">
+                  <Calendar className="w-5 h-5 text-accent-cyan" />
+                  <span>Created {selectedDocument?.created_at}</span>
+                </Inline>
+                <Inline spacing="sm">
+                  <Calendar className="w-5 h-5 text-accent-pink" />
+                  <span>Updated {selectedDocument?.updated_at}</span>
+                </Inline>
               </Inline>
-            </Inline>
-
-            <TiptapEditor
-              content={editedContent}
-              onChange={setEditedContent}
-              editable={true}
-              placeholder="Start writing your document content..."
-              showToolbar={true}
-              showCharacterCount={true}
-              showWordCount={true}
-              mode="full"
-              className="min-h-[400px]"
-            />
+            </div>
           </Stack>
-        ) : (
-          <div className="prose prose-lg max-w-none">
-            <TiptapEditor
-              content={selectedDocument?.content || ''}
-              onChange={() => {}}
-              editable={false}
-              showToolbar={false}
-              className="border-0 p-0 bg-transparent min-h-[200px]"
-            />
-          </div>
-        )}
+        </CardContent>
       </Card>
-    </Container>
+
+      {/* Content Card */}
+      <Card className="overflow-hidden rounded-2xl">
+        <CardContent className={cn(
+          "transition-all duration-300",
+          isEditMode ? "p-6" : "p-8"
+        )}>
+          {isEditMode ? (
+            <Stack spacing="lg">
+              <Inline align="between" className="mb-6">
+                <h3 className="text-2xl font-semibold text-foreground">
+                  Edit Document Content
+                </h3>
+                <Inline spacing="sm" className="text-sm text-muted-foreground">
+                  <Eye className="w-4 h-4 text-accent-cyan" />
+                  <span>Live preview available in editor</span>
+                </Inline>
+              </Inline>
+
+              <TiptapEditor
+                content={editedContent}
+                onChange={setEditedContent}
+                editable={true}
+                placeholder="Start writing your document content..."
+                showToolbar={true}
+                showCharacterCount={true}
+                showWordCount={true}
+                mode="full"
+                className="min-h-[500px] border border-border/30 rounded-lg"
+              />
+            </Stack>
+          ) : (
+            <div className="prose prose-xl max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-accent-pink hover:prose-a:text-accent-purple">
+              <TiptapEditor
+                content={selectedDocument?.content || ''}
+                onChange={() => {}}
+                editable={false}
+                showToolbar={false}
+                className="border-0 p-0 bg-transparent min-h-[300px]"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Stack>
   );
 
   const renderSectionContent = () => {
@@ -528,56 +539,84 @@ export default function DocumentPage() {
 
   return (
     <Container>
-      {/* Header */}
-      <Section
-        title="Documentation Center"
-        description="Comprehensive guides and tutorials for DOAX Venus Vacation"
-        action={
-          <StatusBadge status="success">
-            {filteredDocuments.length} Documents Available
+      {/* Compact Header */}
+      <div className="mb-6 mt-8">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
+            Documentation Center
+          </h1>
+          <StatusBadge status="success" className="px-3 py-1 text-sm">
+            <BookOpen className="w-4 h-4 mr-1" />
+            {filteredDocuments.length} Docs
           </StatusBadge>
-        }
-      />
+        </div>
+        <p className="text-muted-foreground text-sm">
+          Comprehensive guides and tutorials for DOAX Venus Vacation handbook management
+        </p>
+      </div>
 
-      {/* Section Navigation */}
-      <Card className="p-2 mb-6">
-        <Inline spacing="sm" wrap>
-          {documentSections.map(section => {
-            const IconComponent = section.icon;
-            return (
-              <button
-                key={section.id}
-                onClick={() => {
-                  setActiveSection(section.id);
-                  setViewMode('list');
-                  setSelectedDocument(null);
-                  setIsEditMode(false);
-                }}
-                className={cn(
-                  'flex-1 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium min-w-0',
-                  'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
-                  activeSection === section.id
-                    ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg'
-                    : 'bg-muted/50 text-muted-foreground'
-                )}
-              >
-                <IconComponent className="w-4 h-4" />
-                <span className="hidden sm:inline">{section.title}</span>
-                <span className="sm:hidden">{section.title.split(' ')[0]}</span>
-              </button>
-            );
-          })}
-        </Inline>
+      {/* Compact Section Navigation */}
+      <Card className="p-4 mb-5 rounded-2xl">
+        <CardContent className="p-0">
+          <div className="flex gap-3">
+            {documentSections.map(section => {
+              const IconComponent = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <motion.button
+                  key={section.id}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    setViewMode('list');
+                    setSelectedDocument(null);
+                    setIsEditMode(false);
+                  }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className={cn(
+                    'flex-1 px-5 py-4 rounded-xl transition-all duration-200 flex items-center gap-3 font-medium group',
+                    'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
+                    'border transition-all min-h-[64px]',
+                    isActive
+                      ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg border-accent-pink/50'
+                      : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80 hover:shadow-md'
+                  )}
+                >
+                  <div className={cn(
+                    'p-2.5 rounded-xl transition-all flex-shrink-0',
+                    isActive
+                      ? 'bg-white/20'
+                      : 'bg-accent-cyan/10 group-hover:bg-accent-cyan/20'
+                  )}>
+                    <IconComponent className={cn(
+                      'w-5 h-5 transition-colors',
+                      isActive ? 'text-white' : 'text-accent-cyan'
+                    )} />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold mb-1 truncate">{section.title}</h3>
+                    <p className={cn(
+                      'text-xs leading-relaxed line-clamp-2',
+                      isActive ? 'text-white/80' : 'text-muted-foreground'
+                    )}>
+                      {section.description}
+                    </p>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </CardContent>
       </Card>
 
-      {/* Main Content */}
+      {/* Main Content with Enhanced Animations */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`${activeSection}-${viewMode}`}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
         >
           {renderSectionContent()}
         </motion.div>

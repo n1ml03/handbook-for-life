@@ -80,10 +80,7 @@ router.get('/',
 
     logger.info('Health check successful', { responseTime });
 
-    res.json({
-      success: true,
-      ...healthStatus
-    });
+    res.success(healthStatus);
   })
 );
 
@@ -229,10 +226,7 @@ router.get('/stats',
 
       logger.info('Retrieved system statistics');
 
-      res.json({
-        success: true,
-        data: stats
-      });
+      res.success(stats);
     } catch (error) {
       logger.error('Failed to retrieve system statistics:', error);
       res.status(500).json({

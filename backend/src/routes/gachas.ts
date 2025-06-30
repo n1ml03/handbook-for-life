@@ -62,11 +62,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} gachas for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -135,11 +131,7 @@ router.get('/active',
 
     logger.info(`Retrieved ${result.data.length} active gachas`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -159,11 +151,7 @@ router.get('/subtype/:subtype',
 
     logger.info(`Retrieved ${result.data.length} gachas for subtype ${subtype}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -176,10 +164,7 @@ router.get('/key/:unique_key',
     
     logger.info(`Retrieved gacha: ${gacha.name_en}`);
 
-    res.json({
-      success: true,
-      data: gacha
-    });
+    res.success(gacha);
   })
 );
 
@@ -226,11 +211,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} gachas`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -267,10 +248,7 @@ router.get('/:id',
 
     logger.info(`Retrieved gacha: ${gacha.name_en}`);
 
-    res.json({
-      success: true,
-      data: gacha
-    });
+    res.success(gacha);
   })
 );
 
@@ -298,11 +276,7 @@ router.get('/:id/pool',
 
     logger.info(`Retrieved ${result.data.length} pool items for gacha ${id}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -330,11 +304,7 @@ router.get('/:id/featured',
 
     logger.info(`Retrieved ${result.data.length} featured items for gacha ${id}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -355,10 +325,7 @@ router.get('/:id/validate-rates',
 
     logger.info(`Validated drop rates for gacha ${id}: ${validation.message}`);
 
-    res.json({
-      success: true,
-      data: validation
-    });
+    res.success(validation);
   })
 );
 
@@ -482,11 +449,7 @@ router.put('/:id',
 
     logger.info(`Updated gacha: ${gacha.name_en}`);
 
-    res.json({
-      success: true,
-      data: gacha,
-      message: 'Gacha updated successfully'
-    });
+    res.updated(gacha, 'Gacha updated successfully');
   })
 );
 
@@ -508,11 +471,7 @@ router.put('/:id/pool/:poolId',
 
     logger.info(`Updated pool item ${poolId}`);
 
-    res.json({
-      success: true,
-      data: poolItem,
-      message: 'Pool item updated successfully'
-    });
+    res.updated(poolItem, 'Pool item updated successfully');
   })
 );
 
@@ -549,10 +508,7 @@ router.delete('/:id',
 
     logger.info(`Deleted gacha with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Gacha deleted successfully'
-    });
+    res.deleted('Gacha deleted successfully');
   })
 );
 
@@ -573,10 +529,7 @@ router.delete('/:id/pool/:poolId',
 
     logger.info(`Removed pool item ${poolId}`);
 
-    res.json({
-      success: true,
-      message: 'Pool item removed successfully'
-    });
+    res.deleted('Pool item removed successfully');
   })
 );
 

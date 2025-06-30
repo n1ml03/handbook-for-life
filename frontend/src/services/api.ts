@@ -196,12 +196,14 @@ export const charactersApi = {
 
   // Get character skills
   async getCharacterSkills(id: string): Promise<Skill[]> {
-    return apiRequest(`/characters/${id}/skills`);
+    const response = await apiRequest<{ success: boolean; data: Skill[]; pagination: any }>(`/characters/${id}/skills`);
+    return response.data;
   },
 
   // Get character swimsuits
   async getCharacterSwimsuits(id: string): Promise<Swimsuit[]> {
-    return apiRequest(`/characters/${id}/swimsuits`);
+    const response = await apiRequest<{ success: boolean; data: Swimsuit[]; pagination: any }>(`/characters/${id}/swimsuits`);
+    return response.data;
   },
 
   // Create a new character

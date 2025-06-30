@@ -47,11 +47,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} events for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -64,10 +60,7 @@ router.get('/key/:unique_key',
     
     logger.info(`Retrieved event: ${event.name_en}`);
 
-    res.json({
-      success: true,
-      data: event
-    });
+    res.success(event);
   })
 );
 
@@ -86,11 +79,7 @@ router.get('/active',
 
     logger.info(`Retrieved ${result.data.length} active events`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -109,11 +98,7 @@ router.get('/upcoming',
 
     logger.info(`Retrieved ${result.data.length} upcoming events`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -161,11 +146,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} events`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -202,10 +183,7 @@ router.get('/:id',
 
     logger.info(`Retrieved event: ${event.name_en}`);
 
-    res.json({
-      success: true,
-      data: event
-    });
+    res.success(event);
   })
 );
 
@@ -267,11 +245,7 @@ router.put('/:id',
 
     logger.info(`Updated event: ${event.name_en}`);
 
-    res.json({
-      success: true,
-      data: event,
-      message: 'Event updated successfully'
-    });
+    res.updated(event, 'Event updated successfully');
   })
 );
 
@@ -308,10 +282,7 @@ router.delete('/:id',
 
     logger.info(`Deleted event with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Event deleted successfully'
-    });
+    res.deleted('Event deleted successfully');
   })
 );
 

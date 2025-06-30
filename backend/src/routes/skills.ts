@@ -40,11 +40,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} skills for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -58,10 +54,7 @@ router.get('/key/:unique_key',
 
     logger.info(`Retrieved skill: ${skill.name_en}`);
 
-    res.json({
-      success: true,
-      data: skill
-    });
+    res.success(skill);
   })
 );
 
@@ -109,11 +102,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} skills`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -143,10 +132,7 @@ router.get('/:id',
 
     logger.info(`Retrieved skill: ${skill.name_en}`);
 
-    res.json({
-      success: true,
-      data: skill
-    });
+    res.success(skill);
   })
 );
 
@@ -201,11 +187,7 @@ router.put('/:id',
 
     logger.info(`Updated skill: ${skill.name_en}`);
 
-    res.json({
-      success: true,
-      data: skill,
-      message: 'Skill updated successfully'
-    });
+    res.updated(skill, 'Skill updated successfully');
   })
 );
 
@@ -235,10 +217,7 @@ router.delete('/:id',
 
     logger.info(`Deleted skill with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Skill deleted successfully'
-    });
+    res.deleted('Skill deleted successfully');
   })
 );
 

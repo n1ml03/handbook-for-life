@@ -49,11 +49,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} episodes for page ${page}${search ? ` (search: "${search}")` : ''}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -67,10 +63,7 @@ router.get('/key/:unique_key',
 
     logger.info(`Retrieved episode: ${episode.title_en}`);
 
-    res.json({
-      success: true,
-      data: episode
-    });
+    res.success(episode);
   })
 );
 
@@ -89,11 +82,7 @@ router.get('/main-story',
 
     logger.info(`Retrieved ${result.data.length} main story episodes`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -114,11 +103,7 @@ router.get('/character/:id',
 
     logger.info(`Retrieved ${result.data.length} episodes for character ${id}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -166,11 +151,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} episodes`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -202,10 +183,7 @@ router.get('/:id',
 
     logger.info(`Retrieved episode: ${episode.title_en}`);
 
-    res.json({
-      success: true,
-      data: episode
-    });
+    res.success(episode);
   })
 );
 
@@ -260,11 +238,7 @@ router.put('/:id',
 
     logger.info(`Updated episode: ${episode.title_en}`);
 
-    res.json({
-      success: true,
-      data: episode,
-      message: 'Episode updated successfully'
-    });
+    res.updated(episode, 'Episode updated successfully');
   })
 );
 
@@ -294,10 +268,7 @@ router.delete('/:id',
 
     logger.info(`Deleted episode with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Episode deleted successfully'
-    });
+    res.deleted('Episode deleted successfully');
   })
 );
 

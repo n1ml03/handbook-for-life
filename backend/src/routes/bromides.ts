@@ -40,11 +40,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} bromides for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -57,10 +53,7 @@ router.get('/key/:unique_key',
     
     logger.info(`Retrieved bromide: ${bromide.name_en}`);
 
-    res.json({
-      success: true,
-      data: bromide
-    });
+    res.success(bromide);
   })
 );
 
@@ -108,11 +101,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} bromides`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -149,10 +138,7 @@ router.get('/:id',
     
     logger.info(`Retrieved bromide: ${bromide.name_en}`);
 
-    res.json({
-      success: true,
-      data: bromide
-    });
+    res.success(bromide);
   })
 );
 
@@ -214,11 +200,7 @@ router.put('/:id',
     
     logger.info(`Updated bromide: ${bromide.name_en}`);
 
-    res.json({
-      success: true,
-      data: bromide,
-      message: 'Bromide updated successfully'
-    });
+    res.updated(bromide, 'Bromide updated successfully');
   })
 );
 
@@ -255,10 +237,7 @@ router.delete('/:id',
     
     logger.info(`Deleted bromide with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Bromide deleted successfully'
-    });
+    res.deleted('Bromide deleted successfully');
   })
 );
 

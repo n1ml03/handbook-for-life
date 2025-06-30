@@ -96,6 +96,18 @@ export class CharacterService extends BaseService<CharacterModel, Character, New
     }, 'getCharacterSwimsuits', characterId);
   }
 
+  async getCharacterSkills(characterId: string | number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    return this.safeAsyncOperation(async () => {
+      const numericId = this.parseNumericId(characterId, 'Character ID');
+      const validatedOptions = this.validatePaginationOptions(options);
+      
+      // Verify character exists
+      await this.model.findById(numericId);
+      
+      return await this.model.getCharacterSkills(numericId, validatedOptions);
+    }, 'getCharacterSkills', characterId);
+  }
+
   // Batch operations
   async createMultipleCharacters(charactersData: NewCharacter[]): Promise<void> {
     return this.safeAsyncOperation(async () => {

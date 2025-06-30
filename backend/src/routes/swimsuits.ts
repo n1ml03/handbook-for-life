@@ -63,11 +63,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} swimsuits for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -81,10 +77,7 @@ router.get('/key/:unique_key',
 
     logger.info(`Retrieved swimsuit: ${swimsuit.name_en}`);
 
-    res.json({
-      success: true,
-      data: swimsuit
-    });
+    res.success(swimsuit);
   })
 );
 
@@ -97,10 +90,7 @@ router.get('/top-stats',
     
     logger.info(`Retrieved top ${swimsuits.length} swimsuits by stats`);
 
-    res.json({
-      success: true,
-      data: swimsuits
-    });
+    res.success(swimsuits);
   })
 );
 
@@ -148,11 +138,7 @@ router.get('/search',
 
     logger.info(`Search for "${q}" returned ${result.data.length} swimsuits`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -182,10 +168,7 @@ router.get('/:id',
 
     logger.info(`Retrieved swimsuit: ${swimsuit.name_en}`);
 
-    res.json({
-      success: true,
-      data: swimsuit
-    });
+    res.success(swimsuit);
   })
 );
 
@@ -240,11 +223,7 @@ router.put('/:id',
 
     logger.info(`Updated swimsuit: ${swimsuit.name_en}`);
 
-    res.json({
-      success: true,
-      data: swimsuit,
-      message: 'Swimsuit updated successfully'
-    });
+    res.updated(swimsuit, 'Swimsuit updated successfully');
   })
 );
 
@@ -274,10 +253,7 @@ router.delete('/:id',
 
     logger.info(`Deleted swimsuit with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Swimsuit deleted successfully'
-    });
+    res.deleted('Swimsuit deleted successfully');
   })
 );
 
@@ -302,11 +278,7 @@ router.get('/:id/skills',
 
     logger.info(`Retrieved ${result.data.length} skills for swimsuit ${id}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -320,10 +292,7 @@ router.get('/:id/skills/summary',
 
     logger.info(`Retrieved skill summary for swimsuit ${id}`);
 
-    res.json({
-      success: true,
-      data: summary
-    });
+    res.success(summary);
   })
 );
 
@@ -367,11 +336,7 @@ router.put('/:id/skills',
 
     logger.info(`Set ${result.length} skills for swimsuit ${swimsuitId}`);
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Swimsuit skills updated successfully'
-    });
+    res.updated(result, 'Swimsuit skills updated successfully');
   })
 );
 
@@ -388,11 +353,7 @@ router.put('/:id/skills/:slot',
 
     logger.info(`Updated skill slot ${skillSlot} for swimsuit ${swimsuitId}`);
 
-    res.json({
-      success: true,
-      data: swimsuitSkill,
-      message: 'Swimsuit skill updated successfully'
-    });
+    res.updated(swimsuitSkill, 'Swimsuit skill updated successfully');
   })
 );
 
@@ -407,10 +368,7 @@ router.delete('/:id/skills/:slot',
 
     logger.info(`Removed skill from slot ${skillSlot} for swimsuit ${swimsuitId}`);
 
-    res.json({
-      success: true,
-      message: 'Skill removed from swimsuit successfully'
-    });
+    res.deleted('Skill removed from swimsuit successfully');
   })
 );
 

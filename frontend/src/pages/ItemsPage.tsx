@@ -9,7 +9,9 @@ import {
   Package,
   Star,
   Tag,
-  Search} from 'lucide-react';
+  Search,
+  ChevronLeft,
+  ChevronRight} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
 import { Grid } from '@/components/ui/spacing';
@@ -155,16 +157,6 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
               {typeIcon}
             </div>
           </div>
-          
-          {/* Rarity badge - positioned as overlay */}
-          {/* {item.rarity && (
-            <div className="absolute -top-2 -right-2">
-              <Badge className={cn('text-xs font-bold shadow-lg', rarityColor)}>
-                <Star className="w-3 h-3 mr-1" />
-                {item.rarity}
-              </Badge>
-            </div>
-          )} */}
         </div>
 
         <div className="flex-1">
@@ -224,8 +216,17 @@ export default function ItemsPage() {
     character: ''
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12; // 6 rows × 2 cards per row
+
   // Debounce search to improve performance
   const debouncedSearchTerm = useDebounce(String(filterValues.search || ''), 300);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, filterValues.type, filterValues.rarity, filterValues.character, sortState.sortBy, sortState.sortDirection]);
 
   // Optimized fetch function with useCallback
   const fetchAllData = useCallback(async () => {
@@ -338,6 +339,14 @@ export default function ItemsPage() {
     sortState.sortDirection
   );
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedItems.length / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedItems.slice(startIndex, endIndex);
+  }, [filteredAndSortedItems, currentPage, itemsPerPage]);
+
   // Create filter configuration
   const filterFields: FilterField[] = useMemo(() => [
     {
@@ -409,6 +418,19 @@ export default function ItemsPage() {
     setSortState({ sortBy: newSortBy, sortDirection: direction });
   }, []);
 
+  // Pagination handlers
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  }, [totalPages]);
+
   const handleShowFilters = useCallback((show: boolean) => {
     setUiState(prev => ({ ...prev, showFilters: show }));
   }, []);
@@ -429,9 +451,7 @@ export default function ItemsPage() {
           <h1 className="modern-page-title">
             Items Collection
           </h1>
-          <p className="modern-page-subtitle">
-            Browse and search through {unifiedItems.length} items with comprehensive multi-language support
-          </p>
+          
         </motion.div>
 
       {/* Unified Filter Component */}
@@ -479,11 +499,62 @@ export default function ItemsPage() {
             </motion.button>
           </motion.div>
         ) : (
-          filteredAndSortedItems.map((item, index) => (
+          paginatedItems.map((item, index) => (
             <ItemCard key={`${item.type}-${item.id}-${index}`} item={item} />
           ))
         )}
       </Grid>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex items-center justify-center space-x-2 mt-8"
+        >
+          <motion.button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="p-3 rounded-xl bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20 disabled:opacity-50 disabled:hover:bg-dark-card/70 disabled:hover:text-gray-400 transition-all"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </motion.button>
+
+          <div className="flex space-x-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              return (
+                <motion.button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    currentPage === page
+                      ? 'bg-gradient-to-r from-accent-cyan to-accent-purple text-white shadow-lg'
+                      : 'bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20'
+                  }`}
+                >
+                  {page}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <motion.button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="p-3 rounded-xl bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-accent-cyan/20 disabled:opacity-50 disabled:hover:bg-dark-card/70 disabled:hover:text-gray-400 transition-all"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </motion.button>
+        </motion.div>
+      )}
       </div>
     </div>
     </PageLoadingState>

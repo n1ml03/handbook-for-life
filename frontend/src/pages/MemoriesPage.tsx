@@ -273,12 +273,9 @@ export default function MemoriesPage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
+          <h1 className="modern-page-title">
             Episodes Gallery
           </h1>
-          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
-            {loading ? 'Loading episodes...' : `Showing ${filteredMemories.length} of ${memories.length} episodes`}
-          </p>
         </motion.div>
 
         {/* Unified Filter Component */}

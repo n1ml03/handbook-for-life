@@ -228,11 +228,7 @@ router.post('/screenshot',
 
       logger.info(`Processed screenshot: ${imageData.filename}, size: ${imageData.size} bytes`);
 
-      res.json({
-        success: true,
-        data: imageData,
-        message: 'Screenshot processed successfully. Use this data to save to your database.'
-      });
+      res.success(imageData, 'Screenshot processed successfully. Use this data to save to your database.');
     } catch (error) {
       logger.error('Upload error:', error);
       res.status(500).json({
@@ -300,11 +296,7 @@ router.post('/csv',
 
       logger.info(`Uploaded CSV: ${fileInfo.filename}`);
 
-      res.json({
-        success: true,
-        data: fileInfo,
-        message: 'CSV file uploaded successfully'
-      });
+      res.success(fileInfo, 'CSV file uploaded successfully');
     } catch (error) {
       logger.error('CSV upload error:', error);
       res.status(500).json({
@@ -319,11 +311,7 @@ router.post('/csv',
 // GET /api/upload/files - List uploaded files (deprecated - images now stored in database)
 router.get('/files',
   asyncHandler(async (req: Request, res: Response) => {
-    res.json({
-      success: true,
-      data: [],
-      message: 'File listing is deprecated. Images are now stored directly in the database. Use the respective entity endpoints to retrieve image data.'
-    });
+    res.success([], 'File listing is deprecated. Images are now stored directly in the database. Use the respective entity endpoints to retrieve image data.');
   })
 );
 

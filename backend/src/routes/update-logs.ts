@@ -29,11 +29,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} update logs for page ${page}`);
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    });
+    res.paginated(result);
   })
 );
 
@@ -47,10 +43,7 @@ router.get('/:id',
     
     logger.info(`Retrieved update log: ${updateLog.title}`);
 
-    res.json({
-      success: true,
-      data: updateLog
-    });
+    res.success(updateLog);
   })
 );
 
@@ -103,7 +96,8 @@ router.post('/',
     res.status(201).json({
       success: true,
       data: updateLog,
-      message: 'Update log created successfully'
+      message: 'Update log created successfully',
+      timestamp: new Date().toISOString()
     });
   })
 );
@@ -148,11 +142,7 @@ router.put('/:id',
     
     logger.info(`Updated update log: ${updateLog.title}`);
 
-    res.json({
-      success: true,
-      data: updateLog,
-      message: 'Update log updated successfully'
-    });
+    res.updated(updateLog, 'Update log updated successfully');
   })
 );
 
@@ -181,10 +171,7 @@ router.delete('/:id',
 
     logger.info(`Deleted update log with ID: ${id}`);
 
-    res.json({
-      success: true,
-      message: 'Update log deleted successfully'
-    });
+    res.deleted('Update log deleted successfully');
   })
 );
 

@@ -1,12 +1,14 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { Settings, FileText, FileDown, BookOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
 import { useUpdateLogs } from '@/hooks';
 import { UpdateLog } from '@/types';
-import { Container, Section, Inline } from '@/components/ui/spacing';
-import { Card } from '@/components/ui/card';
+import { Container } from '@/components/ui/spacing';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useDocuments } from '@/hooks';
 import {
   CSVManagement,
@@ -25,6 +27,11 @@ interface AdminSection {
   description: string;
   lastUpdated: string;
   status: 'active' | 'inactive' | 'draft';
+  color: string;
+  stats?: {
+    count: number;
+    label: string;
+  };
 }
 
 const AdminPage = () => {
@@ -68,27 +75,42 @@ const AdminPage = () => {
   const adminSections: AdminSection[] = [
     {
       id: 'documents',
-      title: 'Documents',
+      title: 'Document Management',
       icon: FileText,
-      description: 'Manage documentation and guides',
+      description: 'Create, edit, and organize documentation and guides',
       lastUpdated: '2 hours ago',
-      status: 'active'
+      status: 'active',
+      color: 'text-accent-cyan',
+      stats: {
+        count: documents.length,
+        label: 'Documents'
+      }
     },
     {
       id: 'update-logs',
       title: 'Update Logs',
       icon: BookOpen,
-      description: 'Version history and changelogs',
+      description: 'Manage version history and changelog entries',
       lastUpdated: '1 day ago',
-      status: 'active'
+      status: 'active',
+      color: 'text-accent-purple',
+      stats: {
+        count: updateLogs.length,
+        label: 'Updates'
+      }
     },
     {
       id: 'csv-management',
-      title: 'CSV Import/Export',
+      title: 'Data Management',
       icon: FileDown,
-      description: 'Bulk data operations',
+      description: 'Import and export data using CSV files',
       lastUpdated: '3 days ago',
-      status: 'active'
+      status: 'active',
+      color: 'text-accent-pink',
+      stats: {
+        count: documents.length + updateLogs.length,
+        label: 'Total Records'
+      }
     }
   ];
 
@@ -394,10 +416,20 @@ const AdminPage = () => {
       
       default:
         return (
-          <div className="doax-card p-8 text-center">
-            <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">This section is under development</p>
-          </div>
+          <Card className="p-12 text-center rounded-2xl">
+            <CardContent>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-md mx-auto"
+              >
+                <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
+                  <Settings className="w-12 h-12 text-accent-cyan/60" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-3">Section Under Development</h3>
+              </motion.div>
+            </CardContent>
+          </Card>
         );
     }
   };
@@ -405,56 +437,115 @@ const AdminPage = () => {
   return (
     <Container>
       {/* Notifications */}
-      <div className="fixed top-4 right-4 z-40 space-y-2 max-w-md">
-        {notifications.map(notification => (
-          <NotificationToast
-            key={notification.id}
-            notification={notification}
-            onRemove={removeNotification}
-          />
-        ))}
+      <div className="fixed top-4 right-4 z-50 space-y-3 max-w-md">
+        <AnimatePresence>
+          {notifications.map(notification => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, x: 100, scale: 0.8 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 100, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+            >
+              <NotificationToast
+                notification={notification}
+                onRemove={removeNotification}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
-      {/* Header */}
+      {/* Compact Header */}
       {!isEditMode && (
-        <Section
-          title="Admin Panel"
-          description="Manage website content, updates, and system settings with enhanced CSV import/export capabilities"
-        />
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Comprehensive content management system for DOAXVV Handbook
+          </p>
+        </div>
       )}
 
-      {/* Tab Navigation */}
+      {/* Compact Tab Navigation */}
       {!isEditMode && (
-        <Card className="p-2">
-          <Inline spacing="sm" wrap>
-            {adminSections.map(section => {
-              const IconComponent = section.icon;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveTab(section.id)}
-                  className={cn(
-                    'flex-1 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium min-w-0',
-                    'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
-                    activeTab === section.id
-                      ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg'
-                      : 'bg-muted/50 text-muted-foreground'
-                  )}
-                >
-                  <IconComponent className="w-4 h-4" />
-                  <span className="hidden sm:inline">{section.title}</span>
-                  <span className="sm:hidden">{section.title.split(' ')[0]}</span>
-                </button>
-              );
-            })}
-          </Inline>
+        <Card className="p-4 mb-5 rounded-2xl">
+          <CardContent className="p-0">
+            <div className="flex gap-3">
+              {adminSections.map(section => {
+                const IconComponent = section.icon;
+                const isActive = activeTab === section.id;
+                return (
+                  <motion.button
+                    key={section.id}
+                    onClick={() => setActiveTab(section.id)}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className={cn(
+                      'flex-1 px-5 py-4 rounded-xl transition-all duration-200 group border min-h-[64px]',
+                      'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
+                      isActive
+                        ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg border-accent-pink/50'
+                        : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80 hover:shadow-md'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 h-full">
+                      <div className={cn(
+                        'p-2.5 rounded-xl transition-all flex-shrink-0',
+                        isActive
+                          ? 'bg-white/20'
+                          : 'bg-accent-cyan/10 group-hover:bg-accent-cyan/20'
+                      )}>
+                        <IconComponent className={cn(
+                          'w-5 h-5 transition-colors',
+                          isActive ? 'text-white' : section.color
+                        )} />
+                      </div>
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-sm font-semibold truncate">{section.title}</h3>
+                          {section.stats && (
+                            <div className={cn(
+                              'text-right ml-2 flex-shrink-0',
+                              isActive ? 'text-white/90' : 'text-muted-foreground'
+                            )}>
+                              <div className="text-lg font-bold leading-none">{section.stats.count}</div>
+                              <div className="text-xs leading-none">{section.stats.label}</div>
+                            </div>
+                          )}
+                        </div>
+                        <p className={cn(
+                          'text-xs leading-relaxed line-clamp-1',
+                          isActive ? 'text-white/80' : 'text-muted-foreground'
+                        )}>
+                          {section.description}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </CardContent>
         </Card>
       )}
 
-      {/* Tab Content */}
-      <div className="min-h-96">
-        {renderTabContent()}
-      </div>
+      {/* Enhanced Tab Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="min-h-96 space-y-6"
+        >
+          {renderTabContent()}
+        </motion.div>
+      </AnimatePresence>
     </Container>
   );
 };

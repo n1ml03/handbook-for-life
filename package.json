@@ -8,6 +8,7 @@
     "backend"
   ],
   "scripts": {
+    "dev": "concurrently \"bun run dev:backend\" \"bun run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
     "dev:frontend": "cd frontend && bun run dev",
     "dev:backend": "cd backend && bun run dev",
     "build:frontend": "cd frontend && bun run build",
@@ -22,5 +23,8 @@
     "lint:frontend": "cd frontend && bun run lint",
     "lint:backend": "cd backend && bun run lint",
     "lint:all": "bun run lint:frontend && bun run lint:backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   }
 }

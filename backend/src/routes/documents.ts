@@ -39,12 +39,7 @@ router.get('/',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-      timestamp: new Date().toISOString()
-    });
+    res.paginated(result);
   })
 );
 
@@ -65,11 +60,7 @@ router.get('/key/:unique_key',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: document,
-      timestamp: new Date().toISOString()
-    });
+    res.success(document);
   })
 );
 
@@ -98,12 +89,7 @@ router.get('/categories/:category',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-      timestamp: new Date().toISOString()
-    });
+    res.paginated(result);
   })
 );
 
@@ -156,12 +142,7 @@ router.get('/search',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-      timestamp: new Date().toISOString()
-    });
+    res.paginated(result);
   })
 );
 
@@ -176,11 +157,7 @@ router.get('/stats/summary',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: stats,
-      timestamp: new Date().toISOString()
-    });
+    res.success(stats);
   })
 );
 
@@ -218,11 +195,7 @@ router.get('/:id',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: document,
-      timestamp: new Date().toISOString()
-    });
+    res.success(document);
   })
 );
 
@@ -296,12 +269,7 @@ router.put('/:id',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      data: document,
-      message: 'Document updated successfully',
-      timestamp: new Date().toISOString()
-    });
+    res.updated(document, 'Document updated successfully');
   })
 );
 
@@ -340,11 +308,7 @@ router.delete('/:id',
       requestId: (req as any).id
     });
 
-    res.json({
-      success: true,
-      message: 'Document deleted successfully',
-      timestamp: new Date().toISOString()
-    });
+    res.deleted('Document deleted successfully');
   })
 );
 

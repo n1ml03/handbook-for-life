@@ -91,13 +91,15 @@ export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
 
   async findWithItemDetails(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
     const baseQuery = `
-      SELECT 
+      SELECT
         sl.*,
         i1.name_en as item_name,
         i1.rarity as item_rarity,
-        i1.icon_url as item_icon_url,
+        i1.icon_data as item_icon_data,
+        i1.icon_mime_type as item_icon_mime_type,
         i2.name_en as currency_name,
-        i2.icon_url as currency_icon_url
+        i2.icon_data as currency_icon_data,
+        i2.icon_mime_type as currency_icon_mime_type
       FROM shop_listings sl
       LEFT JOIN items i1 ON sl.item_id = i1.id
       LEFT JOIN items i2 ON sl.cost_currency_item_id = i2.id
@@ -113,22 +115,26 @@ export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
         ...this.mapShopListingRow(row),
         item_name: row.item_name,
         item_rarity: row.item_rarity,
-        item_icon_url: row.item_icon_url,
+        item_icon_data: row.item_icon_data,
+        item_icon_mime_type: row.item_icon_mime_type,
         currency_name: row.currency_name,
-        currency_icon_url: row.currency_icon_url,
+        currency_icon_data: row.currency_icon_data,
+        currency_icon_mime_type: row.currency_icon_mime_type,
       })
     );
   }
 
   async findByShopTypeWithDetails(shopType: ShopType, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
     const baseQuery = `
-      SELECT 
+      SELECT
         sl.*,
         i1.name_en as item_name,
         i1.rarity as item_rarity,
-        i1.icon_url as item_icon_url,
+        i1.icon_data as item_icon_data,
+        i1.icon_mime_type as item_icon_mime_type,
         i2.name_en as currency_name,
-        i2.icon_url as currency_icon_url
+        i2.icon_data as currency_icon_data,
+        i2.icon_mime_type as currency_icon_mime_type
       FROM shop_listings sl
       LEFT JOIN items i1 ON sl.item_id = i1.id
       LEFT JOIN items i2 ON sl.cost_currency_item_id = i2.id
@@ -145,9 +151,11 @@ export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
         ...this.mapShopListingRow(row),
         item_name: row.item_name,
         item_rarity: row.item_rarity,
-        item_icon_url: row.item_icon_url,
+        item_icon_data: row.item_icon_data,
+        item_icon_mime_type: row.item_icon_mime_type,
         currency_name: row.currency_name,
-        currency_icon_url: row.currency_icon_url,
+        currency_icon_data: row.currency_icon_data,
+        currency_icon_mime_type: row.currency_icon_mime_type,
       }),
       [shopType]
     );
@@ -168,23 +176,25 @@ export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
 
   async findActiveWithDetails(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
     const baseQuery = `
-      SELECT 
+      SELECT
         sl.*,
         i1.name_en as item_name,
         i1.rarity as item_rarity,
-        i1.icon_url as item_icon_url,
+        i1.icon_data as item_icon_data,
+        i1.icon_mime_type as item_icon_mime_type,
         i2.name_en as currency_name,
-        i2.icon_url as currency_icon_url
+        i2.icon_data as currency_icon_data,
+        i2.icon_mime_type as currency_icon_mime_type
       FROM shop_listings sl
       LEFT JOIN items i1 ON sl.item_id = i1.id
       LEFT JOIN items i2 ON sl.cost_currency_item_id = i2.id
-      WHERE (sl.start_date IS NULL OR sl.start_date <= NOW()) AND 
+      WHERE (sl.start_date IS NULL OR sl.start_date <= NOW()) AND
             (sl.end_date IS NULL OR sl.end_date >= NOW())
     `;
 
     const countQuery = `
-      SELECT COUNT(*) FROM shop_listings 
-      WHERE (start_date IS NULL OR start_date <= NOW()) AND 
+      SELECT COUNT(*) FROM shop_listings
+      WHERE (start_date IS NULL OR start_date <= NOW()) AND
             (end_date IS NULL OR end_date >= NOW())
     `;
 
@@ -196,9 +206,11 @@ export class ShopListingModel extends BaseModel<ShopListing, NewShopListing> {
         ...this.mapShopListingRow(row),
         item_name: row.item_name,
         item_rarity: row.item_rarity,
-        item_icon_url: row.item_icon_url,
+        item_icon_data: row.item_icon_data,
+        item_icon_mime_type: row.item_icon_mime_type,
         currency_name: row.currency_name,
-        currency_icon_url: row.currency_icon_url,
+        currency_icon_data: row.currency_icon_data,
+        currency_icon_mime_type: row.currency_icon_mime_type,
       })
     );
   }

@@ -479,6 +479,38 @@ router.delete('/:id',
   })
 );
 
+/**
+ * @swagger
+ * /api/characters/{id}/swimsuits:
+ *   get:
+ *     tags: [Characters]
+ *     summary: Get character swimsuits
+ *     description: Retrieve a paginated list of swimsuits for a specific character
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         description: Character swimsuits retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Swimsuit'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 // GET /api/characters/:id/swimsuits - Get character swimsuits
 router.get('/:id/swimsuits',
   validateParams(schemas.idParam),
@@ -494,6 +526,57 @@ router.get('/:id/swimsuits',
     });
 
     logger.info(`Retrieved ${result.data.length} swimsuits for character ${req.params.id}`);
+    res.paginated(result);
+  })
+);
+
+/**
+ * @swagger
+ * /api/characters/{id}/skills:
+ *   get:
+ *     tags: [Characters]
+ *     summary: Get character skills
+ *     description: Retrieve a paginated list of skills for a specific character
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - $ref: '#/components/parameters/PageParam'
+ *       - $ref: '#/components/parameters/LimitParam'
+ *       - $ref: '#/components/parameters/SortByParam'
+ *       - $ref: '#/components/parameters/SortOrderParam'
+ *     responses:
+ *       200:
+ *         description: Character skills retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Skill'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+// GET /api/characters/:id/skills - Get character skills
+router.get('/:id/skills',
+  validateParams(schemas.idParam),
+  validateQuery(schemas.pagination),
+  asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    const result = await characterService.getCharacterSkills(req.params.id, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    });
+
+    logger.info(`Retrieved ${result.data.length} skills for character ${req.params.id}`);
     res.paginated(result);
   })
 );

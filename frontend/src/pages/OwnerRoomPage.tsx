@@ -425,7 +425,7 @@ export default function OwnerRoomPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {category.items.map((item) => (
                     <div key={item.id} className="border rounded-lg p-4 space-y-2">
                       <div className="text-sm font-medium">{item.name}</div>

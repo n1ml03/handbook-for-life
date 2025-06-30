@@ -285,12 +285,9 @@ export default function FestivalPage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
+          <h1 className="modern-page-title">
             Festival Gallery
           </h1>
-          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
-            Showing {allEvents.length} of {totalItems} festivals
-          </p>
         </motion.div>
 
         {/* Search and Filter Controls */}

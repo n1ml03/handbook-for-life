@@ -54,6 +54,39 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
     return this.getCreateFields(); // Same fields can be updated
   }
 
+  // Override mapSortColumn to handle specific sorting requirements
+  protected mapSortColumn(sortBy: string): string | null {
+    const columnMapping: { [key: string]: string } = {
+      // Character fields
+      'name': 'name_en',
+      'name_en': 'name_en',
+      'name_jp': 'name_jp',
+      'birthday': 'birthday',
+      'height': 'height',
+      'unique_key': 'unique_key',
+      'is_active': 'is_active',
+      
+      // Swimsuit fields
+      'rarity': 'rarity',
+      'suit_type': 'suit_type',
+      'total_stats_awakened': 'total_stats_awakened',
+      'has_malfunction': 'has_malfunction',
+      'is_limited': 'is_limited',
+      'release_date_gl': 'release_date_gl',
+      
+      // Skill fields
+      'skill_category': 'skill_category',
+      'effect_type': 'effect_type',
+      'game_version': 'game_version',
+      'skill_slot': 'skill_slot',
+      
+      // Default ID sorting
+      'id': 'id'
+    };
+
+    return columnMapping[sortBy] || 'id';
+  }
+
   // Override base methods to add character-specific logic
   async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Character>> {
     return this.getPaginatedResults(
@@ -101,6 +134,13 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
   }
 
   async getCharacterSwimsuits(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    // Set default sorting for swimsuits if not specified
+    const defaultOptions = {
+      ...options,
+      sortBy: options.sortBy || 'rarity',
+      sortOrder: options.sortOrder || 'desc' as 'desc'
+    };
+
     const query = `
       SELECT DISTINCT
         s.id,
@@ -118,8 +158,7 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
         s.is_limited,
         s.release_date_gl
       FROM swimsuits s
-      WHERE s.character_id = ?
-      ORDER BY s.rarity DESC, s.total_stats_awakened DESC`;
+      WHERE s.character_id = ?`;
 
     const countQuery = `
       SELECT COUNT(DISTINCT s.id) as count
@@ -129,7 +168,7 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
     return this.getPaginatedResults(
       query,
       countQuery,
-      options,
+      defaultOptions,
       (row: any) => ({
         id: row.id,
         character_id: row.character_id,
@@ -145,6 +184,66 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
         has_malfunction: Boolean(row.has_malfunction),
         is_limited: Boolean(row.is_limited),
         release_date_gl: row.release_date_gl,
+      }),
+      [characterId]
+    );
+  }
+
+  async getCharacterSkills(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
+    // Set default sorting for skills if not specified
+    const defaultOptions = {
+      ...options,
+      sortBy: options.sortBy || 'skill_category',
+      sortOrder: options.sortOrder || 'asc' as 'asc'
+    };
+
+    const query = `
+      SELECT DISTINCT
+        sk.id,
+        sk.unique_key,
+        sk.name_jp,
+        sk.name_en,
+        sk.name_cn,
+        sk.name_tw,
+        sk.name_kr,
+        sk.description_en,
+        sk.skill_category,
+        sk.effect_type,
+        sk.game_version,
+        ss.skill_slot,
+        s.unique_key as swimsuit_key,
+        s.name_en as swimsuit_name
+      FROM skills sk
+      JOIN swimsuit_skills ss ON sk.id = ss.skill_id
+      JOIN swimsuits s ON ss.swimsuit_id = s.id
+      WHERE s.character_id = ?`;
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT sk.id) as count
+      FROM skills sk
+      JOIN swimsuit_skills ss ON sk.id = ss.skill_id
+      JOIN swimsuits s ON ss.swimsuit_id = s.id
+      WHERE s.character_id = ?`;
+
+    return this.getPaginatedResults(
+      query,
+      countQuery,
+      defaultOptions,
+      (row: any) => ({
+        id: row.id,
+        unique_key: row.unique_key,
+        name_jp: row.name_jp,
+        name_en: row.name_en,
+        name_cn: row.name_cn,
+        name_tw: row.name_tw,
+        name_kr: row.name_kr,
+        description_en: row.description_en,
+        skill_category: row.skill_category,
+        effect_type: row.effect_type,
+        game_version: row.game_version,
+        skill_slot: row.skill_slot,
+        swimsuit_key: row.swimsuit_key,
+        swimsuit_name: row.swimsuit_name,
       }),
       [characterId]
     );

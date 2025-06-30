@@ -322,9 +322,6 @@ export default function ShopPage() {
             <h1 className="modern-page-title">
               Shop Collection
             </h1>
-            <p className="modern-page-subtitle">
-              Browse and discover all available shop items • {shopData.listings.length} of {shopData.totalListings} listings
-            </p>
           </motion.div>
 
           <motion.div

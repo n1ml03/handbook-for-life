@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -8,9 +7,7 @@ import {
   Calendar, 
   RotateCcw,
   Sparkles, 
-  User,
-  Image,
-  X} from 'lucide-react';
+  User} from 'lucide-react';
 import { type Swimsuit } from '@/types';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { swimsuitsApi } from '@/services/api';
@@ -409,9 +406,6 @@ export default function SwimsuitPage() {
           <h1 className="modern-page-title">
             Swimsuit Gallery
           </h1>
-          <p className="modern-page-subtitle">
-            Showing {filteredAndSortedSwimsuits.length} of {swimsuits.length} swimsuits
-          </p>
         </motion.div>
 
         {/* Unified Filter Component */}

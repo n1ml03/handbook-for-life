@@ -295,9 +295,6 @@ export default function AccessoryPage() {
           <h1 className="modern-page-title">
             Accessory Gallery
           </h1>
-          <p className="modern-page-subtitle">
-            Showing {filteredAndSortedAccessories.length} of {accessories.length} accessories
-          </p>
         </motion.div>
 
         {/* Unified Filter Component */}

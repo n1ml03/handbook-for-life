@@ -303,12 +303,9 @@ export default function DecorateBromidePage() {
           animate={{ opacity: 1, y: 0 }}
           className="modern-page-header"
         >
-          <h1 className="text-responsive-3xl font-bold gradient-text leading-tight text-center">
+          <h1 className="modern-page-title">
             Bromide & Decoration Collection
           </h1>
-          <p className="text-responsive-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-center mt-4">
-            Browse and customize your collection of {bromides.length} bromides and decorations
-          </p>
         </motion.div>
 
       {/* Unified Filter Component */}

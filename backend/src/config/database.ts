@@ -20,8 +20,6 @@ export interface DatabaseConfig {
     key?: string;
   };
   connectionLimit?: number;
-  timeout?: number;
-  reconnect?: boolean;
   charset?: string;
   timezone?: string;
   multipleStatements?: boolean;
@@ -58,8 +56,6 @@ const config: DatabaseConfig = {
   password: process.env.DB_PASSWORD || '',
   // Optimized connection pool settings
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '20'), // Increased for better performance
-  timeout: parseInt(process.env.DB_TIMEOUT || '30000'), // 30 seconds
-  reconnect: true,
   charset: 'utf8mb4',
   timezone: '+00:00',
   multipleStatements: false,
@@ -122,7 +118,7 @@ export async function initializePool(): Promise<void> {
       const connection = await Promise.race([
         pool.getConnection(),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timeout')), config.timeout || 30000)
+          setTimeout(() => reject(new Error('Connection timeout')), 30000)
         )
       ]);
 
@@ -140,8 +136,7 @@ export async function initializePool(): Promise<void> {
       logger.info('MySQL connection pool initialized successfully', {
         host: config.host,
         database: config.database,
-        connectionLimit: config.connectionLimit,
-        timeout: config.timeout
+        connectionLimit: config.connectionLimit
       });
 
       // Setup connection monitoring and health checks

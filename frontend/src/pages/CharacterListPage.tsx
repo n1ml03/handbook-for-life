@@ -329,9 +329,6 @@ export default function CharacterListPage() {
             <h1 className="modern-page-title">
               Character Collection
             </h1>
-            <p className="modern-page-subtitle">
-              Explore and discover all characters with detailed information • {filteredAndSortedCharacters.length} of {charactersData.characters.length} characters
-            </p>
           </motion.div>
 
           <motion.div

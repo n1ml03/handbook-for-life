@@ -112,11 +112,9 @@ app.use('/api/images', imageRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {
-  res.json({
-    success: true,
+  res.success({
     message: 'DOAXVV Handbook API Server',
     version: '2.0.0',
-    timestamp: new Date().toISOString(),
     documentation: '/api-docs',
     endpoints: {
       health: '/api/health',

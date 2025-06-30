@@ -236,9 +236,6 @@ export default function SkillsPage() {
           <h1 className="modern-page-title">
             Skills Collection
           </h1>
-          <p className="modern-page-subtitle">
-            Explore and discover powerful skills across all categories • {totalItems} total skills
-          </p>
         </motion.div>
 
         {/* Filters */}

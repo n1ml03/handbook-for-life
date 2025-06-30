@@ -2,10 +2,8 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Database,
-  Calendar,
   Sparkles,
   ChevronDown,
-  ChevronUp,
   Search,
   ExternalLink,
   Image as ImageIcon,
@@ -136,128 +134,274 @@ const UpdateLog = React.memo(function UpdateLog() {
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-4 z-20 space-y-4"
+        className="sticky top-4 z-20 space-y-6"
       >
-        {/* Search Bar */}
-        <div className="modern-glass border border-border/40 rounded-responsive p-responsive backdrop-blur-xl shadow-lg">
-          <div className="relative">
-            <Search className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search updates, features, tags... (⌘K)"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-10 md:pl-12 pr-16 md:pr-20 py-3 md:py-4 text-responsive-base border-0 bg-transparent focus:ring-2 focus:ring-accent-cyan/50 transition-all duration-300 touch-target"
-              aria-label="Search update logs"
-            />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className={`touch-target p-2 hover:bg-accent-cyan/20 ${showFilters ? 'text-accent-cyan bg-accent-cyan/10' : ''}`}
-                aria-label="Toggle filters"
-              >
-                <Filter className="w-4 h-4" />
-              </Button>
-              {hasActiveFilters && (
+        {/* Main Search Container */}
+        <div className="relative">
+          {/* Gradient Background Blur */}
+          <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan/5 via-accent-pink/5 to-accent-purple/5 rounded-3xl blur-xl opacity-60"></div>
+          
+          {/* Search Bar Container */}
+          <div className="relative modern-glass border border-border/20 rounded-3xl p-4 backdrop-blur-xl shadow-2xl bg-background/80 hover:shadow-accent-cyan/10 transition-all duration-500 hover:bg-background/90">
+            {/* Search Input Section */}
+            <div className="relative group">
+              {/* Search Icon */}
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground group-focus-within:text-accent-cyan transition-all duration-300">
+                <Search className="w-5 h-5" />
+              </div>
+              
+              {/* Search Input */}
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search updates, features, tags... (⌘K)"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="pl-11 pr-24 py-4 text-base border-0 bg-transparent focus:ring-2 focus:ring-accent-cyan/30 transition-all duration-500 rounded-2xl placeholder:text-muted-foreground/60 group-hover:placeholder:text-muted-foreground/80"
+                aria-label="Search update logs"
+              />
+              
+              {/* Action Buttons Container */}
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                {/* Filter Toggle Button */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={clearSearch}
-                  className="touch-target p-2 hover:bg-red-500/20 hover:text-red-500"
-                  aria-label="Clear search"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`relative touch-target p-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    showFilters 
+                      ? 'text-accent-cyan bg-accent-cyan/15 shadow-lg shadow-accent-cyan/20' 
+                      : 'hover:bg-accent-cyan/10 hover:text-accent-cyan'
+                  }`}
+                  aria-label="Toggle filters"
                 >
-                  <X className="w-4 h-4" />
+                  <Filter className="w-4 h-4" />
+                  {selectedTags.length > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-accent-pink rounded-full flex items-center justify-center text-xs text-white font-bold shadow-lg"
+                    >
+                      {selectedTags.length}
+                    </motion.div>
+                  )}
                 </Button>
-              )}
+                
+                {/* Clear Button */}
+                <AnimatePresence>
+                  {hasActiveFilters && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearSearch}
+                        className="touch-target p-3 rounded-xl hover:bg-red-500/15 hover:text-red-500 hover:scale-105 transition-all duration-300"
+                        aria-label="Clear search"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              {/* Focus Ring */}
+              <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-focus-within:ring-accent-cyan/30 transition-all duration-300 pointer-events-none"></div>
             </div>
-          </div>
 
-          {/* Filter Panel */}
+            {/* Enhanced Filter Panel */}
             <AnimatePresence>
-             {showFilters && (
-               <motion.div
-                 initial={{ opacity: 0, height: 0 }}
-                 animate={{ opacity: 1, height: 'auto' }}
-                 exit={{ opacity: 0, height: 0 }}
-                 transition={{ duration: 0.2 }}
-                 className="mt-4 pt-4 border-t border-border/30"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-foreground flex items-center">
-                      <Hash className="w-4 h-4 mr-2" />
-                      Filter by Tags
-                    </h4>
-                    {selectedTags.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedTags([])}
-                        className="text-xs hover:text-accent-cyan"
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                                     className="mt-6 pt-6 border-t border-border/30 relative before:absolute before:top-0 before:left-1/2 before:transform before:-translate-x-1/2 before:w-32 before:h-px before:bg-gradient-to-r before:from-transparent before:via-accent-cyan/50 before:to-transparent"
+                >
+                  <div className="space-y-4">
+                    {/* Filter Header */}
+                    <div className="flex items-center justify-between">
+                      <motion.h4 
+                        className="text-sm font-semibold text-foreground flex items-center"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
                       >
-                        Clear all
-                      </Button>
-                    )}
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-accent-cyan/20 to-accent-pink/20 mr-3">
+                          <Hash className="w-4 h-4 text-accent-cyan" />
+                        </div>
+                        Filter by Tags
+                        <Badge variant="secondary" className="ml-3 px-2 py-1 text-xs">
+                          {allTags.length} available
+                        </Badge>
+                      </motion.h4>
+                      
+                      {selectedTags.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedTags([])}
+                            className="text-xs hover:text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300 rounded-lg px-3 py-2"
+                          >
+                            Clear all ({selectedTags.length})
+                          </Button>
+                        </motion.div>
+                      )}
+                    </div>
+                    
+                    {/* Tag Grid */}
+                    <div className="relative">
+                      <div className="flex flex-wrap gap-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-accent-cyan/30 scrollbar-track-transparent p-1">
+                        {allTags.map((tag, index) => {
+                          const isSelected = selectedTags.includes(tag);
+                          return (
+                            <motion.div
+                              key={tag}
+                              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              transition={{ delay: index * 0.03, duration: 0.3 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleTag(tag)}
+                                className={`relative text-xs transition-all duration-300 rounded-full px-4 py-2 border ${
+                                  isSelected
+                                    ? 'bg-gradient-to-r from-accent-cyan/20 to-accent-pink/20 text-accent-cyan border-accent-cyan/40 shadow-lg shadow-accent-cyan/20'
+                                    : 'hover:bg-muted/80 hover:border-border/60 border-transparent'
+                                }`}
+                              >
+                                <span className="relative z-10">#{tag}</span>
+                                {isSelected && (
+                                  <motion.div
+                                    layoutId={`tag-bg-${tag}`}
+                                    className="absolute inset-0 bg-gradient-to-r from-accent-cyan/10 to-accent-pink/10 rounded-full"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                  />
+                                )}
+                              </Button>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Scroll Gradient Overlay */}
+                      {allTags.length > 10 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background/80 to-transparent pointer-events-none rounded-b-lg"></div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                    {allTags.map(tag => (
-                      <Button
-                        key={tag}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleTag(tag)}
-                        className={`text-xs transition-all duration-200 ${
-                          selectedTags.includes(tag)
-                            ? 'bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/40'
-                            : 'hover:bg-muted'
-                        }`}
-                      >
-                        #{tag}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        {/* Search Results Summary */}
-        {(hasActiveFilters || filteredUpdates.length !== updateLogs.length) && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-between bg-muted/50 rounded-xl px-4 py-3 border border-border/30"
-          >
-            <div className="flex items-center space-x-3 text-sm">
-              <Database className="w-4 h-4 text-accent-cyan" />
-              <span className="text-foreground">
-                Found <strong className="text-accent-cyan">{filteredUpdates.length}</strong> of {updateLogs.length} updates
-              </span>
-              {selectedTags.length > 0 && (
-                <div className="flex items-center space-x-1">
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">
-                    {selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
-                  </span>
+        {/* Enhanced Search Results Summary */}
+        <AnimatePresence>
+          {(hasActiveFilters || filteredUpdates.length !== updateLogs.length) && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative"
+            >
+              {/* Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan/5 via-background/50 to-accent-pink/5 rounded-2xl"></div>
+              
+              <div className="relative bg-background/70 backdrop-blur-sm rounded-2xl px-6 py-4 border border-border/30 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    {/* Results Icon */}
+                    <div className="p-2 rounded-xl bg-gradient-to-r from-accent-cyan/20 to-accent-pink/20">
+                      <Database className="w-5 h-5 text-accent-cyan" />
+                    </div>
+                    
+                    {/* Results Text */}
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-sm font-medium">
+                        <span className="text-foreground">Found</span>
+                        <motion.span 
+                          className="text-accent-cyan font-bold text-lg"
+                          key={filteredUpdates.length}
+                          initial={{ scale: 1.2, color: "#06b6d4" }}
+                          animate={{ scale: 1, color: "#06b6d4" }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {filteredUpdates.length}
+                        </motion.span>
+                        <span className="text-muted-foreground">of {updateLogs.length} updates</span>
+                      </div>
+                      
+                      {selectedTags.length > 0 && (
+                        <motion.div 
+                          className="flex items-center space-x-2 text-xs text-muted-foreground"
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <div className="w-1 h-1 bg-accent-pink rounded-full"></div>
+                          <span>
+                            {selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
+                          </span>
+                          <div className="flex items-center space-x-1 ml-2">
+                            {selectedTags.slice(0, 3).map((tag, index) => (
+                              <Badge 
+                                key={tag} 
+                                variant="secondary" 
+                                className="text-xs px-2 py-0.5 bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20"
+                              >
+                                #{tag}
+                              </Badge>
+                            ))}
+                            {selectedTags.length > 3 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{selectedTags.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Clear Filters Button */}
+                  {hasActiveFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearSearch}
+                        className="text-xs hover:text-accent-cyan hover:border-accent-cyan/30 hover:bg-accent-cyan/5 hover:scale-105 transition-all duration-300 rounded-xl px-4 py-2 group"
+                      >
+                        <X className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                        Clear filters
+                      </Button>
+                    </motion.div>
+                  )}
                 </div>
-              )}
-            </div>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSearch}
-                className="text-xs hover:text-accent-cyan"
-              >
-                Clear filters
-              </Button>
-            )}
-          </motion.div>
-        )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Results */}
@@ -268,29 +412,115 @@ const UpdateLog = React.memo(function UpdateLog() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="text-center py-16"
+            className="relative"
           >
-            <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-muted/40 to-accent-cyan/20 flex items-center justify-center">
-                <Search className="w-8 h-8 text-muted-foreground" />
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan/5 via-accent-pink/5 to-accent-purple/5 rounded-3xl opacity-50"></div>
+            
+            <div className="relative text-center py-20">
+              <div className="space-y-8">
+                {/* Enhanced Icon Container */}
+                <motion.div 
+                  className="relative w-32 h-32 mx-auto"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                >
+                  {/* Background Circles */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent-cyan/20 to-accent-pink/20 blur-xl"></div>
+                  <div className="absolute inset-2 rounded-full bg-gradient-to-br from-accent-pink/15 to-accent-purple/15 blur-lg"></div>
+                  
+                  {/* Main Icon Container */}
+                  <div className="relative w-full h-full rounded-full bg-background/90 backdrop-blur-sm border border-border/40 flex items-center justify-center shadow-2xl">
+                    <Search className="w-12 h-12 text-accent-cyan" />
+                  </div>
+                  
+
+                </motion.div>
+
+                {/* Enhanced Text Content */}
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="space-y-3">
+                    <motion.h3 
+                      className="text-2xl font-bold text-foreground"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      No Updates Found
+                    </motion.h3>
+                    <motion.p 
+                      className="text-muted-foreground max-w-lg mx-auto text-lg leading-relaxed"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      {searchTerm 
+                        ? (
+                          <>
+                            No updates match <span className="font-semibold text-accent-cyan">"{searchTerm}"</span>
+                            <br />
+                            <span className="text-sm">Try different keywords or clear your search to explore all updates.</span>
+                          </>
+                        )
+                        : (
+                          <>
+                            No updates match your current filters
+                            <br />
+                            <span className="text-sm">Try adjusting your tag selection to see more results.</span>
+                          </>
+                        )
+                      }
+                    </motion.p>
+                  </div>
+                  
+                  {/* Enhanced Action Buttons */}
+                  <motion.div 
+                    className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button 
+                        variant="outline" 
+                        onClick={clearSearch}
+                        className="px-8 py-3 rounded-2xl border-accent-cyan/30 hover:border-accent-cyan/60 hover:bg-accent-cyan/5 hover:text-accent-cyan transition-all duration-300 group"
+                      >
+                        <X className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform duration-300" />
+                        Clear All Filters
+                      </Button>
+                    </motion.div>
+                    
+                    {searchTerm && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button 
+                          variant="ghost"
+                          onClick={() => setSearchTerm('')}
+                          className="px-6 py-3 rounded-2xl hover:bg-muted/80 transition-all duration-300"
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          Clear Search Only
+                        </Button>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </motion.div>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-foreground">No Updates Found</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  {searchTerm 
-                    ? `No updates match "${searchTerm}". Try different keywords or clear your search.`
-                    : 'No updates match your current filters. Try adjusting your selection.'
-                  }
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={clearSearch}
-                className="mt-4"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Clear Search
-              </Button>
             </div>
           </motion.div>
         ) : (
@@ -524,7 +754,7 @@ const ExpandedContent = React.memo(function ExpandedContent({ update }: { update
         </motion.div>
 
         {/* Screenshots */}
-        {update.screenshots.length > 0 && (
+        {update.screenshots && update.screenshots.length > 0 && (
           <Screenshots screenshots={update.screenshots} />
         )}
       </motion.div>
@@ -600,7 +830,7 @@ export default function HomePage() {
           className="modern-page-header"
         >
           <motion.h1 
-            className="text-responsive-3xl font-bold gradient-text leading-tight text-center"
+            className="modern-page-title"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -620,7 +850,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, type: "spring" }}
             >
-              <span className="mobile-only">•</span> {updateLogs.length} updates available
+              <span className="mobile-only">•</span> {updateLogs?.length || 0} updates available
             </motion.span>
           </motion.p>
         </motion.div>

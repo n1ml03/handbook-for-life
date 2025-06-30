@@ -138,7 +138,7 @@ export abstract class BaseModel<TEntity extends BaseEntity, TNewEntity extends N
         pagination: {
           page,
           limit,
-          total,
+          total: Number(total),
           totalPages,
           hasNext: page < totalPages,
           hasPrev: page > 1,
