@@ -395,8 +395,11 @@ export default function FestivalPage() {
               <Music className="w-12 h-12 text-yellow-400/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No festivals found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any festivals matching your current filters. Try adjusting your search criteria.
+            <p className="text-muted-foreground mb-6">
+              {debouncedSearch ?
+                'Try adjusting your search terms or clear the search to see all festivals.' :
+                'Try adjusting your filters or clear them to see all festivals.'
+              }
             </p>
             <motion.button
               onClick={clearFilters}

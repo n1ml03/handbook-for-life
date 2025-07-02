@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,description_en,skill_category,effect_type,game_version
+1,power_burst,パワーバースト,Power Burst,力量爆发,力量爆發,파워 버스트,Increases POW stat by 15% for 3 turns,ACTIVE,POW_UP,1.0.0
+2,stamina_boost,スタミナブースト,Stamina Boost,体力提升,體力提升,스태미나 부스트,Permanently increases STM by 200 points,PASSIVE,STM_UP,1.0.0
+3,critical_chance,クリティカルチャンス,Critical Chance,暴击机会,暴擊機會,크리티컬 찬스,Increases critical hit rate by 10%,POTENTIAL,CRIT_UP,1.0.0

@@ -121,9 +121,10 @@ router.get('/search',
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
     if (!q) {
-      res.status(400).json({
-        success: false,
-        message: 'Search query is required'
+      res.error('Search query is required', 400, {
+        field: 'q',
+        required: true,
+        example: '?q=kasumi'
       });
       return;
     }

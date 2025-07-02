@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,bromide_type,rarity,skill_id,art_data,art_mime_type,game_version
+1,kasumi_beach_sunset,夕日のビーチ,Beach Sunset,海滩夕阳,海灘夕陽,해변 석양,DECO,SSR,1,,image/jpeg,1.0.0
+2,ayane_purple_night,紫の夜,Purple Night,紫色之夜,紫色之夜,퍼플 나이트,DECO,SR,2,,image/jpeg,1.0.0
+3,hitomi_morning_light,朝の光,Morning Light,晨光,晨光,모닝 라이트,OWNER,R,,,image/jpeg,1.0.0

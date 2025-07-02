@@ -6,9 +6,9 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "setup": "bun install && bun run db:setup",
+    "setup": "bun run db:setup",
     "reset": "bun run db:reset",
-    "import-csv": "bun run db:csv:import",
+
     "health-check": "bun run health",
     "build": "bun build src/server.ts --outdir dist --target bun --minify --sourcemap",
     "db:setup": "bun run src/database/database-setup.ts",
@@ -23,18 +23,23 @@
   "dependencies": {
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "compression": "^1.8.0",
     "cors": "^2.8.5",
-    "csv-parser": "^3.2.0",
+
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "multer": "^2.0.1",
     "mysql2": "^3.14.1",
+    "sharp": "^0.34.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
     "@types/node": "^20.19.1",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",

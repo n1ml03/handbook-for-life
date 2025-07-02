@@ -181,39 +181,7 @@ export interface BulkUploadResponse extends ApiSuccess<{
   };
 }> {}
 
-// ============================================================================
-// CSV IMPORT/EXPORT TYPES
-// ============================================================================
 
-export interface CSVImportRequest {
-  file: File | Buffer;
-  options?: {
-    skipHeaders?: boolean;
-    delimiter?: string;
-    encoding?: string;
-  };
-}
-
-export interface CSVImportResponse<T> extends ApiSuccess<{
-  imported: T[];
-  failed: Array<{
-    row: number;
-    data: any;
-    errors: string[];
-  }>;
-  summary: {
-    totalRows: number;
-    imported: number;
-    failed: number;
-  };
-}> {}
-
-export interface CSVExportResponse extends ApiSuccess<{
-  filename: string;
-  url: string;
-  recordCount: number;
-  generatedAt: Date;
-}> {}
 
 // ============================================================================
 // VALIDATION TYPES
@@ -537,6 +505,48 @@ export interface DocumentApiResponse {
   category: string; // Computed category
   tags: string[]; // Computed tags
   author: string; // Default author
+}
+
+// ============================================================================
+// DASHBOARD API TYPES
+// ============================================================================
+
+export interface DashboardOverviewResponse {
+  swimsuits: {
+    data: SwimsuitApiResponse[];
+    pagination: PaginationMetadata;
+  };
+  accessories: {
+    data: ItemApiResponse[];
+    pagination: PaginationMetadata;
+  };
+  skills: {
+    data: SkillApiResponse[];
+    pagination: PaginationMetadata;
+  };
+  bromides: {
+    data: BromideApiResponse[];
+    pagination: PaginationMetadata;
+  };
+  summary: {
+    totalSwimsuits: number;
+    totalAccessories: number;
+    totalSkills: number;
+    totalBromides: number;
+    lastUpdated: string;
+  };
+}
+
+export interface DashboardCharacterStatsResponse {
+  totalCharacters: number;
+  totalSwimsuits: number;
+  averageSwimsuitsPerCharacter: string;
+  charactersByBirthday: Record<string, number>;
+  swimsuitsByRarity: Record<string, number>;
+  recentlyAdded: {
+    characters: CharacterApiResponse[];
+    swimsuits: SwimsuitApiResponse[];
+  };
 }
 
 // ============================================================================

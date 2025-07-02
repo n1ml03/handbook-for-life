@@ -6,16 +6,7 @@ const options: swaggerJsdoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'DOAXVV Handbook API',
-      version: '2.0.0',
-      description: 'API server for DOAXVV Handbook - Comprehensive game data management system',
-      contact: {
-        name: 'API Support',
-        email: 'support@doaxvv-handbook.com'
-      },
-      license: {
-        name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT'
-      }
+      version: '1.0.0'
     },
     servers: [
       {

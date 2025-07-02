@@ -274,7 +274,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
           {/* Screenshots */}
           <FileUpload
-            files={updateLog.screenshots}
+            files={updateLog.screenshots || []}
             onFilesChange={(files) => onUpdateLogChange({ ...updateLog, screenshots: files })}
             maxFiles={10}
             accept="image/*"

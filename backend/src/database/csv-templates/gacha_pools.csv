@@ -1,0 +1,9 @@
+id,gacha_id,pool_item_type,item_id,drop_rate,is_featured
+1,1,SWIMSUIT,1,0.0500,1
+2,1,SWIMSUIT,2,0.0500,1
+3,1,SWIMSUIT,3,0.1000,0
+4,1,BROMIDE,1,0.1500,0
+5,1,ITEM,1,0.2000,0
+6,2,SWIMSUIT,2,0.0300,1
+7,2,BROMIDE,2,0.1200,0
+8,3,SWIMSUIT,1,0.0800,1 

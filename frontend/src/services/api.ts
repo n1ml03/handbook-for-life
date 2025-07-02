@@ -1,4 +1,4 @@
-import { Document, UpdateLog, Character, Swimsuit, Skill, Event, Bromide } from '@/types';
+import { Document, UpdateLog, Character, Swimsuit, Skill, Event, Bromide, DashboardOverviewResponse, DashboardCharacterStatsResponse } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -88,9 +88,82 @@ export const documentsApi = {
 
   // Update an existing document
   async updateDocument(id: string, updates: Partial<Document>): Promise<Document> {
+    // Filter and transform the updates to match backend schema
+    const backendUpdates: any = {};
+    
+    // Map frontend fields to backend schema fields
+    if (updates.unique_key !== undefined) backendUpdates.unique_key = updates.unique_key;
+    if (updates.title_en !== undefined) backendUpdates.title_en = updates.title_en;
+    if (updates.title !== undefined) backendUpdates.title_en = updates.title; // Map title to title_en
+    if (updates.summary_en !== undefined) backendUpdates.summary_en = updates.summary_en;
+    if (updates.content_json_en !== undefined) backendUpdates.content_json_en = updates.content_json_en;
+    
+    // Handle content field conversion
+    if (updates.content !== undefined && updates.content_json_en === undefined) {
+      // If content is provided but content_json_en is not, convert it
+      try {
+        if (typeof updates.content === 'string' && updates.content.trim()) {
+          // Try to parse as JSON first (TipTap format)
+          const parsed = JSON.parse(updates.content);
+          backendUpdates.content_json_en = parsed;
+        }
+      } catch {
+        // If it's not JSON, treat it as plain text and create a basic TipTap document
+        backendUpdates.content_json_en = {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: updates.content
+                }
+              ]
+            }
+          ]
+        };
+      }
+    }
+    
+    // Handle screenshots conversion from frontend format to backend format
+    if (updates.screenshots !== undefined && Array.isArray(updates.screenshots)) {
+      // Filter out any invalid URLs and ensure they are proper URLs
+      backendUpdates.screenshots = updates.screenshots
+        .filter(url => url && typeof url === 'string' && url.trim() !== '')
+        .map(url => {
+          // If it's already a proper URL, return it
+          if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+            return url;
+          }
+          // If it's a relative path, convert to absolute URL
+          if (url.startsWith('/')) {
+            return `${window.location.origin}${url}`;
+          }
+          // If it's a filename without protocol, treat as relative
+          return `${window.location.origin}/uploads/${url}`;
+        })
+        .filter(url => {
+          // Final validation to ensure it's a valid URL format
+          try {
+            new URL(url);
+            return true;
+          } catch {
+            return false;
+          }
+        });
+    }
+    
+    // Remove any undefined values
+    Object.keys(backendUpdates).forEach(key => {
+      if (backendUpdates[key] === undefined) {
+        delete backendUpdates[key];
+      }
+    });
+
     return apiRequest(`/documents/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      body: JSON.stringify(backendUpdates),
     });
   },
 
@@ -1080,12 +1153,18 @@ export const uploadApi = {
   },
 };
 
-export default { 
-  documentsApi, 
-  updateLogsApi, 
-  charactersApi, 
-  swimsuitsApi, 
-  skillsApi, 
+// Dashboard API
+export const dashboardApi = {
+  getOverview: () => apiRequest<{ success: true; data: DashboardOverviewResponse; message?: string; timestamp: string }>('/api/dashboard/overview'),
+  getCharacterStats: () => apiRequest<{ success: true; data: DashboardCharacterStatsResponse; message?: string; timestamp: string }>('/api/dashboard/character-stats'),
+};
+
+export default {
+  documentsApi,
+  updateLogsApi,
+  charactersApi,
+  swimsuitsApi,
+  skillsApi,
   eventsApi,
   bromidesApi,
   itemsApi,
@@ -1093,5 +1172,6 @@ export default {
   shopListingsApi,
   gachasApi,
   statsApi,
-  uploadApi
-}; 
+  uploadApi,
+  dashboardApi
+};

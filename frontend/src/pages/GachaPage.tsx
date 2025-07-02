@@ -509,6 +509,12 @@ export default function GachaPage() {
               <Diamond className="w-12 h-12 text-purple-400/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No gacha found</h3>
+            <p className="text-muted-foreground mb-6">
+              {filterValues.search ?
+                'Try adjusting your search terms or clear the search to see all gacha events.' :
+                'Try adjusting your filters or clear them to see all gacha events.'
+              }
+            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}

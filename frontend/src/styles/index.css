@@ -2046,13 +2046,14 @@
   @media (min-width: 640px) {
     .grid-responsive-cards {
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--responsive-gap-tablet);
+      gap: 12px;
     }
   }
 
   @media (min-width: 1280px) {
     .grid-responsive-cards {
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
       max-width: none;
     }
   }

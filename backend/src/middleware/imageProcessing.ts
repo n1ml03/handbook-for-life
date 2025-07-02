@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { 
-  prepareImageForDatabase, 
   prepareImageForResponse,
   base64ToBuffer,
   isValidImageMimeType,

@@ -16,12 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
 import { Grid } from '@/components/ui/spacing';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
-import { 
-  swimsuitsApi,
-  itemsApi,
-  skillsApi,
-  bromidesApi
-} from '@/services/api';
+
+import { useDashboardOverview } from '@/hooks/useApiQueries';
 import { 
   type Swimsuit,
   type Item,
@@ -190,15 +186,28 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
 ItemCard.displayName = 'ItemCard';
 
 export default function ItemsPage() {
-  // Optimized state management
-  const [itemsData, setItemsData] = useState({
-    swimsuits: [] as Swimsuit[],
-    accessories: [] as Item[],
-    skills: [] as Skill[],
-    bromides: [] as Bromide[],
-    loading: true,
-    error: null as string | null,
-  });
+  // Use React Query with the new dashboard overview endpoint (single API call instead of 4)
+  const { data: overviewResponse, isLoading, error: queryError } = useDashboardOverview();
+
+  // Extract data safely from the combined response
+  const swimsuits = useMemo(() => {
+    return overviewResponse?.data?.swimsuits?.data || [];
+  }, [overviewResponse]);
+
+  const accessories = useMemo(() => {
+    return overviewResponse?.data?.accessories?.data || [];
+  }, [overviewResponse]);
+
+  const skills = useMemo(() => {
+    return overviewResponse?.data?.skills?.data || [];
+  }, [overviewResponse]);
+
+  const bromides = useMemo(() => {
+    return overviewResponse?.data?.bromides?.data || [];
+  }, [overviewResponse]);
+
+  // Convert query error to string for compatibility
+  const error = queryError ? (queryError as Error).message : null;
 
   const [uiState, setUiState] = useState({
     showFilters: false,
@@ -228,81 +237,42 @@ export default function ItemsPage() {
     setCurrentPage(1);
   }, [debouncedSearchTerm, filterValues.type, filterValues.rarity, filterValues.character, sortState.sortBy, sortState.sortDirection]);
 
-  // Optimized fetch function with useCallback
-  const fetchAllData = useCallback(async () => {
-    try {
-      setItemsData(prev => ({ ...prev, loading: true, error: null }));
-      
-      const [swimsuitsRes, accessoriesRes, skillsRes, bromidesRes] = await Promise.all([
-        swimsuitsApi.getSwimsuits({ limit: 100, page: 1 }),
-        itemsApi.getItems({ category: 'ACCESSORY', limit: 100, page: 1 }),
-        skillsApi.getSkills({ limit: 100, page: 1 }),
-        bromidesApi.getBromides({ limit: 100, page: 1 })
-      ]);
-
-      // Safely extract data from all responses
-      const swimsuitsData = safeExtractArrayData<Swimsuit>(swimsuitsRes, 'swimsuits API');
-      const accessoriesData = safeExtractArrayData<Item>(accessoriesRes, 'accessories API');
-      const skillsData = safeExtractArrayData<Skill>(skillsRes, 'skills API');
-      const bromidesData = safeExtractArrayData<Bromide>(bromidesRes, 'bromides API');
-      
-      setItemsData(prev => ({
-        ...prev,
-        swimsuits: swimsuitsData,
-        accessories: accessoriesData,
-        skills: skillsData,
-        bromides: bromidesData,
-        loading: false
-      }));
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setItemsData(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Failed to fetch items. Please try again.'
-      }));
-    }
-  }, []);
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+  // Data is now automatically fetched and cached by React Query
 
   // Memoized unified items data with multi-language support
   const rawUnifiedItems = useMemo(() => {
     const items: (MultiLanguageItem & UnifiedItem)[] = [];
 
     // Add swimsuits (safely)
-    if (Array.isArray(itemsData.swimsuits)) {
-      itemsData.swimsuits.forEach((swimsuit: Swimsuit) => {
+    if (Array.isArray(swimsuits)) {
+      swimsuits.forEach((swimsuit: Swimsuit) => {
         items.push(convertToMultiLanguageItem(swimsuit, 'swimsuit'));
       });
     }
 
     // Add accessories (safely)
-    if (Array.isArray(itemsData.accessories)) {
-      itemsData.accessories.forEach((accessory: Item) => {
+    if (Array.isArray(accessories)) {
+      accessories.forEach((accessory: Item) => {
         items.push(convertToMultiLanguageItem(accessory, 'accessory'));
       });
     }
 
     // Add skills (safely)
-    if (Array.isArray(itemsData.skills)) {
-      itemsData.skills.forEach((skill: Skill) => {
+    if (Array.isArray(skills)) {
+      skills.forEach((skill: Skill) => {
         items.push(convertToMultiLanguageItem(skill, 'skill'));
       });
     }
 
     // Add bromides (safely)
-    if (Array.isArray(itemsData.bromides)) {
-      itemsData.bromides.forEach((bromide: Bromide) => {
+    if (Array.isArray(bromides)) {
+      bromides.forEach((bromide: Bromide) => {
         items.push(convertToMultiLanguageItem(bromide, 'bromide'));
       });
     }
 
     return items;
-  }, [itemsData.swimsuits, itemsData.accessories, itemsData.skills, itemsData.bromides]);
+  }, [swimsuits, accessories, skills, bromides]);
 
   // Add translations to items using the multi-language search service
   const unifiedItems = useMemo(() => {
@@ -436,8 +406,8 @@ export default function ItemsPage() {
   }, []);
 
   return (
-    <PageLoadingState 
-      isLoading={itemsData.loading} 
+    <PageLoadingState
+      isLoading={isLoading}
       message="Loading items list..."
     >
     <div className="modern-page">
@@ -475,7 +445,7 @@ export default function ItemsPage() {
 
       {/* Items Grid */}
       <Grid cols={2} gap="md" className="mt-8">
-        {filteredAndSortedItems.length === 0 && !itemsData.loading ? (
+        {filteredAndSortedItems.length === 0 && !isLoading ? (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -489,6 +459,12 @@ export default function ItemsPage() {
               <Package className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-foreground mb-3">No items found</h3>
+            <p className="text-muted-foreground mb-6">
+              {debouncedSearchTerm ?
+                'Try adjusting your search terms or clear the search to see all items.' :
+                'Try adjusting your filters or clear them to see all items.'
+              }
+            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}

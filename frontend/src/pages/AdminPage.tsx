@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { Settings, FileText, FileDown, BookOpen } from 'lucide-react';
+import { Settings, FileText, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
@@ -8,10 +8,9 @@ import { useUpdateLogs } from '@/hooks';
 import { UpdateLog } from '@/types';
 import { Container } from '@/components/ui/spacing';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { useDocuments } from '@/hooks';
 import {
-  CSVManagement,
   DocumentManagement,
   UpdateLogManagement,
   DocumentEditor,
@@ -24,7 +23,6 @@ interface AdminSection {
   id: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  description: string;
   lastUpdated: string;
   status: 'active' | 'inactive' | 'draft';
   color: string;
@@ -75,42 +73,27 @@ const AdminPage = () => {
   const adminSections: AdminSection[] = [
     {
       id: 'documents',
-      title: 'Document Management',
+      title: 'All Documents',
       icon: FileText,
-      description: 'Create, edit, and organize documentation and guides',
       lastUpdated: '2 hours ago',
       status: 'active',
       color: 'text-accent-cyan',
-      stats: {
-        count: documents.length,
-        label: 'Documents'
-      }
     },
     {
-      id: 'update-logs',
-      title: 'Update Logs',
+      id: 'checklist-creation',
+      title: 'Checklist Creation',
       icon: BookOpen,
-      description: 'Manage version history and changelog entries',
       lastUpdated: '1 day ago',
       status: 'active',
       color: 'text-accent-purple',
-      stats: {
-        count: updateLogs.length,
-        label: 'Updates'
-      }
     },
     {
-      id: 'csv-management',
-      title: 'Data Management',
-      icon: FileDown,
-      description: 'Import and export data using CSV files',
-      lastUpdated: '3 days ago',
+      id: 'checking-guide',
+      title: 'Checking Guide',
+      icon: Settings,
+      lastUpdated: '1 day ago',
       status: 'active',
       color: 'text-accent-pink',
-      stats: {
-        count: documents.length + updateLogs.length,
-        label: 'Total Records'
-      }
     }
   ];
 
@@ -172,10 +155,25 @@ const AdminPage = () => {
       // Check if this is an existing document (has a valid ID) or a new one
       const isExistingDocument = editingDocument?.id && editingDocument.id > 0;
 
-      // Prepare document for saving
+      // Prepare document for saving - ensure required fields are present
       const documentToSave = {
-        ...document
+        ...document,
+        // Ensure we have title_en field
+        title_en: document.title_en || document.title || 'Untitled Document',
+        // Ensure we have unique_key
+        unique_key: document.unique_key || `doc-${Date.now()}`,
+        // Map frontend screenshots to backend format if needed
+        screenshots: document.screenshots || []
       };
+
+      console.log('Saving document:', {
+        isExistingDocument,
+        documentId: editingDocument?.id,
+        documentToSave: {
+          ...documentToSave,
+          content: documentToSave.content?.substring(0, 100) + '...' // Truncate for logging
+        }
+      });
 
       if (isExistingDocument) {
         // Update existing document
@@ -183,7 +181,7 @@ const AdminPage = () => {
         addNotification({
           type: 'success',
           title: 'Document Updated',
-          message: `"${document.title_en}" has been successfully updated.`,
+          message: `"${documentToSave.title_en}" has been successfully updated.`,
           duration: 3000
         });
       } else {
@@ -192,7 +190,7 @@ const AdminPage = () => {
         addNotification({
           type: 'success',
           title: 'Document Created',
-          message: `"${document.title_en}" has been successfully created.`,
+          message: `"${documentToSave.title_en}" has been successfully created.`,
           duration: 3000
         });
       }
@@ -203,7 +201,7 @@ const AdminPage = () => {
       addNotification({
         type: 'error',
         title: 'Save Failed',
-        message: 'Failed to save document. Please try again.',
+        message: error instanceof Error ? error.message : 'Failed to save document. Please try again.',
         duration: 5000
       });
     }
@@ -388,10 +386,10 @@ const AdminPage = () => {
           />
         );
       
-      case 'update-logs':
+      case 'checklist-creation':
         return (
           <UpdateLogManagement
-            updateLogs={updateLogs}
+            updateLogs={updateLogs.filter((_, index) => index % 2 === 0)}
             onCreateNew={handleCreateNewUpdateLog}
             onEditUpdateLog={(log: UpdateLog) => {
               setEditingLog(log);
@@ -401,16 +399,18 @@ const AdminPage = () => {
             isEditMode={isEditMode}
           />
         );
-      
-      case 'csv-management':
+
+      case 'checking-guide':
         return (
-          <CSVManagement
-            documents={documents}
-            updateLogs={updateLogs}
-            onAddDocument={addDocument}
-            onAddUpdateLog={async (log: UpdateLog) => {
-              await addUpdateLog(log);
+          <UpdateLogManagement
+            updateLogs={updateLogs.filter((_, index) => index % 2 === 1)}
+            onCreateNew={handleCreateNewUpdateLog}
+            onEditUpdateLog={(log: UpdateLog) => {
+              setEditingLog(log);
+              setIsEditMode(true);
             }}
+            onDeleteUpdateLog={handleDeleteUpdateLog}
+            isEditMode={isEditMode}
           />
         );
       
@@ -470,11 +470,11 @@ const AdminPage = () => {
         </div>
       )}
 
-      {/* Compact Tab Navigation */}
+      {/* Compact Tab Navigation - Single Row */}
       {!isEditMode && (
-        <Card className="p-4 mb-5 rounded-2xl">
+        <Card className="p-3 mb-4 rounded-2xl">
           <CardContent className="p-0">
-            <div className="flex gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {adminSections.map(section => {
                 const IconComponent = section.icon;
                 const isActive = activeTab === section.id;
@@ -485,44 +485,35 @@ const AdminPage = () => {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     className={cn(
-                      'flex-1 px-5 py-4 rounded-xl transition-all duration-200 group border min-h-[64px]',
+                      'px-3 py-2 rounded-xl transition-all duration-200 group border',
                       'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
                       isActive
                         ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg border-accent-pink/50'
                         : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80 hover:shadow-md'
                     )}
                   >
-                    <div className="flex items-center gap-3 h-full">
+                    <div className="flex items-center justify-center gap-2">
                       <div className={cn(
-                        'p-2.5 rounded-xl transition-all flex-shrink-0',
+                        'p-1.5 rounded-lg transition-all',
                         isActive
                           ? 'bg-white/20'
                           : 'bg-accent-cyan/10 group-hover:bg-accent-cyan/20'
                       )}>
                         <IconComponent className={cn(
-                          'w-5 h-5 transition-colors',
+                          'w-4 h-4 transition-colors',
                           isActive ? 'text-white' : section.color
                         )} />
                       </div>
-                      <div className="text-left flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-sm font-semibold truncate">{section.title}</h3>
-                          {section.stats && (
-                            <div className={cn(
-                              'text-right ml-2 flex-shrink-0',
-                              isActive ? 'text-white/90' : 'text-muted-foreground'
-                            )}>
-                              <div className="text-lg font-bold leading-none">{section.stats.count}</div>
-                              <div className="text-xs leading-none">{section.stats.label}</div>
-                            </div>
-                          )}
-                        </div>
-                        <p className={cn(
-                          'text-xs leading-relaxed line-clamp-1',
-                          isActive ? 'text-white/80' : 'text-muted-foreground'
-                        )}>
-                          {section.description}
-                        </p>
+                      <div>
+                        <h3 className="text-sm font-semibold">{section.title}</h3>
+                        {section.stats && (
+                          <div className={cn(
+                            'text-xs font-medium',
+                            isActive ? 'text-white/90' : 'text-muted-foreground'
+                          )}>
+                            {section.stats.count} {section.stats.label}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.button>

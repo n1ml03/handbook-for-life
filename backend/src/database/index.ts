@@ -12,8 +12,7 @@ export { initializePool, closeDatabase, executeQuery } from '../config/database'
 export { default as MigrationRunner } from './migrations/run-migrations';
 export { default as SeedRunner } from './seeds/run-seeds';
 
-// Export CSV importer
-export { CSVImporter } from './csv-import';
+
 
 // Database structure overview
 export const DATABASE_STRUCTURE = {
@@ -38,27 +37,7 @@ export const DATABASE_STRUCTURE = {
     gacha_pools: 'Gacha reward pools with drop rates'
   },
 
-  // Import order for CSV data (respects foreign key constraints)
-  IMPORT_ORDER: [
-    // Group 1: Core entities (no dependencies)
-    'characters',
-    'skills', 
-    'items',
-    'bromides',
-    
-    // Group 2: Dependent entities
-    'swimsuits',
-    'episodes',
-    
-    // Group 3: Game content
-    'events',
-    'gachas',
-    
-    // Group 4: Linking tables
-    'swimsuit_skills',
-    'gacha_pools',
-    'shop_listings'
-  ],
+
 
   // Multi-language support
   SUPPORTED_LANGUAGES: ['jp', 'en', 'cn', 'tw', 'kr'],
@@ -71,7 +50,7 @@ export const DATABASE_STRUCTURE = {
     'Foreign key constraints for data integrity',
     'Multi-language content support',
     'Migration versioning system',
-    'Automated CSV import with dependency checking',
+
     'Sample data for development testing'
   ]
 } as const;
@@ -210,22 +189,7 @@ export const DEV_UTILS = {
     console.log('✅ Database reset complete!');
   },
 
-  /**
-   * Validate CSV files without importing
-   */
-  async validateCSVFiles(csvDir: string = './csv_data'): Promise<boolean> {
-    const { CSVImporter } = await import('./csv-import');
-    const importer = new CSVImporter();
-    importer.setCsvDir(csvDir);
-    importer.setValidateOnly(true);
-    
-    await importer.initialize();
-    const results = await importer.importAll();
-    await importer.cleanup();
 
-    const hasErrors = results.some(r => r.errors.length > 0);
-    return !hasErrors;
-  }
 };
 
 // Export for convenience

@@ -1,0 +1,8 @@
+swimsuit_id,skill_id,skill_slot
+1,1,ACTIVE
+1,2,PASSIVE_1
+1,3,POTENTIAL_1
+2,2,ACTIVE
+2,1,PASSIVE_1
+2,3,POTENTIAL_1
+3,3,PASSIVE_1

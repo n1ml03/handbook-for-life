@@ -314,9 +314,10 @@ router.get('/:id/validate-rates',
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid gacha ID'
+      res.error('Invalid gacha ID', 400, {
+        field: 'id',
+        expected: 'number',
+        received: req.params.id
       });
       return;
     }

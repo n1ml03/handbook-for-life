@@ -1,0 +1,3 @@
+id,unique_key,version,title,content,description,date,tags,screenshots_data,metrics,created_at,updated_at
+1,v1_0_0_release,1.0.0,Initial Release,Initial release of DOAXVV Handbook with core features,First version includes character profiles and swimsuit database,2023-01-01 00:00:00,"[""release"", ""initial"", ""core""]","[]","{""performance"": {""load_time"": 1.2, ""api_calls"": 15}}",2023-01-01 00:00:00,2023-01-01 00:00:00
+2,v1_1_0_features,1.1.0,Feature Update,Added skill system and improved search functionality,Enhanced user experience with new filtering options,2023-02-01 00:00:00,"[""features"", ""skills"", ""search""]","[]","{""performance"": {""load_time"": 1.0, ""api_calls"": 12}}",2023-02-01 00:00:00,2023-02-01 00:00:00

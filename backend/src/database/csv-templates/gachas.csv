@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,gacha_subtype,game_version,start_date,end_date
+1,venus_white_gacha,ヴィーナスホワイトガチャ,Venus White Gacha,维纳斯白扭蛋,維納斯白扭蛋,비너스 화이트 가챠,TRENDY,1.0.0,2017-03-24 00:00:00,2017-04-07 23:59:59
+2,nostalgic_memories,懐かしい思い出,Nostalgic Memories,怀旧回忆,懷舊回憶,추억의 기억,NOSTALGIC,1.2.0,2017-09-01 00:00:00,2017-09-15 23:59:59
+3,kasumi_birthday_special,かすみ誕生日スペシャル,Kasumi Birthday Special,霞生日特别,霞生日特別,카스미 생일 스페셜,BIRTHDAY,1.0.0,2017-02-20 00:00:00,2017-02-26 23:59:59

@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,type,game_version,start_date,end_date,is_active
+1,summer_festival_2017,夏祭り2017,Summer Festival 2017,2017夏日祭,2017夏日祭,2017 여름축제,FESTIVAL_RANKING,1.0.0,2017-07-01 00:00:00,2017-07-15 23:59:59,0
+2,venus_tower_climb,ヴィーナスタワー,Venus Tower Climb,维纳斯塔攀登,維納斯塔攀登,비너스 타워 클라임,TOWER,1.1.0,2017-08-01 00:00:00,2017-08-31 23:59:59,0
+3,birthday_login_bonus,誕生日ログインボーナス,Birthday Login Bonus,生日登录奖励,生日登入獎勵,생일 로그인 보너스,LOGIN_BONUS,1.0.0,2017-02-23 00:00:00,2017-02-28 23:59:59,0

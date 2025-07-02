@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,description_en,source_description_en,item_category,rarity,icon_data,icon_mime_type,game_version
+1,v_stones,Vストーン,V-Stones,V石,V石,V스톤,Premium currency used for gacha pulls and special purchases,Purchased with real money or earned through events,CURRENCY,SSR,,image/png,1.0.0
+2,girl_coins,ガールコイン,Girl Coins,女孩币,女孩幣,걸 코인,Standard in-game currency for basic purchases,Earned through matches and daily activities,CURRENCY,N,,image/png,1.0.0
+3,awakening_stone,覚醒石,Awakening Stone,觉醒石,覺醒石,각성석,Material used to awaken and upgrade swimsuits,Obtained from events and special matches,UPGRADE_MATERIAL,SR,,image/png,1.0.0

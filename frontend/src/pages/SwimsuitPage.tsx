@@ -526,6 +526,12 @@ export default function SwimsuitPage() {
               <Search className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
             <h3 className="text-2xl font-bold text-gray-300 mb-3">No swimsuits found</h3>
+            <p className="text-muted-foreground mb-6">
+              {filterValues.search ?
+                'Try adjusting your search terms or clear the search to see all swimsuits.' :
+                'Try adjusting your filters or clear them to see all swimsuits.'
+              }
+            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}

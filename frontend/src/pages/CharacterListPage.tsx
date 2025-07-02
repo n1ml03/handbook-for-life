@@ -11,6 +11,7 @@ import {
 import { charactersApi } from '@/services/api';
 import { safeExtractArrayData } from '@/services/utils';
 import { type Character, type SortDirection } from '@/types';
+import { useCharacters } from '@/hooks/useApiQueries';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { Button } from '@/components/ui/button';
@@ -122,12 +123,25 @@ CharacterCard.displayName = 'CharacterCard';
 export default function CharacterListPage() {
   const navigate = useNavigate();
   
-  // State management
-  const [charactersData, setCharactersData] = useState({
-    characters: [] as Character[],
-    loading: true,
-    error: null as string | null,
+  // Use React Query for data fetching with caching
+  const {
+    data: charactersResponse,
+    isLoading,
+    error: queryError
+  } = useCharacters({
+    page: 1,
+    limit: 100,
+    sortBy: 'name_en',
+    sortOrder: 'asc'
   });
+
+  // Extract characters data safely
+  const characters = useMemo(() => {
+    return safeExtractArrayData<Character>(charactersResponse, 'characters API');
+  }, [charactersResponse]);
+
+  // Convert query error to string for compatibility
+  const error = queryError ? (queryError as Error).message : null;
   
   const [uiState, setUiState] = useState({
     currentPage: 1,
@@ -154,45 +168,18 @@ export default function CharacterListPage() {
     search: debouncedSearchTerm,
   }), [filterValues, debouncedSearchTerm]);
 
-  // Fetch characters
-  const fetchCharacters = useCallback(async () => {
-    try {
-      setCharactersData(prev => ({ ...prev, loading: true, error: null }));
-      
-      // Use safer parameters to avoid 400 Bad Request
-      const response = await charactersApi.getCharacters({
-        page: 1,
-        limit: 100,
-        sortBy: 'name_en',
-        sortOrder: 'asc'
-      });
-      
-      const responseData = safeExtractArrayData<Character>(response, 'characters API');
-      setCharactersData(prev => ({ ...prev, characters: responseData, loading: false }));
-    } catch (err) {
-      console.error('Failed to fetch characters:', err);
-      setCharactersData(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Failed to fetch characters. Please try again.'
-      }));
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCharacters();
-  }, [fetchCharacters]);
+  // Data is now automatically fetched and cached by React Query
 
   // Add multi-language support
   const multiLanguageCharacters = useMemo(() => {
-    const compatibleCharacters = charactersData.characters.map(char => ({
+    const compatibleCharacters = characters.map(char => ({
       ...char,
       id: char.id.toString(),
       name: char.name_en || char.name_jp || '',
       description: char.voice_actor_jp || ''
     }));
     return addTranslationsToItems(compatibleCharacters);
-  }, [charactersData.characters]);
+  }, [characters]);
 
   // Filter configuration
   const filterFields: FilterField[] = useMemo(() => [
@@ -317,7 +304,7 @@ export default function CharacterListPage() {
   }, [navigate]);
 
   return (
-    <PageLoadingState isLoading={charactersData.loading} message="Loading character list...">
+    <PageLoadingState isLoading={isLoading} message="Loading character list...">
       <div className="modern-page">
         <div className="modern-container-xl">
           {/* Header */}
@@ -362,7 +349,7 @@ export default function CharacterListPage() {
               sortDirection={sortState.sortDirection}
               onSortChange={(sortBy, sortDirection) => setSortState({ sortBy, sortDirection })}
               resultCount={filteredAndSortedCharacters.length}
-              totalCount={charactersData.characters.length}
+              totalCount={characters.length}
               itemLabel="characters"
               searchAriaLabel="Search characters by name"
             />
@@ -441,7 +428,7 @@ export default function CharacterListPage() {
             )}
 
             {/* Empty State */}
-            {filteredAndSortedCharacters.length === 0 && !charactersData.loading && (
+            {filteredAndSortedCharacters.length === 0 && !isLoading && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

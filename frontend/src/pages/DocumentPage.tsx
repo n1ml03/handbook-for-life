@@ -297,6 +297,12 @@ export default function DocumentPage() {
             <FileText className="w-16 h-16 text-accent-cyan/50" />
           </motion.div>
           <h3 className="text-2xl font-bold text-gray-300 mb-3">No documents found</h3>
+          <p className="text-muted-foreground mb-6">
+            {debouncedSearch ?
+              'Try adjusting your search terms or clear the search to see all documents.' :
+              'Try adjusting your filters or clear them to see all documents.'
+            }
+          </p>
           <Button
             onClick={clearFilters}
             className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"

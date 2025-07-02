@@ -430,6 +430,48 @@ export interface GachaCardProps {
 }
 
 // ============================================================================
+// DASHBOARD TYPES
+// ============================================================================
+
+export interface DashboardOverviewResponse {
+  swimsuits: {
+    data: Swimsuit[];
+    pagination: PaginationMetadata;
+  };
+  accessories: {
+    data: Item[];
+    pagination: PaginationMetadata;
+  };
+  skills: {
+    data: Skill[];
+    pagination: PaginationMetadata;
+  };
+  bromides: {
+    data: Bromide[];
+    pagination: PaginationMetadata;
+  };
+  summary: {
+    totalSwimsuits: number;
+    totalAccessories: number;
+    totalSkills: number;
+    totalBromides: number;
+    lastUpdated: string;
+  };
+}
+
+export interface DashboardCharacterStatsResponse {
+  totalCharacters: number;
+  totalSwimsuits: number;
+  averageSwimsuitsPerCharacter: string;
+  charactersByBirthday: Record<string, number>;
+  swimsuitsByRarity: Record<string, number>;
+  recentlyAdded: {
+    characters: Character[];
+    swimsuits: Swimsuit[];
+  };
+}
+
+// ============================================================================
 // STATE AND CONTEXT TYPES
 // ============================================================================
 
@@ -480,7 +522,7 @@ export interface UpdateLog {
   // Binary screenshot data (matching backend)
   screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
   // Legacy field for backward compatibility (computed from screenshots_data)
-  screenshots: string[];
+  screenshots?: string[]; // Made optional to handle cases where it might be undefined
   metrics?: {
     performanceImprovement: string;
     userSatisfaction: string;
@@ -558,37 +600,7 @@ export interface AdminSection {
   status: 'active' | 'inactive' | 'draft';
 }
 
-export interface CSVValidationError {
-  row: number;
-  column: string;
-  message: string;
-  severity: 'error' | 'warning';
-}
 
-export interface CSVPreviewData {
-  headers: string[];
-  rows: unknown[][];
-  totalRows: number;
-  validRows: number;
-  invalidRows: number;
-  errors: CSVValidationError[];
-}
-
-export interface ColumnMapping {
-  csvColumn: string;
-  dbField: string;
-  isRequired: boolean;
-  dataType: 'string' | 'number' | 'boolean' | 'date' | 'array';
-}
-
-export interface ImportProgress {
-  stage: 'uploading' | 'parsing' | 'validating' | 'importing' | 'complete';
-  progress: number;
-  processedRows: number;
-  totalRows: number;
-  errors: number;
-  message: string;
-}
 
 export interface ExportOptions {
   format: 'csv' | 'excel' | 'json';

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import path from 'path';
 import { config } from 'dotenv';
 import { Server } from 'http';
@@ -13,6 +14,15 @@ import { errorHandler, notFound } from './middleware/errorHandler';
 import { responseFormatter } from './middleware/responseFormatter';
 import { responseValidator } from './middleware/responseValidator';
 import { swaggerUi, specs } from './config/swagger';
+import { CacheService } from './services/CacheService';
+import {
+  rateLimits,
+  sanitizeInput,
+  securityHeaders,
+  validateRequest,
+  securityLogger,
+  corsOptions
+} from './middleware/security';
 
 // Import routes
 import healthRoutes from '@routes/health';
@@ -29,24 +39,55 @@ import gachasRoutes from '@routes/gachas';
 import shopListingsRoutes from '@routes/shop-listings';
 import uploadRoutes from '@routes/upload';
 import imageRoutes from '@routes/images';
+import dashboardRoutes from '@routes/dashboard';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration (simplified for local development)
-app.use(cors({
-  origin: true, // Allow all origins for local development
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+// Compression middleware - enable gzip compression for JSON responses
+app.use(compression({
+  filter: (req, res) => {
+    // Only compress JSON responses for API endpoints
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+
+    // Compress JSON responses and API endpoints
+    const contentType = res.getHeader('content-type');
+    if (contentType && contentType.toString().includes('application/json')) {
+      return true;
+    }
+
+    // Compress API routes
+    if (req.url.startsWith('/api/')) {
+      return true;
+    }
+
+    return compression.filter(req, res);
+  },
+  level: 6, // Good balance between compression ratio and speed
+  threshold: 1024, // Only compress responses larger than 1KB
 }));
+
+// Response formatting middleware (must be early to provide res.error, res.success, etc.)
+app.use(responseFormatter);
+
+// Security headers
+app.use(securityHeaders);
+
+// Security logging
+app.use(securityLogger);
+
+// Request validation and sanitization
+app.use(validateRequest);
+app.use(sanitizeInput);
+
+// CORS configuration with security options
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Response formatting and validation middleware
-app.use(responseFormatter);
 app.use(responseValidator({
   enforceStandardFormat: process.env.NODE_ENV === 'development',
   logResponses: process.env.NODE_ENV === 'development',
@@ -95,20 +136,22 @@ app.use('/api/health', healthRoutes);
 
 // Authentication routes removed for local development
 
-// API routes (no rate limiting for local development)
-app.use('/api/characters', charactersRoutes);
-app.use('/api/skills', skillsRoutes);
-app.use('/api/swimsuits', swimsuitsRoutes);
-app.use('/api/items', itemsRoutes);
-app.use('/api/episodes', episodesRoutes);
-app.use('/api/events', eventsRoutes);
-app.use('/api/bromides', bromidesRoutes);
-app.use('/api/gachas', gachasRoutes);
-app.use('/api/shop-listings', shopListingsRoutes);
-app.use('/api/documents', documentsRoutes);
-app.use('/api/update-logs', updateLogsRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/images', imageRoutes);
+// API routes with appropriate rate limiting
+app.use('/api/health', healthRoutes);
+app.use('/api/characters', rateLimits.general, charactersRoutes);
+app.use('/api/skills', rateLimits.general, skillsRoutes);
+app.use('/api/swimsuits', rateLimits.general, swimsuitsRoutes);
+app.use('/api/items', rateLimits.general, itemsRoutes);
+app.use('/api/episodes', rateLimits.general, episodesRoutes);
+app.use('/api/events', rateLimits.general, eventsRoutes);
+app.use('/api/bromides', rateLimits.general, bromidesRoutes);
+app.use('/api/gachas', rateLimits.general, gachasRoutes);
+app.use('/api/shop-listings', rateLimits.general, shopListingsRoutes);
+app.use('/api/documents', rateLimits.mutations, documentsRoutes);
+app.use('/api/update-logs', rateLimits.general, updateLogsRoutes);
+app.use('/api/upload', rateLimits.uploads, uploadRoutes);
+app.use('/api/images', rateLimits.general, imageRoutes);
+app.use('/api/dashboard', rateLimits.general, dashboardRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {
@@ -130,7 +173,8 @@ app.get('/', (_req, res) => {
       gachas: '/api/gachas',
       shopListings: '/api/shop-listings',
       upload: '/api/upload',
-      images: '/api/images'
+      images: '/api/images',
+      dashboard: '/api/dashboard'
     }
   });
 });
@@ -182,8 +226,11 @@ const startServer = async () => {
       process.exit(1);
     }
 
+    // Initialize cache service
+    CacheService.initialize();
+
     server = app.listen(PORT, () => {
-      logger.info(`\n🚀 DOAXVV Handbook API Server Started\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌍 Server running on: http://localhost:${PORT}\n📊 Health check: http://localhost:${PORT}/api/health\n🗃️  Database: Connected to MySQL\n📝 Logging: Console output\n⚡ Environment: ${process.env.NODE_ENV || 'development'}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n      `);
+      logger.info(`\n🚀 DOAXVV Handbook API Server Started\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌍 Server running on: http://localhost:${PORT}\n📊 Health check: http://localhost:${PORT}/api/health\n📚 API Documentation: http://localhost:${PORT}/api-docs\n🗃️  Database: Connected to MySQL\n📝 Logging: Console output\n⚡ Environment: ${process.env.NODE_ENV || 'development'}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n      `);
     });
 
     // Handle graceful shutdown

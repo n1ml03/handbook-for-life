@@ -543,25 +543,7 @@ export interface ScreenshotData {
   filename: string;
 }
 
-// ============================================================================
-// CSV/DATA IMPORT TYPES
-// ============================================================================
 
-// Export types for CSV/data import
-export interface CSVImportResult<T> {
-  successful: T[];
-  failed: Array<{
-    row: number;
-    data: any;
-    errors: string[];
-  }>;
-  summary: {
-    totalRows: number;
-    processed: number;
-    successful: number;
-    failed: number;
-  };
-}
 
 // Type guards for runtime type checking
 export function isCharacter(obj: any): obj is Character {

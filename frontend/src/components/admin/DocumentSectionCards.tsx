@@ -45,30 +45,30 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
       {/* All Documents Card */}
       <div 
         className={cn(
-          "doax-card p-4 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
+          "doax-card p-3 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
           activeSection === 'all'
             ? 'border-accent-cyan bg-accent-cyan/5'
             : 'border-border hover:border-accent-cyan/50'
         )}
         onClick={() => onSectionChange('all')}
       >
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <div className={cn(
-            "p-2 rounded-lg",
+            "p-1.5 rounded-lg",
             activeSection === 'all'
               ? 'bg-accent-cyan text-white'
               : 'bg-accent-cyan/10 text-accent-cyan'
           )}>
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">All Documents</h3>
-            <p className="text-xs text-muted-foreground">Complete collection</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-foreground truncate">All Documents</h3>
+            <p className="text-xs text-muted-foreground hidden sm:block">Complete collection</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total documents</span>
-          <StatusBadge status="info" className="text-xs">
+          <span className="text-xs text-muted-foreground hidden sm:block">Total</span>
+          <StatusBadge status="info" className="text-xs ml-auto">
             {documents.length}
           </StatusBadge>
         </div>
@@ -77,30 +77,30 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
       {/* Checklist Creation Card */}
       <div 
         className={cn(
-          "doax-card p-4 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
+          "doax-card p-3 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
           activeSection === 'checklist-creation'
             ? 'border-accent-pink bg-accent-pink/5'
             : 'border-border hover:border-accent-pink/50'
         )}
         onClick={() => onSectionChange('checklist-creation')}
       >
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <div className={cn(
-            "p-2 rounded-lg",
+            "p-1.5 rounded-lg",
             activeSection === 'checklist-creation'
               ? 'bg-accent-pink text-white'
               : 'bg-accent-pink/10 text-accent-pink'
           )}>
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Checklist Creation</h3>
-            <p className="text-xs text-muted-foreground">Creation guides</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-foreground truncate">Creation</h3>
+            <p className="text-xs text-muted-foreground hidden sm:block">Creation guides</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Creation docs</span>
-          <StatusBadge status="success" className="text-xs">
+          <span className="text-xs text-muted-foreground hidden sm:block">Docs</span>
+          <StatusBadge status="success" className="text-xs ml-auto">
             {getChecklistCreationCount()}
           </StatusBadge>
         </div>
@@ -109,30 +109,30 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
       {/* Checking Guide Card */}
       <div 
         className={cn(
-          "doax-card p-4 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
+          "doax-card p-3 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
           activeSection === 'checking-guide'
             ? 'border-accent-purple bg-accent-purple/5'
             : 'border-border hover:border-accent-purple/50'
         )}
         onClick={() => onSectionChange('checking-guide')}
       >
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <div className={cn(
-            "p-2 rounded-lg",
+            "p-1.5 rounded-lg",
             activeSection === 'checking-guide'
               ? 'bg-accent-purple text-white'
               : 'bg-accent-purple/10 text-accent-purple'
           )}>
-            <AlertCircle className="w-5 h-5" />
+            <AlertCircle className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Checking Guide</h3>
-            <p className="text-xs text-muted-foreground">Verification docs</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-foreground truncate">Checking</h3>
+            <p className="text-xs text-muted-foreground hidden sm:block">Verification docs</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Checking docs</span>
-          <StatusBadge status="warning" className="text-xs">
+          <span className="text-xs text-muted-foreground hidden sm:block">Docs</span>
+          <StatusBadge status="warning" className="text-xs ml-auto">
             {getCheckingGuideCount()}
           </StatusBadge>
         </div>

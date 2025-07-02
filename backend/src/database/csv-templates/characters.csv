@@ -1,0 +1,4 @@
+id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,birthday,height,measurements,blood_type,voice_actor_jp,profile_image_data,profile_image_mime_type,is_active,game_version
+1,kasumi,かすみ,Kasumi,霞,霞,카스미,1996-02-23,157,B90/W58/H85,B,今井麻美,,image/jpeg,1,1.0.0
+2,ayane,あやね,Ayane,绫音,綾音,아야네,1998-07-26,157,B89/W56/H84,AB,早見沙織,,image/jpeg,1,1.0.0
+3,hitomi,ひとみ,Hitomi,瞳,瞳,히토미,1997-05-25,160,B90/W59/H86,A,田中理恵,,image/jpeg,1,1.0.0

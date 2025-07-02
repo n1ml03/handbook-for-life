@@ -14,4 +14,7 @@ export { usePagination, usePaginationWithFilters } from './usePagination'
 // Complex search hooks remain in services
 export { useMultiLanguageSearch, useMultiLanguageSearchWithPagination } from '@/services/multiLanguageSearch'
 
-// Custom hooks can be added here as the application grows 
+// Custom hooks can be added here as the application grows
+
+// React Query hooks
+export * from './useApiQueries'

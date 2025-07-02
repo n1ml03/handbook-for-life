@@ -24,11 +24,11 @@ interface UploadedFile {
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
-  files,
+  files = [], // Provide default empty array
   onFilesChange,
   maxFiles = 10,
   accept = 'image/*',
-  maxSize = 5 * 1024 * 1024, // 5MB
+  maxSize = 10 * 1024 * 1024, // 10MB
   label,
   description,
   className,
@@ -39,6 +39,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Ensure files is always a valid array of strings
+  const validFiles = React.useMemo(() => {
+    if (!Array.isArray(files)) {
+      return [];
+    }
+    return files.filter((file): file is string => 
+      typeof file === 'string' && file.trim().length > 0
+    );
+  }, [files]);
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -48,6 +58,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const validateFile = (file: File): string | null => {
+    if (!file) {
+      return 'Invalid file object';
+    }
+
     if (file.size > maxSize) {
       return `File "${file.name}" is too large. Maximum size is ${formatFileSize(maxSize)}.`;
     }
@@ -71,39 +85,48 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const uploadFiles = async (filesToUpload: File[]): Promise<UploadedFile[]> => {
+    if (!Array.isArray(filesToUpload) || filesToUpload.length === 0) {
+      throw new Error('No valid files to upload');
+    }
+
     const formData = new FormData();
     
-    if (filesToUpload.length === 1) {
-      formData.append('screenshot', filesToUpload[0]);
-      const response = await fetch('/api/upload/screenshot', {
-        method: 'POST',
-        body: formData,
-      });
+    try {
+      if (filesToUpload.length === 1) {
+        formData.append('screenshot', filesToUpload[0]);
+        const response = await fetch('/api/upload/screenshot', {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+          throw new Error(error.message || 'Upload failed');
+        }
+
+        const result = await response.json();
+        return Array.isArray(result.data) ? result.data : [result.data];
+      } else {
+        filesToUpload.forEach(file => {
+          formData.append('screenshots', file);
+        });
+
+        const response = await fetch('/api/upload/screenshots', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+          throw new Error(error.message || 'Upload failed');
+        }
+
+        const result = await response.json();
+        return Array.isArray(result.data) ? result.data : [];
       }
-
-      const result = await response.json();
-      return [result.data];
-    } else {
-      filesToUpload.forEach(file => {
-        formData.append('screenshots', file);
-      });
-
-      const response = await fetch('/api/upload/screenshots', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
-      }
-
-      const result = await response.json();
-      return result.data;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error instanceof Error ? error : new Error('Upload failed');
     }
   };
 
@@ -112,15 +135,23 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     setUploadError(null);
 
+    // Filter out invalid files
+    const validFileList = fileList.filter(file => file instanceof File);
+    
+    if (validFileList.length === 0) {
+      setUploadError('No valid files selected');
+      return;
+    }
+
     // Validate file count
-    if (files.length + fileList.length > maxFiles) {
+    if (validFiles.length + validFileList.length > maxFiles) {
       setUploadError(`Cannot upload more than ${maxFiles} files. Remove some files first.`);
       return;
     }
 
     // Validate each file
     const validationErrors: string[] = [];
-    fileList.forEach(file => {
+    validFileList.forEach(file => {
       const error = validateFile(file);
       if (error) validationErrors.push(error);
     });
@@ -133,16 +164,23 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setIsUploading(true);
 
     try {
-      const uploadedFiles = await uploadFiles(fileList);
-      const newFileUrls = uploadedFiles.map(file => file.url);
-      onFilesChange([...files, ...newFileUrls]);
+      const uploadedFiles = await uploadFiles(validFileList);
+      const newFileUrls = uploadedFiles
+        .map(file => file?.url)
+        .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+      
+      if (newFileUrls.length > 0) {
+        onFilesChange([...validFiles, ...newFileUrls]);
+      } else {
+        setUploadError('No valid file URLs returned from upload');
+      }
     } catch (error) {
       console.error('Upload error:', error);
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }
-  }, [files, maxFiles, maxSize, accept, disabled, onFilesChange]);
+  }, [validFiles, maxFiles, maxSize, accept, disabled, onFilesChange]);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -186,29 +224,56 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   }, [handleFiles]);
 
   const removeFile = async (fileUrl: string) => {
-    if (disabled) return;
+    if (disabled || !fileUrl || typeof fileUrl !== 'string') return;
 
     try {
-      // Extract filename from URL
-      const filename = fileUrl.split('/').pop();
-      if (filename) {
-        await fetch(`/api/upload/files/${encodeURIComponent(filename)}?type=screenshots`, {
-          method: 'DELETE',
-        });
+      // Check if it's a data URL (base64 encoded image)
+      if (fileUrl.startsWith('data:')) {
+        // For data URLs, we don't need to call the backend API
+        // Just remove from local state since it's in-memory data
+        console.log('Removing data URL file from state');
+      } else if (fileUrl.includes('/')) {
+        // For regular file URLs, attempt to delete from server
+        const filename = fileUrl.split('/').pop();
+        if (filename && filename.trim().length > 0) {
+          await fetch(`/api/upload/files/${encodeURIComponent(filename)}?type=screenshots`, {
+            method: 'DELETE',
+          });
+        }
       }
     } catch (error) {
       console.error('Error deleting file:', error);
+      // Continue with removal from state even if API deletion fails
     }
 
-    const newFiles = files.filter(file => file !== fileUrl);
+    const newFiles = validFiles.filter(file => file !== fileUrl);
     onFilesChange(newFiles);
   };
 
   const getFileDisplayName = (fileUrl: string): string => {
-    const filename = fileUrl.split('/').pop() || fileUrl;
-    // Extract original name if it follows our naming pattern
-    const match = filename.match(/^(.+)-\d+-\d+(\.[^.]+)$/);
-    return match ? `${match[1]}${match[2]}` : filename;
+    // Add comprehensive validation
+    if (!fileUrl || typeof fileUrl !== 'string') {
+      return 'Unknown file';
+    }
+
+    try {
+      const trimmedUrl = fileUrl.trim();
+      if (trimmedUrl.length === 0) {
+        return 'Unknown file';
+      }
+
+      // Extract filename from URL
+      const filename = trimmedUrl.includes('/') 
+        ? trimmedUrl.split('/').pop() || trimmedUrl
+        : trimmedUrl;
+
+      // Extract original name if it follows our naming pattern
+      const match = filename.match(/^(.+)-\d+-\d+(\.[^.]+)$/);
+      return match ? `${match[1]}${match[2]}` : filename;
+    } catch (error) {
+      console.error('Error parsing file display name:', error);
+      return 'Unknown file';
+    }
   };
 
   return (
@@ -307,43 +372,50 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       )}
 
       {/* Uploaded Files List */}
-      {files.length > 0 && (
+      {validFiles.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-foreground">
-            Uploaded Files ({files.length}/{maxFiles})
+            Uploaded Files ({validFiles.length}/{maxFiles})
           </p>
           <div className="space-y-2">
-            {files.map((fileUrl, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 bg-background/50 border border-border rounded-lg"
-              >
-                <ImageIcon className="w-4 h-4 text-accent-pink shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {getFileDisplayName(fileUrl)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {fileUrl}
-                  </p>
+            {validFiles.map((fileUrl, index) => {
+              // Additional safety check for each file URL
+              if (!fileUrl || typeof fileUrl !== 'string') {
+                return null;
+              }
+
+              return (
+                <div
+                  key={`${fileUrl}-${index}`} // More unique key
+                  className="flex items-center gap-3 p-3 bg-background/50 border border-border rounded-lg"
+                >
+                  <ImageIcon className="w-4 h-4 text-accent-pink shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {getFileDisplayName(fileUrl)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {fileUrl}
+                    </p>
+                  </div>
+                  {!disabled && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(fileUrl);
+                      }}
+                      className="p-1 h-auto text-muted-foreground hover:text-red-500"
+                      aria-label="Remove file"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
-                {!disabled && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(fileUrl);
-                    }}
-                    className="p-1 h-auto text-muted-foreground hover:text-red-500"
-                    aria-label="Remove file"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

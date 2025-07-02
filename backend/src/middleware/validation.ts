@@ -6,11 +6,21 @@ export const validate = (schema: ZodSchema<any>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      logger.warn('Validation error:', result.error.errors[0]?.message);
-      res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        details: result.error.errors[0]?.message
+      logger.warn('Validation error:', {
+        errors: result.error.errors,
+        body: req.body,
+        url: req.url,
+        method: req.method
+      });
+      res.error('Validation error', 400, {
+        field: result.error.errors[0]?.path?.join('.'),
+        message: result.error.errors[0]?.message,
+        code: result.error.errors[0]?.code,
+        allErrors: result.error.errors.map(err => ({
+          field: err.path?.join('.'),
+          message: err.message,
+          code: err.code
+        }))
       });
       return;
     }
@@ -24,10 +34,10 @@ export const validateParams = (schema: ZodSchema<any>) => {
     const result = schema.safeParse(req.params);
     if (!result.success) {
       logger.warn('Parameter validation error:', result.error.errors[0]?.message);
-      res.status(400).json({
-        success: false,
-        error: 'Parameter validation error',
-        details: result.error.errors[0]?.message
+      res.error('Parameter validation error', 400, {
+        field: result.error.errors[0]?.path?.join('.'),
+        message: result.error.errors[0]?.message,
+        code: result.error.errors[0]?.code
       });
       return;
     }
@@ -41,10 +51,10 @@ export const validateQuery = (schema: ZodSchema<any>) => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
       logger.warn('Query validation error:', result.error.errors[0]?.message);
-      res.status(400).json({
-        success: false,
-        error: 'Query validation error',
-        details: result.error.errors[0]?.message
+      res.error('Query validation error', 400, {
+        field: result.error.errors[0]?.path?.join('.'),
+        message: result.error.errors[0]?.message,
+        code: result.error.errors[0]?.code
       });
       return;
     }

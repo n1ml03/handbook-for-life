@@ -1,0 +1,4 @@
+id,character_id,unique_key,name_jp,name_en,name_cn,name_tw,name_kr,description_en,rarity,suit_type,total_stats_awakened,has_malfunction,is_limited,release_date_gl,game_version,image_before_data,image_before_mime_type,image_after_data,image_after_mime_type
+1,1,kasumi_venus_white,ヴィーナスホワイト,Venus White,维纳斯白,維納斯白,비너스 화이트,A pure white swimsuit that embodies elegance and grace,SSR,POW,15420,1,1,2017-03-24,1.0.0,,image/jpeg,,image/jpeg
+2,2,ayane_purple_storm,パープルストーム,Purple Storm,紫色风暴,紫色風暴,퍼플 스톰,A striking purple swimsuit with storm-like patterns,SSR,TEC,15380,1,1,2017-03-24,1.0.0,,image/jpeg,,image/jpeg
+3,1,kasumi_trendy_chic,トレンディシック,Trendy Chic,时尚别致,時尚別緻,트렌디 시크,A fashionable and modern swimsuit design,SR,STM,12850,0,0,2017-04-15,1.1.0,,image/jpeg,,

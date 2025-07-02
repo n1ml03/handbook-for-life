@@ -1,0 +1,4 @@
+id,unique_key,title_jp,title_en,title_cn,title_tw,title_kr,unlock_condition_en,episode_type,related_entity_type,related_entity_id,game_version
+1,kasumi_intro_story,かすみとの出会い,Meeting Kasumi,与霞的相遇,與霞的相遇,카스미와의 만남,Complete tutorial,MAIN,,1,1.0.0
+2,venus_white_story,ヴィーナスホワイトの物語,Venus White Story,维纳斯白的故事,維納斯白的故事,비너스 화이트 스토리,Obtain Venus White swimsuit,SWIMSUIT,swimsuits,1,1.0.0
+3,summer_festival_2017,夏祭り2017,Summer Festival 2017,2017夏日祭,2017夏日祭,2017 여름축제,Participate in Summer Festival event,EVENT,events,1,1.0.0

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useTheme } from '@/hooks/useTheme';
 import { DocumentsProvider } from '@/contexts/DocumentsContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
+import { QueryProvider } from '@/contexts/QueryProvider';
 
 // Layout Components - Optimized with performance improvements
 import Header from '@/components/layout/Header';
@@ -48,10 +49,11 @@ function App() {
   useTheme();
 
   return (
-    <LoadingProvider>
-      <DocumentsProvider>
-        <AccessibilityProvider>
-          <UpdateLogsProvider>
+    <QueryProvider>
+      <LoadingProvider>
+        <DocumentsProvider>
+          <AccessibilityProvider>
+            <UpdateLogsProvider>
             <Router>
             <div className="min-h-screen bg-background font-sans antialiased">
               {/* Skip Links for Accessibility */}
@@ -109,10 +111,11 @@ function App() {
               <GlobalLoadingOverlay />
             </div>
             </Router>
-          </UpdateLogsProvider>
-        </AccessibilityProvider>
-      </DocumentsProvider>
-    </LoadingProvider>
+            </UpdateLogsProvider>
+          </AccessibilityProvider>
+        </DocumentsProvider>
+      </LoadingProvider>
+    </QueryProvider>
   );
 }
 
