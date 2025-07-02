@@ -172,7 +172,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
     <MultiLanguageCard
       names={names}
       primaryLanguage="en"
-      languageVariant="compact"
+      languageVariant="expanded"
       header={header}
     >
       {skillsInfo}

@@ -430,7 +430,10 @@ export default function ShopPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-3">No shop listings found</h3>
                 <p className="text-muted-foreground mb-6">
-                  Try adjusting your search criteria or reset filters to see all listings.
+                  {debouncedSearch ?
+                    'Try adjusting your search terms or clear the search to see all shop listings.' :
+                    'Try adjusting your filters or clear them to see all shop listings.'
+                  }
                 </p>
                 <Button 
                   onClick={() => {

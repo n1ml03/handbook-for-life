@@ -78,7 +78,7 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
       {/* Description */}
       {memory.description && (
         <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
-          <p className="text-sm text-gray-300 leading-relaxed">
+          <p className="text-xs text-gray-300 leading-relaxed">
             {memory.description}
           </p>
         </div>

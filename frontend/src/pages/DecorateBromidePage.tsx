@@ -392,11 +392,11 @@ export default function DecorateBromidePage() {
         )}
 
         {/* Empty State */}
-        {filteredAndSortedBromides.length === 0 && (
+        {filteredAndSortedBromides.length === 0 && !loading && (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-20 mt-8"
           >
             <motion.div
               className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"
@@ -405,7 +405,13 @@ export default function DecorateBromidePage() {
             >
               <Search className="w-12 h-12 text-accent-cyan/60" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No items found</h3>
+            <h3 className="text-2xl font-bold text-gray-300 mb-3">No bromides or decorations found</h3>
+            <p className="text-muted-foreground mb-6">
+              {debouncedSearch ?
+                'Try adjusting your search terms or clear the search to see all bromides.' :
+                'Try adjusting your filters or clear them to see all bromides.'
+              }
+            </p>
             <motion.button
               onClick={clearFilters}
               whileHover={{ scale: 1.05 }}

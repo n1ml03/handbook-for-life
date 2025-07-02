@@ -303,6 +303,8 @@ export default function CharacterListPage() {
     navigate(`/characters/${characterId}`);
   }, [navigate]);
 
+  const debouncedSearch = filterValues.search !== '';
+
   return (
     <PageLoadingState isLoading={isLoading} message="Loading character list...">
       <div className="modern-page">
@@ -439,7 +441,10 @@ export default function CharacterListPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-3">No characters found</h3>
                 <p className="text-muted-foreground mb-6">
-                  Try adjusting your search criteria or reset filters to see all characters.
+                  {debouncedSearch ?
+                    'Try adjusting your search terms or clear the search to see all characters.' :
+                    'Try adjusting your filters or clear them to see all characters.'
+                  }
                 </p>
                 <Button 
                   onClick={() => {

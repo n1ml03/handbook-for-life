@@ -280,11 +280,6 @@ export default function SkillsPage() {
                   </span>
                 </div>
               )}
-              {!loading && debouncedSearch && (
-                <div className="text-sm text-muted-foreground">
-                  Search results for: <span className="font-medium text-foreground">"{debouncedSearch}"</span>
-                </div>
-              )}
             </div>
           </motion.div>
 

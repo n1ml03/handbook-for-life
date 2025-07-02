@@ -19,6 +19,7 @@ import { gachasApi } from '@/services/api';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption } from '@/components/features/UnifiedFilter';
 import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Define reward interface for gacha rewards
 interface GachaReward {
@@ -155,7 +156,7 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
       <div className="bg-gradient-to-r from-purple-400/10 to-pink-500/10 rounded-lg p-3 border border-purple-400/20">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="w-3 h-3 text-purple-400" />
-          <span className="text-xs font-medium text-purple-400">Pull Info</span>
+          <span className="text-xs font-medium text-purple-400">Gacha Info</span>
         </div>
         <div className="space-y-1 text-xs">
           <div className="text-gray-300">
@@ -200,7 +201,7 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
     <MultiLanguageCard
       names={names}
       primaryLanguage="en"
-      languageVariant="compact"
+      languageVariant="expanded"
       header={header}
     >
       {gachaDetails}
@@ -221,6 +222,8 @@ export default function GachaPage() {
     dateRange: '',
     version: ''
   });
+
+  const debouncedSearch = useDebounce(filterValues.search, 500);
 
   useEffect(() => {
     const fetchGachas = async () => {
@@ -423,26 +426,60 @@ export default function GachaPage() {
           headerIcon={<Diamond className="w-4 h-4" />}
         />
 
+        {/* Empty State */}
+        {filteredAndSortedGachas.length === 0 && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20 mt-8"
+          >
+            <motion.div
+              className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Diamond className="w-12 h-12 text-accent-cyan/60" />
+            </motion.div>
+            <h3 className="text-2xl font-bold text-gray-300 mb-3">No gacha events found</h3>
+            <p className="text-muted-foreground mb-6">
+              {debouncedSearch ?
+                'Try adjusting your search terms or clear the search to see all gacha events.' :
+                'Try adjusting your filters or clear them to see all gacha events.'
+              }
+            </p>
+            <motion.button
+              onClick={clearFilters}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-accent-pink to-accent-purple hover:from-accent-pink/90 hover:to-accent-purple/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
+            >
+              Clear All Filters
+            </motion.button>
+          </motion.div>
+        )}
+
         {/* Gacha Display */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8"
-        >
-          <div className="grid-responsive-cards mt-8 mb-8">
-            {paginatedGachas.map((gacha, index) => (
-              <motion.div
-                key={gacha.id}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-              >
-                <GachaCard gacha={gacha} />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        {filteredAndSortedGachas.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8"
+          >
+            <div className="grid-responsive-cards mt-8 mb-8">
+              {paginatedGachas.map((gacha, index) => (
+                <motion.div
+                  key={gacha.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                >
+                  <GachaCard gacha={gacha} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -490,38 +527,6 @@ export default function GachaPage() {
               className="p-3 rounded-xl bg-dark-card/70 border border-dark-border/50 text-gray-400 hover:text-white hover:bg-purple-400/20 disabled:opacity-50 disabled:hover:bg-dark-card/70 disabled:hover:text-gray-400 transition-all"
             >
               <ChevronRight className="w-5 h-5" />
-            </motion.button>
-          </motion.div>
-        )}
-
-        {/* Empty State */}
-        {filteredAndSortedGachas.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
-            <motion.div
-              className="w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-purple-400/20"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Diamond className="w-12 h-12 text-purple-400/60" />
-            </motion.div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">No gacha found</h3>
-            <p className="text-muted-foreground mb-6">
-              {filterValues.search ?
-                'Try adjusting your search terms or clear the search to see all gacha events.' :
-                'Try adjusting your filters or clear them to see all gacha events.'
-              }
-            </p>
-            <motion.button
-              onClick={clearFilters}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-400/90 hover:to-pink-500/90 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg"
-            >
-              Clear All Filters
             </motion.button>
           </motion.div>
         )}
