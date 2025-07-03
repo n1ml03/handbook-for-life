@@ -8,7 +8,6 @@
     "dev": "bun --watch src/server.ts",
     "setup": "bun run db:setup",
     "reset": "bun run db:reset",
-
     "health-check": "bun run health",
     "build": "bun build src/server.ts --outdir dist --target bun --minify --sourcemap",
     "db:setup": "bun run src/database/database-setup.ts",
@@ -25,9 +24,10 @@
     "@types/swagger-ui-express": "^4.1.8",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
-
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
     "multer": "^2.0.1",
     "mysql2": "^3.14.1",
     "sharp": "^0.34.2",
@@ -39,6 +39,7 @@
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/helmet": "^4.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^20.19.1",
     "@typescript-eslint/eslint-plugin": "^8.35.0",

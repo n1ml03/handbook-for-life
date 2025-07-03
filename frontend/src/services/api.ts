@@ -79,11 +79,110 @@ export const documentsApi = {
   },
 
   // Create a new document
-  async createDocument(document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<Document> {
+  async createDocument(document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>, jsonContent?: any): Promise<Document> {
+    // Convert frontend document format to backend format
+    const backendDocument: any = {
+      unique_key: document.unique_key,
+      title_en: document.title_en,
+      summary_en: document.summary_en,
+    };
+
+    // Handle content field conversion with validation
+    if (jsonContent) {
+      // If JSON content is provided, use it directly (preferred)
+      backendDocument.content_json_en = jsonContent;
+    } else if (document.content_json_en !== undefined) {
+      // If content_json_en is provided directly, use it
+      backendDocument.content_json_en = document.content_json_en;
+    } else if (document.content !== undefined) {
+      // If only HTML content is provided, validate and convert it
+      backendDocument.content_json_en = this.validateAndFormatContent(document.content);
+    }
+
+    // Handle screenshots data
+    if (document.screenshots_data) {
+      backendDocument.screenshots_data = document.screenshots_data;
+    }
+
     return apiRequest('/documents', {
       method: 'POST',
-      body: JSON.stringify(document),
+      body: JSON.stringify(backendDocument),
     });
+  },
+
+  // Validate and format content for TipTap
+  validateAndFormatContent(content: string): any {
+    if (!content || typeof content !== 'string') {
+      throw new Error('Content must be a non-empty string');
+    }
+
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      throw new Error('Content cannot be empty or contain only whitespace');
+    }
+
+    try {
+      // Try to parse as JSON first (TipTap format)
+      const parsed = JSON.parse(trimmedContent);
+
+      // Validate TipTap document structure
+      if (!parsed.type || parsed.type !== 'doc') {
+        throw new Error('Invalid TipTap document structure: missing or invalid type');
+      }
+
+      if (!Array.isArray(parsed.content)) {
+        throw new Error('Invalid TipTap document structure: content must be an array');
+      }
+
+      return parsed;
+    } catch (parseError) {
+      // If it's not JSON, check if it's HTML (from TipTap editor)
+      if (trimmedContent.includes('<') && trimmedContent.includes('>')) {
+        // It's HTML content from TipTap editor
+        // For now, create a basic TipTap document structure with HTML content
+        // In a real implementation, you might want to parse HTML to TipTap JSON
+        if (trimmedContent.length > 50000) {
+          throw new Error('Content is too long (maximum 50,000 characters)');
+        }
+
+        // Create a basic TipTap document with the HTML content as text
+        // This is a simplified approach - ideally we'd parse HTML to proper TipTap nodes
+        return {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: trimmedContent.replace(/<[^>]*>/g, '') // Strip HTML tags for now
+                }
+              ]
+            }
+          ]
+        };
+      } else {
+        // It's plain text, create a basic TipTap document
+        if (trimmedContent.length > 50000) {
+          throw new Error('Content is too long (maximum 50,000 characters)');
+        }
+
+        return {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: trimmedContent
+                }
+              ]
+            }
+          ]
+        };
+      }
+    }
   },
 
   // Update an existing document
@@ -98,32 +197,10 @@ export const documentsApi = {
     if (updates.summary_en !== undefined) backendUpdates.summary_en = updates.summary_en;
     if (updates.content_json_en !== undefined) backendUpdates.content_json_en = updates.content_json_en;
     
-    // Handle content field conversion
+    // Handle content field conversion with validation
     if (updates.content !== undefined && updates.content_json_en === undefined) {
-      // If content is provided but content_json_en is not, convert it
-      try {
-        if (typeof updates.content === 'string' && updates.content.trim()) {
-          // Try to parse as JSON first (TipTap format)
-          const parsed = JSON.parse(updates.content);
-          backendUpdates.content_json_en = parsed;
-        }
-      } catch {
-        // If it's not JSON, treat it as plain text and create a basic TipTap document
-        backendUpdates.content_json_en = {
-          type: 'doc',
-          content: [
-            {
-              type: 'paragraph',
-              content: [
-                {
-                  type: 'text',
-                  text: updates.content
-                }
-              ]
-            }
-          ]
-        };
-      }
+      // If content is provided but content_json_en is not, validate and convert it
+      backendUpdates.content_json_en = this.validateAndFormatContent(updates.content);
     }
     
     // Handle screenshots conversion from frontend format to backend format
@@ -1155,8 +1232,8 @@ export const uploadApi = {
 
 // Dashboard API
 export const dashboardApi = {
-  getOverview: () => apiRequest<{ success: true; data: DashboardOverviewResponse; message?: string; timestamp: string }>('/api/dashboard/overview'),
-  getCharacterStats: () => apiRequest<{ success: true; data: DashboardCharacterStatsResponse; message?: string; timestamp: string }>('/api/dashboard/character-stats'),
+  getOverview: () => apiRequest<{ success: true; data: DashboardOverviewResponse; message?: string; timestamp: string }>('/dashboard/overview'),
+  getCharacterStats: () => apiRequest<{ success: true; data: DashboardCharacterStatsResponse; message?: string; timestamp: string }>('/dashboard/character-stats'),
 };
 
 export default {

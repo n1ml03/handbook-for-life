@@ -178,7 +178,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
         [
           document.unique_key,
           document.title_en,
-          document.summary_en,
+          document.summary_en ?? null,
           document.content_json_en ? JSON.stringify(document.content_json_en) : null,
           document.screenshots_data ? JSON.stringify(document.screenshots_data) : null,
         ]

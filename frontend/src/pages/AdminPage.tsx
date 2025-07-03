@@ -23,8 +23,6 @@ interface AdminSection {
   id: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  lastUpdated: string;
-  status: 'active' | 'inactive' | 'draft';
   color: string;
   stats?: {
     count: number;
@@ -73,27 +71,15 @@ const AdminPage = () => {
   const adminSections: AdminSection[] = [
     {
       id: 'documents',
-      title: 'All Documents',
+      title: 'Document Management',
       icon: FileText,
-      lastUpdated: '2 hours ago',
-      status: 'active',
       color: 'text-accent-cyan',
     },
     {
-      id: 'checklist-creation',
-      title: 'Checklist Creation',
+      id: 'update-logs',
+      title: 'Update Logs Management',
       icon: BookOpen,
-      lastUpdated: '1 day ago',
-      status: 'active',
       color: 'text-accent-purple',
-    },
-    {
-      id: 'checking-guide',
-      title: 'Checking Guide',
-      icon: Settings,
-      lastUpdated: '1 day ago',
-      status: 'active',
-      color: 'text-accent-pink',
     }
   ];
 
@@ -151,6 +137,13 @@ const AdminPage = () => {
   }, []);
 
   const handleSaveDocument = useCallback(async (document: Document) => {
+    // Show loading notification
+    addNotification({
+      type: 'info',
+      title: 'Saving Document',
+      message: 'Please wait while we save your document...'
+    });
+
     try {
       // Check if this is an existing document (has a valid ID) or a new one
       const isExistingDocument = editingDocument?.id && editingDocument.id > 0;
@@ -175,6 +168,11 @@ const AdminPage = () => {
         }
       });
 
+      // Validate required fields
+      if (!documentToSave.title_en || !documentToSave.unique_key) {
+        throw new Error('Title and unique key are required fields');
+      }
+
       if (isExistingDocument) {
         // Update existing document
         await updateDocument(editingDocument.id.toString(), documentToSave);
@@ -185,8 +183,9 @@ const AdminPage = () => {
           duration: 3000
         });
       } else {
-        // Create new document - pass the full document object as addDocument handles API conversion
-        await addDocument(documentToSave);
+        // Create new document - pass the full document object and JSON content if available
+        const jsonContent = (documentToSave as any).jsonContent;
+        await addDocument(documentToSave, jsonContent);
         addNotification({
           type: 'success',
           title: 'Document Created',
@@ -196,13 +195,40 @@ const AdminPage = () => {
       }
       setEditingDocument(null);
       setIsEditMode(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving document:', error);
+
+      // Determine error type and show appropriate message
+      let errorTitle = 'Save Failed';
+      let errorMessage = 'Failed to save document. Please try again.';
+
+      if (error?.message?.includes('required fields')) {
+        errorTitle = 'Validation Error';
+        errorMessage = error.message;
+      } else if (error?.message?.includes('Network Error') || error?.message?.includes('fetch')) {
+        errorTitle = 'Network Error';
+        errorMessage = 'Unable to connect to server. Please check your connection and try again.';
+      } else if (error?.status === 400) {
+        errorTitle = 'Validation Error';
+        errorMessage = 'Invalid document data. Please check all fields and try again.';
+      } else if (error?.status === 401) {
+        errorTitle = 'Authorization Error';
+        errorMessage = 'You are not authorized to perform this action.';
+      } else if (error?.status === 409) {
+        errorTitle = 'Conflict Error';
+        errorMessage = 'A document with this unique key already exists.';
+      } else if (error?.status >= 500) {
+        errorTitle = 'Server Error';
+        errorMessage = 'Server error occurred. Please try again later.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       addNotification({
         type: 'error',
-        title: 'Save Failed',
-        message: error instanceof Error ? error.message : 'Failed to save document. Please try again.',
-        duration: 5000
+        title: errorTitle,
+        message: errorMessage,
+        duration: 7000
       });
     }
   }, [editingDocument, addDocument, updateDocument, addNotification]);
@@ -252,7 +278,19 @@ const AdminPage = () => {
   }, []);
 
   const handleSaveUpdateLog = useCallback(async (log: UpdateLog) => {
+    // Show loading notification
+    addNotification({
+      type: 'info',
+      title: 'Saving Update Log',
+      message: 'Please wait while we save your update log...'
+    });
+
     try {
+      // Validate required fields
+      if (!log.version || !log.title || !log.content) {
+        throw new Error('Version, title, and content are required fields');
+      }
+
       if (editingLog?.id) {
         await updateUpdateLog(editingLog.id, log);
         addNotification({
@@ -272,13 +310,40 @@ const AdminPage = () => {
       }
       setEditingLog(null);
       setIsEditMode(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving update log:', error);
+
+      // Determine error type and show appropriate message
+      let errorTitle = 'Save Failed';
+      let errorMessage = 'Failed to save update log. Please try again.';
+
+      if (error?.message?.includes('required fields')) {
+        errorTitle = 'Validation Error';
+        errorMessage = error.message;
+      } else if (error?.message?.includes('Network Error') || error?.message?.includes('fetch')) {
+        errorTitle = 'Network Error';
+        errorMessage = 'Unable to connect to server. Please check your connection and try again.';
+      } else if (error?.status === 400) {
+        errorTitle = 'Validation Error';
+        errorMessage = 'Invalid update log data. Please check all fields and try again.';
+      } else if (error?.status === 401) {
+        errorTitle = 'Authorization Error';
+        errorMessage = 'You are not authorized to perform this action.';
+      } else if (error?.status === 409) {
+        errorTitle = 'Conflict Error';
+        errorMessage = 'An update log with this version already exists.';
+      } else if (error?.status >= 500) {
+        errorTitle = 'Server Error';
+        errorMessage = 'Server error occurred. Please try again later.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       addNotification({
         type: 'error',
-        title: 'Save Failed',
-        message: 'Failed to save update log. Please try again.',
-        duration: 5000
+        title: errorTitle,
+        message: errorMessage,
+        duration: 7000
       });
     }
   }, [editingLog, addUpdateLog, updateUpdateLog, addNotification]);
@@ -474,7 +539,7 @@ const AdminPage = () => {
       {!isEditMode && (
         <Card className="p-3 mb-4 rounded-2xl">
           <CardContent className="p-0">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {adminSections.map(section => {
                 const IconComponent = section.icon;
                 const isActive = activeTab === section.id;

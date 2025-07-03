@@ -35,6 +35,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   commonTags
 }) => {
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
+  const [jsonContent, setJsonContent] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +55,10 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
   const handleSaveDraft = () => {
     const draftDocument = { ...document };
+    // Add JSON content if available
+    if (jsonContent) {
+      (draftDocument as any).jsonContent = jsonContent;
+    }
     onDocumentChange(draftDocument);
     onSave(draftDocument);
   };
@@ -104,6 +109,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <TiptapEditor
               content={document.content}
               onChange={(content) => onDocumentChange({ ...document, content })}
+              onJsonChange={setJsonContent}
               editable={!isPreviewMode}
               placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
               showToolbar={!isPreviewMode}
@@ -291,6 +297,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               <TiptapEditor
                 content={document.content}
                 onChange={(content) => onDocumentChange({ ...document, content })}
+                onJsonChange={setJsonContent}
                 editable={!isPreviewMode}
                 placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
                 showToolbar={!isPreviewMode}

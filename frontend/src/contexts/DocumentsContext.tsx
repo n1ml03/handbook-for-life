@@ -7,7 +7,7 @@ interface DocumentsContextType {
   documents: Document[];
   isLoading: boolean;
   error: string | null;
-  addDocument: (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Document>;
+  addDocument: (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>, jsonContent?: any) => Promise<Document>;
   updateDocument: (id: string, updates: Partial<Document>) => Promise<Document>;
   deleteDocument: (id: string) => Promise<void>;
   refreshDocuments: () => Promise<void>;
@@ -56,9 +56,9 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addDocument = useCallback(async (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<Document> => {
+  const addDocument = useCallback(async (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>, jsonContent?: any): Promise<Document> => {
     try {
-      const newDocument = await documentsApi.createDocument(document);
+      const newDocument = await documentsApi.createDocument(document, jsonContent);
       // Ensure consistent data structure
       const documentWithDefaults = {
         ...newDocument,

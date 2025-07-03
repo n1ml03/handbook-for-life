@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search, FileText, Tags, Calendar, User, ArrowLeft,
-  Edit3, X, Eye, CheckSquare, ListChecks, BookOpen
+  Edit3, X, Eye, CheckSquare, ListChecks, BookOpen,
+  CheckCircle2, AlertCircle, AlertTriangle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,15 @@ import { useDebounce } from '@/hooks';
 type ViewMode = DocumentViewMode;
 type ActiveSection = DocumentSectionType;
 
+interface NotificationState {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info' | 'loading';
+  title: string;
+  message: string;
+  timestamp: number;
+  duration?: number;
+}
+
 export default function DocumentPage() {
   const { documents, updateDocument } = useDocuments();
   useAccessibility();
@@ -45,9 +55,81 @@ export default function DocumentPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationState[]>([]);
 
   // Debounce search to improve performance
   const debouncedSearch = useDebounce(filterValues.search, 500);
+
+  // Notification management
+  const addNotification = useCallback((notification: Omit<NotificationState, 'id' | 'timestamp'>) => {
+    const newNotification: NotificationState = {
+      ...notification,
+      id: Date.now().toString(),
+      timestamp: Date.now()
+    };
+    setNotifications(prev => [...prev, newNotification]);
+
+    // Auto-remove after duration (except for loading notifications)
+    if (notification.duration !== undefined && notification.duration > 0 && notification.type !== 'loading') {
+      setTimeout(() => {
+        removeNotification(newNotification.id);
+      }, notification.duration);
+    }
+
+    // Return the ID so it can be used to remove the notification later
+    return newNotification.id;
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+
+
+  // Simple notification toast component
+  const NotificationToast = ({ notification }: { notification: NotificationState }) => (
+    <div className={cn(
+      "flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300",
+      "bg-background/90 backdrop-blur-md border-border/40",
+      "hover:shadow-2xl hover:scale-[1.02] transform",
+      "animate-in slide-in-from-right-5 fade-in duration-300"
+    )}>
+      <div className={cn(
+        "shrink-0 mt-0.5 p-1.5 rounded-lg",
+        notification.type === 'success' ? "bg-emerald-100/50 text-emerald-600" : "",
+        notification.type === 'error' ? "bg-red-100/50 text-red-600" : "",
+        notification.type === 'warning' ? "bg-amber-100/50 text-amber-600" : "",
+        notification.type === 'info' ? "bg-blue-100/50 text-blue-600" : "",
+        notification.type === 'loading' ? "bg-blue-100/50 text-blue-600" : ""
+      )}>
+        {notification.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+        {notification.type === 'error' && <AlertCircle className="w-4 h-4" />}
+        {notification.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
+        {notification.type === 'info' && <Info className="w-4 h-4" />}
+        {notification.type === 'loading' && (
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-foreground leading-tight">{notification.title}</h4>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{notification.message}</p>
+      </div>
+      {notification.type !== 'loading' && (
+        <button
+          onClick={() => removeNotification(notification.id)}
+          className={cn(
+            "shrink-0 p-1.5 rounded-lg transition-all duration-200",
+            "bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground",
+            "focus:ring-2 focus:ring-border/50 focus:outline-none",
+            "hover:scale-110 active:scale-95"
+          )}
+          aria-label="Dismiss notification"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
 
   // Memoized filter values that include debounced search
   const filterValuesWithDebouncedSearch = useMemo(() => ({
@@ -168,16 +250,100 @@ export default function DocumentPage() {
   const handleSaveDocument = async () => {
     if (!selectedDocument) return;
 
+    // Show loading notification
+    const loadingNotificationId = addNotification({
+      type: 'loading',
+      title: 'Saving Document',
+      message: 'Please wait while we save your changes...'
+    });
+
     setIsSaving(true);
     try {
-      // Update the document using the context
-      updateDocument(selectedDocument.id.toString(), { content: editedContent });
-      
+      // Validate content before saving
+      if (!editedContent || editedContent.trim() === '') {
+        throw new Error('Document content cannot be empty');
+      }
+
+      // Additional content validation
+      const trimmedContent = editedContent.trim();
+      if (trimmedContent.length > 50000) {
+        throw new Error('Document content is too long (maximum 50,000 characters)');
+      }
+
+      // Try to validate TipTap JSON format if it looks like JSON
+      if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(trimmedContent);
+          if (!parsed.type || parsed.type !== 'doc') {
+            throw new Error('Invalid document format: TipTap document must have type "doc"');
+          }
+          if (!Array.isArray(parsed.content)) {
+            throw new Error('Invalid document format: TipTap document content must be an array');
+          }
+        } catch (parseError) {
+          if (parseError instanceof SyntaxError) {
+            throw new Error('Invalid JSON format in document content');
+          }
+          throw parseError;
+        }
+      }
+
+      // Update the document using the context - AWAIT the promise
+      await updateDocument(selectedDocument.id.toString(), { content: editedContent });
+
       // Update selected document
       setSelectedDocument(prev => prev ? { ...prev, content: editedContent } : null);
       setIsEditMode(false);
-    } catch (error) {
+
+      // Remove loading notification and show success
+      removeNotification(loadingNotificationId);
+      addNotification({
+        type: 'success',
+        title: 'Document Saved',
+        message: `"${selectedDocument.title || 'Document'}" has been successfully saved.`,
+        duration: 4000
+      });
+    } catch (error: any) {
       console.error('Error saving document:', error);
+
+      // Remove loading notification
+      removeNotification(loadingNotificationId);
+
+      // Determine error type and show appropriate message
+      let errorTitle = 'Save Failed';
+      let errorMessage = 'Failed to save document. Please try again.';
+
+      if (error?.message?.includes('empty')) {
+        errorTitle = 'Validation Error';
+        errorMessage = error.message;
+      } else if (error?.message?.includes('Network Error') || error?.message?.includes('fetch')) {
+        errorTitle = 'Network Error';
+        errorMessage = 'Unable to connect to server. Please check your connection and try again.';
+      } else if (error?.message?.includes('validation') || error?.status === 400) {
+        errorTitle = 'Validation Error';
+        errorMessage = 'Invalid document data. Please check your content and try again.';
+      } else if (error?.status === 401) {
+        errorTitle = 'Authorization Error';
+        errorMessage = 'You are not authorized to save this document.';
+      } else if (error?.status === 404) {
+        errorTitle = 'Not Found';
+        errorMessage = 'Document not found. It may have been deleted. Please refresh the page.';
+      } else if (error?.status === 409) {
+        errorTitle = 'Conflict Error';
+        errorMessage = 'Document conflict detected. Please refresh and try again.';
+      } else if (error?.status >= 500) {
+        errorTitle = 'Server Error';
+        errorMessage = 'Server error occurred. Please try again later or contact support.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      addNotification({
+        type: 'error',
+        title: errorTitle,
+        message: errorMessage,
+        duration: 8000
+      });
     } finally {
       setIsSaving(false);
     }
@@ -627,6 +793,25 @@ export default function DocumentPage() {
           {renderSectionContent()}
         </motion.div>
       </AnimatePresence>
+
+      {/* Notifications - Always visible on scroll */}
+      <div className="fixed top-20 right-4 z-[9999] space-y-3 max-w-md pointer-events-none">
+        <div className="pointer-events-auto">
+          <AnimatePresence>
+            {notifications.map(notification => (
+              <motion.div
+                key={notification.id}
+                initial={{ opacity: 0, x: 100, scale: 0.8 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 100, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <NotificationToast notification={notification} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
     </Container>
   );
 } 

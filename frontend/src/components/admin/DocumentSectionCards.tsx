@@ -41,7 +41,7 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
   };
 
   return (
-    <div className="grid-responsive-cards">
+    <div className="grid-responsive-cards single-row">
       {/* All Documents Card */}
       <div 
         className={cn(

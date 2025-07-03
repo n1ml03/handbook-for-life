@@ -2057,6 +2057,44 @@
       max-width: none;
     }
   }
+
+  /* Custom single row layout for specific components */
+  .grid-responsive-cards.single-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 8px 0 4px 0;
+    margin: -8px 0 -4px 0;
+  }
+
+  .grid-responsive-cards.single-row > * {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  /* Override transform for single-row cards to prevent clipping */
+  .grid-responsive-cards.single-row .doax-card:hover,
+  .grid-responsive-cards.single-row .modern-card:hover {
+    transform: translateY(-1px) !important;
+  }
+
+  @media (min-width: 640px) {
+    .grid-responsive-cards.single-row {
+      gap: 16px;
+    }
+    
+    .grid-responsive-cards.single-row > * {
+      min-width: 250px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-responsive-cards.single-row {
+      gap: 20px;
+    }
+  }
 }
 
 /* Enhanced Scrollbar Styles for Search UI */

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { TextSelection } from 'prosemirror-state';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
@@ -15,7 +16,7 @@ import CharacterCount from '@tiptap/extension-character-count';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import TextAlign from '@tiptap/extension-text-align';
-import { motion, AnimatePresence } from 'framer-motion';
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import {
   Bold,
   Italic,
@@ -38,85 +39,112 @@ import {
   Palette,
   Eye,
   Edit3,
-  Smile,
-  Keyboard,
-  Upload,
-  Pin,
-  PinOff
+  MoreHorizontal,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/services/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+// Removed tooltip imports for hover-free interface
 
 export interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
+  onJsonChange?: (jsonContent: any) => void; // Optional callback for JSON content
   editable?: boolean;
   placeholder?: string;
   className?: string;
   showToolbar?: boolean;
   showCharacterCount?: boolean;
-  showWordCount?: boolean;
+  showWordCount?: boolean; // Legacy prop for backward compatibility
   maxCharacters?: number;
   minHeight?: string;
   mode?: 'full' | 'minimal' | 'inline';
-  stickyToolbar?: boolean;
+  stickyToolbar?: boolean; // Legacy prop for backward compatibility
 }
 
 const TiptapEditor = ({
   content,
   onChange,
+  onJsonChange,
   editable = true,
   placeholder = 'Start writing...',
   className: _className,
   showToolbar = true,
   showCharacterCount = true,
-  showWordCount = false,
   maxCharacters,
   minHeight = '200px',
-  mode = 'full',
-  stickyToolbar = false
+  mode = 'full'
 }: TiptapEditorProps) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [isToolbarSticky, setIsToolbarSticky] = useState(false);
-  const [toolbarPinned, setToolbarPinned] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
-  // Enhanced sticky toolbar functionality
+  // Close color picker when clicking outside
   useEffect(() => {
-    if (!stickyToolbar || !toolbarRef.current || !editorContainerRef.current) return;
-
-    const handleScroll = () => {
-      if (!toolbarRef.current || !editorContainerRef.current) return;
-
-      const editorRect = editorContainerRef.current.getBoundingClientRect();
-      const toolbarHeight = toolbarRef.current.offsetHeight;
-      
-      // Make toolbar sticky when editor is scrolled past viewport
-      const shouldBeSticky = editorRect.top < 0 && editorRect.bottom > toolbarHeight;
-      
-      if (shouldBeSticky !== isToolbarSticky) {
-        setIsToolbarSticky(shouldBeSticky);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [stickyToolbar, isToolbarSticky]);
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker]);
+
+  // Mode-specific configurations
+  const modeConfig = {
+    full: {
+      showBubbleMenu: true,
+      showFloatingMenu: true,
+      showAdvancedTools: true,
+      showPreviewToggle: true,
+      showAllFormatting: true,
+      showMediaTools: true,
+      minToolbarHeight: 'auto'
+    },
+    minimal: {
+      showBubbleMenu: true,
+      showFloatingMenu: false,
+      showAdvancedTools: false,
+      showPreviewToggle: false,
+      showAllFormatting: false,
+      showMediaTools: false,
+      minToolbarHeight: 'auto'
+    },
+    inline: {
+      showBubbleMenu: true,
+      showFloatingMenu: false,
+      showAdvancedTools: false,
+      showPreviewToggle: false,
+      showAllFormatting: false,
+      showMediaTools: false,
+      minToolbarHeight: 'none'
+    }
+  };
+
+  const currentConfig = modeConfig[mode];
 
   const editor = useEditor({
+    immediatelyRender: true,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable horizontal rule in StarterKit since we're using the standalone extension
+        horizontalRule: false,
+      }),
+      HorizontalRule.configure({
+        HTMLAttributes: {
+          class: 'my-4 border-t-2 border-border',
+        },
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-accent-cyan hover:text-accent-pink transition-colors cursor-pointer underline',
+          class: 'text-accent-cyan cursor-pointer underline',
         },
       }),
       Image.configure({
@@ -158,6 +186,10 @@ const TiptapEditor = ({
       }),
       Placeholder.configure({
         placeholder,
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: false,
+        includeChildren: true,
+        emptyEditorClass: 'is-editor-empty',
       }),
       Typography,
       TextAlign.configure({
@@ -167,28 +199,74 @@ const TiptapEditor = ({
     content,
     editable: editable && !isPreviewMode,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // Send HTML content for display
+      const htmlContent = editor.getHTML();
+      onChange(htmlContent);
+
+      // Send JSON content if callback is provided
+      if (onJsonChange) {
+        const jsonContent = editor.getJSON();
+        onJsonChange(jsonContent);
+      }
+    },
+    onCreate: ({ editor }) => {
+      // Ensure the editor is ready for immediate interaction
+      if (editable && !isPreviewMode) {
+        editor.setEditable(true);
+      }
+    },
+    onFocus: ({ editor }) => {
+      // Ensure the editor is in edit mode when focused
+      if (editable && !isPreviewMode) {
+        editor.setEditable(true);
+      }
     },
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-sm max-w-none focus:outline-hidden',
+          'prose prose-sm max-w-none focus:outline-none',
+          // Text and content rendering
           'prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground',
-          'prose-em:text-foreground prose-code:text-accent-purple prose-code:bg-muted/50',
-          'prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:font-mono',
-          'prose-blockquote:border-l-4 prose-blockquote:border-accent-pink',
-          'prose-blockquote:text-muted-foreground prose-blockquote:italic',
+          'prose-em:text-foreground prose-code:text-accent-purple prose-code:bg-accent-purple/10',
+          'prose-code:px-2 prose-code:py-1 prose-code:rounded-md prose-code:font-mono prose-code:text-sm',
+          'prose-blockquote:border-l-4 prose-blockquote:border-accent-pink prose-blockquote:bg-accent-pink/5',
+          'prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:pl-4 prose-blockquote:py-2',
           'prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground',
-          'prose-a:text-accent-cyan prose-a:no-underline hover:prose-a:text-accent-pink',
-          'prose-table:border-collapse prose-table:border prose-table:border-border',
-          'prose-th:border prose-th:border-border prose-th:bg-muted/50 prose-th:p-3',
-          'prose-td:border prose-td:border-border prose-td:p-3',
-          `min-h-[${minHeight}] p-6 border border-border rounded-lg bg-background/50`,
-          'focus-within:border-accent-cyan focus-within:ring-2 focus-within:ring-accent-cyan/20',
-          'transition-all duration-200',
-          mode === 'minimal' ? 'p-4 min-h-[120px]' : '',
-          mode === 'inline' ? 'p-2 min-h-[60px] border-0 bg-transparent' : '',
+          'prose-a:text-accent-cyan prose-a:no-underline',
+          // Table styling
+          'prose-table:border-collapse prose-table:border prose-table:border-border prose-table:rounded-lg prose-table:overflow-hidden',
+          'prose-th:border prose-th:border-border prose-th:bg-accent-cyan/10 prose-th:p-3 prose-th:font-semibold prose-th:text-foreground',
+          'prose-td:border prose-td:border-border prose-td:p-3 prose-td:text-foreground',
+          // Horizontal rule styling
+          'prose-hr:border-border prose-hr:my-6',
+          // List styling improvements
+          'prose-li:marker:text-foreground',
+          // Better text contrast and readability
+          'text-foreground leading-relaxed',
+          // Layout and spacing
+          `min-h-[${minHeight}] p-3 sm:p-4 lg:p-6`,
+          'focus-within:ring-2 focus-within:ring-accent-cyan/30 focus-within:ring-offset-1',
+          // Mode-specific adjustments
+          mode === 'minimal' ? 'p-2 sm:p-3 lg:p-4 min-h-[100px] sm:min-h-[120px]' : '',
+          mode === 'inline' ? 'p-2 sm:p-3 min-h-[50px] sm:min-h-[60px] border-0 bg-transparent focus-within:ring-0' : '',
+          // Ensure text is always visible
+          '[&_*]:text-inherit [&_p:empty]:min-h-[1.5em]',
+          // Placeholder styling
+          '[&.is-editor-empty_.ProseMirror]:before:text-muted-foreground [&.is-editor-empty_.ProseMirror]:before:float-left [&.is-editor-empty_.ProseMirror]:before:pointer-events-none [&.is-editor-empty_.ProseMirror]:before:h-0 [&.is-editor-empty_.ProseMirror]:before:content-[attr(data-placeholder)]',
         ),
+      },
+      handleClick: (view, pos) => {
+        // Ensure immediate focus and cursor positioning on single click
+        if (editable && !isPreviewMode) {
+          view.focus();
+          // Set cursor position at the clicked location using TextSelection
+          const resolvedPos = view.state.doc.resolve(pos);
+          const selection = TextSelection.near(resolvedPos);
+          const tr = view.state.tr.setSelection(selection);
+          view.dispatch(tr);
+          return true;
+        }
+        return false;
       },
     },
   });
@@ -206,40 +284,93 @@ const TiptapEditor = ({
   }, [editor]);
 
   const addLink = useCallback(() => {
+    if (!editor) return;
+    
     const url = window.prompt('Enter URL:');
-    if (url && editor) {
-      editor.chain().focus().setLink({ href: url }).run();
+    if (url) {
+      try {
+        editor.chain().focus().setLink({ href: url }).run();
+      } catch (error) {
+        console.error('Failed to add link:', error);
+      }
     }
   }, [editor]);
 
   const addImage = useCallback(() => {
+    if (!editor) return;
+    
     const url = window.prompt('Enter image URL:');
-    if (url && editor) {
-      editor.chain().focus().setImage({ src: url }).run();
+    if (url) {
+      try {
+        editor.chain().focus().setImage({ src: url }).run();
+      } catch (error) {
+        console.error('Failed to add image:', error);
+      }
     }
   }, [editor]);
 
   const addTable = useCallback(() => {
-    if (editor) {
+    if (!editor) return;
+    
+    try {
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    } catch (error) {
+      console.error('Failed to add table:', error);
     }
   }, [editor]);
 
   const setTextAlign = useCallback((alignment: 'left' | 'center' | 'right' | 'justify') => {
-    if (editor) {
+    if (!editor) return;
+    
+    try {
       editor.chain().focus().setTextAlign(alignment).run();
+    } catch (error) {
+      console.error('Failed to set text alignment:', error);
     }
   }, [editor]);
 
   const setTextColor = useCallback((color: string) => {
-    if (editor) {
+    if (!editor) return;
+    
+    try {
       editor.chain().focus().setColor(color).run();
+      setShowColorPicker(false);
+    } catch (error) {
+      console.error('Failed to set text color:', error);
+      setShowColorPicker(false);
     }
-    setShowColorPicker(false);
   }, [editor]);
 
   if (!editor) {
-    return null;
+    return (
+      <div className="w-full space-y-4">
+        {showToolbar && mode !== 'inline' && (
+          <div className="modern-card border-b-0 rounded-t-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-accent-cyan/5 via-accent-purple/5 to-accent-pink/5 p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-16 bg-muted animate-pulse rounded"></div>
+                <div className="h-8 w-16 bg-muted animate-pulse rounded"></div>
+                <div className="h-8 w-16 bg-muted animate-pulse rounded"></div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="relative">
+          <div className={cn(
+            showToolbar && mode !== 'inline'
+              ? 'modern-card border-t-0 rounded-t-none rounded-b-xl bg-gradient-to-br from-background via-background to-accent-cyan/5'
+              : mode === 'inline'
+                ? 'border-0 bg-transparent'
+                : 'modern-card bg-gradient-to-br from-background via-background to-accent-purple/5',
+            'shadow-sm',
+            `min-h-[${minHeight}] p-3 sm:p-4 lg:p-6`,
+            'flex items-center justify-center'
+          )}>
+            <div className="text-muted-foreground text-sm">Loading editor...</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const ToolbarButton = ({
@@ -262,13 +393,20 @@ const TiptapEditor = ({
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      title={title}
+      aria-label={title}
       className={cn(
-        'h-9 w-9 p-0 rounded-lg transition-all duration-200',
-        'hover:bg-accent-pink/10 hover:text-accent-pink hover:scale-105',
-        isActive ? 'bg-gradient-to-r from-accent-pink/20 to-accent-purple/20 text-accent-pink shadow-xs' : '',
-        disabled ? 'opacity-50 cursor-not-allowed hover:scale-100' : '',
-        variant === 'color' ? 'h-8 w-8' : ''
+        'h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10 p-0 rounded-lg sm:rounded-xl',
+        // Base styles
+        'border border-transparent bg-transparent',
+        // Focus styles
+        'focus:ring-2 focus:ring-accent-cyan/40 focus:ring-offset-2 focus:ring-offset-background',
+        'focus:border-accent-cyan/30',
+        // Active state
+        isActive ? 'bg-gradient-to-br from-accent-cyan/20 via-accent-purple/10 to-accent-pink/15 text-accent-cyan border-accent-cyan/40 shadow-md shadow-accent-cyan/25' : '',
+        // Disabled state
+        disabled ? 'opacity-40 cursor-not-allowed' : '',
+        // Variant styles
+        variant === 'color' ? 'h-7 w-7 sm:h-8 sm:w-8 lg:h-9 lg:w-9' : '',
       )}
     >
       {children}
@@ -276,91 +414,8 @@ const TiptapEditor = ({
   );
 
   const ToolbarDivider = () => (
-    <div className="w-px h-6 bg-border/50 mx-1" />
+    <div className="w-px h-8 bg-gradient-to-b from-transparent via-accent-cyan/30 to-transparent mx-3 rounded-full" />
   );
-
-  const KeyboardShortcutsDialog = () => (
-    <Dialog open={showKeyboardShortcuts} onOpenChange={setShowKeyboardShortcuts}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-responsive mt-4">
-          <div className="space-y-2">
-            <h3 className="font-semibold">Text Formatting</h3>
-            <div className="grid grid-cols-2 gap-responsive-sm text-sm">
-              <span>Bold</span>
-              <span className="text-muted-foreground">Ctrl + B</span>
-              <span>Italic</span>
-              <span className="text-muted-foreground">Ctrl + I</span>
-              <span>Strikethrough</span>
-              <span className="text-muted-foreground">Ctrl + Shift + S</span>
-              <span>Code</span>
-              <span className="text-muted-foreground">Ctrl + `</span>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Structure</h3>
-            <div className="grid grid-cols-2 gap-responsive-sm text-sm">
-              <span>Heading 1</span>
-              <span className="text-muted-foreground">Ctrl + Alt + 1</span>
-              <span>Heading 2</span>
-              <span className="text-muted-foreground">Ctrl + Alt + 2</span>
-              <span>Bullet List</span>
-              <span className="text-muted-foreground">Ctrl + Shift + 8</span>
-              <span>Numbered List</span>
-              <span className="text-muted-foreground">Ctrl + Shift + 7</span>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const ColorPicker = ({ onColorSelect }: { onColorSelect: (color: string) => void }) => {
-    const colors = [
-      { name: 'Black', value: '#000000' },
-      { name: 'Gray 800', value: '#374151' },
-      { name: 'Gray 600', value: '#6B7280' },
-      { name: 'Gray 400', value: '#9CA3AF' },
-      { name: 'Red', value: '#EF4444' },
-      { name: 'Orange', value: '#F97316' },
-      { name: 'Yellow', value: '#EAB308' },
-      { name: 'Green', value: '#22C55E' },
-      { name: 'Blue', value: '#3B82F6' },
-      { name: 'Purple', value: '#8B5CF6' },
-      { name: 'Pink', value: '#EC4899' },
-      { name: 'Cyan', value: '#06B6D4' }
-    ];
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        className="p-3 bg-background border border-border rounded-lg shadow-lg"
-      >
-        <div className="grid grid-cols-6 gap-responsive-sm">
-          {colors.map((color) => (
-            <TooltipProvider key={color.value}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onColorSelect(color.value)}
-                    className="w-8 h-8 rounded-sm border border-border hover:scale-110 transition-transform"
-                    style={{ backgroundColor: color.value }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{color.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
-      </motion.div>
-    );
-  };
 
   const getCharacterCount = () => {
     if (!editor) return { characters: 0, words: 0 };
@@ -374,139 +429,36 @@ const TiptapEditor = ({
     return getCharacterCount().characters >= maxCharacters;
   };
 
-  const { characters, words } = getCharacterCount();
+  const { characters } = getCharacterCount();
 
   return (
-    <div className="w-full space-y-2" ref={editorContainerRef}>
-      {/* Enhanced Bubble Menu with animations */}
-      {editor && (
-        <AnimatePresence>
-          <BubbleMenu
-            editor={editor}
-            tippyOptions={{ duration: 100, placement: 'top' }}
-            className="bg-background/95 backdrop-blur-sm border border-border rounded-xl shadow-xl p-2 flex items-center gap-1"
-          >
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              isActive={editor.isActive('bold')}
-              title="Bold (Ctrl+B)"
-            >
-              <Bold className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              isActive={editor.isActive('italic')}
-              title="Italic (Ctrl+I)"
-            >
-              <Italic className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              isActive={editor.isActive('strike')}
-              title="Strikethrough"
-            >
-              <Strikethrough className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarDivider />
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
-              isActive={editor.isActive('highlight')}
-              title="Highlight"
-            >
-              <Highlighter className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={addLink}
-              isActive={editor.isActive('link')}
-              title="Add Link"
-            >
-              <LinkIcon className="h-4 w-4" />
-            </ToolbarButton>
-          </BubbleMenu>
-        </AnimatePresence>
-      )}
-
-      {/* Enhanced Floating Menu with animations */}
-      {editor && (
-        <AnimatePresence>
-          <FloatingMenu
-            editor={editor}
-            tippyOptions={{ duration: 100, placement: 'left' }}
-            className="bg-background/95 backdrop-blur-sm border border-border rounded-xl shadow-xl p-2 flex flex-col gap-1"
-          >
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              isActive={editor.isActive('heading', { level: 1 })}
-              title="Heading 1"
-            >
-              <Type className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              isActive={editor.isActive('bulletList')}
-              title="Bullet List"
-            >
-              <List className="h-4 w-4" />
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              isActive={editor.isActive('blockquote')}
-              title="Quote"
-            >
-              <Quote className="h-4 w-4" />
-            </ToolbarButton>
-          </FloatingMenu>
-        </AnimatePresence>
-      )}
-
-      {/* Enhanced Main Toolbar */}
-      {editable && showToolbar && mode !== 'inline' && (
-        <div 
-          ref={toolbarRef}
-          className={cn(
-            "border border-border bg-gradient-to-r from-muted/30 to-muted/20 backdrop-blur-sm transition-all duration-200",
-            isToolbarSticky || toolbarPinned 
-              ? "fixed top-0 left-0 right-0 z-40 rounded-none border-b shadow-lg" 
-              : "rounded-t-xl"
-          )}
+    <div className="w-full space-y-4">
+      {/* Enhanced Bubble Menu - Mode-aware */}
+      {editor && currentConfig.showBubbleMenu && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 150, placement: 'top' }}
+          className="modern-glass p-3 flex items-center gap-2 shadow-xl border border-border/50 backdrop-blur-md rounded-lg z-50"
         >
-          <div className="p-3 flex flex-wrap items-center gap-2">
-            {/* History Controls */}
-            <div className="flex items-center gap-1">
-              <ToolbarButton
-                onClick={() => editor.chain().focus().undo().run()}
-                disabled={!editor.can().undo()}
-                title="Undo (Ctrl+Z)"
-              >
-                <Undo className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => editor.chain().focus().redo().run()}
-                disabled={!editor.can().redo()}
-                title="Redo (Ctrl+Y)"
-              >
-                <Redo className="h-4 w-4" />
-              </ToolbarButton>
-            </div>
+          {/* Core formatting - available in all modes */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            isActive={editor.isActive('bold')}
+            title="Bold (Ctrl+B)"
+          >
+            <Bold className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            isActive={editor.isActive('italic')}
+            title="Italic (Ctrl+I)"
+          >
+            <Italic className="h-4 w-4" />
+          </ToolbarButton>
 
-            <ToolbarDivider />
-
-            {/* Text Formatting */}
-            <div className="flex items-center gap-1">
-              <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                isActive={editor.isActive('bold')}
-                title="Bold (Ctrl+B)"
-              >
-                <Bold className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                isActive={editor.isActive('italic')}
-                title="Italic (Ctrl+I)"
-              >
-                <Italic className="h-4 w-4" />
-              </ToolbarButton>
+          {/* Extended formatting - only in full mode */}
+          {currentConfig.showAllFormatting && (
+            <>
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleStrike().run()}
                 isActive={editor.isActive('strike')}
@@ -514,19 +466,117 @@ const TiptapEditor = ({
               >
                 <Strikethrough className="h-4 w-4" />
               </ToolbarButton>
+              <ToolbarDivider />
               <ToolbarButton
-                onClick={() => editor.chain().focus().toggleCode().run()}
-                isActive={editor.isActive('code')}
-                title="Inline Code"
+                onClick={() => editor.chain().focus().toggleHighlight().run()}
+                isActive={editor.isActive('highlight')}
+                title="Highlight"
               >
-                <Code className="h-4 w-4" />
+                <Highlighter className="h-4 w-4" />
+              </ToolbarButton>
+            </>
+          )}
+
+          {/* Link tool - available in full and minimal modes */}
+          {mode !== 'inline' && (
+            <>
+              <ToolbarDivider />
+              <ToolbarButton
+                onClick={addLink}
+                isActive={editor.isActive('link')}
+                title="Add Link"
+              >
+                <LinkIcon className="h-4 w-4" />
+              </ToolbarButton>
+            </>
+          )}
+        </BubbleMenu>
+      )}
+
+      {/* Enhanced Floating Menu - Only in full mode */}
+      {editor && currentConfig.showFloatingMenu && (
+        <FloatingMenu
+          editor={editor}
+          tippyOptions={{ duration: 150, placement: 'left' }}
+          className="modern-glass p-3 flex flex-col gap-2 shadow-xl border border-border/50 backdrop-blur-md rounded-lg z-50"
+        >
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            isActive={editor.isActive('heading', { level: 1 })}
+            title="Heading 1"
+          >
+            <Type className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            isActive={editor.isActive('bulletList')}
+            title="Bullet List"
+          >
+            <List className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            isActive={editor.isActive('blockquote')}
+            title="Quote"
+          >
+            <Quote className="h-4 w-4" />
+          </ToolbarButton>
+        </FloatingMenu>
+      )}
+
+      {/* Modern Enhanced Toolbar */}
+      {editable && showToolbar && mode !== 'inline' && (
+        <div className="modern-card border-b-0 rounded-t-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-accent-cyan/5 via-accent-purple/5 to-accent-pink/5 p-3 sm:p-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4">
+            {/* Essential Tools - Always visible */}
+            <div className="flex items-center gap-1">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().undo().run()}
+                disabled={!editor.can().undo()}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo className="h-3 w-3 sm:h-4 sm:w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => editor.chain().focus().redo().run()}
+                disabled={!editor.can().redo()}
+                title="Redo (Ctrl+Y)"
+              >
+                <Redo className="h-3 w-3 sm:h-4 sm:w-4" />
               </ToolbarButton>
             </div>
 
             <ToolbarDivider />
 
-            {/* Headings */}
+            {/* Core Text Formatting - Always visible */}
             <div className="flex items-center gap-1">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                isActive={editor.isActive('bold')}
+                title="Bold (Ctrl+B)"
+              >
+                <Bold className="h-3 w-3 sm:h-4 sm:w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                isActive={editor.isActive('italic')}
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="h-3 w-3 sm:h-4 sm:w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                isActive={editor.isActive('strike')}
+                title="Strikethrough"
+              >
+                <Strikethrough className="h-3 w-3 sm:h-4 sm:w-4" />
+              </ToolbarButton>
+            </div>
+
+            {/* Structure Tools - Hidden on mobile, visible on tablet+ */}
+            <div className="hidden sm:flex items-center gap-1">
+              <ToolbarDivider />
               <ToolbarButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                 isActive={editor.isActive('heading', { level: 1 })}
@@ -542,19 +592,6 @@ const TiptapEditor = ({
                 <span className="text-xs font-bold">H2</span>
               </ToolbarButton>
               <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                isActive={editor.isActive('heading', { level: 3 })}
-                title="Heading 3"
-              >
-                <span className="text-xs font-bold">H3</span>
-              </ToolbarButton>
-            </div>
-
-            <ToolbarDivider />
-
-            {/* Lists and Quotes */}
-            <div className="flex items-center gap-1">
-              <ToolbarButton
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
                 isActive={editor.isActive('bulletList')}
                 title="Bullet List"
@@ -568,173 +605,303 @@ const TiptapEditor = ({
               >
                 <ListOrdered className="h-4 w-4" />
               </ToolbarButton>
-              <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                isActive={editor.isActive('blockquote')}
-                title="Quote"
-              >
-                <Quote className="h-4 w-4" />
-              </ToolbarButton>
             </div>
 
-            <ToolbarDivider />
-
-            {/* Text Alignment */}
+            {/* Media & Links - Simplified on mobile */}
             <div className="flex items-center gap-1">
-              <ToolbarButton
-                onClick={() => setTextAlign('left')}
-                isActive={editor.isActive({ textAlign: 'left' })}
-                title="Align Left"
-              >
-                <AlignLeft className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => setTextAlign('center')}
-                isActive={editor.isActive({ textAlign: 'center' })}
-                title="Align Center"
-              >
-                <AlignCenter className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => setTextAlign('right')}
-                isActive={editor.isActive({ textAlign: 'right' })}
-                title="Align Right"
-              >
-                <AlignRight className="h-4 w-4" />
-              </ToolbarButton>
-            </div>
-
-            <ToolbarDivider />
-
-            {/* Media and Special Elements */}
-            <div className="flex items-center gap-1">
+              <ToolbarDivider />
               <ToolbarButton
                 onClick={addLink}
                 isActive={editor.isActive('link')}
                 title="Add Link"
               >
-                <LinkIcon className="h-4 w-4" />
+                <LinkIcon className="h-3 w-3 sm:h-4 sm:w-4" />
               </ToolbarButton>
-              <ToolbarButton
-                onClick={addImage}
-                title="Add Image"
-              >
-                <ImageIcon className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={addTable}
-                title="Add Table"
-              >
-                <TableIcon className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => editor.chain().focus().setHorizontalRule().run()}
-                title="Horizontal Rule"
-              >
-                <Minus className="h-4 w-4" />
-              </ToolbarButton>
-            </div>
-
-            <ToolbarDivider />
-
-            {/* New Media Controls */}
-            <div className="flex items-center gap-1">
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileUpload}
-              />
-              <ToolbarButton
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload Image"
-              >
-                <Upload className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                title="Insert Emoji"
-              >
-                <Smile className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => setShowKeyboardShortcuts(true)}
-                title="Keyboard Shortcuts"
-              >
-                <Keyboard className="h-4 w-4" />
-              </ToolbarButton>
-            </div>
-
-            {/* Color and Highlight */}
-            <div className="flex items-center gap-1 relative">
-              <ToolbarButton
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                title="Text Color"
-                variant="color"
-              >
-                <Palette className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHighlight().run()}
-                isActive={editor.isActive('highlight')}
-                title="Highlight"
-              >
-                <Highlighter className="h-4 w-4" />
-              </ToolbarButton>
-
-              {showColorPicker && (
-                <div className="absolute top-full left-0 mt-2 z-50">
-                  <ColorPicker onColorSelect={setTextColor} />
+              {currentConfig.showMediaTools && (
+                <div className="hidden sm:flex items-center gap-1">
+                  <ToolbarButton
+                    onClick={addImage}
+                    title="Add Image"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </ToolbarButton>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                  />
+                  <ToolbarButton
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Upload Image"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </ToolbarButton>
                 </div>
               )}
             </div>
 
-            {/* Sticky Toolbar Toggle */}
-            {stickyToolbar && (
+            {/* Advanced Tools - Mode-aware and Responsive */}
+            {currentConfig.showAdvancedTools && (
               <>
                 <ToolbarDivider />
-                <ToolbarButton
-                  onClick={() => setToolbarPinned(!toolbarPinned)}
-                  isActive={toolbarPinned}
-                  title={toolbarPinned ? "Unpin Toolbar" : "Pin Toolbar"}
-                >
-                  {toolbarPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                </ToolbarButton>
-              </>
-            )}
+                <div className="flex items-center gap-1 relative">
+                  {/* Mobile: Show more tools button */}
+                  <div className="sm:hidden">
+                    <ToolbarButton
+                      onClick={() => setShowAdvancedTools(!showAdvancedTools)}
+                      isActive={showAdvancedTools}
+                      title="More Tools"
+                    >
+                      <MoreHorizontal className="h-3 w-3" />
+                    </ToolbarButton>
+                  </div>
 
-            {/* Preview Toggle */}
-            {mode === 'full' && (
-              <>
-                <ToolbarDivider />
-                <ToolbarButton
-                  onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  isActive={isPreviewMode}
-                  title={isPreviewMode ? "Edit Mode" : "Preview Mode"}
-                >
-                  {isPreviewMode ? <Edit3 className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </ToolbarButton>
+                  {/* Desktop: Show tools inline */}
+                  <div className="hidden lg:flex items-center gap-1">
+                    <ToolbarButton
+                      onClick={() => editor.chain().focus().toggleCode().run()}
+                      isActive={editor.isActive('code')}
+                      title="Inline Code"
+                    >
+                      <Code className="h-4 w-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                      isActive={editor.isActive('blockquote')}
+                      title="Quote"
+                    >
+                      <Quote className="h-4 w-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      onClick={addTable}
+                      title="Add Table"
+                    >
+                      <TableIcon className="h-4 w-4" />
+                    </ToolbarButton>
+                  </div>
+
+                  {/* Tablet: Show more tools button */}
+                  <div className="hidden sm:block lg:hidden">
+                    <ToolbarButton
+                      onClick={() => setShowAdvancedTools(!showAdvancedTools)}
+                      isActive={showAdvancedTools}
+                      title="More Tools"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </ToolbarButton>
+                  </div>
+
+                  {/* Mobile/Tablet Dropdown */}
+                  {showAdvancedTools && (
+                    <div className="absolute top-full left-0 mt-3 z-50 lg:hidden">
+                      <div className="modern-glass p-3 sm:p-4 border border-border/50 backdrop-blur-md shadow-xl min-w-[200px] sm:min-w-[240px] rounded-xl bg-background/95">
+                        <div className="space-y-3">
+                          {/* Mobile: Include structure tools */}
+                          <div className="sm:hidden space-y-3">
+                            <div className="flex items-center gap-2">
+                              <ToolbarButton
+                                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                                isActive={editor.isActive('heading', { level: 1 })}
+                                title="Heading 1"
+                              >
+                                <span className="text-xs font-bold">H1</span>
+                              </ToolbarButton>
+                              <ToolbarButton
+                                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                                isActive={editor.isActive('heading', { level: 2 })}
+                                title="Heading 2"
+                              >
+                                <span className="text-xs font-bold">H2</span>
+                              </ToolbarButton>
+                              <ToolbarButton
+                                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                                isActive={editor.isActive('bulletList')}
+                                title="Bullet List"
+                              >
+                                <List className="h-4 w-4" />
+                              </ToolbarButton>
+                            </div>
+                            {currentConfig.showMediaTools && (
+                              <div className="flex items-center gap-2">
+                                <ToolbarButton
+                                  onClick={addImage}
+                                  title="Add Image"
+                                >
+                                  <ImageIcon className="h-4 w-4" />
+                                </ToolbarButton>
+                                <ToolbarButton
+                                  onClick={() => fileInputRef.current?.click()}
+                                  title="Upload Image"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                </ToolbarButton>
+                              </div>
+                            )}
+                            <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-cyan/30 to-transparent" />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <ToolbarButton
+                              onClick={() => editor.chain().focus().toggleCode().run()}
+                              isActive={editor.isActive('code')}
+                              title="Inline Code"
+                            >
+                              <Code className="h-4 w-4" />
+                            </ToolbarButton>
+                            <ToolbarButton
+                              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                              isActive={editor.isActive('blockquote')}
+                              title="Quote"
+                            >
+                              <Quote className="h-4 w-4" />
+                            </ToolbarButton>
+                            <ToolbarButton
+                              onClick={addTable}
+                              title="Add Table"
+                            >
+                              <TableIcon className="h-4 w-4" />
+                            </ToolbarButton>
+                          </div>
+
+                          <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-purple/30 to-transparent" />
+
+                          <div className="flex items-center gap-2">
+                            <ToolbarButton
+                              onClick={() => setTextAlign('left')}
+                              isActive={editor.isActive({ textAlign: 'left' })}
+                              title="Align Left"
+                            >
+                              <AlignLeft className="h-4 w-4" />
+                            </ToolbarButton>
+                            <ToolbarButton
+                              onClick={() => setTextAlign('center')}
+                              isActive={editor.isActive({ textAlign: 'center' })}
+                              title="Align Center"
+                            >
+                              <AlignCenter className="h-4 w-4" />
+                            </ToolbarButton>
+                            <ToolbarButton
+                              onClick={() => setTextAlign('right')}
+                              isActive={editor.isActive({ textAlign: 'right' })}
+                              title="Align Right"
+                            >
+                              <AlignRight className="h-4 w-4" />
+                            </ToolbarButton>
+                          </div>
+
+                          <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-pink/30 to-transparent" />
+
+                          <div className="flex items-center gap-2 relative">
+                            <ToolbarButton
+                              onClick={() => setShowColorPicker(!showColorPicker)}
+                              title="Text Color"
+                              variant="color"
+                              isActive={showColorPicker}
+                            >
+                              <Palette className="h-4 w-4" />
+                            </ToolbarButton>
+                            {showColorPicker && (
+                              <div ref={colorPickerRef} className="absolute top-full left-0 mt-2 z-50 modern-glass border border-border/50 backdrop-blur-md rounded-lg p-4 shadow-xl min-w-[240px] bg-background/95">
+                                <div className="space-y-3">
+                                  <div className="text-xs font-medium text-foreground mb-2">Text Colors</div>
+                                  <div className="grid grid-cols-8 gap-2">
+                                    {[
+                                      // Neutral colors
+                                      { color: '#000000', label: 'Black' },
+                                      { color: '#374151', label: 'Gray 700' },
+                                      { color: '#6B7280', label: 'Gray 500' },
+                                      { color: '#9CA3AF', label: 'Gray 400' },
+                                      { color: '#D1D5DB', label: 'Gray 300' },
+                                      { color: '#F3F4F6', label: 'Gray 100' },
+                                      { color: '#FFFFFF', label: 'White' },
+                                      { color: 'hsl(var(--foreground))', label: 'Default' },
+                                      // Theme accent colors
+                                      { color: 'hsl(var(--accent-cyan))', label: 'Cyan' },
+                                      { color: 'hsl(var(--accent-purple))', label: 'Purple' },
+                                      { color: 'hsl(var(--accent-pink))', label: 'Pink' },
+                                      { color: '#EF4444', label: 'Red' },
+                                      { color: '#F97316', label: 'Orange' },
+                                      { color: '#F59E0B', label: 'Amber' },
+                                      { color: '#84CC16', label: 'Lime' },
+                                      { color: '#22C55E', label: 'Green' },
+                                      { color: '#10B981', label: 'Emerald' },
+                                      { color: '#06B6D4', label: 'Cyan' },
+                                      { color: '#0EA5E9', label: 'Sky' },
+                                      { color: '#3B82F6', label: 'Blue' },
+                                      { color: '#6366F1', label: 'Indigo' },
+                                      { color: '#8B5CF6', label: 'Violet' },
+                                      { color: '#A855F7', label: 'Purple' },
+                                      { color: '#D946EF', label: 'Fuchsia' },
+                                    ].map(({ color, label }) => (
+                                      <button
+                                        key={color}
+                                        className="w-7 h-7 rounded-md border border-border focus:ring-2 focus:ring-accent-cyan/40 focus:ring-offset-1"
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => setTextColor(color)}
+                                        aria-label={label}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="pt-2 border-t border-border/30">
+                                    <button
+                                      className="text-xs text-muted-foreground font-medium focus:ring-2 focus:ring-accent-cyan/40 focus:ring-offset-1 rounded px-2 py-1"
+                                      onClick={() => {
+                                        editor?.chain().focus().unsetColor().run();
+                                        setShowColorPicker(false);
+                                      }}
+                                    >
+                                      Remove Color
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <ToolbarButton
+                              onClick={() => editor.chain().focus().toggleHighlight().run()}
+                              isActive={editor.isActive('highlight')}
+                              title="Highlight"
+                            >
+                              <Highlighter className="h-4 w-4" />
+                            </ToolbarButton>
+                            <ToolbarButton
+                              onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                              title="Horizontal Rule"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </ToolbarButton>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {currentConfig.showPreviewToggle && (
+                  <ToolbarButton
+                    onClick={() => setIsPreviewMode(!isPreviewMode)}
+                    isActive={isPreviewMode}
+                    title={isPreviewMode ? "Edit Mode" : "Preview Mode"}
+                  >
+                    {isPreviewMode ? <Edit3 className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                  </ToolbarButton>
+                )}
               </>
             )}
           </div>
 
-          {/* Bottom Row - Status and Stats */}
-          {(showCharacterCount || showWordCount) && (
-            <div className="px-3 py-2 border-t border-border/50 bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+          {/* Status Bar */}
+          {showCharacterCount && (
+            <div className="px-4 py-2 border-t border-border/30 bg-muted/10 flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
-                {showCharacterCount && (
-                  <div className={cn(
-                    "flex items-center gap-1",
-                    isAtLimit() ? "text-destructive" : ""
-                  )}>
-                    <span>Characters: {characters}</span>
-                    {maxCharacters && <span>/ {maxCharacters}</span>}
-                  </div>
-                )}
-                {showWordCount && (
-                  <div>Words: {words}</div>
-                )}
+                <div className={cn(
+                  "flex items-center gap-1",
+                  isAtLimit() ? "text-destructive" : ""
+                )}>
+                  <span>Characters: {characters}</span>
+                  {maxCharacters && <span>/ {maxCharacters}</span>}
+                </div>
               </div>
 
               {isPreviewMode && (
@@ -744,54 +911,63 @@ const TiptapEditor = ({
               )}
             </div>
           )}
+          </div>
         </div>
       )}
 
-      {/* Editor Content */}
-      <div className={cn(
-        "relative",
-        editable && showToolbar && mode !== 'inline' ? 'border-t-0 rounded-t-none' : ''
-      )}>
+      {/* Enhanced Editor Content */}
+      <div className="relative">
         <EditorContent
           editor={editor}
+          onClick={() => {
+            // Ensure immediate focus on any click within the editor area
+            if (editor && editable && !isPreviewMode) {
+              editor.commands.focus();
+            }
+          }}
           className={cn(
-            "transition-all duration-200",
-            editable && showToolbar && mode !== 'inline' ? 'border border-t-0 border-border rounded-b-xl' : '',
-            mode === 'inline' ? 'border-0' : '',
-            isAtLimit() ? 'ring-2 ring-destructive/20' : '',
-            // Add top padding when toolbar is sticky
-            (isToolbarSticky || toolbarPinned) ? "pt-16" : ""
+            editable && showToolbar && mode !== 'inline'
+              ? 'modern-card border-t-0 rounded-t-none rounded-b-xl bg-gradient-to-br from-background via-background to-accent-cyan/5'
+              : mode === 'inline'
+                ? 'border-0 bg-transparent'
+                : 'modern-card bg-gradient-to-br from-background via-background to-accent-purple/5',
+            isAtLimit() ? 'ring-2 ring-destructive/30 ring-offset-2' : '',
+            'shadow-sm',
+            // Add cursor pointer to indicate clickable area when editable
+            editable && !isPreviewMode ? 'cursor-text' : ''
           )}
         />
 
-        {/* Character limit warning */}
+        {/* Enhanced Character limit warning */}
         {isAtLimit() && maxCharacters && (
-          <div className="absolute bottom-2 right-2 bg-destructive/10 text-destructive text-xs px-2 py-1 rounded-lg border border-destructive/20">
-            Character limit reached
+          <div className="absolute bottom-3 right-3 modern-glass bg-destructive/20 text-destructive text-xs px-3 py-2 rounded-lg border border-destructive/30 backdrop-blur-sm">
+            <span className="font-medium">Character limit reached</span>
           </div>
         )}
       </div>
 
-      {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcutsDialog />
-
-      {/* Minimal mode stats */}
-      {mode === 'minimal' && (showCharacterCount || showWordCount) && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-          <div className="flex items-center gap-4">
-            {showCharacterCount && (
-              <div className={cn(
-                "flex items-center gap-1",
-                isAtLimit() ? "text-destructive" : ""
-              )}>
-                <span>Characters: {characters}</span>
-                {maxCharacters && <span>/ {maxCharacters}</span>}
-              </div>
-            )}
-            {showWordCount && (
-              <div>Words: {words}</div>
-            )}
+      {/* Mode-specific stats and info */}
+      {mode === 'minimal' && showCharacterCount && (
+        <div className="modern-glass px-3 py-2 rounded-lg mt-3 border border-white/10">
+          <div className="flex items-center justify-between text-xs">
+            <div className={cn(
+              "flex items-center gap-2 font-medium",
+              isAtLimit() ? "text-destructive" : "text-accent-cyan"
+            )}>
+              <span>Characters: {characters}</span>
+              {maxCharacters && <span className="text-muted-foreground">/ {maxCharacters}</span>}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              Minimal Mode
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Inline mode - no stats, ultra-minimal */}
+      {mode === 'inline' && (
+        <div className="sr-only">
+          Inline editor mode - {characters} characters
         </div>
       )}
     </div>

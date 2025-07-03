@@ -83,7 +83,7 @@ export class DashboardController {
       // First, get summary counts with a single optimized query
       const summaryQuery = `
         SELECT
-          (SELECT COUNT(*) FROM swimsuits WHERE is_active = 1) as total_swimsuits,
+          (SELECT COUNT(*) FROM swimsuits) as total_swimsuits,
           (SELECT COUNT(*) FROM items WHERE item_category = 'ACCESSORY') as total_accessories,
           (SELECT COUNT(*) FROM skills) as total_skills,
           (SELECT COUNT(*) FROM bromides) as total_bromides
