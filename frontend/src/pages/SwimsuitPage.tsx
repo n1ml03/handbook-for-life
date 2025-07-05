@@ -11,7 +11,7 @@ import {
 import { type Swimsuit } from '@/types';
 import { addTranslationsToItems, searchInAllLanguages } from '@/services/multiLanguageSearch';
 import { swimsuitsApi } from '@/services/api';
-import { safeExtractArrayData } from '@/services/utils';
+import { safeExtractArrayData, getSwimsuitImages, getLocalizedName } from '@/services/utils';
 import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import UnifiedFilter, { SortDirection } from '@/components/features/UnifiedFilter';
 import { createSwimsuitFilterConfig, swimsuitSortOptions } from '@/components/features/FilterConfigs';
@@ -25,7 +25,8 @@ interface SwimsuitCardProps {
 
 const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCardProps) {
   const [currentView, setCurrentView] = useState<'before' | 'after'>('before');
-  const characterName = (swimsuit.character as any)?.name_en || 'Unknown';
+  const characterName = swimsuit.character ? getLocalizedName(swimsuit.character, 'en') : 'Unknown';
+  const swimsuitImages = getSwimsuitImages(swimsuit);
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -55,9 +56,9 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
         whileTap={{ scale: 0.98 }}
       >
         {/* Show swimsuit image if available, otherwise show placeholder */}
-        {((currentView === 'before' && swimsuit.image_before_url) || (currentView === 'after' && swimsuit.image_after_url)) ? (
+        {((currentView === 'before' && swimsuitImages.beforeImage) || (currentView === 'after' && swimsuitImages.afterImage)) ? (
           <img
-            src={currentView === 'before' ? swimsuit.image_before_url : swimsuit.image_after_url}
+            src={currentView === 'before' ? swimsuitImages.beforeImage : swimsuitImages.afterImage}
             alt={`${characterName} swimsuit ${currentView}`}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ zIndex: 1 }}

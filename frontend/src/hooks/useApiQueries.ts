@@ -8,7 +8,7 @@ import {
   bromidesApi,
   dashboardApi
 } from '@/services/api';
-import { Character, Swimsuit, Skill, Item, Event, Bromide } from '@/types';
+
 
 // Query keys for consistent cache management
 export const queryKeys = {

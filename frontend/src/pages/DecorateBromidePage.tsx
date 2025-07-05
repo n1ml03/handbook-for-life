@@ -288,12 +288,14 @@ export default function DecorateBromidePage() {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    // Instant scroll to top when changing pages for better performance
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   return (
     <PageLoadingState 
       isLoading={loading} 
-      message="Loading bromide & decoration list..."
+      message="Loading Deco-bromides list..."
     >
     <div className="modern-page">
       <div className="modern-container-lg">
@@ -304,7 +306,7 @@ export default function DecorateBromidePage() {
           className="modern-page-header"
         >
           <h1 className="modern-page-title">
-            Bromide & Decoration Collection
+            Deco-bromides Collection
           </h1>
         </motion.div>
 
@@ -321,7 +323,7 @@ export default function DecorateBromidePage() {
         sortDirection={sortDirection}
         onSortChange={handleSortChange}
         resultCount={filteredAndSortedBromides.length}
-        itemLabel="bromides & decorations"
+        itemLabel="deco-bromides"
         accentColor="accent-cyan"
         secondaryColor="accent-purple"
         headerIcon={<Search className="w-4 h-4" />}
@@ -332,9 +334,12 @@ export default function DecorateBromidePage() {
           {paginatedBromides.map((bromide, index) => (
             <motion.div
               key={bromide.id}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
+              transition={{
+                duration: 0.15,
+                delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+              }}
             >
               <BromideCard bromide={bromide} />
             </motion.div>

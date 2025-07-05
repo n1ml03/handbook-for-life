@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,8 +8,8 @@ import {
   Calendar,
   Mic
 } from 'lucide-react';
-import { charactersApi } from '@/services/api';
-import { safeExtractArrayData } from '@/services/utils';
+
+import { safeExtractArrayData, getCharacterProfileImageUrl } from '@/services/utils';
 import { type Character, type SortDirection } from '@/types';
 import { useCharacters } from '@/hooks/useApiQueries';
 import UnifiedFilter, { FilterField, SortOption } from '@/components/features/UnifiedFilter';
@@ -48,9 +48,9 @@ const CharacterCard = React.memo(function CharacterCard({ character, onClick }: 
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
-          {character.profile_image_url ? (
+          {getCharacterProfileImageUrl(character) ? (
             <img
-              src={character.profile_image_url}
+              src={getCharacterProfileImageUrl(character)}
               alt={character.name_en}
               className="w-full h-full object-cover rounded-lg"
               onError={(e) => {
@@ -303,6 +303,12 @@ export default function CharacterListPage() {
     navigate(`/characters/${characterId}`);
   }, [navigate]);
 
+  const handlePageChange = useCallback((page: number) => {
+    setUiState(prev => ({ ...prev, currentPage: page }));
+    // Instant scroll to top when changing pages for better performance
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   const debouncedSearch = filterValues.search !== '';
 
   return (
@@ -367,15 +373,18 @@ export default function CharacterListPage() {
               {paginationData.paginatedCharacters.map((character, index) => (
                 <motion.div
                   key={character.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
                 >
                   <CharacterCard
                   character={character as typeof character & Character}
                   onClick={() => handleCharacterClick((character as typeof character & Character).id)}
                 />
-                </motion.div> 
+                </motion.div>
               ))}
             </div>
 
@@ -388,7 +397,7 @@ export default function CharacterListPage() {
                 className="flex items-center justify-center gap-2 mb-8"
               >
                 <Button
-                  onClick={() => setUiState(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }))}
+                  onClick={() => handlePageChange(Math.max(1, uiState.currentPage - 1))}
                   disabled={uiState.currentPage === 1}
                   variant="outline"
                   size="sm"
@@ -403,7 +412,7 @@ export default function CharacterListPage() {
                     return (
                       <Button
                         key={pageNum}
-                        onClick={() => setUiState(prev => ({ ...prev, currentPage: pageNum }))}
+                        onClick={() => handlePageChange(pageNum)}
                         variant={uiState.currentPage === pageNum ? "default" : "outline"}
                         size="sm"
                         className={uiState.currentPage === pageNum 
@@ -418,7 +427,7 @@ export default function CharacterListPage() {
                 </div>
 
                 <Button
-                  onClick={() => setUiState(prev => ({ ...prev, currentPage: Math.min(paginationData.totalPages, prev.currentPage + 1) }))}
+                  onClick={() => handlePageChange(Math.min(paginationData.totalPages, uiState.currentPage + 1))}
                   disabled={uiState.currentPage === paginationData.totalPages}
                   variant="outline"
                   size="sm"

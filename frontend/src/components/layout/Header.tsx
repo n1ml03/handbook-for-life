@@ -114,8 +114,7 @@ const MENU_ITEMS: MenuItem[] = [
     color: 'text-accent-pink',
     category: 'main',
     children: [
-      { id: 'character', icon: User, label: 'Character', path: '/girls', color: 'text-accent-pink', category: 'girls' },
-      { id: 'owner-room', icon: Building, label: 'Owner Room', path: '/owner-room', color: 'text-accent-ocean', category: 'girls' }
+      { id: 'character', icon: User, label: 'Character', path: '/girls', color: 'text-accent-pink', category: 'girls' }
     ]
   },
   {

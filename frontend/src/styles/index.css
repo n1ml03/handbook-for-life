@@ -326,15 +326,13 @@
     pointer-events: none;
   }
 
+  /* Hover effects disabled for flat design */
   .modern-card:hover {
-    background-color: hsl(var(--color-card) / 0.98);
-    border-color: hsl(var(--color-border) / 0.5);
-    box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    /* No hover effects for flat design */
   }
 
   .modern-card:hover::before {
-    opacity: 1;
+    /* No hover effects for flat design */
   }
 
   /* Light mode specific card enhancements */
@@ -345,9 +343,7 @@
   }
 
   .light .modern-card:hover {
-    background-color: hsl(var(--color-card));
-    border-color: hsl(var(--color-border) / 0.6);
-    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.1);
+    /* No hover effects for flat design */
   }
 
   /* Legacy card support */
@@ -486,10 +482,7 @@
   .light .modern-card:hover,
   .light .doax-card:hover,
   .light .gaming-card:hover {
-    background-color: hsl(var(--color-card));
-    border-color: hsl(var(--color-border) / 0.85);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+    /* No hover effects for flat design */
   }
 
   /* Container enhancements for light mode */
@@ -512,8 +505,7 @@
   }
 
   .light .doax-nav-item:hover {
-    background-color: hsl(var(--color-accent) / 0.15);
-    color: hsl(var(--color-accent-pink));
+    /* No hover effects for flat design */
   }
 
   .light .doax-nav-item:focus {
@@ -647,8 +639,7 @@
   }
 
   .doax-nav-item:hover {
-    color: hsl(var(--color-accent-pink));
-    background-color: hsl(var(--color-accent) / 0.1);
+    /* No hover effects for flat design */
   }
 
   .doax-nav-item:focus {
@@ -665,12 +656,7 @@
   }
 
   .gaming-card:hover {
-    background: linear-gradient(135deg,
-      hsl(var(--color-card) / 0.9) 0%,
-      hsl(var(--color-card) / 0.7) 100%);
-    border-color: hsl(var(--color-accent-pink) / 0.3);
-    box-shadow: 0 20px 25px -5px hsl(var(--color-accent-pink) / 0.1),
-                0 8px 10px -6px hsl(var(--color-accent-pink) / 0.1);
+    /* No hover effects for flat design */
   }
 
   .interactive-element {
@@ -1487,19 +1473,17 @@
 
   /* Modern Component States - Enhanced for light mode */
   .modern-interactive {
-    @apply transition-all duration-200 ease-in-out;
-    @apply hover:scale-105 hover:shadow-md;
     @apply focus:outline-none focus:ring-2 focus:ring-accent-pink/30 focus:ring-offset-1;
+    /* Hover effects disabled for flat design */
   }
 
   .light .modern-interactive {
-    @apply hover:shadow-lg;
     @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    /* Hover effects disabled for flat design */
   }
 
   .light .modern-interactive:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 8px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    /* No hover effects for flat design */
   }
 
   .modern-loading {

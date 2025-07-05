@@ -15,7 +15,7 @@ import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
 import { type ShopListing } from '@/types';
-import { shopListingsApi } from '@/services/api';
+import { shopApi } from '@/services/api';
 import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
@@ -193,7 +193,7 @@ export default function ShopPage() {
       if (filterValues.item_category) params.item_category = filterValues.item_category;
       if (filterValues.available_only) params.available_only = filterValues.available_only;
 
-      const response = await shopListingsApi.getShopListings(params);
+      const response = await shopApi.getShopListings(params);
       
       // Safely extract data and pagination
       const responseData = safeExtractArrayData<ShopListing>(response, 'shop listings API');
@@ -359,9 +359,12 @@ export default function ShopPage() {
               {shopData.listings.map((listing, index) => (
                 <motion.div
                   key={listing.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
                 >
                   <ShopListingCard listing={listing} />
                 </motion.div>

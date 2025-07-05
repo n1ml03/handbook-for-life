@@ -125,7 +125,6 @@ frontend/
 │   │   ├── FestivalPage.tsx          # Festival events
 │   │   ├── AccessoryPage.tsx         # Accessories
 │   │   ├── DecorateBromidePage.tsx   # Bromide decoration
-│   │   ├── OwnerRoomPage.tsx         # Owner room
 │   │   └── NotFoundPage.tsx          # 404 error page
 │   │
 │   ├── 🧩 components/                # Reusable components
@@ -350,7 +349,6 @@ Built on **Radix UI** primitives with custom Tailwind styling:
 | `/memories` | `MemoriesPage` | Photo collection |
 | `/accessories` | `AccessoryPage` | Accessory catalog |
 | `/decorate` | `DecorateBromidePage` | Bromide decoration |
-| `/owner-room` | `OwnerRoomPage` | Owner room customization |
 
 ### **📚 Documentation & Admin**
 | Route | Component | Description |

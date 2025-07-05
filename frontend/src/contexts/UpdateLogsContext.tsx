@@ -1,13 +1,13 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import { UpdateLog } from '@/types';
 import { updateLogsApi, ApiError } from '@/services/api';
-import { safeExtractArrayData, safeIdCompare } from '@/services/utils';
+import { safeExtractArrayData, compareEntityIds } from '@/services/utils';
 
 interface UpdateLogsContextType {
   updateLogs: UpdateLog[];
   isLoading: boolean;
   error: string | null;
-  addUpdateLog: (log: Omit<UpdateLog, 'id' | 'createdAt' | 'updatedAt'>) => Promise<UpdateLog>;
+  addUpdateLog: (log: Omit<UpdateLog, 'id' | 'created_at' | 'updated_at'>) => Promise<UpdateLog>;
   updateUpdateLog: (id: string, updates: Partial<UpdateLog>) => Promise<UpdateLog>;
   deleteUpdateLog: (id: string) => Promise<void>;
   refreshUpdateLogs: () => Promise<void>;
@@ -55,7 +55,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
     }
   };
 
-  const addUpdateLog = async (log: Omit<UpdateLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<UpdateLog> => {
+  const addUpdateLog = async (log: Omit<UpdateLog, 'id' | 'created_at' | 'updated_at'>): Promise<UpdateLog> => {
     try {
       const newLog = await updateLogsApi.createUpdateLog(log);
       setUpdateLogs(prev => [newLog, ...prev]);
@@ -70,7 +70,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
     try {
       const updatedLog = await updateLogsApi.updateUpdateLog(id, updates);
       setUpdateLogs(prev => prev.map(log => 
-        safeIdCompare(log.id, id) ? updatedLog : log
+        compareEntityIds(log.id, id) ? updatedLog : log
       ));
       return updatedLog;
     } catch (error) {
@@ -82,7 +82,7 @@ export function UpdateLogsProvider({ children }: UpdateLogsProviderProps) {
   const deleteUpdateLog = async (id: string): Promise<void> => {
     try {
       await updateLogsApi.deleteUpdateLog(id);
-      setUpdateLogs(prev => prev.filter(log => !safeIdCompare(log.id, id)));
+      setUpdateLogs(prev => prev.filter(log => !compareEntityIds(log.id, id)));
     } catch (error) {
       console.error('Error deleting update log:', error);
       throw error;

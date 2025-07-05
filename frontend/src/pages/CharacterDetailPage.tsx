@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { charactersApi } from '@/services/api';
 import { type Character, type Skill, type Swimsuit } from '@/types';
 import { PageLoadingState } from '@/components/ui';
+import { getCharacterProfileImageUrl } from '@/services/utils';
 
 export default function CharacterDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -210,9 +211,9 @@ export default function CharacterDetailPage() {
               {/* Character Avatar */}
               <div className="flex-shrink-0">
                 <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-2xl sm:rounded-3xl flex items-center justify-center border-2 border-accent-cyan/30 overflow-hidden">
-                  {character.profile_image_url ? (
+                  {getCharacterProfileImageUrl(character) ? (
                     <img
-                      src={character.profile_image_url}
+                      src={getCharacterProfileImageUrl(character)}
                       alt={character.name_en}
                       className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
                       onError={(e) => {

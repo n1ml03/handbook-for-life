@@ -481,9 +481,12 @@ export default function DocumentPage() {
           {filteredDocuments.map((document, index) => (
             <motion.div
               key={document.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{
+                duration: 0.15,
+                delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+              }}
             >
               <Card
                 className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:border-accent-pink/30 overflow-hidden rounded-2xl"

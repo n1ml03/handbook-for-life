@@ -121,9 +121,6 @@ export const languageOptions = [
   { value: 'JP' as Language, label: '日本語' }
 ];
 
-// =============================================================================
-// CONSOLIDATED MULTI-LANGUAGE SEARCH HOOKS
-// =============================================================================
 
 // Generic hook for multi-language search and filtering
 export function useMultiLanguageSearch<T extends { id: string; name: string; description?: string }>(
@@ -225,7 +222,7 @@ export function useMultiLanguageSearchWithPagination<T extends { id: string; nam
 }
 
 // =============================================================================
-// FILTER UTILITIES - Consolidated from useMultiLanguageSearch.ts
+// FILTER UTILITIES
 // =============================================================================
 
 // Utility function to create search filter function for common use cases

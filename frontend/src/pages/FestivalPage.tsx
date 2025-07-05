@@ -205,6 +205,12 @@ export default function FestivalPage() {
     }
   }, [debouncedSearch, filterValues.status, filterValues.version]);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Instant scroll to top when changing pages for better performance
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   // Filter fields configuration
   const filterFields: FilterField[] = [
     {
@@ -320,9 +326,12 @@ export default function FestivalPage() {
             {paginatedFestivals.map((festival, index) => (
               <motion.div
                 key={festival.id}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
+                transition={{
+                  duration: 0.15,
+                  delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                }}
               >
                 <FestivalCard festival={festival as any} />
               </motion.div>
@@ -338,7 +347,7 @@ export default function FestivalPage() {
             className="flex items-center justify-center space-x-2 mt-8"
           >
             <motion.button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -353,7 +362,7 @@ export default function FestivalPage() {
                 return (
                   <motion.button
                     key={page}
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => handlePageChange(page)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
@@ -369,7 +378,7 @@ export default function FestivalPage() {
             </div>
             
             <motion.button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

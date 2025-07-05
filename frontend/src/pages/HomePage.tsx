@@ -76,7 +76,7 @@ const UpdateLog = React.memo(function UpdateLog() {
       filtered = filtered.filter(update => {
         const tags = safeNormalizeTags(update.tags);
         return update.title.toLowerCase().includes(searchLower) ||
-          update.description.toLowerCase().includes(searchLower) ||
+          (update.description || '').toLowerCase().includes(searchLower) ||
           update.content.toLowerCase().includes(searchLower) ||
           tags.some(tag => safeToString(tag).toLowerCase().includes(searchLower));
       });
@@ -142,7 +142,7 @@ const UpdateLog = React.memo(function UpdateLog() {
           <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan/5 via-accent-pink/5 to-accent-purple/5 rounded-3xl blur-xl opacity-60"></div>
           
           {/* Search Bar Container */}
-          <div className="relative modern-glass border border-border/20 rounded-3xl p-4 backdrop-blur-xl shadow-2xl bg-background/80 hover:shadow-accent-cyan/10 transition-all duration-500 hover:bg-background/90">
+          <div className="relative modern-glass border border-border/20 rounded-3xl p-3 backdrop-blur-xl shadow-2xl bg-background/80 hover:shadow-accent-cyan/10 transition-all duration-500 hover:bg-background/90">
             {/* Search Input Section */}
             <div className="relative group">
               {/* Search Icon */}
@@ -269,7 +269,10 @@ const UpdateLog = React.memo(function UpdateLog() {
                               key={tag}
                               initial={{ opacity: 0, scale: 0.8, y: 10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
-                              transition={{ delay: index * 0.03, duration: 0.3 }}
+                              transition={{
+                                delay: Math.min(index * 0.01, 0.05),
+                                duration: 0.15
+                              }}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -360,7 +363,7 @@ const UpdateLog = React.memo(function UpdateLog() {
                             {selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
                           </span>
                           <div className="flex items-center space-x-1 ml-2">
-                            {selectedTags.slice(0, 3).map((tag, index) => (
+                            {selectedTags.slice(0, 3).map((tag) => (
                               <Badge 
                                 key={tag} 
                                 variant="secondary" 
@@ -543,7 +546,10 @@ const UpdateLog = React.memo(function UpdateLog() {
                     key={update.version}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    transition={{
+                      delay: Math.min(index * 0.02, 0.1),
+                      duration: 0.15
+                    }}
                   >
                     <UpdateCard
                       update={update}
@@ -696,7 +702,10 @@ const UpdateCard = React.memo(function UpdateCard({
                           key={tagIndex}
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          transition={{ delay: tagIndex * 0.05 }}
+                          transition={{
+                            delay: Math.min(tagIndex * 0.01, 0.05),
+                            duration: 0.1
+                          }}
                           whileHover={{ scale: 1.05 }}
                       >
                         <Badge variant="secondary" className="text-xs hover:bg-accent-cyan/20 hover:text-accent-cyan transition-colors duration-200">
@@ -776,12 +785,15 @@ const Screenshots = React.memo(function Screenshots({ screenshots }: { screensho
       </h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
         {screenshots.map((screenshot, screenshotIndex) => (
-          <motion.div 
-            key={screenshotIndex} 
+          <motion.div
+            key={screenshotIndex}
             className="relative group"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: screenshotIndex * 0.05 + 0.25 }}
+            transition={{
+              delay: Math.min(screenshotIndex * 0.02 + 0.1, 0.2),
+              duration: 0.15
+            }}
             whileHover={{ scale: 1.02 }}
           >
             <div className="aspect-video bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg border border-border/40 flex items-center justify-center transition-all duration-500 group-hover:border-accent-pink/60 group-hover:shadow-lg group-hover:shadow-accent-pink/20">

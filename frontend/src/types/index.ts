@@ -6,14 +6,14 @@ import React from 'react'
 
 // Multi-language names interface used across entities
 export interface MultiLanguageNames {
-  jp: string;
-  en: string;
-  cn: string;
-  tw: string;
-  kr: string;
+  name_jp: string;
+  name_en: string;
+  name_cn: string;
+  name_tw: string;
+  name_kr: string;
 }
 
-// Character entity matching database schema
+// Character entity matching database schema exactly
 export interface Character {
   id: number;
   unique_key: string;
@@ -27,7 +27,8 @@ export interface Character {
   measurements?: string;
   blood_type?: string;
   voice_actor_jp?: string;
-  profile_image_url?: string;
+  profile_image_data?: string; // Base64 encoded image data
+  profile_image_mime_type?: string;
   is_active: boolean;
   game_version?: string;
 }
@@ -52,17 +53,15 @@ export interface Swimsuit {
   has_malfunction: boolean;
   is_limited: boolean;
   release_date_gl?: string; // ISO date string
-  // Populated fields from joins
-  character?: Character;
-  skills?: SwimsuitSkill[];
-  // Binary image data fields (matching backend)
+  game_version?: string;
+  // Binary image data fields (matching backend schema)
   image_before_data?: string; // Base64 encoded image data
   image_before_mime_type?: string;
   image_after_data?: string; // Base64 encoded image data
   image_after_mime_type?: string;
-  // Legacy URL fields for backward compatibility (computed from binary data)
-  image_before_url?: string;
-  image_after_url?: string;
+  // Populated fields from joins
+  character?: Character;
+  skills?: SwimsuitSkill[];
 }
 
 // Skill types and enums
@@ -80,6 +79,7 @@ export interface Skill {
   description_en?: string;
   skill_category: SkillCategory;
   effect_type?: string;
+  game_version?: string;
 }
 
 export interface SwimsuitSkill {
@@ -105,11 +105,10 @@ export interface Item {
   source_description_en?: string;
   item_category: ItemCategory;
   rarity: ItemRarity;
-  // Binary image data fields (matching backend)
+  game_version?: string;
+  // Binary image data fields (matching backend schema)
   icon_data?: string; // Base64 encoded image data
   icon_mime_type?: string;
-  // Legacy URL field for backward compatibility (computed from binary data)
-  icon_url?: string;
 }
 
 // Bromide types and enums
@@ -127,11 +126,10 @@ export interface Bromide {
   bromide_type: BromideType;
   rarity: BromideRarity;
   skill_id?: number;
-  // Binary image data fields (matching backend)
+  game_version?: string;
+  // Binary image data fields (matching backend schema)
   art_data?: string; // Base64 encoded image data
   art_mime_type?: string;
-  // Legacy URL field for backward compatibility (computed from binary data)
-  art_url?: string;
   // Populated fields from joins
   skill?: Skill;
 }
@@ -151,6 +149,7 @@ export interface Episode {
   episode_type: EpisodeType;
   related_entity_type?: string;
   related_entity_id?: number;
+  game_version?: string;
 }
 
 // Event types and enums
@@ -168,6 +167,7 @@ export interface Event {
   start_date: string; // ISO datetime string
   end_date: string; // ISO datetime string
   is_active?: boolean; // Computed field
+  game_version?: string;
 }
 
 // Gacha types and enums
@@ -185,6 +185,7 @@ export interface Gacha {
   gacha_subtype: GachaSubtype;
   start_date: string; // ISO datetime string
   end_date: string; // ISO datetime string
+  game_version?: string;
   pools?: GachaPool[];
 }
 
@@ -213,36 +214,42 @@ export interface ShopListing {
   cost_currency_item?: Item;
 }
 
-// Document types
-export type DocumentViewMode = 'list' | 'document';
-export type DocumentSection = 'checklist-creation' | 'checking-guide';
-
-export interface DocumentSectionInfo {
-  id: DocumentSection;
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-  status: 'active' | 'inactive' | 'draft';
-}
-
+// Document types - matching backend ExtendedDocument schema exactly
 export interface Document {
   id: number;
   unique_key: string;
   title_en: string;
   summary_en?: string;
   content_json_en?: Record<string, unknown>; // TipTap JSON content
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Binary screenshot data
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
-  // Binary screenshot data (matching backend)
-  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
-  // Extended properties for UI compatibility
+  // Extended fields for frontend compatibility (from backend ExtendedDocument)
   title: string; // Maps to title_en
   content: string; // Maps to content_json_en converted to HTML
-  category: string; // Category based on tags or type
-  tags: string[]; // Generated from category and type
-  author: string; // Default or computed author
-  // Legacy field for backward compatibility (computed from screenshots_data)
-  screenshots: string[]; // Screenshot URLs for visual documentation
+  category: string; // Generated category
+  tags: string[]; // Generated tags
+  author: string; // Default author
+}
+
+// Update log types - matching backend schema exactly
+export interface UpdateLog {
+  id: number;
+  unique_key: string;
+  version: string;
+  title: string;
+  content: string;
+  description?: string;
+  date: string; // ISO date string
+  tags?: string[]; // JSON array from backend
+  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Binary screenshot data
+  metrics?: {
+    performanceImprovement: string;
+    userSatisfaction: string;
+    bugReports: number;
+  }; // JSON object from backend
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
 }
 
 // Timeline view (for HomePage)
@@ -254,7 +261,7 @@ export interface TimelineView {
 }
 
 // ============================================================================
-// API RESPONSE TYPES
+// API RESPONSE TYPES - Matching Backend Exactly
 // ============================================================================
 
 export interface ApiSuccess<T = unknown> {
@@ -267,7 +274,7 @@ export interface ApiSuccess<T = unknown> {
 export interface ApiError {
   success: false;
   error: string;
-  errorId?: string; // Added to match backend error response format
+  errorId?: string;
   details?: Record<string, unknown>;
   timestamp: string;
   statusCode?: number;
@@ -277,7 +284,6 @@ export interface ApiError {
 
 export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
 
-// Pagination types
 export interface PaginationInfo {
   page: number;
   limit: number;
@@ -292,7 +298,11 @@ export interface PaginatedResult<T> {
   pagination: PaginationInfo;
 }
 
-export type ListResponse<T> = ApiSuccess<PaginatedResult<T>>
+export interface PaginatedApiResponse<T> extends ApiSuccess<T[]> {
+  pagination: PaginationInfo;
+}
+
+export type ListResponse<T> = PaginatedApiResponse<T>;
 
 // ============================================================================
 // QUERY PARAMETER TYPES
@@ -360,10 +370,11 @@ export interface EpisodeQueryParams extends PaginationQuery, SearchQuery {
 }
 
 export interface DocumentQueryParams extends PaginationQuery, SearchQuery {
+  category?: string;
 }
 
 // ============================================================================
-// UTILITY AND UI TYPES
+// UTILITY TYPES
 // ============================================================================
 
 export type SortDirection = 'asc' | 'desc';
@@ -395,7 +406,7 @@ export interface SortOption {
 }
 
 // ============================================================================
-// COMPONENT PROP TYPES
+// COMPONENT PROPS TYPES
 // ============================================================================
 
 export interface SwimsuitCardProps {
@@ -433,23 +444,11 @@ export interface GachaCardProps {
 // DASHBOARD TYPES
 // ============================================================================
 
-export interface DashboardOverviewResponse {
-  swimsuits: {
-    data: Swimsuit[];
-    pagination: PaginationMetadata;
-  };
-  accessories: {
-    data: Item[];
-    pagination: PaginationMetadata;
-  };
-  skills: {
-    data: Skill[];
-    pagination: PaginationMetadata;
-  };
-  bromides: {
-    data: Bromide[];
-    pagination: PaginationMetadata;
-  };
+export interface DashboardOverviewData {
+  swimsuits: PaginatedResult<Swimsuit>;
+  accessories: PaginatedResult<Item>;
+  skills: PaginatedResult<Skill>;
+  bromides: PaginatedResult<Bromide>;
   summary: {
     totalSwimsuits: number;
     totalAccessories: number;
@@ -458,6 +457,8 @@ export interface DashboardOverviewResponse {
     lastUpdated: string;
   };
 }
+
+export interface DashboardOverviewResponse extends ApiSuccess<DashboardOverviewData> {}
 
 export interface DashboardCharacterStatsResponse {
   totalCharacters: number;
@@ -472,7 +473,7 @@ export interface DashboardCharacterStatsResponse {
 }
 
 // ============================================================================
-// STATE AND CONTEXT TYPES
+// STATE TYPES
 // ============================================================================
 
 export interface ErrorState {
@@ -508,28 +509,18 @@ export interface FilterState {
 }
 
 // ============================================================================
-// ADMIN AND UPDATE LOG TYPES
+// ADMIN TYPES
 // ============================================================================
 
-export interface UpdateLog {
-  id: string;
-  version: string;
+export type DocumentViewMode = 'list' | 'document';
+export type DocumentSection = 'checklist-creation' | 'checking-guide';
+
+export interface DocumentSectionInfo {
+  id: DocumentSection;
   title: string;
-  content: string;
+  icon: React.ComponentType<{ className?: string }>;
   description: string;
-  date: string;
-  tags: string[];
-  // Binary screenshot data (matching backend)
-  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>;
-  // Legacy field for backward compatibility (computed from screenshots_data)
-  screenshots?: string[]; // Made optional to handle cases where it might be undefined
-  metrics?: {
-    performanceImprovement: string;
-    userSatisfaction: string;
-    bugReports: number;
-  };
-  createdAt: string;
-  updatedAt: string;
+  status: 'active' | 'inactive' | 'draft';
 }
 
 export interface DocumentCategory {
@@ -539,55 +530,37 @@ export interface DocumentCategory {
   color?: string;
 }
 
-// Default document categories data
+// Document categories data
 export const documentCategoriesData: DocumentCategory[] = [
   {
-    id: 'game-mechanics',
-    name: 'Game Mechanics',
-    description: 'Core game mechanics and systems',
-    color: 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+    id: 'checklist-creation',
+    name: 'Checklist Creation',
+    description: 'Documents related to creating and managing checklists',
+    color: 'text-blue-600 border-blue-200 bg-blue-50'
   },
   {
-    id: 'characters',
-    name: 'Characters',
-    description: 'Character guides and information',
-    color: 'text-pink-400 border-pink-400/30 bg-pink-400/10'
+    id: 'checking-guide',
+    name: 'Checking Guide',
+    description: 'Guides for checking and validation processes',
+    color: 'text-green-600 border-green-200 bg-green-50'
   },
   {
-    id: 'swimsuits',
-    name: 'Swimsuits',
-    description: 'Swimsuit guides and stats',
-    color: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/10'
+    id: 'general',
+    name: 'General',
+    description: 'General documentation and guides',
+    color: 'text-gray-600 border-gray-200 bg-gray-50'
   },
   {
-    id: 'events',
-    name: 'Events',
-    description: 'Event guides and strategies',
-    color: 'text-purple-400 border-purple-400/30 bg-purple-400/10'
+    id: 'tutorial',
+    name: 'Tutorial',
+    description: 'Step-by-step tutorials and how-to guides',
+    color: 'text-purple-600 border-purple-200 bg-purple-50'
   },
   {
-    id: 'skills',
-    name: 'Skills',
-    description: 'Skill guides and explanations',
-    color: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'
-  },
-  {
-    id: 'items',
-    name: 'Items',
-    description: 'Item guides and usage',
-    color: 'text-green-400 border-green-400/30 bg-green-400/10'
-  },
-  {
-    id: 'strategies',
-    name: 'Strategies',
-    description: 'Tips and strategies',
-    color: 'text-orange-400 border-orange-400/30 bg-orange-400/10'
-  },
-  {
-    id: 'updates',
-    name: 'Updates',
-    description: 'Game updates and changelogs',
-    color: 'text-red-400 border-red-400/30 bg-red-400/10'
+    id: 'reference',
+    name: 'Reference',
+    description: 'Reference materials and documentation',
+    color: 'text-orange-600 border-orange-200 bg-orange-50'
   }
 ];
 
@@ -599,8 +572,6 @@ export interface AdminSection {
   lastUpdated: string;
   status: 'active' | 'inactive' | 'draft';
 }
-
-
 
 export interface ExportOptions {
   format: 'csv' | 'excel' | 'json';
@@ -625,7 +596,7 @@ export interface NotificationState {
 }
 
 // ============================================================================
-// THEME AND UI TYPES
+// THEME TYPES
 // ============================================================================
 
 export interface ThemeColors {
@@ -644,7 +615,10 @@ export interface ComponentTheme {
   shadows: Record<string, string>;
 }
 
-// Memory types for episodes page
+// ============================================================================
+// MEMORY TYPES
+// ============================================================================
+
 export interface Memory {
   id: string;
   name: string;
@@ -666,6 +640,10 @@ export interface MemoryCardProps {
   onToggleFavorite?: (id: string) => void;
 }
 
+// ============================================================================
+// PAGINATION TYPES
+// ============================================================================
+
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -675,7 +653,7 @@ export interface PaginationProps {
 }
 
 // ============================================================================
-// TYPE GUARDS AND UTILITIES
+// UTILITY FUNCTIONS
 // ============================================================================
 
 export function isApiSuccess<T>(response: ApiResponse<T>): response is ApiSuccess<T> {
@@ -686,8 +664,7 @@ export function isApiError(response: ApiResponse): response is ApiError {
   return response.success === false;
 }
 
-// Helper function to get multi-language name
-export function getLocalizedName(entity: { name_jp: string; name_en: string; name_cn: string; name_tw: string; name_kr: string }, lang: Language = 'en'): string {
+export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'en'): string {
   switch (lang) {
     case 'jp': return entity.name_jp;
     case 'en': return entity.name_en;
@@ -698,10 +675,12 @@ export function getLocalizedName(entity: { name_jp: string; name_en: string; nam
   }
 }
 
-// Add ItemType enum for unified items
+// ============================================================================
+// UNIFIED ITEM TYPES
+// ============================================================================
+
 export type ItemType = 'swimsuit' | 'accessory' | 'skill' | 'bromide';
 
-// Add UnifiedItem interface for items page
 export interface UnifiedItem {
   id: string;
   name: string;
@@ -721,4 +700,17 @@ export interface UnifiedItem {
     name?: string;
     description?: string;
   }>;
+}
+
+// ============================================================================
+// HELPER UTILITY TYPES
+// ============================================================================
+
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 } 

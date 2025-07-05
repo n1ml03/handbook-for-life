@@ -89,7 +89,7 @@ export function screenshotsDataToUrls(screenshotsData?: ScreenshotData[]): strin
 export function urlsToScreenshotsData(urls: string[]): ScreenshotData[] {
   // This is a simplified implementation for backward compatibility
   // In practice, you'd need to fetch the URLs and convert them to base64
-  return urls.map((url, index) => ({
+  return urls.map((_, index) => ({
     data: '', // Would need to fetch and convert
     mimeType: 'image/jpeg', // Would need to detect
     filename: `screenshot_${index + 1}.jpg`
@@ -189,7 +189,7 @@ export function addCompatibilityUrls<T extends Record<string, any>>(entity: T, i
   imageFields.forEach(field => {
     const imageData = extractImageData(entity, field);
     if (imageData) {
-      result[`${field}_url`] = getImageUrl(imageData);
+      (result as any)[`${field}_url`] = getImageUrl(imageData);
     }
   });
   

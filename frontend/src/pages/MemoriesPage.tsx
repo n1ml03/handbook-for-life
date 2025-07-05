@@ -262,7 +262,7 @@ export default function MemoriesPage() {
 
   return (
     <PageLoadingState 
-      isLoading={loading && memories.length === 0} 
+      isLoading={loading} 
       message="Loading episodes..."
     >
     <div className="modern-page">
@@ -319,9 +319,12 @@ export default function MemoriesPage() {
               {filteredMemories.map((memory, index) => (
                 <motion.div
                   key={memory.id}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * index }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
                 >
                   <MemoryCard memory={memory} onToggleFavorite={handleToggleFavorite} />
                 </motion.div>

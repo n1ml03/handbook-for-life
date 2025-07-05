@@ -17,7 +17,8 @@
     "health": "curl -f http://localhost:3001/api/health || exit 1",
     "docs:generate": "node scripts/add-swagger-docs.js",
     "docs:open": "open http://localhost:3001/api-docs || echo 'Open http://localhost:3001/api-docs in your browser'",
-    "docs:spec": "curl -s http://localhost:3001/api-docs.json | jq . > swagger-spec.json && echo 'OpenAPI spec saved to swagger-spec.json'"
+    "docs:spec": "curl -s http://localhost:3001/api-docs.json | jq . > swagger-spec.json && echo 'OpenAPI spec saved to swagger-spec.json'",
+    "test:logger": "bun run src/test-logger.ts"
   },
   "dependencies": {
     "@types/swagger-jsdoc": "^6.0.4",

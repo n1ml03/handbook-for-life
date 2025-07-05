@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { Settings, FileText, BookOpen } from 'lucide-react';
+import { FileText, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
@@ -130,7 +130,7 @@ const AdminPage = () => {
       category: 'game-mechanics', // Default category
       tags: [], // Empty tags array
       author: 'Admin', // Default author
-      screenshots: [] // Empty screenshots array
+      screenshots_data: [] // Empty screenshots array
     };
     setEditingDocument(newDocument);
     setIsEditMode(true);
@@ -155,13 +155,20 @@ const AdminPage = () => {
         title_en: document.title_en || document.title || 'Untitled Document',
         // Ensure we have unique_key
         unique_key: document.unique_key || `doc-${Date.now()}`,
+        // Handle content conversion - prioritize JSON content over HTML
+        content_json_en: document.content_json_en || undefined,
         // Map frontend screenshots to backend format if needed
-        screenshots: document.screenshots || []
+
+        screenshots_data: document.screenshots_data || [],
+        // Ensure tags are present
+        tags: document.tags || []
       };
 
       console.log('Saving document:', {
         isExistingDocument,
         documentId: editingDocument?.id,
+        hasJsonContent: !!documentToSave.content_json_en,
+        hasHtmlContent: !!documentToSave.content,
         documentToSave: {
           ...documentToSave,
           content: documentToSave.content?.substring(0, 100) + '...' // Truncate for logging
@@ -171,6 +178,11 @@ const AdminPage = () => {
       // Validate required fields
       if (!documentToSave.title_en || !documentToSave.unique_key) {
         throw new Error('Title and unique key are required fields');
+      }
+
+      // Validate content exists in some form
+      if (!documentToSave.content && !documentToSave.content_json_en) {
+        throw new Error('Document content is required');
       }
 
       if (isExistingDocument) {
@@ -184,7 +196,7 @@ const AdminPage = () => {
         });
       } else {
         // Create new document - pass the full document object and JSON content if available
-        const jsonContent = (documentToSave as any).jsonContent;
+        const jsonContent = (documentToSave as any).jsonContent || documentToSave.content_json_en;
         await addDocument(documentToSave, jsonContent);
         addNotification({
           type: 'success',
@@ -195,6 +207,8 @@ const AdminPage = () => {
       }
       setEditingDocument(null);
       setIsEditMode(false);
+      setIsPreviewMode(false);
+      setIsFocusMode(false);
     } catch (error: any) {
       console.error('Error saving document:', error);
 
@@ -258,21 +272,22 @@ const AdminPage = () => {
   // Update log handlers
   const handleCreateNewUpdateLog = useCallback(() => {
     setEditingLog({
-      id: '',
+      id: 0,
+      unique_key: '',
       version: '',
       title: '',
       description: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
       tags: [],
-      screenshots: [],
+      screenshots_data: [],
       metrics: {
         performanceImprovement: '0%',
         userSatisfaction: '0%',
         bugReports: 0
       },
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
     setIsEditMode(true);
   }, []);
@@ -292,7 +307,7 @@ const AdminPage = () => {
       }
 
       if (editingLog?.id) {
-        await updateUpdateLog(editingLog.id, log);
+        await updateUpdateLog(editingLog.id.toString(), log);
         addNotification({
           type: 'success',
           title: 'Update Log Updated',
@@ -382,14 +397,14 @@ const AdminPage = () => {
   const getFilteredDocuments = useCallback(() => {
     switch (activeDocumentSection) {
       case 'checklist-creation':
-        return documents.filter(doc => 
-          doc.unique_key.includes('checklist') || 
-          doc.title_en.toLowerCase().includes('checklist')
+        return documents.filter(doc =>
+          doc.unique_key.includes('checklist') ||
+          (doc.title_en?.toLowerCase() || '').includes('checklist')
         );
       case 'checking-guide':
-        return documents.filter(doc => 
-          doc.unique_key.includes('guide') || 
-          doc.title_en.toLowerCase().includes('guide')
+        return documents.filter(doc =>
+          doc.unique_key.includes('guide') ||
+          (doc.title_en?.toLowerCase() || '').includes('guide')
         );
       default:
         return documents;
@@ -451,7 +466,7 @@ const AdminPage = () => {
           />
         );
       
-      case 'checklist-creation':
+      case 'update-logs':
         return (
           <UpdateLogManagement
             updateLogs={updateLogs.filter((_, index) => index % 2 === 0)}
@@ -464,61 +479,31 @@ const AdminPage = () => {
             isEditMode={isEditMode}
           />
         );
-
-      case 'checking-guide':
-        return (
-          <UpdateLogManagement
-            updateLogs={updateLogs.filter((_, index) => index % 2 === 1)}
-            onCreateNew={handleCreateNewUpdateLog}
-            onEditUpdateLog={(log: UpdateLog) => {
-              setEditingLog(log);
-              setIsEditMode(true);
-            }}
-            onDeleteUpdateLog={handleDeleteUpdateLog}
-            isEditMode={isEditMode}
-          />
-        );
-      
-      default:
-        return (
-          <Card className="p-12 text-center rounded-2xl">
-            <CardContent>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="max-w-md mx-auto"
-              >
-                <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
-                  <Settings className="w-12 h-12 text-accent-cyan/60" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">Section Under Development</h3>
-              </motion.div>
-            </CardContent>
-          </Card>
-        );
     }
   };
 
   return (
     <Container>
       {/* Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-3 max-w-md">
-        <AnimatePresence>
-          {notifications.map(notification => (
-            <motion.div
-              key={notification.id}
-              initial={{ opacity: 0, x: 100, scale: 0.8 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <NotificationToast
-                notification={notification}
-                onRemove={removeNotification}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className="fixed top-20 right-4 z-[9999] space-y-3 max-w-md pointer-events-none">
+        <div className="pointer-events-auto">
+          <AnimatePresence>
+            {notifications.map(notification => (
+              <motion.div
+                key={notification.id}
+                initial={{ opacity: 0, x: 100, scale: 0.8 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 100, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <NotificationToast
+                  notification={notification}
+                  onRemove={removeNotification}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Compact Header */}

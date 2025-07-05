@@ -19,7 +19,6 @@ const CharacterDetailPage = lazy(() => import('@/pages/CharacterDetailPage'));
 const AccessoryPage = lazy(() => import('@/pages/AccessoryPage'));
 const SkillsPage = lazy(() => import('@/pages/SkillsPage'));
 const DecorateBromidePage = lazy(() => import('@/pages/DecorateBromidePage'));
-const OwnerRoomPage = lazy(() => import('@/pages/OwnerRoomPage'));
 const ItemsPage = lazy(() => import('@/pages/ItemsPage'));
 const FestivalPage = lazy(() => import('@/pages/FestivalPage'));
 const GachaPage = lazy(() => import('@/pages/GachaPage'));
@@ -41,8 +40,6 @@ function EnhancedLoadingFallback() {
     </div>
   );
 }
-
-
 
 function App() {
   // Use theme hook to handle theme application
@@ -94,7 +91,6 @@ function App() {
                       <Route path="/decorate-bromide" element={<DecorateBromidePage />} />
                       <Route path="/accessory" element={<AccessoryPage />} />
                       <Route path="/memories" element={<MemoriesPage />} />
-                      <Route path="/owner-room" element={<OwnerRoomPage />} />
                       <Route path="/items" element={<ItemsPage />} />
                       <Route path="/shop" element={<ShopPage />} />
                       <Route path="/festivals" element={<FestivalPage />} />

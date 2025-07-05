@@ -1,8 +1,305 @@
 import React from 'react'
 import { twMerge } from "tailwind-merge"
+import { Language, MultiLanguageNames } from '@/types'
 
 export function cn(...inputs: (string | undefined)[]) {
   return twMerge(...inputs.filter(Boolean))
+}
+
+// =============================================================================
+// BACKEND DATA HELPERS - Functions for working with backend response format
+// =============================================================================
+
+/**
+ * Extract localized name from multi-language entity
+ */
+export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'en'): string {
+  switch (lang) {
+    case 'jp': return entity.name_jp || entity.name_en || '';
+    case 'en': return entity.name_en || entity.name_jp || '';
+    case 'cn': return entity.name_cn || entity.name_en || '';
+    case 'tw': return entity.name_tw || entity.name_en || '';
+    case 'kr': return entity.name_kr || entity.name_en || '';
+    default: return entity.name_en || entity.name_jp || '';
+  }
+}
+
+/**
+ * Create data URL from binary image data and mime type
+ */
+export function createImageDataUrl(imageData?: string, mimeType?: string): string | undefined {
+  if (!imageData || !mimeType) {
+    return undefined;
+  }
+  return `data:${mimeType};base64,${imageData}`;
+}
+
+/**
+ * Extract character profile image URL from character data
+ */
+export function getCharacterProfileImageUrl(character: { profile_image_data?: string; profile_image_mime_type?: string }): string | undefined {
+  return createImageDataUrl(character.profile_image_data, character.profile_image_mime_type);
+}
+
+/**
+ * Extract swimsuit images from swimsuit data
+ */
+export function getSwimsuitImages(swimsuit: { 
+  image_before_data?: string; 
+  image_before_mime_type?: string;
+  image_after_data?: string;
+  image_after_mime_type?: string;
+}): {
+  beforeImage?: string;
+  afterImage?: string;
+} {
+  return {
+    beforeImage: createImageDataUrl(swimsuit.image_before_data, swimsuit.image_before_mime_type),
+    afterImage: createImageDataUrl(swimsuit.image_after_data, swimsuit.image_after_mime_type),
+  };
+}
+
+/**
+ * Extract item icon URL from item data
+ */
+export function getItemIconUrl(item: { icon_data?: string; icon_mime_type?: string }): string | undefined {
+  return createImageDataUrl(item.icon_data, item.icon_mime_type);
+}
+
+/**
+ * Extract bromide art URL from bromide data
+ */
+export function getBromideArtUrl(bromide: { art_data?: string; art_mime_type?: string }): string | undefined {
+  return createImageDataUrl(bromide.art_data, bromide.art_mime_type);
+}
+
+/**
+ * Extract screenshot URLs from screenshots_data array
+ */
+export function extractScreenshotUrls(screenshotsData?: Array<{data: string; mimeType: string; filename: string}>): string[] {
+  if (!screenshotsData || !Array.isArray(screenshotsData)) {
+    return [];
+  }
+  
+  return screenshotsData
+    .filter(screenshot => screenshot.data && screenshot.mimeType)
+    .map(screenshot => createImageDataUrl(screenshot.data, screenshot.mimeType))
+    .filter(Boolean) as string[];
+}
+
+/**
+ * Format ISO date string to display format
+ */
+export function formatDisplayDate(isoDateString?: string): string {
+  if (!isoDateString) {
+    return '';
+  }
+  
+  try {
+    const date = new Date(isoDateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return isoDateString;
+  }
+}
+
+/**
+ * Format ISO datetime string to display format
+ */
+export function formatDisplayDateTime(isoDateTimeString?: string): string {
+  if (!isoDateTimeString) {
+    return '';
+  }
+  
+  try {
+    const date = new Date(isoDateTimeString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return isoDateTimeString;
+  }
+}
+
+/**
+ * Extract content HTML from TipTap JSON content
+ */
+export function extractContentHtml(contentJson?: Record<string, unknown>): string {
+  if (!contentJson || typeof contentJson !== 'object') {
+    return '';
+  }
+  
+  // This is a simple extraction for TipTap JSON
+  // For a full implementation, you might want to use a TipTap HTML serializer
+  try {
+    const content = contentJson.content as any[];
+    if (!Array.isArray(content)) {
+      return '';
+    }
+    
+    return content
+      .map(node => {
+        if (node.type === 'paragraph' && node.content) {
+          return node.content
+            .map((textNode: any) => textNode.text || '')
+            .join('');
+        }
+        return '';
+      })
+      .filter(text => text.length > 0)
+      .join('\n\n');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Extract plain text from TipTap JSON content for search/display
+ */
+export function extractContentText(contentJson?: Record<string, unknown>): string {
+  const html = extractContentHtml(contentJson);
+  // Remove HTML tags if any were preserved
+  return html.replace(/<[^>]*>/g, '').trim();
+}
+
+/**
+ * Check if an event is currently active based on start/end dates
+ */
+export function isEventActive(event: { start_date: string; end_date: string }): boolean {
+  const now = new Date();
+  const startDate = new Date(event.start_date);
+  const endDate = new Date(event.end_date);
+  
+  return now >= startDate && now <= endDate;
+}
+
+/**
+ * Check if a gacha is currently active based on start/end dates
+ */
+export function isGachaActive(gacha: { start_date: string; end_date: string }): boolean {
+  const now = new Date();
+  const startDate = new Date(gacha.start_date);
+  const endDate = new Date(gacha.end_date);
+  
+  return now >= startDate && now <= endDate;
+}
+
+/**
+ * Generate category from document tags or content
+ */
+export function generateDocumentCategory(document: {
+  title_en?: string;
+  content_json_en?: Record<string, unknown>;
+  summary_en?: string;
+}): string {
+  // Safely handle potentially undefined title_en
+  const title = document.title_en?.toLowerCase() || '';
+  const summary = document.summary_en?.toLowerCase() || '';
+  const content = extractContentText(document.content_json_en).toLowerCase();
+  const text = `${title} ${summary} ${content}`;
+
+  if (text.includes('character') || text.includes('girl')) {
+    return 'characters';
+  }
+  if (text.includes('swimsuit') || text.includes('outfit')) {
+    return 'swimsuits';
+  }
+  if (text.includes('skill') || text.includes('ability')) {
+    return 'skills';
+  }
+  if (text.includes('event') || text.includes('festival')) {
+    return 'events';
+  }
+  if (text.includes('item') || text.includes('currency')) {
+    return 'items';
+  }
+  if (text.includes('guide') || text.includes('tutorial')) {
+    return 'guides';
+  }
+  if (text.includes('update') || text.includes('changelog')) {
+    return 'updates';
+  }
+
+  return 'general';
+}
+
+/**
+ * Generate tags from document content and category
+ */
+export function generateDocumentTags(document: {
+  title_en?: string;
+  content_json_en?: Record<string, unknown>;
+  summary_en?: string;
+}): string[] {
+  const category = generateDocumentCategory(document);
+  const tags = [category];
+
+  // Safely handle potentially undefined title_en
+  const title = document.title_en?.toLowerCase() || '';
+  const summary = document.summary_en?.toLowerCase() || '';
+  const content = extractContentText(document.content_json_en).toLowerCase();
+  const text = `${title} ${summary} ${content}`;
+  
+  // Add specific tags based on content
+  const tagPatterns = [
+    { pattern: /beginner|new|start/i, tag: 'beginner' },
+    { pattern: /advanced|expert|pro/i, tag: 'advanced' },
+    { pattern: /strategy|tactic|tip/i, tag: 'strategy' },
+    { pattern: /stats|number|calculation/i, tag: 'stats' },
+    { pattern: /ssr\+|ssr|sr|r|n/i, tag: 'rarity' },
+    { pattern: /limited|exclusive|special/i, tag: 'limited' },
+    { pattern: /malfunction|awakening/i, tag: 'enhancement' },
+  ];
+  
+  tagPatterns.forEach(({ pattern, tag }) => {
+    if (pattern.test(text) && !tags.includes(tag)) {
+      tags.push(tag);
+    }
+  });
+  
+  return tags;
+}
+
+/**
+ * Safe comparison of entity IDs (handles string/number conversion)
+ */
+export function compareEntityIds(id1: any, id2: any): boolean {
+  return String(id1) === String(id2);
+}
+
+/**
+ * Extract rarity display color class
+ */
+export function getRarityColorClass(rarity: string): string {
+  switch (rarity.toUpperCase()) {
+    case 'SSR+': return 'text-rainbow bg-gradient-to-r from-purple-400 via-pink-400 to-red-400';
+    case 'SSR': return 'text-yellow-400';
+    case 'SR': return 'text-purple-400';
+    case 'R': return 'text-blue-400';
+    case 'N': return 'text-gray-400';
+    default: return 'text-gray-400';
+  }
+}
+
+/**
+ * Extract suit type display color class
+ */
+export function getSuitTypeColorClass(suitType: string): string {
+  switch (suitType.toUpperCase()) {
+    case 'POW': return 'text-red-400';
+    case 'TEC': return 'text-blue-400';
+    case 'STM': return 'text-green-400';
+    case 'APL': return 'text-pink-400';
+    default: return 'text-gray-400';
+  }
 }
 
 // =============================================================================

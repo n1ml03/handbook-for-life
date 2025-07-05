@@ -452,7 +452,7 @@ export const createDecorBromideFilterConfig = (types: string[], rarities: string
     key: 'search',
     label: 'Search',
     type: 'text',
-    placeholder: 'Search bromides and decorations in all languages...',
+    placeholder: 'Search deco-bromides in all languages...',
     icon: <Search className="w-3 h-3 mr-1" />,
   },
   {

@@ -88,7 +88,7 @@ export const UpdateLogManagement: React.FC<UpdateLogManagementProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleDelete(log.id)}
+                      onClick={() => handleDelete(log.id.toString())}
                       className="text-red-600 border-red-200 focus:ring-2 focus:ring-red-100 focus:outline-hidden transition-colors duration-200"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Document, DocumentCategory } from '@/types';
 import { DocumentSectionCards } from './DocumentSectionCards';
-import { safeNormalizeTags, safeToString } from '@/services/utils';
+import { generateDocumentCategory, generateDocumentTags, extractContentText, formatDisplayDateTime } from '@/services/utils';
 
 export interface DocumentManagementProps {
   documents: Document[];
@@ -19,7 +19,7 @@ export interface DocumentManagementProps {
 
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({
   documents,
-  documentCategories,
+
   activeDocumentSection,
   onSectionChange,
   onEditDocument,
@@ -33,22 +33,23 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
       return documents;
     }
     return documents.filter(doc => {
-      const tags = safeNormalizeTags(doc.tags);
+      const tags = generateDocumentTags(doc);
+      const category = generateDocumentCategory(doc);
       
       if (activeDocumentSection === 'checklist-creation') {
         return tags.some(tag => {
-          const tagStr = safeToString(tag).toLowerCase();
+          const tagStr = tag.toLowerCase();
           return tagStr.includes('checklist') || 
                  tagStr.includes('creation') ||
                  tagStr.includes('guide');
-        }) || doc.category === 'checklist-creation';
+        }) || category === 'checklist-creation';
       } else if (activeDocumentSection === 'checking-guide') {
         return tags.some(tag => {
-          const tagStr = safeToString(tag).toLowerCase();
+          const tagStr = tag.toLowerCase();
           return tagStr.includes('checking') || 
                  tagStr.includes('verification') ||
                  tagStr.includes('validation');
-        }) || doc.category === 'checking-guide';
+        }) || category === 'checking-guide';
       }
       return false;
     });
@@ -84,24 +85,25 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{document.title}</h3>
+                        <h3 className="text-lg font-semibold">{document.title_en || document.title || 'Untitled Document'}</h3>
                         <Badge variant="outline" className="text-xs">
-                          {documentCategories.find(cat => cat.id === document.category)?.name || document.category}
+                          {generateDocumentCategory(document)}
                         </Badge>
                       </div>
                       <p className="text-muted-foreground mb-3 line-clamp-2">
-                        {document.content.split('\n').find(line => line.trim() && !line.startsWith('#'))?.slice(0, 150)}
-                        {document.content.length > 150 && '...'}
+                        {document.summary_en || extractContentText(document.content_json_en).slice(0, 150)}
+                        {(document.summary_en && document.summary_en.length > 150) || 
+                         (extractContentText(document.content_json_en).length > 150) ? '...' : ''}
                       </p>
                       <div className="flex flex-wrap gap-1 mb-3">
                         {(() => {
-                          const tags = safeNormalizeTags(document.tags);
+                          const tags = generateDocumentTags(document);
                           return (
                             <>
                               {tags.slice(0, 3).map((tag, index) => (
                                 <Badge key={index} variant="outline" className="text-xs">
                                   <Tags className="w-3 h-3 mr-1" />
-                                  {safeToString(tag)}
+                                  {tag}
                                 </Badge>
                               ))}
                               {tags.length > 3 && (
@@ -114,7 +116,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({
                         })()}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Last updated: {document.updated_at} by {document.author}
+                        Last updated: {formatDisplayDateTime(document.updated_at)}
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">

@@ -286,29 +286,15 @@ export const corsOptions = {
  */
 export const securityLogger = (req: Request, res: Response, next: NextFunction): void => {
   const startTime = Date.now();
-  
-  // Log request details
-  logger.info('API Request', {
-    method: req.method,
-    url: req.url,
-    ip: req.ip,
-    userAgent: req.get('user-agent'),
-    contentLength: req.get('content-length'),
-    timestamp: new Date().toISOString()
-  });
-  
+
+  // Log incoming request using enhanced logger
+  logger.logApiRequest(req);
+
   // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    logger.info('API Response', {
-      method: req.method,
-      url: req.url,
-      statusCode: res.statusCode,
-      duration,
-      ip: req.ip,
-      timestamp: new Date().toISOString()
-    });
+    logger.logRequest(req, res, duration);
   });
-  
+
   next();
 };

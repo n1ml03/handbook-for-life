@@ -402,7 +402,7 @@ const TiptapEditor = ({
         'focus:ring-2 focus:ring-accent-cyan/40 focus:ring-offset-2 focus:ring-offset-background',
         'focus:border-accent-cyan/30',
         // Active state
-        isActive ? 'bg-gradient-to-br from-accent-cyan/20 via-accent-purple/10 to-accent-pink/15 text-accent-cyan border-accent-cyan/40 shadow-md shadow-accent-cyan/25' : '',
+        isActive ? 'bg-accent-cyan/20 text-accent-cyan border-accent-cyan/30' : '',
         // Disabled state
         disabled ? 'opacity-40 cursor-not-allowed' : '',
         // Variant styles
@@ -414,7 +414,7 @@ const TiptapEditor = ({
   );
 
   const ToolbarDivider = () => (
-    <div className="w-px h-8 bg-gradient-to-b from-transparent via-accent-cyan/30 to-transparent mx-3 rounded-full" />
+    <div className="w-px h-8 bg-border mx-3" />
   );
 
   const getCharacterCount = () => {
@@ -438,7 +438,7 @@ const TiptapEditor = ({
         <BubbleMenu
           editor={editor}
           tippyOptions={{ duration: 150, placement: 'top' }}
-          className="modern-glass p-3 flex items-center gap-2 shadow-xl border border-border/50 backdrop-blur-md rounded-lg z-50"
+          className="bg-background/95 backdrop-blur-sm p-3 flex items-center gap-2 border border-border rounded-lg z-50"
         >
           {/* Core formatting - available in all modes */}
           <ToolbarButton
@@ -498,7 +498,7 @@ const TiptapEditor = ({
         <FloatingMenu
           editor={editor}
           tippyOptions={{ duration: 150, placement: 'left' }}
-          className="modern-glass p-3 flex flex-col gap-2 shadow-xl border border-border/50 backdrop-blur-md rounded-lg z-50"
+          className="bg-background/95 backdrop-blur-sm p-3 flex flex-col gap-2 border border-border rounded-lg z-50"
         >
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -526,8 +526,8 @@ const TiptapEditor = ({
 
       {/* Modern Enhanced Toolbar */}
       {editable && showToolbar && mode !== 'inline' && (
-        <div className="modern-card border-b-0 rounded-t-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-accent-cyan/5 via-accent-purple/5 to-accent-pink/5 p-3 sm:p-4">
+        <div className="border border-border border-b-0 rounded-t-xl overflow-hidden bg-background">
+          <div className="bg-muted/10 p-3 sm:p-4">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4">
             {/* Essential Tools - Always visible */}
             <div className="flex items-center gap-1">
@@ -696,7 +696,7 @@ const TiptapEditor = ({
                   {/* Mobile/Tablet Dropdown */}
                   {showAdvancedTools && (
                     <div className="absolute top-full left-0 mt-3 z-50 lg:hidden">
-                      <div className="modern-glass p-3 sm:p-4 border border-border/50 backdrop-blur-md shadow-xl min-w-[200px] sm:min-w-[240px] rounded-xl bg-background/95">
+                      <div className="bg-background/95 backdrop-blur-sm p-3 sm:p-4 border border-border min-w-[200px] sm:min-w-[240px] rounded-xl">
                         <div className="space-y-3">
                           {/* Mobile: Include structure tools */}
                           <div className="sm:hidden space-y-3">
@@ -739,7 +739,7 @@ const TiptapEditor = ({
                                 </ToolbarButton>
                               </div>
                             )}
-                            <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-cyan/30 to-transparent" />
+                            <div className="w-full h-px bg-border" />
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -927,12 +927,11 @@ const TiptapEditor = ({
           }}
           className={cn(
             editable && showToolbar && mode !== 'inline'
-              ? 'modern-card border-t-0 rounded-t-none rounded-b-xl bg-gradient-to-br from-background via-background to-accent-cyan/5'
+              ? 'border border-border border-t-0 rounded-t-none rounded-b-xl bg-background'
               : mode === 'inline'
                 ? 'border-0 bg-transparent'
-                : 'modern-card bg-gradient-to-br from-background via-background to-accent-purple/5',
+                : 'border border-border rounded-xl bg-background',
             isAtLimit() ? 'ring-2 ring-destructive/30 ring-offset-2' : '',
-            'shadow-sm',
             // Add cursor pointer to indicate clickable area when editable
             editable && !isPreviewMode ? 'cursor-text' : ''
           )}

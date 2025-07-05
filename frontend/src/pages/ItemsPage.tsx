@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Gem,
   Shirt,
@@ -32,10 +32,35 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { 
   addTranslationsToItems, 
   type MultiLanguageItem} from '@/services/multiLanguageSearch';
-import { safeExtractArrayData } from '@/services/utils';
+import { getBromideArtUrl } from '@/services/utils';
 import { useMultiLanguageSearch } from '@/services/multiLanguageSearch';
 import React from 'react';
 import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
+
+// Skeleton component for loading states
+const ItemCardSkeleton = React.memo(() => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="bg-dark-card/50 border border-dark-border/30 rounded-2xl p-6 animate-pulse"
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-muted/30 rounded-lg" />
+        <div className="flex-1">
+          <div className="w-16 h-4 bg-muted/30 rounded mb-2" />
+          <div className="w-12 h-3 bg-muted/20 rounded" />
+        </div>
+      </div>
+    </div>
+    <div className="space-y-2">
+      <div className="w-3/4 h-4 bg-muted/30 rounded" />
+      <div className="w-1/2 h-3 bg-muted/20 rounded" />
+    </div>
+  </motion.div>
+));
+
+ItemCardSkeleton.displayName = 'ItemCardSkeleton';
 
 // Memoized helper functions outside component
 const getTypeIcon = (type: ItemType) => {
@@ -58,14 +83,6 @@ const getTypeColor = (type: ItemType) => {
   }
 };
 
-const getRarityColor = (rarity: string) => {
-  switch (rarity) {
-    case 'SSR': return 'text-yellow-400 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-yellow-400/30';
-    case 'SR': return 'text-purple-400 bg-gradient-to-r from-purple-400/20 to-pink-400/20 border-purple-400/30';
-    case 'R': return 'text-blue-400 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 border-blue-400/30';
-    default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
-  }
-};
 
 // Convert database items to multi-language compatible format
 const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageItem & UnifiedItem => {
@@ -88,7 +105,7 @@ const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageIte
       break;
     case 'bromide':
       name = item.name_en || item.name_jp || `Bromide ${item.id}`;
-      description = item.art_url ? 'Bromide artwork' : '';
+      description = getBromideArtUrl(item) ? 'Bromide artwork' : '';
       break;
     default:
       name = item.name || `Item ${item.id}`;
@@ -112,11 +129,10 @@ const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageIte
 
 
 
-// Optimized ItemCard component
+// Optimized ItemCard component with lazy loading
 const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & MultiLanguageItem }) {
   const typeIcon = useMemo(() => getTypeIcon(item.type), [item.type]);
   const typeColor = useMemo(() => getTypeColor(item.type), [item.type]);
-  const statsEntries = useMemo(() => item.stats ? Object.entries(item.stats).slice(0, 4) : [], [item.stats]);
 
   // Extract multi-language names from translations
   const names: MultiLanguageNames = useMemo(() => {
@@ -140,13 +156,20 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
               <img
                 src={item.image}
                 alt={names.name_en}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-opacity duration-200"
+                loading="lazy"
+                decoding="async"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   const fallback = target.nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = 'flex';
                 }}
+                onLoad={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.opacity = '1';
+                }}
+                style={{ opacity: 0 }}
               />
             ) : null}
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -187,7 +210,7 @@ ItemCard.displayName = 'ItemCard';
 
 export default function ItemsPage() {
   // Use React Query with the new dashboard overview endpoint (single API call instead of 4)
-  const { data: overviewResponse, isLoading, error: queryError } = useDashboardOverview();
+  const { data: overviewResponse, isLoading } = useDashboardOverview();
 
   // Extract data safely from the combined response
   const swimsuits = useMemo(() => {
@@ -207,7 +230,6 @@ export default function ItemsPage() {
   }, [overviewResponse]);
 
   // Convert query error to string for compatibility
-  const error = queryError ? (queryError as Error).message : null;
 
   const [uiState, setUiState] = useState({
     showFilters: false,
@@ -227,7 +249,7 @@ export default function ItemsPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12; // 6 rows × 2 cards per row
+  const itemsPerPage = 12;
 
   // Debounce search to improve performance
   const debouncedSearchTerm = useDebounce(String(filterValues.search || ''), 300);
@@ -239,40 +261,42 @@ export default function ItemsPage() {
 
   // Data is now automatically fetched and cached by React Query
 
-  // Memoized unified items data with multi-language support
+  // Memoized unified items data with multi-language support - optimized
   const rawUnifiedItems = useMemo(() => {
+    if (!overviewResponse?.data) return [];
+
     const items: (MultiLanguageItem & UnifiedItem)[] = [];
 
     // Add swimsuits (safely)
-    if (Array.isArray(swimsuits)) {
-      swimsuits.forEach((swimsuit: Swimsuit) => {
-        items.push(convertToMultiLanguageItem(swimsuit, 'swimsuit'));
-      });
+    if (Array.isArray(swimsuits) && swimsuits.length > 0) {
+      items.push(...swimsuits.map((swimsuit: Swimsuit) =>
+        convertToMultiLanguageItem(swimsuit, 'swimsuit')
+      ));
     }
 
     // Add accessories (safely)
-    if (Array.isArray(accessories)) {
-      accessories.forEach((accessory: Item) => {
-        items.push(convertToMultiLanguageItem(accessory, 'accessory'));
-      });
+    if (Array.isArray(accessories) && accessories.length > 0) {
+      items.push(...accessories.map((accessory: Item) =>
+        convertToMultiLanguageItem(accessory, 'accessory')
+      ));
     }
 
     // Add skills (safely)
-    if (Array.isArray(skills)) {
-      skills.forEach((skill: Skill) => {
-        items.push(convertToMultiLanguageItem(skill, 'skill'));
-      });
+    if (Array.isArray(skills) && skills.length > 0) {
+      items.push(...skills.map((skill: Skill) =>
+        convertToMultiLanguageItem(skill, 'skill')
+      ));
     }
 
     // Add bromides (safely)
-    if (Array.isArray(bromides)) {
-      bromides.forEach((bromide: Bromide) => {
-        items.push(convertToMultiLanguageItem(bromide, 'bromide'));
-      });
+    if (Array.isArray(bromides) && bromides.length > 0) {
+      items.push(...bromides.map((bromide: Bromide) =>
+        convertToMultiLanguageItem(bromide, 'bromide')
+      ));
     }
 
     return items;
-  }, [swimsuits, accessories, skills, bromides]);
+  }, [overviewResponse?.data, swimsuits, accessories, skills, bromides]);
 
   // Add translations to items using the multi-language search service
   const unifiedItems = useMemo(() => {
@@ -309,12 +333,17 @@ export default function ItemsPage() {
     sortState.sortDirection
   );
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredAndSortedItems.length / itemsPerPage);
-  const paginatedItems = useMemo(() => {
+  // Pagination calculations - optimized
+  const { totalPages, paginatedItems } = useMemo(() => {
+    const total = Math.ceil(filteredAndSortedItems.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredAndSortedItems.slice(startIndex, endIndex);
+    const paginated = filteredAndSortedItems.slice(startIndex, endIndex);
+
+    return {
+      totalPages: total,
+      paginatedItems: paginated
+    };
   }, [filteredAndSortedItems, currentPage, itemsPerPage]);
 
   // Create filter configuration
@@ -388,17 +417,31 @@ export default function ItemsPage() {
     setSortState({ sortBy: newSortBy, sortDirection: direction });
   }, []);
 
-  // Pagination handlers
+  // Pagination handlers - optimized with instant scroll to top
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    // Instant scroll to top when changing pages for better performance
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   const handlePrevPage = useCallback(() => {
-    setCurrentPage(prev => Math.max(1, prev - 1));
+    setCurrentPage(prev => {
+      const newPage = Math.max(1, prev - 1);
+      if (newPage !== prev) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+      return newPage;
+    });
   }, []);
 
   const handleNextPage = useCallback(() => {
-    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+    setCurrentPage(prev => {
+      const newPage = Math.min(totalPages, prev + 1);
+      if (newPage !== prev) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+      return newPage;
+    });
   }, [totalPages]);
 
   const handleShowFilters = useCallback((show: boolean) => {
@@ -407,8 +450,8 @@ export default function ItemsPage() {
 
   return (
     <PageLoadingState
-      isLoading={isLoading}
-      message="Loading items list..."
+      isLoading={isLoading && !overviewResponse}
+      message="Loading items collection..."
     >
     <div className="modern-page">
       <div className="modern-container-lg">
@@ -445,7 +488,19 @@ export default function ItemsPage() {
 
       {/* Items Grid */}
       <Grid cols={2} gap="md" className="mt-8">
-        {filteredAndSortedItems.length === 0 && !isLoading ? (
+        {isLoading ? (
+          // Show skeleton loading states with faster animation
+          Array.from({ length: itemsPerPage }, (_, index) => (
+            <motion.div
+              key={`skeleton-${index}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1, delay: index * 0.01 }}
+            >
+              <ItemCardSkeleton />
+            </motion.div>
+          ))
+        ) : filteredAndSortedItems.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -475,9 +530,22 @@ export default function ItemsPage() {
             </motion.button>
           </motion.div>
         ) : (
-          paginatedItems.map((item, index) => (
-            <ItemCard key={`${item.type}-${item.id}-${index}`} item={item} />
-          ))
+          <AnimatePresence mode="wait">
+            {paginatedItems.map((item, index) => (
+              <motion.div
+                key={`${item.type}-${item.id}-${currentPage}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{
+                  duration: 0.15,
+                  delay: Math.min(index * 0.015, 0.08) // Even faster stagger
+                }}
+              >
+                <ItemCard item={item} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </Grid>
 
