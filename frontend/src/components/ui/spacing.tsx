@@ -58,7 +58,7 @@ export const Grid = ({ children, className, cols = 1, gap = 'md' }: { children: 
   const gridGap = {
     sm: 'gap-4',
     md: 'gap-6',
-    lg: 'gap-8',
+    lg: 'gap-6',
   };
   return (
     <div className={cn('grid performance-grid', gridCols[cols], gridGap[gap], className)}>{children}</div>

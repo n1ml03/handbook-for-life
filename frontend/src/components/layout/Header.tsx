@@ -5,10 +5,8 @@ import {
   Shirt,
   User,
   Users,
-  Star,
   Image,
   Gem,
-  Building,
   Calendar,
   FileText,
   Settings,
@@ -16,7 +14,8 @@ import {
   Camera,
   ChevronDown,
   Music,
-  Diamond
+  Diamond,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

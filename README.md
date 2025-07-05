@@ -1,4 +1,4 @@
-# Handbook for Life
+# Handbook
 
 A modern, full-stack handbook and data management system for DOAXVV (Dead or Alive Xtreme Venus Vacation), featuring a robust Bun/Express backend and a beautiful React 19 frontend.
 

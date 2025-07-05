@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLoading } from '@/contexts/LoadingContext';
+import { useLoadingStore } from '@/stores';
 import { cn } from '@/services/utils';
 
 interface PulseWaveProps {
@@ -77,7 +77,7 @@ function LoadingSpinnerEnhanced() {
 }
 
 export function GlobalLoadingOverlay() {
-  const { isGlobalLoading, loadingMessage, loadingProgress } = useLoading();
+  const { isGlobalLoading, loadingMessage, loadingProgress } = useLoadingStore();
 
   return (
     <AnimatePresence>

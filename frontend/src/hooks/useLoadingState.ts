@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useLoading } from '@/contexts/LoadingContext';
+import { useLoadingStore } from '@/stores';
 
 export interface UseLoadingStateReturn {
   showGlobalLoading: (message?: string, progress?: number) => void;
@@ -13,31 +13,57 @@ export interface UseLoadingStateReturn {
  * Provides methods to show/hide global loading overlay
  */
 export function useLoadingState(): UseLoadingStateReturn {
-  const { isGlobalLoading, setGlobalLoading, clearGlobalLoading } = useLoading();
+  const {
+    isGlobalLoading,
+    showGlobalLoading: storeShowGlobalLoading,
+    hideGlobalLoading: storeHideGlobalLoading,
+    updateLoadingProgress: storeUpdateLoadingProgress
+  } = useLoadingStore();
 
   const showGlobalLoading = useCallback((
-    message: string = 'Đang tải dữ liệu...', 
+    message: string = 'Đang tải dữ liệu...',
     progress?: number
   ) => {
-    setGlobalLoading(true, message, progress);
-  }, [setGlobalLoading]);
+    storeShowGlobalLoading(message, progress);
+  }, [storeShowGlobalLoading]);
 
   const hideGlobalLoading = useCallback(() => {
-    clearGlobalLoading();
-  }, [clearGlobalLoading]);
+    storeHideGlobalLoading();
+  }, [storeHideGlobalLoading]);
 
   const updateLoadingProgress = useCallback((
-    progress: number, 
+    progress: number,
     message?: string
   ) => {
-    setGlobalLoading(true, message, progress);
-  }, [setGlobalLoading]);
+    storeUpdateLoadingProgress(progress, message);
+  }, [storeUpdateLoadingProgress]);
 
   return {
     showGlobalLoading,
     hideGlobalLoading,
     updateLoadingProgress,
     isGlobalLoading,
+  };
+}
+
+/**
+ * Backward compatibility hook for components using useLoading directly
+ */
+export function useLoading() {
+  const {
+    isGlobalLoading,
+    loadingMessage,
+    loadingProgress,
+    setGlobalLoading,
+    clearGlobalLoading
+  } = useLoadingStore();
+
+  return {
+    isGlobalLoading,
+    loadingMessage,
+    loadingProgress,
+    setGlobalLoading,
+    clearGlobalLoading,
   };
 }
 

@@ -127,7 +127,7 @@ export default function CharacterListPage() {
   const {
     data: charactersResponse,
     isLoading,
-    error: queryError
+    // error: queryError
   } = useCharacters({
     page: 1,
     limit: 100,
@@ -141,7 +141,7 @@ export default function CharacterListPage() {
   }, [charactersResponse]);
 
   // Convert query error to string for compatibility
-  const error = queryError ? (queryError as Error).message : null;
+  // const error = queryError ? (queryError as Error).message : null;
   
   const [uiState, setUiState] = useState({
     currentPage: 1,

@@ -195,9 +195,8 @@ const AdminPage = () => {
           duration: 3000
         });
       } else {
-        // Create new document - pass the full document object and JSON content if available
-        const jsonContent = (documentToSave as any).jsonContent || documentToSave.content_json_en;
-        await addDocument(documentToSave, jsonContent);
+        // Create new document - the content_json_en is already part of the document object
+        await addDocument(documentToSave);
         addNotification({
           type: 'success',
           title: 'Document Created',

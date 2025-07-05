@@ -1,15 +1,16 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
-import { DocumentsProvider } from '@/contexts/DocumentsContext';
-import { LoadingProvider } from '@/contexts/LoadingContext';
 import { QueryProvider } from '@/contexts/QueryProvider';
 
 // Layout Components - Optimized with performance improvements
 import Header from '@/components/layout/Header';
-import { AccessibilityProvider, SkipLink } from '@/components/layout/AccessibilityProvider';
-import { UpdateLogsProvider } from '@/contexts/UpdateLogsContext';
+import { SkipLink } from '@/components/layout/AccessibilityProvider';
 import { GlobalLoadingOverlay } from '@/components/ui/global-loading-overlay.tsx';
+
+// PWA Components
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
+import { PWAUpdateNotification } from '@/components/ui/PWAUpdateNotification';
 
 // Main Pages - Lazy loaded for better performance
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -47,15 +48,11 @@ function App() {
 
   return (
     <QueryProvider>
-      <LoadingProvider>
-        <DocumentsProvider>
-          <AccessibilityProvider>
-            <UpdateLogsProvider>
-            <Router>
-            <div className="min-h-screen bg-background font-sans antialiased">
-              {/* Skip Links for Accessibility */}
-              <SkipLink href="#main-content">Skip to main content</SkipLink>
-              <SkipLink href="#header-nav">Skip to navigation</SkipLink>
+      <Router>
+        <div className="min-h-screen bg-background font-sans antialiased">
+          {/* Skip Links for Accessibility */}
+          <SkipLink href="#main-content">Skip to main content</SkipLink>
+          <SkipLink href="#header-nav">Skip to navigation</SkipLink>
 
               {/* Enhanced Background Pattern*/}
               <div className="fixed inset-0 opacity-[0.015] pointer-events-none">
@@ -105,12 +102,12 @@ function App() {
               
               {/* Global Loading Overlay */}
               <GlobalLoadingOverlay />
-            </div>
-            </Router>
-            </UpdateLogsProvider>
-          </AccessibilityProvider>
-        </DocumentsProvider>
-      </LoadingProvider>
+
+          {/* PWA Components */}
+          <OfflineIndicator />
+          <PWAUpdateNotification />
+        </div>
+      </Router>
     </QueryProvider>
   );
 }

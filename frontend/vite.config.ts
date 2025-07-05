@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { fileURLToPath, URL } from 'url'
+import { fileURLToPath } from 'url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,6 +28,8 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: true,
+    // PWA Configuration
+    copyPublicDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -70,6 +72,9 @@ export default defineConfig({
         }
       }
     },
+    // PWA specific build options
+    assetsInlineLimit: 0, // Don't inline assets for better caching
+    minify: 'esbuild',
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {

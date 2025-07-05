@@ -29,19 +29,19 @@ function BromideCard({ bromide }: { bromide: any }) {
     }
   };
 
-  const _getTypeColor = (type: string) => {
-    switch (type) {
-      case 'Character': return 'text-accent-pink';
-      case 'Scene': return 'text-accent-cyan';
-      case 'Event': return 'text-accent-purple';
-      case 'Special': return 'text-accent-gold';
-      case 'Frame': return 'text-green-400';
-      case 'Background': return 'text-blue-400';
-      case 'Sticker': return 'text-orange-400';
-      case 'Effect': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
-  };
+  // const _getTypeColor = (type: string) => {
+  //   switch (type) {
+  //     case 'Character': return 'text-accent-pink';
+  //     case 'Scene': return 'text-accent-cyan';
+  //     case 'Event': return 'text-accent-purple';
+  //     case 'Special': return 'text-accent-gold';
+  //     case 'Frame': return 'text-green-400';
+  //     case 'Background': return 'text-blue-400';
+  //     case 'Sticker': return 'text-orange-400';
+  //     case 'Effect': return 'text-red-400';
+  //     default: return 'text-gray-400';
+  //   }
+  // };
 
   const names: MultiLanguageNames = {
     name_jp: bromide.name_jp || '',
@@ -250,15 +250,15 @@ export default function DecorateBromidePage() {
   ), [filteredAndSortedBromides, currentPage, itemsPerPage]);
 
   // Memoized filter options
-  const _filterOptions = useMemo(() => {
-    const types = [...new Set(bromides.map(b => b.category))].filter(Boolean).sort();
-    const rarities = [...new Set(bromides.map(b => b.rarity))].filter(Boolean).sort();
-    const characters = [...new Set(bromides.map(b => b.character))].filter(Boolean).sort();
-    const sources = [...new Set(bromides.map(b => b.source ?? b.category))].filter(Boolean).sort();
-    const versions = ['1.0', '1.5', '2.0', '2.5', '3.0'];
-    
-    return { types, rarities, characters, sources, versions };
-  }, [bromides]);
+  // const _filterOptions = useMemo(() => {
+  //   const types = [...new Set(bromides.map(b => b.category))].filter(Boolean).sort();
+  //   const rarities = [...new Set(bromides.map(b => b.rarity))].filter(Boolean).sort();
+  //   const characters = [...new Set(bromides.map(b => b.character))].filter(Boolean).sort();
+  //   const sources = [...new Set(bromides.map(b => b.source ?? b.category))].filter(Boolean).sort();
+  //   const versions = ['1.0', '1.5', '2.0', '2.5', '3.0'];
+  //
+  //   return { types, rarities, characters, sources, versions };
+  // }, [bromides]);
 
   // Optimized event handlers with useCallback
   const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
