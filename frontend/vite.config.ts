@@ -68,6 +68,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(path.dirname(fileURLToPath(import.meta.url)), "./src"),
     },
+    dedupe: ['react', 'react-dom'], // Ensure single React instance
   },
   server: {
     port: 3000,
@@ -145,7 +146,11 @@ export default defineConfig({
       'zustand',
       'tailwind-merge',
       'class-variance-authority',
+      'react-hook-form',
+      'zod',
+      '@hookform/resolvers/zod',
     ],
+    force: true, // Force re-optimization to ensure React 19 compatibility
   },
   define: {
     'process.env': {},
