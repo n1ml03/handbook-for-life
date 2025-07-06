@@ -2,10 +2,30 @@ import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import logger from '../config/logger';
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 
 /**
  * Security middleware for API protection
  */
+
+// Initialize DOMPurify with JSDOM for server-side HTML sanitization
+const window = new JSDOM('').window;
+const purify = DOMPurify(window as any);
+
+// Configure DOMPurify for strict sanitization
+purify.setConfig({
+  ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'],
+  ALLOWED_ATTR: ['class', 'id'],
+  ALLOW_DATA_ATTR: false,
+  ALLOW_UNKNOWN_PROTOCOLS: false,
+  SANITIZE_DOM: true,
+  SANITIZE_NAMED_PROPS: true,
+  KEEP_CONTENT: true,
+  RETURN_DOM: false,
+  RETURN_DOM_FRAGMENT: false,
+  RETURN_TRUSTED_TYPE: false
+});
 
 // Rate limiting configurations
 export const createRateLimit = (windowMs: number, max: number, message: string) => {
@@ -133,19 +153,74 @@ function sanitizeObject(obj: any): any {
 }
 
 /**
- * Sanitize string input
+ * Sanitize string input using DOMPurify for robust HTML sanitization
  */
 function sanitizeString(str: string): string {
   if (typeof str !== 'string') {
     return str;
   }
-  
-  // Remove potential XSS vectors
-  return str
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+
+  // First pass: Basic sanitization for non-HTML content
+  let sanitized = str
     .replace(/javascript:/gi, '') // Remove javascript: protocol
     .replace(/on\w+\s*=/gi, '') // Remove event handlers
     .trim();
+
+  // Second pass: Use DOMPurify for HTML content detection and sanitization
+  // Only apply DOMPurify if the string contains HTML-like content
+  if (/<[^>]*>/g.test(sanitized)) {
+    try {
+      sanitized = purify.sanitize(sanitized, {
+        RETURN_DOM: false,
+        RETURN_DOM_FRAGMENT: false
+      });
+    } catch (error) {
+      logger.warn('DOMPurify sanitization error:', error);
+      // Fallback to basic sanitization if DOMPurify fails
+      sanitized = sanitized
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<[^>]*>/g, ''); // Remove all HTML tags as fallback
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Sanitize rich text content (for TipTap editor content)
+ * More permissive than regular string sanitization
+ */
+export function sanitizeRichText(content: any): any {
+  if (typeof content === 'string') {
+    try {
+      // Use DOMPurify with more permissive settings for rich text
+      return purify.sanitize(content, {
+        ALLOWED_TAGS: [
+          'p', 'br', 'strong', 'em', 'u', 's', 'sub', 'sup',
+          'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+          'blockquote', 'code', 'pre', 'a', 'img', 'table', 'thead',
+          'tbody', 'tr', 'td', 'th', 'hr', 'div', 'span'
+        ],
+        ALLOWED_ATTR: [
+          'href', 'src', 'alt', 'title', 'class', 'id', 'style',
+          'target', 'rel', 'colspan', 'rowspan'
+        ],
+        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+        RETURN_DOM: false,
+        RETURN_DOM_FRAGMENT: false
+      });
+    } catch (error) {
+      logger.warn('Rich text sanitization error:', error);
+      return content; // Return original if sanitization fails
+    }
+  }
+
+  // Handle TipTap JSON content
+  if (typeof content === 'object' && content !== null) {
+    return sanitizeObject(content);
+  }
+
+  return content;
 }
 
 /**

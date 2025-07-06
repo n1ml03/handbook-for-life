@@ -28,6 +28,9 @@ import { charactersApi } from '@/services/api';
 import { type Character, type Skill, type Swimsuit } from '@/types';
 import { PageLoadingState } from '@/components/ui';
 import { getCharacterProfileImageUrl } from '@/services/utils';
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+import { isValid } from 'date-fns/isValid';
 
 export default function CharacterDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -92,8 +95,8 @@ export default function CharacterDetailPage() {
   const formatBirthday = useCallback((birthday?: string) => {
     if (!birthday) return 'Unknown';
     try {
-      const date = new Date(birthday);
-      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      const date = parseISO(birthday);
+      return isValid(date) ? format(date, 'MMMM d') : birthday;
     } catch {
       return birthday;
     }
@@ -102,12 +105,8 @@ export default function CharacterDetailPage() {
   const formatReleaseDate = useCallback((dateStr?: string) => {
     if (!dateStr) return 'Unknown';
     try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      const date = parseISO(dateStr);
+      return isValid(date) ? format(date, 'MMM d, yyyy') : dateStr;
     } catch {
       return dateStr;
     }

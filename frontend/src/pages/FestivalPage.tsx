@@ -18,24 +18,26 @@ import type { FilterField, SortOption } from '@/components/features/UnifiedFilte
 import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import { useDebounce } from '@/hooks';
 import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+import { isValid } from 'date-fns/isValid';
 
 function FestivalCard({ festival }: { festival: any }) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, 'MMM d, yyyy HH:mm') : dateString;
+    } catch {
+      return dateString;
+    }
   };
 
   const getEventStatus = () => {
     const now = new Date();
-    const start = festival.start_date ? new Date(festival.start_date) : null;
-    const end = festival.end_date ? new Date(festival.end_date) : null;
-    if (!start || !end) return 'unknown';
+    const start = festival.start_date ? parseISO(festival.start_date) : null;
+    const end = festival.end_date ? parseISO(festival.end_date) : null;
+    if (!start || !end || !isValid(start) || !isValid(end)) return 'unknown';
     if (now < start) return 'upcoming';
     if (now > end) return 'ended';
     return 'active';

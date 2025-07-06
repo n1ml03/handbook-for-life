@@ -63,47 +63,8 @@ export const validateQuery = (schema: ZodSchema<any>) => {
   };
 };
 
-/**
- * Global input sanitization middleware
- */
-export const sanitizeInput = (req: Request, _res: Response, next: NextFunction): void => {
-  // Sanitize common dangerous patterns
-  const sanitizeString = (str: string): string => {
-    return str
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-      .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+\s*=/gi, '') // Remove event handlers
-      .trim();
-  };
-
-  const sanitizeObject = (obj: any): any => {
-    if (typeof obj === 'string') {
-      return sanitizeString(obj);
-    } else if (Array.isArray(obj)) {
-      return obj.map(sanitizeObject);
-    } else if (obj && typeof obj === 'object') {
-      const sanitized: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        sanitized[key] = sanitizeObject(value);
-      }
-      return sanitized;
-    }
-    return obj;
-  };
-
-  // Sanitize request body
-  if (req.body) {
-    req.body = sanitizeObject(req.body);
-  }
-
-  // Sanitize query parameters
-  if (req.query) {
-    const sanitized = sanitizeObject(req.query);
-    Object.assign(req.query, sanitized);
-  }
-
-  next();
-};
+// Note: Input sanitization is now handled by the security middleware
+// which uses DOMPurify for more robust sanitization
 
 /**
  * Request size validation middleware

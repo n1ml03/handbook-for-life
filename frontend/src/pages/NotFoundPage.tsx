@@ -35,8 +35,8 @@ export default function NotFoundPage() {
               repeatDelay: 2
             }}
             style={{
-              left: `${20 + Math.random() * 60}%`,
-              top: `${20 + Math.random() * 60}%`
+              left: `${20 + (index * 13) % 60}%`,
+              top: `${20 + (index * 17) % 60}%`
             }}
           >
             <item.icon className="w-8 h-8 text-accent-pink" />

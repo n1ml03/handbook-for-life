@@ -1,3 +1,4 @@
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { Document, UpdateLog, Character, Swimsuit, Skill, Event, Bromide, DashboardOverviewResponse, DashboardCharacterStatsResponse } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -9,43 +10,78 @@ export class ApiError extends Error {
   }
 }
 
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+// Create Axios instance with default configuration
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  const config: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-
-  // Remove Content-Type for FormData to let browser set it with boundary
-  if (options.body instanceof FormData) {
-    const headers = { ...config.headers };
-    delete (headers as any)['Content-Type'];
-    config.headers = headers;
+// Request interceptor for logging and authentication
+apiClient.interceptors.request.use(
+  (config) => {
+    // Log requests in development
+    if (import.meta.env.DEV) {
+      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
   }
+);
 
-  try {
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      // Handle backend error response format: { success: false, error: string, errorId?: string, timestamp: string }
-      throw new ApiError(
-        errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-        response.status
-      );
+// Response interceptor for error handling and logging
+apiClient.interceptors.response.use(
+  (response) => {
+    // Log successful responses in development
+    if (import.meta.env.DEV) {
+      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    }
+    return response;
+  },
+  (error: AxiosError) => {
+    // Log errors in development
+    if (import.meta.env.DEV) {
+      console.error(`❌ API Error: ${error.response?.status} ${error.config?.url}`, error);
     }
 
-    const data = await response.json();
-    return data;
+    // Handle different error types
+    if (error.response) {
+      // Server responded with error status
+      const errorData = error.response.data as any;
+      throw new ApiError(
+        errorData?.error || errorData?.message || `HTTP ${error.response.status}: ${error.response.statusText}`,
+        error.response.status
+      );
+    } else if (error.request) {
+      // Request was made but no response received
+      throw new ApiError('Network error - no response received', 0);
+    } else {
+      // Something else happened
+      throw new ApiError(error.message || 'Request setup error', 0);
+    }
+  }
+);
+
+// Enhanced API request function using Axios
+async function apiRequest<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
+  try {
+    const response = await apiClient.request<T>({
+      url: endpoint,
+      ...options,
+    });
+    return response.data;
   } catch (error) {
+    // Re-throw ApiError instances
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError('Network error', 0);
+    // This shouldn't happen due to interceptor, but just in case
+    throw new ApiError('Unexpected error', 500);
   }
 }
 
@@ -59,30 +95,24 @@ export const documentsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Document[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/documents${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/documents', {
+      method: 'GET',
+      params,
+    });
   },
 
   // Get a specific document by ID
   async getDocument(id: string): Promise<Document> {
-    return apiRequest(`/documents/${id}`);
+    return apiRequest(`/documents/${id}`, {
+      method: 'GET',
+    });
   },
 
   // Create a new document
   async createDocument(document: Omit<Document, 'id' | 'created_at' | 'updated_at'>): Promise<Document> {
     return apiRequest('/documents', {
       method: 'POST',
-      body: JSON.stringify(document),
+      data: document,
     });
   },
 
@@ -90,7 +120,7 @@ export const documentsApi = {
   async updateDocument(id: string, updates: Partial<Document>): Promise<Document> {
     return apiRequest(`/documents/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -121,30 +151,24 @@ export const updateLogsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: UpdateLog[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/update-logs${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/update-logs', {
+      method: 'GET',
+      params,
+    });
   },
 
   // Get a specific update log by ID
   async getUpdateLog(id: string): Promise<UpdateLog> {
-    return apiRequest(`/update-logs/${id}`);
+    return apiRequest(`/update-logs/${id}`, {
+      method: 'GET',
+    });
   },
 
   // Create a new update log
   async createUpdateLog(updateLog: Omit<UpdateLog, 'id' | 'created_at' | 'updated_at'>): Promise<UpdateLog> {
     return apiRequest('/update-logs', {
       method: 'POST',
-      body: JSON.stringify(updateLog),
+      data: updateLog,
     });
   },
 
@@ -152,7 +176,7 @@ export const updateLogsApi = {
   async updateUpdateLog(id: string, updates: Partial<UpdateLog>): Promise<UpdateLog> {
     return apiRequest(`/update-logs/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -173,34 +197,32 @@ export const charactersApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Character[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/characters${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/characters', {
+      method: 'GET',
+      params,
+    });
   },
 
   // Get a specific character by ID
   async getCharacter(id: string): Promise<{ data: Character }> {
-    return apiRequest(`/characters/${id}`);
+    return apiRequest(`/characters/${id}`, {
+      method: 'GET',
+    });
   },
 
   // Get character skills
   async getCharacterSkills(id: string): Promise<Skill[]> {
-    const response = await apiRequest<{ data: Skill[] }>(`/characters/${id}/skills`);
+    const response = await apiRequest<{ data: Skill[] }>(`/characters/${id}/skills`, {
+      method: 'GET',
+    });
     return response.data;
   },
 
   // Get character swimsuits
   async getCharacterSwimsuits(id: string): Promise<Swimsuit[]> {
-    const response = await apiRequest<{ data: Swimsuit[] }>(`/characters/${id}/swimsuits`);
+    const response = await apiRequest<{ data: Swimsuit[] }>(`/characters/${id}/swimsuits`, {
+      method: 'GET',
+    });
     return response.data;
   },
 
@@ -208,7 +230,7 @@ export const charactersApi = {
   async createCharacter(character: Omit<Character, 'id' | 'created_at' | 'updated_at'>): Promise<Character> {
     return apiRequest('/characters', {
       method: 'POST',
-      body: JSON.stringify(character),
+      data: character,
     });
   },
 
@@ -216,7 +238,7 @@ export const charactersApi = {
   async updateCharacter(id: string, updates: Partial<Character>): Promise<Character> {
     return apiRequest(`/characters/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -237,18 +259,10 @@ export const swimsuitsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Swimsuit[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/swimsuits${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/swimsuits', {
+      method: 'GET',
+      params,
+    });
   },
 
   // Get a specific swimsuit by ID
@@ -260,7 +274,7 @@ export const swimsuitsApi = {
   async createSwimsuit(swimsuit: Omit<Swimsuit, 'id' | 'created_at' | 'updated_at'>): Promise<Swimsuit> {
     return apiRequest('/swimsuits', {
       method: 'POST',
-      body: JSON.stringify(swimsuit),
+      data: swimsuit,
     });
   },
 
@@ -268,7 +282,7 @@ export const swimsuitsApi = {
   async updateSwimsuit(id: string, updates: Partial<Swimsuit>): Promise<Swimsuit> {
     return apiRequest(`/swimsuits/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -291,18 +305,10 @@ export const skillsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Skill[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/skills${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/skills', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific skill by ID
@@ -318,25 +324,17 @@ export const skillsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Skill[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('q', query);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    return apiRequest(`/skills/search?${searchParams.toString()}`);
+    return apiRequest('/skills/search', {
+      method: 'GET',
+      params: { q: query, ...params }
+    });
   },
 
   // Create a new skill
   async createSkill(skill: Omit<Skill, 'id' | 'created_at' | 'updated_at'>): Promise<Skill> {
     return apiRequest('/skills', {
       method: 'POST',
-      body: JSON.stringify(skill),
+      data: skill,
     });
   },
 
@@ -344,7 +342,7 @@ export const skillsApi = {
   async updateSkill(id: string, updates: Partial<Skill>): Promise<Skill> {
     return apiRequest(`/skills/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -366,18 +364,10 @@ export const eventsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Event[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/events${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/events', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific event by ID
@@ -389,7 +379,7 @@ export const eventsApi = {
   async createEvent(event: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event> {
     return apiRequest('/events', {
       method: 'POST',
-      body: JSON.stringify(event),
+      data: event,
     });
   },
 
@@ -397,7 +387,7 @@ export const eventsApi = {
   async updateEvent(id: string, updates: Partial<Event>): Promise<Event> {
     return apiRequest(`/events/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -409,18 +399,10 @@ export const eventsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Event[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('q', query);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    return apiRequest(`/events/search?${searchParams.toString()}`);
+    return apiRequest('/events/search', {
+      method: 'GET',
+      params: { q: query, ...params }
+    });
   },
 
   // Delete an event
@@ -442,18 +424,10 @@ export const itemsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/items${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/items', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific item by ID
@@ -479,25 +453,17 @@ export const itemsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('q', query);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    return apiRequest(`/items/search?${searchParams.toString()}`);
+    return apiRequest('/items/search', {
+      method: 'GET',
+      params: { q: query, ...params }
+    });
   },
 
   // Create a new item
   async createItem(item: any): Promise<any> {
     return apiRequest('/items', {
       method: 'POST',
-      body: JSON.stringify(item),
+      data: item,
     });
   },
 
@@ -505,7 +471,7 @@ export const itemsApi = {
   async updateItem(id: string, updates: any): Promise<any> {
     return apiRequest(`/items/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -530,18 +496,10 @@ export const episodesApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/episodes${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/episodes', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific episode by ID
@@ -561,18 +519,10 @@ export const episodesApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/episodes/main-story${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/episodes/main-story', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get character episodes
@@ -582,18 +532,10 @@ export const episodesApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/episodes/character/${characterId}${queryString ? `?${queryString}` : ''}`);
+    return apiRequest(`/episodes/character/${characterId}`, {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Search episodes
@@ -603,25 +545,17 @@ export const episodesApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('q', query);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    return apiRequest(`/episodes/search?${searchParams.toString()}`);
+    return apiRequest('/episodes/search', {
+      method: 'GET',
+      params: { q: query, ...params }
+    });
   },
 
   // Create a new episode
   async createEpisode(episode: any): Promise<any> {
     return apiRequest('/episodes', {
       method: 'POST',
-      body: JSON.stringify(episode),
+      data: episode,
     });
   },
 
@@ -629,7 +563,7 @@ export const episodesApi = {
   async updateEpisode(id: string, updates: any): Promise<any> {
     return apiRequest(`/episodes/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -650,18 +584,10 @@ export const bromidesApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: Bromide[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/bromides${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/bromides', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific bromide by ID
@@ -673,7 +599,7 @@ export const bromidesApi = {
   async createBromide(bromide: Omit<Bromide, 'id' | 'created_at' | 'updated_at'>): Promise<Bromide> {
     return apiRequest('/bromides', {
       method: 'POST',
-      body: JSON.stringify(bromide),
+      data: bromide,
     });
   },
 
@@ -681,7 +607,7 @@ export const bromidesApi = {
   async updateBromide(id: string, updates: Partial<Bromide>): Promise<Bromide> {
     return apiRequest(`/bromides/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -707,18 +633,10 @@ export const shopApi = {
     sortBy?: string;
     sortDirection?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/shop-listings${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/shop-listings', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific shop listing by ID
@@ -733,18 +651,10 @@ export const shopApi = {
     sortBy?: string;
     sortDirection?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/shop-listings/active${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/shop-listings/active', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get shop listings by type
@@ -754,18 +664,10 @@ export const shopApi = {
     sortBy?: string;
     sortDirection?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/shop-listings/type/${shopType}${queryString ? `?${queryString}` : ''}`);
+    return apiRequest(`/shop-listings/type/${shopType}`, {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get shop statistics
@@ -788,18 +690,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/gachas${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/gachas', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get active gachas
@@ -809,18 +703,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/gachas/active${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/gachas/active', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get a specific gacha by ID
@@ -840,18 +726,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/gachas/subtype/${subtype}${queryString ? `?${queryString}` : ''}`);
+    return apiRequest(`/gachas/subtype/${subtype}`, {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get gacha pool
@@ -861,18 +739,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/gachas/${id}/pool${queryString ? `?${queryString}` : ''}`);
+    return apiRequest(`/gachas/${id}/pool`, {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Get featured items
@@ -882,18 +752,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/gachas/${id}/featured${queryString ? `?${queryString}` : ''}`);
+    return apiRequest(`/gachas/${id}/featured`, {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Search gachas
@@ -903,18 +765,10 @@ export const gachasApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    searchParams.append('q', query);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    return apiRequest(`/gachas/search?${searchParams.toString()}`);
+    return apiRequest('/gachas/search', {
+      method: 'GET',
+      params: { q: query, ...params }
+    });
   },
 
   // Validate gacha rates
@@ -926,7 +780,7 @@ export const gachasApi = {
   async createGacha(gacha: any): Promise<any> {
     return apiRequest('/gachas', {
       method: 'POST',
-      body: JSON.stringify(gacha),
+      data: gacha,
     });
   },
 
@@ -934,7 +788,7 @@ export const gachasApi = {
   async updateGacha(id: string, updates: any): Promise<any> {
     return apiRequest(`/gachas/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      data: updates,
     });
   },
 
@@ -949,7 +803,7 @@ export const gachasApi = {
   async addPoolItem(id: string, poolItem: any): Promise<any> {
     return apiRequest(`/gachas/${id}/pool`, {
       method: 'POST',
-      body: JSON.stringify(poolItem),
+      data: poolItem,
     });
   },
 
@@ -957,7 +811,7 @@ export const gachasApi = {
   async bulkAddPoolItems(id: string, items: any[]): Promise<any> {
     return apiRequest(`/gachas/${id}/pool/bulk`, {
       method: 'POST',
-      body: JSON.stringify({ items }),
+      data: { items },
     });
   },
 
@@ -999,7 +853,10 @@ export const uploadApi = {
 
     return apiRequest('/upload/screenshot', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -1013,7 +870,10 @@ export const uploadApi = {
 
     return apiRequest('/upload', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -1029,7 +889,10 @@ export const uploadApi = {
 
     return apiRequest('/upload/multiple', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -1041,7 +904,10 @@ export const uploadApi = {
 
     return apiRequest('/upload/csv', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -1053,18 +919,10 @@ export const uploadApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ data: any[]; pagination: any }> {
-    const searchParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    
-    const queryString = searchParams.toString();
-    return apiRequest(`/upload/history${queryString ? `?${queryString}` : ''}`);
+    return apiRequest('/upload/history', {
+      method: 'GET',
+      params: params
+    });
   },
 
   // Delete file

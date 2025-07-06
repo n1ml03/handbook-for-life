@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"bun run dev:backend\" \"bun run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "setup": "cd backend && bun run setup",
     "dev:frontend": "cd frontend && bun run dev",
     "dev:backend": "cd backend && bun run dev",
     "build:frontend": "cd frontend && bun run build",

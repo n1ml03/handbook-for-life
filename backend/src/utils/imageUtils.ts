@@ -169,19 +169,20 @@ export function prepareScreenshotsForResponse(screenshotsJson: string | null): S
 }
 
 /**
- * Generate a unique filename for an image
+ * Generate a unique filename for an image using nanoid for better entropy
  */
 export function generateImageFilename(originalName?: string, mimeType?: ImageMimeType): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
+  const { generateIdWithLength } = require('./id');
+  const random = generateIdWithLength(8); // Use nanoid instead of Math.random()
   const extension = mimeType ? getFileExtensionFromMimeType(mimeType) : 'jpg';
-  
+
   if (originalName) {
     const baseName = originalName.replace(/\.[^/.]+$/, ''); // Remove extension
     const safeName = baseName.replace(/[^a-zA-Z0-9_-]/g, '_'); // Sanitize
     return `${safeName}_${timestamp}_${random}.${extension}`;
   }
-  
+
   return `image_${timestamp}_${random}.${extension}`;
 }
 

@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 import { logger } from '../config';
 import { executeQuery } from '../config/database';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { generateId } from '../utils/id';
 
 export class DatabaseService {
   constructor() {}
@@ -373,8 +374,8 @@ export class DatabaseService {
 
   private generateUpdateLogUniqueKey(version: string): string {
     const cleanVersion = version.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const timestamp = Date.now();
-    return `update-${cleanVersion}-${timestamp}`;
+    const uniqueId = generateId();
+    return `update-${cleanVersion}-${uniqueId}`;
   }
 
   private getDefaultMetrics(): any {

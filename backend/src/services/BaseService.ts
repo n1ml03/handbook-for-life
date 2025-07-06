@@ -1,6 +1,7 @@
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../config';
 import { PaginationOptions, PaginatedResult, BaseEntity, NewBaseEntity } from '../models/BaseModel';
+import { formatISO } from 'date-fns/formatISO';
 
 /**
  * Standardized health status interface for all services
@@ -349,18 +350,18 @@ export abstract class BaseService<TModel, TEntity extends BaseEntity, TNewEntity
    */
   private formatDatesForResponse<T extends Record<string, any>>(obj: T): T {
     if (!obj || typeof obj !== 'object') return obj;
-    
+
     const formatted = { ...obj };
-    
+
     Object.keys(formatted).forEach(key => {
       const value = formatted[key];
       if (value instanceof Date) {
-        (formatted as any)[key] = value.toISOString();
+        (formatted as any)[key] = formatISO(value);
       } else if (typeof value === 'object' && value !== null) {
         (formatted as any)[key] = this.formatDatesForResponse(value);
       }
     });
-    
+
     return formatted;
   }
 

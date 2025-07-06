@@ -1,4 +1,6 @@
 import { AppError } from '../middleware/errorHandler';
+import { parseISO } from 'date-fns/parseISO';
+import { isValid } from 'date-fns/isValid';
 
 /**
  * Shared validation utilities to reduce code duplication
@@ -37,12 +39,16 @@ export class ValidationHelpers {
   }
 
   /**
-   * Validates date range (start must be before end)
+   * Validates date range (start must be before end) using date-fns
    */
   static validateDateRange(startDate: string | Date, endDate: string | Date, fieldPrefix: string = ''): void {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
+    const start = typeof startDate === 'string' ? parseISO(startDate) : startDate;
+    const end = typeof endDate === 'string' ? parseISO(endDate) : endDate;
+
+    if (!isValid(start) || !isValid(end)) {
+      throw new AppError(`${fieldPrefix}Invalid date format`, 400);
+    }
+
     if (start >= end) {
       throw new AppError(`${fieldPrefix}Start date must be before end date`, 400);
     }

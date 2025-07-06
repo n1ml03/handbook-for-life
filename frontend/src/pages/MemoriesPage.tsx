@@ -16,6 +16,9 @@ import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createMemoriesFilterConfig, memoriesSortOptions } from '@/components/features/FilterConfigs';
 import React from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+import { isValid } from 'date-fns/isValid';
 
 // Helper function to convert Episode to Memory
 const episodeToMemory = (episode: Episode): Memory => ({
@@ -38,11 +41,12 @@ const episodeToMemory = (episode: Episode): Memory => ({
 const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, 'MMM d, yyyy') : dateString;
+    } catch {
+      return dateString;
+    }
   };
 
   const names: MultiLanguageNames = {

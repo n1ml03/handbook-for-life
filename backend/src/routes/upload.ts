@@ -624,10 +624,11 @@ router.post('/optimized',
 
     } catch (error) {
       logger.error('Error in optimized image upload:', error);
+      const { generateIdWithLength } = require('../utils/id');
       res.status(500).json({
         success: false,
         error: 'Failed to process image upload',
-        errorId: `err_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+        errorId: `err_${Date.now()}_${generateIdWithLength(11)}`,
         timestamp: new Date().toISOString()
       });
     }

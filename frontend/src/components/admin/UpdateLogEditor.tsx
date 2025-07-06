@@ -9,6 +9,7 @@ import { FormGroup, StatusBadge } from '@/components/ui/spacing';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { cn, extractScreenshotUrls, formatDisplayDateTime } from '@/services/utils';
 import { UpdateLog } from '@/types';
+import { validateData, updateLogValidationSchema } from '@/utils/validation';
 import { TagInput } from './TagInput';
 import TiptapEditor from '@/components/features/TiptapEditor';
 
@@ -59,29 +60,27 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isPreviewMode]);
 
-  // Validation function
+  // Enhanced validation function using Zod schema
   const validateUpdateLog = (log: UpdateLog): string[] => {
-    const errors: string[] = [];
-    
-    // Check required fields
-    if (!log.version) {
-      errors.push('Version is required');
+    // Prepare update log data for validation
+    const updateLogData = {
+      version: log.version,
+      title: log.title,
+      content: log.content,
+      date: log.date,
+      description: log.description,
+      tags: log.tags
+    };
+
+    // Use Zod validation
+    const validation = validateData(updateLogValidationSchema, updateLogData);
+
+    if (validation.success) {
+      return [];
     }
-    
-    if (!log.title) {
-      errors.push('Title is required');
-    }
-    
-    if (!log.content) {
-      errors.push('Content is required');
-    }
-    
-    // Validate version format
-    if (log.version && !/^\d+\.\d+(\.\d+)?$/.test(log.version)) {
-      errors.push('Version must be in format X.Y or X.Y.Z (e.g., 1.0 or 1.0.1)');
-    }
-    
-    return errors;
+
+    // Return formatted error messages
+    return validation.fieldErrors || [];
   };
 
   const handleSaveDraft = async () => {

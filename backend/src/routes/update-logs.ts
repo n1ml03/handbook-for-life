@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
+import { validate, validateQuery } from '../middleware/validation';
+import { schemas } from '../utils/ValidationSchemas';
 import { asyncHandler } from '../middleware/errorHandler';
 import { UpdateLogService } from '../services/UpdateLogService';
 import logger from '../config/logger';
@@ -48,8 +49,8 @@ router.get('/:id',
 );
 
 // POST /api/update-logs - Create a new update log
-router.post('/', 
-  validate(schemas.createUpdateLog),
+router.post('/',
+  validate(schemas.updateLogSchemas.create),
   asyncHandler(async (req, res) => {
     const {
       version,
@@ -127,8 +128,8 @@ router.post('/',
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.put('/:id', 
-  validate(schemas.updateUpdateLog),
+router.put('/:id',
+  validate(schemas.updateLogSchemas.update),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const updates = req.body;

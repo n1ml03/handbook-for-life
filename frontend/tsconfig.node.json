@@ -9,6 +9,7 @@
   },
   "include": [
     "vite.config.ts",
-    "src/types/bun.d.ts"
+    "src/types/bun.d.ts",
+    "src/types/minimatch.d.ts"
   ]
 } 

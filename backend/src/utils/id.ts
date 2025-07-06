@@ -1,9 +1,16 @@
+import { nanoid } from 'nanoid';
+
 /**
- * Simple ID generation utility to replace UUID
+ * Secure ID generation utility using nanoid
+ * Generates URL-safe, unique string IDs with good entropy
  */
 export function generateId(): string {
-  // Use timestamp + random string for simple unique ID generation
-  const timestamp = Date.now().toString(36);
-  const randomStr = Math.random().toString(36).substring(2, 15);
-  return `${timestamp}-${randomStr}`;
-} 
+  return nanoid();
+}
+
+/**
+ * Generate ID with custom length
+ */
+export function generateIdWithLength(length: number = 21): string {
+  return nanoid(length);
+}

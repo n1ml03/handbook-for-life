@@ -2,6 +2,8 @@
  * Content conversion and validation utilities for TipTap editor
  */
 
+import { nanoid } from 'nanoid';
+
 export interface TipTapDocument {
   type: 'doc';
   content: any[];
@@ -182,7 +184,7 @@ export function sanitizeDocumentForApi(document: any): any {
   }
 
   if (!sanitized.unique_key) {
-    sanitized.unique_key = `doc-${Date.now()}`;
+    sanitized.unique_key = `doc-${nanoid()}`;
   }
 
   // Handle content conversion

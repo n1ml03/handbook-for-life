@@ -1,6 +1,10 @@
 import React from 'react'
 import { twMerge } from "tailwind-merge"
 import { Language, MultiLanguageNames } from '@/types'
+import { format } from 'date-fns/format'
+import { parseISO } from 'date-fns/parseISO'
+import { isValid } from 'date-fns/isValid'
+import DOMPurify from 'dompurify'
 
 export function cn(...inputs: (string | undefined)[]) {
   return twMerge(...inputs.filter(Boolean))
@@ -94,14 +98,10 @@ export function formatDisplayDate(isoDateString?: string): string {
   if (!isoDateString) {
     return '';
   }
-  
+
   try {
-    const date = new Date(isoDateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const date = parseISO(isoDateString);
+    return isValid(date) ? format(date, 'MMM d, yyyy') : isoDateString;
   } catch {
     return isoDateString;
   }
@@ -114,16 +114,10 @@ export function formatDisplayDateTime(isoDateTimeString?: string): string {
   if (!isoDateTimeString) {
     return '';
   }
-  
+
   try {
-    const date = new Date(isoDateTimeString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = parseISO(isoDateTimeString);
+    return isValid(date) ? format(date, 'MMM d, yyyy h:mm a') : isoDateTimeString;
   } catch {
     return isoDateTimeString;
   }
@@ -175,10 +169,10 @@ export function extractContentText(contentJson?: Record<string, unknown>): strin
  */
 export function isEventActive(event: { start_date: string; end_date: string }): boolean {
   const now = new Date();
-  const startDate = new Date(event.start_date);
-  const endDate = new Date(event.end_date);
-  
-  return now >= startDate && now <= endDate;
+  const startDate = parseISO(event.start_date);
+  const endDate = parseISO(event.end_date);
+
+  return isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate;
 }
 
 /**
@@ -186,10 +180,10 @@ export function isEventActive(event: { start_date: string; end_date: string }): 
  */
 export function isGachaActive(gacha: { start_date: string; end_date: string }): boolean {
   const now = new Date();
-  const startDate = new Date(gacha.start_date);
-  const endDate = new Date(gacha.end_date);
-  
-  return now >= startDate && now <= endDate;
+  const startDate = parseISO(gacha.start_date);
+  const endDate = parseISO(gacha.end_date);
+
+  return isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate;
 }
 
 /**
@@ -675,4 +669,58 @@ export function createPaginationMetadata(
     hasNextPage: currentPage < totalPages,
     hasPrevPage: currentPage > 1
   };
+}
+
+// =============================================================================
+// INPUT SANITIZATION HELPERS - Client-side sanitization utilities
+// =============================================================================
+
+/**
+ * Sanitize HTML content using DOMPurify
+ * For general user input that may contain HTML
+ */
+export function sanitizeHtml(dirty: string): string {
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'],
+    ALLOWED_ATTR: ['class', 'id'],
+    ALLOW_DATA_ATTR: false,
+    SANITIZE_DOM: true,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false
+  });
+}
+
+/**
+ * Sanitize rich text content (for TipTap editor)
+ * More permissive than general HTML sanitization
+ */
+export function sanitizeRichText(dirty: string): string {
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'em', 'u', 's', 'sub', 'sup',
+      'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'blockquote', 'code', 'pre', 'a', 'img', 'table', 'thead',
+      'tbody', 'tr', 'td', 'th', 'hr', 'div', 'span'
+    ],
+    ALLOWED_ATTR: [
+      'href', 'src', 'alt', 'title', 'class', 'id', 'style',
+      'target', 'rel', 'colspan', 'rowspan'
+    ],
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false
+  });
+}
+
+/**
+ * Sanitize plain text input
+ * Removes all HTML tags and dangerous content
+ */
+export function sanitizePlainText(dirty: string): string {
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false
+  });
 }

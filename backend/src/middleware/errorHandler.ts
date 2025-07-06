@@ -209,9 +209,11 @@ export const errorHandler = (
   res.status(statusCode).json(response);
 };
 
-// Generate unique error ID for tracking
+// Generate unique error ID for tracking using nanoid
+import { generateId } from '../utils/id';
+
 function generateErrorId(): string {
-  return `err_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  return `err_${generateId()}`;
 }
 
 export const notFound = (req: Request, _res: Response, next: NextFunction): void => {

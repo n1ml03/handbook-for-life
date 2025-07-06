@@ -597,9 +597,21 @@ export interface ServicePerformanceApiResponse {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-export function formatDateForApi(date: Date | null | undefined): string | undefined {
+import { formatISO } from 'date-fns/formatISO';
+import { isValid } from 'date-fns/isValid';
+import { parseISO } from 'date-fns/parseISO';
+
+export function formatDateForApi(date: Date | string | null | undefined): string | undefined {
   if (!date) return undefined;
-  return date instanceof Date ? date.toISOString() : new Date(date).toISOString();
+
+  let dateObj: Date;
+  if (typeof date === 'string') {
+    dateObj = parseISO(date);
+  } else {
+    dateObj = date;
+  }
+
+  return isValid(dateObj) ? formatISO(dateObj) : undefined;
 }
 
 export function getLocalizedName(

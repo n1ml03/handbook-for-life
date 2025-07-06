@@ -15,6 +15,7 @@ import { responseFormatter } from './middleware/responseFormatter';
 import { responseValidator } from './middleware/responseValidator';
 import { swaggerUi, specs } from './config/swagger';
 import { CacheService } from './services/CacheService';
+import { generateId } from './utils/id';
 import {
   rateLimits,
   sanitizeInput,
@@ -100,7 +101,7 @@ app.use(responseValidator({
 
 // Request ID middleware for tracking
 app.use((req: any, res, next) => {
-  req.id = Math.random().toString(36).substring(2, 11);
+  req.id = generateId();
   res.setHeader('X-Request-ID', req.id);
   next();
 });

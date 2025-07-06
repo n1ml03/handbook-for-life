@@ -18,6 +18,9 @@ import { Button } from '@/components/ui/button';
 import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 import { useDebounce } from '@/hooks/useDebounce';
 import React from 'react';
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+import { isValid } from 'date-fns/isValid';
 
 // Character Card Component
 interface CharacterCardProps {
@@ -29,8 +32,8 @@ const CharacterCard = React.memo(function CharacterCard({ character, onClick }: 
   const formatBirthday = useCallback((birthday?: string) => {
     if (!birthday) return 'Unknown';
     try {
-      const date = new Date(birthday);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const date = parseISO(birthday);
+      return isValid(date) ? format(date, 'MMM d') : birthday;
     } catch {
       return birthday;
     }
@@ -208,7 +211,7 @@ export default function CharacterListPage() {
         { value: '', label: 'All Months' },
         ...Array.from({length: 12}, (_, i) => ({
           value: (i + 1).toString(),
-          label: new Date(2000, i).toLocaleDateString('en-US', { month: 'long' })
+          label: format(new Date(2000, i), 'MMMM')
         }))
       ]
     },

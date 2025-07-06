@@ -304,10 +304,11 @@ export class TransactionManager {
   }
 
   /**
-   * Generate unique transaction ID
+   * Generate unique transaction ID using nanoid
    */
   private static generateTransactionId(): string {
-    return `txn_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const { generateId } = require('../utils/id');
+    return `txn_${generateId()}`;
   }
 
   /**

@@ -6,6 +6,8 @@ import { FormGroup, StatusBadge } from '@/components/ui/spacing';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { cn, extractScreenshotUrls, extractContentText, formatDisplayDateTime } from '@/services/utils';
 import { Document, DocumentCategory } from '@/types';
+import { validateData, documentValidationSchema } from '@/utils/validation';
+import { nanoid } from 'nanoid';
 
 import TiptapEditor from '@/components/features/TiptapEditor';
 
@@ -55,30 +57,26 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isPreviewMode]);
 
-  // Validation function
+  // Enhanced validation function using Zod schema
   const validateDocument = (doc: Document): string[] => {
-    const errors: string[] = [];
-    
-    // Check required fields
-    if (!doc.title_en) {
-      errors.push('Title is required');
+    // Prepare document data for validation
+    const documentData = {
+      unique_key: doc.unique_key,
+      title_en: doc.title_en,
+      summary_en: doc.summary_en,
+      content_json_en: doc.content_json_en || jsonContent,
+      screenshots_data: doc.screenshots_data
+    };
+
+    // Use Zod validation
+    const validation = validateData(documentValidationSchema, documentData);
+
+    if (validation.success) {
+      return [];
     }
-    
-    if (!doc.unique_key) {
-      errors.push('Unique key is required');
-    }
-    
-    // Check content (JSON content should be present)
-    if (!doc.content_json_en && !jsonContent) {
-      errors.push('Content is required');
-    }
-    
-    // Validate unique key format
-    if (doc.unique_key && !/^[a-zA-Z0-9-_]+$/.test(doc.unique_key)) {
-      errors.push('Unique key can only contain letters, numbers, hyphens, and underscores');
-    }
-    
-    return errors;
+
+    // Return formatted error messages
+    return validation.fieldErrors || [];
   };
 
   const handleSaveDraft = async () => {
@@ -91,7 +89,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         ...document,
         // Ensure required fields are set
         title_en: document.title_en || '',
-        unique_key: document.unique_key || `doc-${Date.now()}`,
+        unique_key: document.unique_key || `doc-${nanoid()}`,
         // Handle content conversion
         content_json_en: jsonContent || document.content_json_en,
         // Set timestamps

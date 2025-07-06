@@ -64,7 +64,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       title_en: row.title_en,
       summary_en: row.summary_en,
       content_json_en: row.content_json_en,
-      screenshots_data: row.screenshots_data ? JSON.parse(row.screenshots_data) : [],
+      screenshots_data: row.screenshots_data || [],
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
       // Extended fields for frontend compatibility

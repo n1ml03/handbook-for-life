@@ -2,6 +2,7 @@ import React, { useRef, useState, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/services/utils';
+import { uploadApi } from '@/services/api';
 
 interface FileUploadProps {
   files: string[];
@@ -89,40 +90,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       throw new Error('No valid files to upload');
     }
 
-    const formData = new FormData();
+    // FormData is handled by the upload function
     
     try {
       if (filesToUpload.length === 1) {
-        formData.append('screenshot', filesToUpload[0]);
-        const response = await fetch('/api/upload/screenshot', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-          throw new Error(error.message || 'Upload failed');
-        }
-
-        const result = await response.json();
+        const result = await uploadApi.uploadScreenshot(filesToUpload[0]);
         return Array.isArray(result.data) ? result.data : [result.data];
       } else {
-        filesToUpload.forEach(file => {
-          formData.append('screenshots', file);
-        });
-
-        const response = await fetch('/api/upload/screenshots', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-          throw new Error(error.message || 'Upload failed');
-        }
-
-        const result = await response.json();
-        return Array.isArray(result.data) ? result.data : [];
+        // For multiple files, upload them one by one
+        const uploadPromises = filesToUpload.map(file => uploadApi.uploadScreenshot(file));
+        const results = await Promise.all(uploadPromises);
+        return results.flatMap(result => Array.isArray(result.data) ? result.data : [result.data]);
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -236,9 +214,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         // For regular file URLs, attempt to delete from server
         const filename = fileUrl.split('/').pop();
         if (filename && filename.trim().length > 0) {
-          await fetch(`/api/upload/files/${encodeURIComponent(filename)}?type=screenshots`, {
-            method: 'DELETE',
-          });
+          await uploadApi.deleteFile(filename);
         }
       }
     } catch (error) {

@@ -193,9 +193,11 @@ const documentBase = z.object({
   title_en: z.string().min(1, 'Title is required').max(255, 'Title too long').trim(),
   summary_en: z.string().max(1000, 'Summary too long').optional(),
   content_json_en: tiptapContentSchema.optional(),
-  screenshots: z.array(z.string().url().max(500, 'Screenshot URL too long'))
-    .max(20, 'Cannot have more than 20 screenshots')
-    .optional(),
+  screenshots_data: z.array(z.object({
+    data: z.string().min(1, 'Image data is required'),
+    mimeType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']),
+    filename: z.string().min(1, 'Filename is required')
+  })).max(20, 'Cannot have more than 20 screenshots').optional(),
 });
 
 export const documentSchemas = {
