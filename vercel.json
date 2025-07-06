@@ -1,0 +1,16 @@
+{
+  "buildCommand": "cd frontend && bun run build",
+  "installCommand": "bun install",
+  "framework": null,
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "regions": ["hnd1"]
+}
