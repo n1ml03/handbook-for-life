@@ -6,12 +6,12 @@ export const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/85 hover:shadow-xs light:shadow-sm light:hover:shadow-md light:border light:border-primary/20",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/85 hover:shadow-xs light:shadow-md light:hover:shadow-lg light:border light:border-primary/40",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-xs light:shadow-sm light:hover:shadow-md light:border light:border-secondary/30",
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-xs light:shadow-md light:hover:shadow-lg light:border light:border-secondary/50",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/85 hover:shadow-xs light:shadow-sm light:hover:shadow-md",
-        outline: "text-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-xs light:border-border light:hover:bg-accent/60 light:hover:shadow-sm",
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/85 hover:shadow-xs light:shadow-md light:hover:shadow-lg light:border light:border-destructive/30",
+        outline: "text-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-xs light:border-border/80 light:hover:bg-accent/70 light:hover:shadow-md",
       },
     },
     defaultVariants: {

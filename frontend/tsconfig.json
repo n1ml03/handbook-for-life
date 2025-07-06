@@ -6,6 +6,7 @@
     "skipLibCheck": true,
     "allowJs": true,
     "downlevelIteration": true,
+    "types": ["node"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -31,7 +32,8 @@
   },
   "include": [
     "src/**/*",
-    "src/types/bun.d.ts"
+    "src/types/bun.d.ts",
+    "src/types/minimatch.d.ts"
   ],
   "exclude": [
     "node_modules",

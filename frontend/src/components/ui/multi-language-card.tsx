@@ -2,42 +2,42 @@ import React, { useMemo } from 'react';
 import { Card } from './card';
 import { cn } from '@/services/utils';
 
-// Language configuration with modern colors and styling
+// Language configuration with white backgrounds for light mode
 const LANGUAGES = {
-  jp: { 
-    flag: '🇯🇵', 
-    name: 'JP', 
-    color: 'text-rose-400', 
-    bg: 'bg-gradient-to-r from-rose-500/10 to-pink-500/10',
-    border: 'border-rose-500/20'
+  jp: {
+    flag: '🇯🇵',
+    name: 'JP',
+    color: 'text-rose-400 light:text-rose-700',
+    bg: 'bg-gradient-to-r from-rose-500/10 to-pink-500/10 light:bg-white',
+    border: 'border-rose-500/20 light:border-rose-300'
   },
-  en: { 
-    flag: '🇺🇸', 
-    name: 'EN', 
-    color: 'text-blue-400', 
-    bg: 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10',
-    border: 'border-blue-500/20'
+  en: {
+    flag: '🇺🇸',
+    name: 'EN',
+    color: 'text-blue-400 light:text-blue-700',
+    bg: 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10 light:bg-white',
+    border: 'border-blue-500/20 light:border-blue-300'
   },
-  cn: { 
-    flag: '🇨🇳', 
-    name: 'CN', 
-    color: 'text-amber-400', 
-    bg: 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10',
-    border: 'border-amber-500/20'
+  cn: {
+    flag: '🇨🇳',
+    name: 'CN',
+    color: 'text-amber-400 light:text-amber-700',
+    bg: 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 light:bg-white',
+    border: 'border-amber-500/20 light:border-amber-300'
   },
-  tw: { 
-    flag: '🇹🇼', 
-    name: 'TW', 
-    color: 'text-emerald-400', 
-    bg: 'bg-gradient-to-r from-emerald-500/10 to-green-500/10',
-    border: 'border-emerald-500/20'
+  tw: {
+    flag: '🇹🇼',
+    name: 'TW',
+    color: 'text-emerald-400 light:text-emerald-700',
+    bg: 'bg-gradient-to-r from-emerald-500/10 to-green-500/10 light:bg-white',
+    border: 'border-emerald-500/20 light:border-emerald-300'
   },
-  kr: { 
-    flag: '🇰🇷', 
-    name: 'KR', 
-    color: 'text-purple-400', 
-    bg: 'bg-gradient-to-r from-purple-500/10 to-violet-500/10',
-    border: 'border-purple-500/20'
+  kr: {
+    flag: '🇰🇷',
+    name: 'KR',
+    color: 'text-purple-400 light:text-purple-700',
+    bg: 'bg-gradient-to-r from-purple-500/10 to-violet-500/10 light:bg-white',
+    border: 'border-purple-500/20 light:border-purple-300'
   }
 } as const;
 
@@ -68,28 +68,32 @@ const LanguageBadge = React.memo<{
   
   if (variant === 'minimal') {
     return (
-      <div 
+      <div
         className={cn(
           'inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg font-medium',
           langConfig.bg,
           langConfig.color,
           langConfig.border,
-          'border backdrop-blur-sm'
+          'border backdrop-blur-sm',
+          // Light mode enhancements
+          'light:shadow-sm light:bg-opacity-80'
         )}
       >
         <span className="text-base">{langConfig.flag}</span>
-        <span>{name}</span>
+        <span className="light:font-semibold">{name}</span>
       </div>
     );
   }
 
   if (variant === 'expanded') {
     return (
-      <div 
+      <div
         className={cn(
           'p-4 rounded-xl border backdrop-blur-sm',
           langConfig.bg,
-          langConfig.border
+          langConfig.border,
+          // Light mode enhancements
+          'light:shadow-md light:bg-opacity-80'
         )}
       >
         <div className="flex items-center gap-3">
@@ -98,7 +102,7 @@ const LanguageBadge = React.memo<{
             <div className={cn('text-sm font-semibold', langConfig.color)}>
               {langConfig.name}
             </div>
-            <div className="text-white/90 truncate font-medium">{name}</div>
+            <div className="text-white/90 light:text-foreground truncate font-medium">{name}</div>
           </div>
         </div>
       </div>
@@ -113,7 +117,9 @@ const LanguageBadge = React.memo<{
         langConfig.bg,
         langConfig.color,
         langConfig.border,
-        'border backdrop-blur-sm'
+        'border backdrop-blur-sm',
+        // Light mode enhancements
+        'light:shadow-sm light:bg-opacity-80 light:font-bold'
       )}>
         <span className="text-base">{langConfig.flag}</span>
         <span>{langConfig.name}</span>
@@ -122,12 +128,17 @@ const LanguageBadge = React.memo<{
   }
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-200">
+    <div className={cn(
+      'flex items-center gap-3 p-2 rounded-lg transition-colors duration-200',
+      'hover:bg-white/5 light:hover:bg-black/5'
+    )}>
       <div className={cn(
         'w-8 h-8 rounded-full flex items-center justify-center text-sm',
         langConfig.bg,
         langConfig.border,
-        'border'
+        'border',
+        // Light mode enhancements
+        'light:shadow-sm'
       )}>
         {langConfig.flag}
       </div>
@@ -135,7 +146,7 @@ const LanguageBadge = React.memo<{
         <div className={cn('text-xs font-semibold uppercase tracking-wider', langConfig.color)}>
           {langConfig.name}
         </div>
-        <div className="text-white/90 truncate font-medium text-sm">{name}</div>
+        <div className="text-white/90 light:text-foreground truncate font-medium text-sm">{name}</div>
       </div>
     </div>
   );
@@ -181,7 +192,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
     return (
       <div className="space-y-4">
         <div className="relative">
-          <h3 className="text-xl font-bold text-white leading-tight tracking-tight">{primaryName}</h3>
+          <h3 className="text-xl font-bold text-white light:text-foreground leading-tight tracking-tight">{primaryName}</h3>
           <div className="absolute -top-1 -right-1 text-lg opacity-80">
             {LANGUAGES[primaryLanguage].flag}
           </div>
@@ -203,19 +214,25 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
   if (variant === 'expanded') {
     return (
       <div className="space-y-6">
-        <div className="relative p-4 rounded-xl border border-white/10 bg-gradient-to-r from-white/5 to-white/2">
-          <h3 className="text-2xl font-bold text-white leading-tight tracking-tight">{primaryName}</h3>
+        <div className={cn(
+          'relative p-4 rounded-xl border',
+          // Dark mode styling
+          'border-white/10 bg-gradient-to-r from-white/5 to-white/2',
+          // Light mode styling - pure white background
+          'light:border-border/40 light:bg-white light:shadow-md'
+        )}>
+          <h3 className="text-2xl font-bold text-white light:text-foreground leading-tight tracking-tight">{primaryName}</h3>
           <div className={cn(
             'absolute top-3 right-3 text-xl',
             LANGUAGES[primaryLanguage].color
           )}>
             {LANGUAGES[primaryLanguage].flag}
           </div>
-          <div className="mt-2 text-sm text-white/60 font-medium">
+          <div className="mt-2 text-sm text-white/60 light:text-muted-foreground font-medium">
             Primary ({LANGUAGES[primaryLanguage].name})
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {otherLanguagesData.map(({ lang, name }) => (
             <LanguageBadge
@@ -236,7 +253,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
       {/* Primary name with elegant styling */}
       <div className="relative">
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl font-bold text-white leading-tight tracking-tight flex-1">{primaryName}</h3>
+          <h3 className="text-xl font-bold text-white light:text-foreground leading-tight tracking-tight flex-1">{primaryName}</h3>
           <LanguageBadge
             lang={primaryLanguage}
             name={primaryName}
@@ -248,7 +265,13 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
 
       {/* Other languages with modern grid layout */}
       {otherLanguagesData.length > 0 && (
-        <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/20 to-slate-900/40 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
+        <div className={cn(
+          'rounded-xl p-4 border',
+          // Dark mode styling
+          'bg-gradient-to-br from-slate-900/40 via-slate-800/20 to-slate-900/40 border-white/10 backdrop-blur-sm',
+          // Light mode styling - pure white background
+          'light:bg-white light:border-border/40 light:shadow-sm light:backdrop-blur-none'
+        )}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {otherLanguagesData.map(({ lang, name }) => (
               <LanguageBadge
@@ -296,17 +319,19 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(({
   const cardClasses = useMemo(() => ({
     base: cn(
       'modern-card p-8',
-      'border-2 border-white/10',
-      'bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60',
-      'backdrop-blur-md shadow-xl',
+      // Dark mode styling
+      'border-2 border-white/10 bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md shadow-xl',
+      // Light mode styling - pure white background
+      'light:border-2 light:border-border/40 light:bg-white light:shadow-lg light:backdrop-blur-none',
       className
     ),
     clickable: cn(
       'modern-card p-8 overflow-hidden transition-all duration-300',
-      'border-2 border-white/10 hover:border-white/20',
-      'bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60',
-      'backdrop-blur-md shadow-2xl',
-      hover ? 'hover:shadow-3xl hover:bg-gradient-to-br hover:from-slate-900/80 hover:via-slate-800/60 hover:to-slate-900/80' : ''
+      // Dark mode styling
+      'border-2 border-white/10 hover:border-white/20 bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md shadow-2xl',
+      // Light mode styling - pure white background
+      'light:border-2 light:border-border/40 light:hover:border-border/60 light:bg-white light:shadow-lg light:backdrop-blur-none',
+      hover ? 'hover:shadow-3xl hover:bg-gradient-to-br hover:from-slate-900/80 hover:via-slate-800/60 hover:to-slate-900/80 light:hover:shadow-xl light:hover:bg-white' : ''
     )
   }), [className, hover]);
 
@@ -314,7 +339,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(({
     <div className="relative">
       {/* Header section with modern styling */}
       {header && (
-        <div className="mb-6 pb-4 border-b border-white/20">
+        <div className="mb-6 pb-4 border-b border-white/20 light:border-border/40">
           {header}
         </div>
       )}
@@ -336,7 +361,13 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(({
         {/* Side content with modern styling */}
         {sideContent && (
           <div className="lg:col-span-1">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-white/2 border border-white/10">
+            <div className={cn(
+              'p-4 rounded-xl border',
+              // Dark mode styling
+              'bg-gradient-to-br from-white/5 to-white/2 border-white/10',
+              // Light mode styling - pure white background
+              'light:bg-white light:border-border/40 light:shadow-sm'
+            )}>
               {sideContent}
             </div>
           </div>
@@ -345,14 +376,14 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(({
 
       {/* Additional content with improved spacing */}
       {children && (
-        <div className="mt-6 pt-4 border-t border-white/20">
+        <div className="mt-6 pt-4 border-t border-white/20 light:border-border/40">
           {children}
         </div>
       )}
 
       {/* Footer section with modern styling */}
       {footer && (
-        <div className="mt-6 pt-4 border-t border-white/20">
+        <div className="mt-6 pt-4 border-t border-white/20 light:border-border/40">
           {footer}
         </div>
       )}

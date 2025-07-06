@@ -10,8 +10,8 @@ const Card = forwardRef<
     ref={ref}
     className={cn(
       "rounded-responsive border bg-card text-card-foreground modern-shadow glass-effect theme-sync transition-all duration-200",
-      // Light mode enhancements
-      "light:bg-card light:border-border light:shadow-sm light:hover:shadow-md light:hover:border-border/80",
+      // Light mode enhancements - Improved contrast and visibility
+      "light:bg-card light:border-border/80 light:shadow-md light:hover:shadow-lg light:hover:border-border",
       // Touch-friendly improvements
       "touch-friendly focus-mobile",
       className
@@ -57,7 +57,7 @@ const CardDescription = forwardRef<
     className={cn(
       "text-xs text-muted-foreground leading-relaxed",
       // Light mode enhancements for better contrast
-      "light:text-muted-foreground/90",
+      "light:text-muted-foreground light-medium-contrast-text",
       className
     )}
     {...props}

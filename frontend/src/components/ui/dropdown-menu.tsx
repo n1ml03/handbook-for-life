@@ -82,8 +82,8 @@ const DropdownMenuItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 min-h-[44px]",
-      // Light mode enhancements
-      "light:hover:bg-accent/60 light:focus:bg-accent/80 light:focus:text-accent-foreground",
+      // Light mode enhancements - Improved contrast and visibility
+      "light:hover:bg-accent/70 light:focus:bg-accent/90 light:focus:text-accent-foreground light:border light:border-transparent light:hover:border-border/40",
       inset ? "pl-8" : "",
       className
     )}
@@ -100,8 +100,8 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      // Light mode enhancements
-      "light:hover:bg-accent/60 light:focus:bg-accent/80",
+      // Light mode enhancements - Improved contrast and visibility
+      "light:hover:bg-accent/70 light:focus:bg-accent/90 light:border light:border-transparent light:hover:border-border/40",
       className
     )}
     checked={checked}

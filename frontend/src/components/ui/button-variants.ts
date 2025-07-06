@@ -5,11 +5,11 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/95 shadow-sm hover:shadow-md light:shadow-sm light:hover:shadow-md light:border light:border-primary/20",
+        default: "bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/95 shadow-sm hover:shadow-md light:shadow-md light:hover:shadow-lg light:border light:border-primary/30",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/85 active:bg-destructive/95 shadow-sm hover:shadow-md light:shadow-sm light:hover:shadow-md",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:bg-accent/80 shadow-sm hover:shadow-md hover:border-ring/50 light:border-border light:hover:border-accent-foreground/30 light:hover:bg-accent/80",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground active:bg-accent/80 shadow-sm hover:shadow-md hover:border-ring/50 light:border-border/80 light:hover:border-accent-foreground/40 light:hover:bg-accent/80 light:shadow-md",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/75 active:bg-secondary/90 shadow-sm hover:shadow-md light:border light:border-secondary/30 light:hover:border-secondary/50",
         ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 hover:shadow-sm light:hover:bg-accent/60 light:hover:text-accent-foreground",
