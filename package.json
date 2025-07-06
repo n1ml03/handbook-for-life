@@ -27,9 +27,5 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
-  },
-  "engines": {
-    "bun": ">=1.0.0"
-  },
-  "packageManager": "bun@1.1.38"
+  }
 }
