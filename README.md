@@ -48,14 +48,19 @@ bun run install:all
 - Run migrations and seeds:
 ```bash
 cd backend
-bun run db:migrate && bun run db:seed
+bun run local-setup --seed
 ```
 
 ### 4. Start Development
 ```bash
-# In project root:
-bun run dev:backend   # Start backend (http://localhost:3001)
-bun run dev:frontend  # Start frontend (http://localhost:5173)
+# Set up with sample data
+bun run local-setup --seed
+
+# Start development with debug support
+bun run dev:debug
+
+# Start with verbose SQL logging
+bun run dev:verbose
 ```
 
 ---

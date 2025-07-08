@@ -47,15 +47,15 @@ export interface DatabaseHealthCheck {
 // CONFIGURATION
 // ============================================================================
 
-// Enhanced database configuration with optimized connection pooling
+// Enhanced database configuration with development-optimized connection pooling
 const config: DatabaseConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),
   database: process.env.DB_NAME || 'doaxvv_handbook',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  // Optimized connection pool settings
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '20'), // Increased for better performance
+  // Development-optimized connection pool settings (reduced for local development)
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'), // Reduced for development
   charset: 'utf8mb4',
   timezone: '+00:00',
   multipleStatements: false,
@@ -67,7 +67,7 @@ const config: DatabaseConfig = {
 // CONNECTION POOL
 // ============================================================================
 
-// Enhanced connection pool configuration with optimized settings
+// Enhanced connection pool configuration with development-optimized settings
 export const pool = mysql.createPool({
   ...config,
   namedPlaceholders: true, // Enable named placeholders for better security
@@ -404,6 +404,16 @@ export async function executeQuery(
 
     // Track query performance
     QueryOptimizer.trackQueryPerformance(query, executionTime, 'executeQuery');
+
+    // Development query logging
+    if (process.env.DB_ENABLE_QUERY_LOGGING === 'true' && process.env.NODE_ENV === 'development') {
+      logger.debug('SQL Query Executed', {
+        query: query.trim(),
+        params: params || [],
+        executionTime: `${executionTime}ms`,
+        rowsAffected: Array.isArray(result[0]) ? result[0].length : (result[0] as any)?.affectedRows || 0
+      });
+    }
 
     // Log slow queries
     const slowQueryThreshold = parseInt(process.env.DB_SLOW_QUERY_THRESHOLD || '1000');
