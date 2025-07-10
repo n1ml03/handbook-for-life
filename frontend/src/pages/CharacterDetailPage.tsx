@@ -151,13 +151,6 @@ export default function CharacterDetailPage() {
     return <Zap className="w-4 h-4" />;
   };
 
-  if (loading) {
-    return (
-      <PageLoadingState isLoading={true} message="Loading character details...">
-        <div></div>
-      </PageLoadingState>
-    );
-  }
 
   if (!character) {
     return (

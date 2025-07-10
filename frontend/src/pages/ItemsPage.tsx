@@ -449,10 +449,6 @@ export default function ItemsPage() {
   }, []);
 
   return (
-    <PageLoadingState
-      isLoading={isLoading && !overviewResponse}
-      message="Loading items collection..."
-    >
     <div className="modern-page">
       <div className="modern-container-lg">
         {/* Modern Page Header */}
@@ -601,6 +597,5 @@ export default function ItemsPage() {
       )}
       </div>
     </div>
-    </PageLoadingState>
   );
 }

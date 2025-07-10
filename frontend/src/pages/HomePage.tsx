@@ -157,9 +157,6 @@ const UpdateLog = React.memo(function UpdateLog() {
     );
   }, []);
 
-  if (isLoading) {
-    return <InlinePageLoader message="Loading update logs..." className="py-12" />;
-  }
 
   const hasActiveFilters = searchTerm || selectedTags.length > 0;
 
