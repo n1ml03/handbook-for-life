@@ -89,51 +89,14 @@ export default defineConfig({
     copyPublicDir: true,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Core React libraries
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-            return 'react-vendor';
-          }
-
-          // Radix UI components - split into smaller chunks
-          if (id.includes('@radix-ui')) {
-            if (id.includes('dialog') || id.includes('dropdown') || id.includes('select')) {
-              return 'ui-radix-interactive';
-            }
-            return 'ui-radix-core';
-          }
-
-          // TipTap editor - large library, separate chunk
-          if (id.includes('@tiptap') || id.includes('prosemirror')) {
-            return 'editor-tiptap';
-          }
-
-          // Animation library
-          if (id.includes('framer-motion') || id.includes('motion-dom')) {
-            return 'animation-vendor';
-          }
-
-          // State management
-          if (id.includes('zustand') || id.includes('@tanstack/react-query')) {
-            return 'data-vendor';
-          }
-
-          // Utility libraries
-          if (id.includes('class-variance-authority') || id.includes('tailwind-merge') || id.includes('lucide-react')) {
-            return 'utils-vendor';
-          }
-
-          // Large node_modules packages
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        }
+        // Remove manual chunks to avoid vendor file issues
+        manualChunks: undefined
       }
     },
     // PWA specific build options
     assetsInlineLimit: 4096, // Inline small assets for fewer requests
     minify: 'esbuild',
-    chunkSizeWarningLimit: 500, // Warn for chunks larger than 500kB
+    chunkSizeWarningLimit: 1000, // Increase warning limit since we're not splitting chunks
     target: 'esnext', // Modern browsers for better optimization
     cssCodeSplit: true, // Split CSS for better caching
   },

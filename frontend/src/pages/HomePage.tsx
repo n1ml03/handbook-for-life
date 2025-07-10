@@ -24,7 +24,7 @@ import React from 'react';
 
 // Enhanced Update Log Component with performance optimizations
 const UpdateLog = React.memo(function UpdateLog() {
-  const { updateLogs, isLoading } = useUpdateLogs();
+  const { updateLogs, isLoading, loadUpdateLogs } = useUpdateLogs();
   const [expandedUpdate, setExpandedUpdate] = useState<string | null>('2.1.0');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -33,6 +33,41 @@ const UpdateLog = React.memo(function UpdateLog() {
 
   // Debounced search for better performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Ensure update logs are loaded when component mounts
+  useEffect(() => {
+    if (updateLogs.length === 0 && !isLoading) {
+      loadUpdateLogs();
+    }
+  }, [updateLogs.length, isLoading, loadUpdateLogs]);
+
+  // Refresh data when window gains focus (user switches back to this tab/page)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Only refresh if we have existing data (avoid unnecessary loading on first focus)
+      if (updateLogs.length > 0) {
+        loadUpdateLogs();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [updateLogs.length, loadUpdateLogs]);
+
+  // Listen for cross-page data synchronization events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'doaxvv-update-logs-updated' && e.newValue) {
+        // Another page/tab updated update logs, refresh our data
+        loadUpdateLogs();
+        // Clear the flag
+        localStorage.removeItem('doaxvv-update-logs-updated');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadUpdateLogs]);
 
   // Keyboard shortcut for search (Cmd+K / Ctrl+K)
   useEffect(() => {

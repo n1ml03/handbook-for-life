@@ -31,9 +31,9 @@ interface AdminSection {
 }
 
 const AdminPage = () => {
-  const { documents, addDocument, updateDocument, deleteDocument } = useDocuments();
+  const { documents, addDocument, updateDocument, deleteDocument, refreshDocuments } = useDocuments();
   const [documentCategories] = useState<DocumentCategory[]>(documentCategoriesData);
-  const { updateLogs, addUpdateLog, updateUpdateLog, deleteUpdateLog } = useUpdateLogs();
+  const { updateLogs, addUpdateLog, updateUpdateLog, deleteUpdateLog, refreshUpdateLogs } = useUpdateLogs();
   
   const [activeTab, setActiveTab] = useState<string>('documents');
   const [activeDocumentSection, setActiveDocumentSection] = useState<'checklist-creation' | 'checking-guide' | 'all'>('all');
@@ -204,6 +204,13 @@ const AdminPage = () => {
           duration: 3000
         });
       }
+
+      // Refresh documents to ensure all pages have the latest data
+      await refreshDocuments();
+
+      // Notify other pages/tabs that documents have been updated
+      localStorage.setItem('doaxvv-documents-updated', Date.now().toString());
+
       setEditingDocument(null);
       setIsEditMode(false);
       setIsPreviewMode(false);
@@ -246,16 +253,22 @@ const AdminPage = () => {
     }
   }, [editingDocument, addDocument, updateDocument, addNotification]);
 
-  const handleDeleteDocument = useCallback((documentId: number) => {
+  const handleDeleteDocument = useCallback(async (documentId: number) => {
     if (confirm('Are you sure you want to delete this document?')) {
       try {
-        deleteDocument(documentId.toString());
+        await deleteDocument(documentId.toString());
         addNotification({
           type: 'success',
           title: 'Document Deleted',
           message: 'Document has been successfully deleted.',
           duration: 3000
         });
+
+        // Refresh documents to ensure all pages have the latest data
+        await refreshDocuments();
+
+        // Notify other pages/tabs that documents have been updated
+        localStorage.setItem('doaxvv-documents-updated', Date.now().toString());
       } catch (error) {
         console.error('Error deleting document:', error);
         addNotification({
@@ -266,7 +279,7 @@ const AdminPage = () => {
         });
       }
     }
-  }, [deleteDocument, addNotification]);
+  }, [deleteDocument, addNotification, refreshDocuments]);
 
   // Update log handlers
   const handleCreateNewUpdateLog = useCallback(() => {
@@ -322,6 +335,13 @@ const AdminPage = () => {
           duration: 3000
         });
       }
+
+      // Refresh update logs to ensure all pages have the latest data
+      await refreshUpdateLogs();
+
+      // Notify other pages/tabs that update logs have been updated
+      localStorage.setItem('doaxvv-update-logs-updated', Date.now().toString());
+
       setEditingLog(null);
       setIsEditMode(false);
     } catch (error: any) {
@@ -372,6 +392,12 @@ const AdminPage = () => {
           message: 'Update log has been successfully deleted.',
           duration: 3000
         });
+
+        // Refresh update logs to ensure all pages have the latest data
+        await refreshUpdateLogs();
+
+        // Notify other pages/tabs that update logs have been updated
+        localStorage.setItem('doaxvv-update-logs-updated', Date.now().toString());
       } catch (error) {
         console.error('Error deleting update log:', error);
         addNotification({
@@ -382,7 +408,7 @@ const AdminPage = () => {
         });
       }
     }
-  }, [deleteUpdateLog, addNotification]);
+  }, [deleteUpdateLog, addNotification, refreshUpdateLogs]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingDocument(null);
@@ -468,7 +494,7 @@ const AdminPage = () => {
       case 'update-logs':
         return (
           <UpdateLogManagement
-            updateLogs={updateLogs.filter((_, index) => index % 2 === 0)}
+            updateLogs={updateLogs}
             onCreateNew={handleCreateNewUpdateLog}
             onEditUpdateLog={(log: UpdateLog) => {
               setEditingLog(log);

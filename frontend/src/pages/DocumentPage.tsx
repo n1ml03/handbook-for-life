@@ -39,7 +39,7 @@ interface NotificationState {
 }
 
 export default function DocumentPage() {
-  const { documents, updateDocument } = useDocuments();
+  const { documents, updateDocument, loadDocuments, isLoading } = useDocuments();
   useAccessibility();
   const [activeSection, setActiveSection] = useState<ActiveSection>('checklist-creation');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -59,6 +59,41 @@ export default function DocumentPage() {
 
   // Debounce search to improve performance
   const debouncedSearch = useDebounce(filterValues.search, 500);
+
+  // Ensure documents are loaded when component mounts
+  useEffect(() => {
+    if (documents.length === 0 && !isLoading) {
+      loadDocuments();
+    }
+  }, [documents.length, isLoading, loadDocuments]);
+
+  // Refresh data when window gains focus (user switches back to this tab/page)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Only refresh if we have existing data (avoid unnecessary loading on first focus)
+      if (documents.length > 0) {
+        loadDocuments();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [documents.length, loadDocuments]);
+
+  // Listen for cross-page data synchronization events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'doaxvv-documents-updated' && e.newValue) {
+        // Another page/tab updated documents, refresh our data
+        loadDocuments();
+        // Clear the flag
+        localStorage.removeItem('doaxvv-documents-updated');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadDocuments]);
 
   // Notification management
   const addNotification = useCallback((notification: Omit<NotificationState, 'id' | 'timestamp'>) => {
