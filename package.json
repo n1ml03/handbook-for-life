@@ -30,12 +30,14 @@
     "lint:frontend": "cd frontend && bun run lint",
     "lint:backend": "cd backend && bun run lint",
     "lint:all": "bun run lint:frontend && bun run lint:backend",
-    "network-setup": "node network-setup setup",
-    "network-setup:validate": "node network-setup setup --validate",
-    "network-discover": "node network-setup discover",
-    "network-validate": "node network-setup validate",
-    "network-test": "node network-setup test",
-    "network-revert": "node network-setup revert"
+    "network-setup": "bun run scripts/network-cli.js setup",
+    "network-setup:validate": "bun run scripts/network-cli.js setup --validate",
+    "network-setup:force": "bun run scripts/network-cli.js setup --force",
+    "network-discover": "bun run scripts/network-cli.js discover",
+    "network-discover:json": "bun run scripts/network-cli.js discover --json",
+    "network-validate": "bun run scripts/network-cli.js validate",
+    "network-test": "bun run scripts/network-cli.js test",
+    "network-revert": "bun run scripts/network-cli.js revert"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

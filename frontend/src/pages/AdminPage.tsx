@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { FileText, BookOpen } from 'lucide-react';
+import { FileText, BookOpen, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentType, type DocumentCategory } from '@/types';
@@ -16,6 +16,7 @@ import {
   UpdateLogManagement,
   DocumentEditor,
   UpdateLogEditor,
+  TestingToolsManagement,
   NotificationToast,
   AdminErrorBoundary,
   type NotificationState
@@ -87,6 +88,12 @@ const AdminPage = () => {
       title: 'Update Logs Management',
       icon: BookOpen,
       color: 'text-accent-purple',
+    },
+    {
+      id: 'testing-tools',
+      title: 'Testing Tools',
+      icon: Settings,
+      color: 'text-accent-gold',
     }
   ];
 
@@ -513,6 +520,11 @@ const AdminPage = () => {
             isEditMode={isEditMode}
           />
         );
+      
+      case 'testing-tools':
+        return (
+          <TestingToolsManagement />
+        );
     }
   };
 
@@ -614,7 +626,7 @@ const AdminPage = () => {
           <Card className="p-3 rounded-2xl">
             <CardContent className="p-0">
               <div
-                className="grid grid-cols-2 gap-2"
+                className="grid grid-cols-3 gap-2"
                 role="tablist"
                 aria-label="Admin dashboard sections"
               >

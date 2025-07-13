@@ -578,6 +578,17 @@ export interface ExportOptions {
   customFilename?: string;
 }
 
+export interface TestingTool {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  category: 'database' | 'api' | 'monitoring' | 'testing' | 'documentation' | 'server' | 'tool' | 'health';
+  status: 'active' | 'inactive' | 'maintenance';
+  port?: number;
+}
+
 export interface NotificationState {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';

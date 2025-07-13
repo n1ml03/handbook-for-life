@@ -5,4 +5,5 @@ export { DocumentManagement, type DocumentManagementProps } from './DocumentMana
 export { UpdateLogManagement } from './UpdateLogManagement';
 export { DocumentEditor, type DocumentEditorProps } from './DocumentEditor';
 export { UpdateLogEditor } from './UpdateLogEditor';
+export { TestingToolsManagement, type TestingToolsManagementProps } from './TestingToolsManagement';
 export { AdminErrorBoundary, withAdminErrorBoundary, useErrorHandler } from './AdminErrorBoundary';

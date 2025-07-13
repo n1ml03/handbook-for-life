@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Network Setup CLI Interface
  * 
@@ -26,7 +26,7 @@ class NetworkCLI {
 🌐 DOAXVV Handbook - Network Setup CLI
 
 USAGE:
-  node scripts/network-cli.js [command] [options]
+  bun run scripts/network-cli.js [command] [options]
 
 COMMANDS:
   setup                 Configure both frontend and backend for network access
@@ -46,12 +46,12 @@ OPTIONS:
   --force              Force setup even if validation fails
 
 EXAMPLES:
-  node scripts/network-cli.js setup
-  node scripts/network-cli.js setup --validate
-  node scripts/network-cli.js discover --json
-  node scripts/network-cli.js validate
-  node scripts/network-cli.js backup list
-  node scripts/network-cli.js revert
+  bun run scripts/network-cli.js setup
+  bun run scripts/network-cli.js setup --validate
+  bun run scripts/network-cli.js discover --json
+  bun run scripts/network-cli.js validate
+  bun run scripts/network-cli.js backup list
+  bun run scripts/network-cli.js revert
 
 NETWORK ACCESS:
   After successful setup, your applications will be accessible at:
@@ -105,7 +105,7 @@ For more information, see:
       }
       
       console.log('\n💡 Try running with --verbose for more details');
-      console.log('💡 Or run "node scripts/network-cli.js help" for usage information');
+      console.log('💡 Or run "bun run scripts/network-cli.js help" for usage information');
       
       process.exit(1);
     }
@@ -275,7 +275,7 @@ For more information, see:
           
         default:
           console.error(`❌ Unknown command: ${command}`);
-          console.log('💡 Run "node scripts/network-cli.js help" for usage information');
+          console.log('💡 Run "bun run scripts/network-cli.js help" for usage information');
           process.exit(1);
       }
     } catch (error) {
