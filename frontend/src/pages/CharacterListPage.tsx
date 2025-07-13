@@ -59,11 +59,12 @@ const CharacterCard = React.memo(function CharacterCard({ character, onClick }: 
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
               }}
             />
-          ) : null}
-          <User className="w-6 h-6 text-accent-cyan hidden" />
+          ) : (
+            // Empty state - just show the background gradient without any icon
+            <div className="w-full h-full" />
+          )}
         </div>
         <div>
           <span className="text-xs text-gray-400">ID: {character.id}</span>
@@ -372,23 +373,25 @@ export default function CharacterListPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="grid-responsive-cards mb-8">
-              {paginationData.paginatedCharacters.map((character, index) => (
-                <motion.div
-                  key={character.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.15,
-                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                  }}
-                >
-                  <CharacterCard
-                  character={character as typeof character & Character}
-                  onClick={() => handleCharacterClick((character as typeof character & Character).id)}
-                />
-                </motion.div>
-              ))}
+            <div className="grid-container-full-width">
+              <div className="grid-responsive-cards mb-8">
+                {paginationData.paginatedCharacters.map((character, index) => (
+                  <motion.div
+                    key={character.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                    }}
+                  >
+                    <CharacterCard
+                    character={character as typeof character & Character}
+                    onClick={() => handleCharacterClick((character as typeof character & Character).id)}
+                  />
+                  </motion.div>
+                ))}
+              </div>
             </div>
 
             {/* Pagination */}

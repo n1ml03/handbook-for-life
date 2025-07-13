@@ -1,8 +1,9 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, AlertCircle, ZoomIn, Move } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/services/utils';
 import { uploadApi } from '@/services/api';
+import { ScreenshotPreview } from './ScreenshotGallery';
 
 interface FileUploadProps {
   files: string[];
@@ -14,6 +15,9 @@ interface FileUploadProps {
   description?: string;
   className?: string;
   disabled?: boolean;
+  showPreview?: boolean; // New prop to enable image preview
+  enableReorder?: boolean; // New prop to enable drag reorder
+  screenshotsData?: Array<{data: string; mimeType: string; filename: string}>; // For preview mode
 }
 
 interface UploadedFile {
@@ -33,7 +37,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   label,
   description,
   className,
-  disabled = false
+  disabled = false,
+  showPreview = true,
+  enableReorder = false,
+  screenshotsData = []
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -239,7 +246,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       // Extract filename from URL
-      const filename = trimmedUrl.includes('/') 
+      const filename = trimmedUrl.includes('/')
         ? trimmedUrl.split('/').pop() || trimmedUrl
         : trimmedUrl;
 
@@ -251,6 +258,136 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       return 'Unknown file';
     }
   };
+
+  // Image preview component for individual files
+  const ImagePreview = React.memo(({
+    fileUrl,
+    index,
+    onRemove,
+    screenshotData
+  }: {
+    fileUrl: string;
+    index: number;
+    onRemove: () => void;
+    screenshotData?: {data: string; mimeType: string; filename: string};
+  }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [showLightbox, setShowLightbox] = useState(false);
+
+    // Use screenshotData if available, otherwise use fileUrl
+    const imageUrl = screenshotData
+      ? `data:${screenshotData.mimeType};base64,${screenshotData.data}`
+      : fileUrl;
+
+    const displayName = screenshotData?.filename || getFileDisplayName(fileUrl);
+
+    if (!imageUrl || imageError) {
+      return (
+        <div className="relative group">
+          <div className="aspect-video bg-muted rounded-lg border border-border/40 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto" />
+              <span className="text-xs text-muted-foreground">
+                {imageError ? 'Failed to load' : 'Loading...'}
+              </span>
+            </div>
+          </div>
+          {!disabled && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onRemove}
+              className="absolute -top-2 -right-2 p-1 h-auto bg-red-500 text-white hover:bg-red-600 rounded-full"
+              aria-label="Remove file"
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground mt-2 truncate">{displayName}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative group">
+        <div
+          className="aspect-video bg-muted rounded-lg overflow-hidden border border-border/40 cursor-pointer group-hover:border-accent-pink/60 transition-all duration-300"
+          onClick={() => setShowLightbox(true)}
+        >
+          <img
+            src={imageUrl}
+            alt={displayName}
+            className={cn(
+              'w-full h-full object-cover transition-all duration-300',
+              imageLoaded ? 'opacity-100' : 'opacity-0',
+              'group-hover:scale-105'
+            )}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+            loading="lazy"
+            decoding="async"
+          />
+
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 bg-muted animate-pulse" />
+          )}
+
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+            <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+        </div>
+
+        {/* Remove button */}
+        {!disabled && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="absolute -top-2 -right-2 p-1 h-auto bg-red-500 text-white hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Remove file"
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+
+        {/* Drag handle for reordering */}
+        {enableReorder && !disabled && (
+          <div className="absolute top-2 left-2 p-1 bg-black/50 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
+            <Move className="w-3 h-3" />
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground mt-2 truncate">{displayName}</p>
+
+        {/* Simple lightbox */}
+        {showLightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setShowLightbox(false)}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
+              onClick={() => setShowLightbox(false)}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+            <img
+              src={imageUrl}
+              alt={displayName}
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+      </div>
+    );
+  });
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -349,50 +486,77 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       {/* Uploaded Files List */}
       {validFiles.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <p className="text-sm font-medium text-foreground">
             Uploaded Files ({validFiles.length}/{maxFiles})
           </p>
-          <div className="space-y-2">
-            {validFiles.map((fileUrl, index) => {
-              // Additional safety check for each file URL
-              if (!fileUrl || typeof fileUrl !== 'string') {
-                return null;
-              }
 
-              return (
-                <div
-                  key={`${fileUrl}-${index}`} // More unique key
-                  className="flex items-center gap-3 p-3 bg-background/50 border border-border rounded-lg"
-                >
-                  <ImageIcon className="w-4 h-4 text-accent-pink shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {getFileDisplayName(fileUrl)}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {fileUrl}
-                    </p>
+          {showPreview && accept === 'image/*' ? (
+            // Image preview grid
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {validFiles.map((fileUrl, index) => {
+                // Additional safety check for each file URL
+                if (!fileUrl || typeof fileUrl !== 'string') {
+                  return null;
+                }
+
+                // Find corresponding screenshot data if available
+                const screenshotData = screenshotsData?.[index];
+
+                return (
+                  <ImagePreview
+                    key={`${fileUrl}-${index}`}
+                    fileUrl={fileUrl}
+                    index={index}
+                    onRemove={() => removeFile(fileUrl)}
+                    screenshotData={screenshotData}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            // Traditional file list
+            <div className="space-y-2">
+              {validFiles.map((fileUrl, index) => {
+                // Additional safety check for each file URL
+                if (!fileUrl || typeof fileUrl !== 'string') {
+                  return null;
+                }
+
+                return (
+                  <div
+                    key={`${fileUrl}-${index}`} // More unique key
+                    className="flex items-center gap-3 p-3 bg-background/50 border border-border rounded-lg"
+                  >
+                    <ImageIcon className="w-4 h-4 text-accent-pink shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {getFileDisplayName(fileUrl)}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {fileUrl}
+                      </p>
+                    </div>
+                    {!disabled && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(fileUrl);
+                        }}
+                        className="p-1 h-auto text-muted-foreground hover:text-red-500"
+                        aria-label="Remove file"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                  {!disabled && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFile(fileUrl);
-                      }}
-                      className="p-1 h-auto text-muted-foreground hover:text-red-500"
-                      aria-label="Remove file"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

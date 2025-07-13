@@ -327,7 +327,7 @@ export const validateApiKey = (req: Request, res: Response, next: NextFunction):
 };
 
 /**
- * CORS configuration for production
+ * CORS configuration for development and production with network access support
  */
 export const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -335,19 +335,38 @@ export const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
-    
-    // In development, allow all origins
+
+    // Get allowed origins from environment
+    const corsOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || [];
+
+    // In development, allow configured origins plus common development patterns
     if (process.env.NODE_ENV === 'development') {
+      // Allow configured CORS origins
+      if (corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow localhost and 127.0.0.1 on any port for development
+      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
+        return callback(null, true);
+      }
+
+      // Allow local network IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x) for network access
+      if (origin.match(/^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/)) {
+        return callback(null, true);
+      }
+
+      // Log and allow other origins in development for debugging
+      logger.info('CORS allowing development origin', { origin });
       return callback(null, true);
     }
-    
-    // In production, check against allowed origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-    if (allowedOrigins.includes(origin)) {
+
+    // In production, strictly check against allowed origins
+    if (corsOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
-    logger.warn('CORS blocked request', { origin, ip: origin });
+
+    logger.warn('CORS blocked request', { origin, allowedOrigins: corsOrigins });
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,

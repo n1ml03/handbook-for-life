@@ -3,12 +3,11 @@ import { BookOpen, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/services/utils';
 import { StatusBadge } from '@/components/ui/spacing';
 import { Document } from '@/types';
-import { safeNormalizeTags, safeToString } from '@/services/utils';
 
 interface DocumentSectionCardsProps {
   documents: Document[];
-  activeSection: 'checklist-creation' | 'checking-guide' | 'all';
-  onSectionChange: (section: 'checklist-creation' | 'checking-guide' | 'all') => void;
+  activeSection: 'checklist' | 'guide' | 'all';
+  onSectionChange: (section: 'checklist' | 'guide' | 'all') => void;
 }
 
 export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
@@ -16,28 +15,8 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
   activeSection,
   onSectionChange
 }) => {
-  const getChecklistCreationCount = () => {
-    return documents.filter(doc => {
-      const tags = safeNormalizeTags(doc.tags);
-      return tags.some(tag => {
-        const tagStr = safeToString(tag).toLowerCase();
-        return tagStr.includes('checklist') || 
-               tagStr.includes('creation') ||
-               tagStr.includes('guide');
-      }) || doc.category === 'checklist-creation';
-    }).length;
-  };
-
-  const getCheckingGuideCount = () => {
-    return documents.filter(doc => {
-      const tags = safeNormalizeTags(doc.tags);
-      return tags.some(tag => {
-        const tagStr = safeToString(tag).toLowerCase();
-        return tagStr.includes('checking') || 
-               tagStr.includes('verification') ||
-               tagStr.includes('validation');
-      }) || doc.category === 'checking-guide';
-    }).length;
+  const getDocumentCountByType = (type: string) => {
+    return documents.filter(doc => doc.document_type === type).length;
   };
 
   return (
@@ -78,30 +57,30 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
       <div 
         className={cn(
           "doax-card p-3 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
-          activeSection === 'checklist-creation'
+          activeSection === 'checklist'
             ? 'border-accent-pink bg-accent-pink/5'
             : 'border-border hover:border-accent-pink/50'
         )}
-        onClick={() => onSectionChange('checklist-creation')}
+        onClick={() => onSectionChange('checklist')}
       >
         <div className="flex items-center gap-2 mb-2">
           <div className={cn(
             "p-1.5 rounded-lg",
-            activeSection === 'checklist-creation'
+            activeSection === 'checklist'
               ? 'bg-accent-pink text-white'
               : 'bg-accent-pink/10 text-accent-pink'
           )}>
             <CheckCircle2 className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm text-foreground truncate">Creation</h3>
-            <p className="text-xs text-muted-foreground hidden sm:block">Creation guides</p>
+            <h3 className="font-semibold text-sm text-foreground truncate">Checklist</h3>
+            <p className="text-xs text-muted-foreground hidden sm:block">Checklist documents</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground hidden sm:block">Docs</span>
           <StatusBadge status="success" className="text-xs ml-auto">
-            {getChecklistCreationCount()}
+            {getDocumentCountByType('checklist')}
           </StatusBadge>
         </div>
       </div>
@@ -110,33 +89,35 @@ export const DocumentSectionCards: React.FC<DocumentSectionCardsProps> = ({
       <div 
         className={cn(
           "doax-card p-3 cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
-          activeSection === 'checking-guide'
+          activeSection === 'guide'
             ? 'border-accent-purple bg-accent-purple/5'
             : 'border-border hover:border-accent-purple/50'
         )}
-        onClick={() => onSectionChange('checking-guide')}
+        onClick={() => onSectionChange('guide')}
       >
         <div className="flex items-center gap-2 mb-2">
           <div className={cn(
             "p-1.5 rounded-lg",
-            activeSection === 'checking-guide'
+            activeSection === 'guide'
               ? 'bg-accent-purple text-white'
               : 'bg-accent-purple/10 text-accent-purple'
           )}>
             <AlertCircle className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm text-foreground truncate">Checking</h3>
-            <p className="text-xs text-muted-foreground hidden sm:block">Verification docs</p>
+            <h3 className="font-semibold text-sm text-foreground truncate">Guide</h3>
+            <p className="text-xs text-muted-foreground hidden sm:block">Guide documents</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground hidden sm:block">Docs</span>
           <StatusBadge status="warning" className="text-xs ml-auto">
-            {getCheckingGuideCount()}
+            {getDocumentCountByType('guide')}
           </StatusBadge>
         </div>
       </div>
+
+
     </div>
   );
 }; 

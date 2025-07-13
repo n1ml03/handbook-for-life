@@ -10,6 +10,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { cn, extractScreenshotUrls, formatDisplayDateTime } from '@/services/utils';
 import { UpdateLog } from '@/types';
 import { validateData, updateLogValidationSchema } from '@/utils/validation';
+import { useDebounce } from '@/hooks/useDebounce';
 import { TagInput } from './TagInput';
 import TiptapEditor from '@/components/features/TiptapEditor';
 
@@ -41,7 +42,6 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   const [isContentExpanded, setIsContentExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-
 
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -379,7 +379,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
                   {/* Screenshots */}
                   <FileUpload
-                    files={extractScreenshotUrls(updateLog.screenshots_data)}
+                    files={extractScreenshotUrls(updateLog.screenshots_data, updateLog.id)}
                     onFilesChange={(files) => {
                       // Convert files to screenshots_data format
                       const screenshotsData = files.map((file, index) => ({
@@ -395,6 +395,9 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                     label="Screenshots"
                     description="Upload screenshot images for this update (PNG, JPG, GIF, WebP)"
                     disabled={isPreviewMode}
+                    showPreview={true}
+                    enableReorder={false}
+                    screenshotsData={updateLog.screenshots_data}
                   />
                 </div>
                 </div>

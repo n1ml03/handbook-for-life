@@ -70,19 +70,18 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
     <div className="relative">
       {/* Banner Section */}
       <div className="relative h-32 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20 rounded-lg overflow-hidden mb-3">
-        {gacha.bannerImage && gacha.bannerImage !== '⭐' && gacha.bannerImage !== '🌙' && gacha.bannerImage !== '💎' ? (
-          <img 
-            src={gacha.bannerImage} 
-            alt={gacha.name_en}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/30 to-pink-500/30">
-            <div className="text-4xl">{gacha.bannerImage ?? '💎'}</div>
-            <Diamond className="w-12 h-12 text-purple-300/50 absolute" />
-          </div>
-        )}
-        
+        {/* Always try to load the image, but handle errors gracefully */}
+        <img
+          src={`/api/images/gacha/${gacha.id}/banner`}
+          alt={gacha.name_en}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // Hide image if it fails to load, showing just the background gradient
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
+
         {/* Overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         
@@ -133,7 +132,7 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
         </div>
       )} */}
 
-            {/* Dates Display */}
+      {/* Dates Display */}
       <div className="space-y-2">
         <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/20">
           <div className="flex items-center gap-2 mb-1">
@@ -239,7 +238,6 @@ export default function GachaPage() {
         }
         const gachaEvents: GachaEvent[] = responseData.map(gacha => ({
           ...gacha,
-          bannerImage: '💎', // Default banner image
           description: `${gacha.name_en || gacha.name_jp} - ${gacha.gacha_subtype} gacha`, // Default description
           rewards: [] // Default empty rewards - can be populated from pools later
         }));
@@ -472,20 +470,22 @@ export default function GachaPage() {
             transition={{ delay: 0.3 }}
             className="mt-8"
           >
-            <div className="grid-responsive-cards mt-8 mb-8">
-              {paginatedGachas.map((gacha, index) => (
-                <motion.div
-                  key={gacha.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.15,
-                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                  }}
-                >
-                  <GachaCard gacha={gacha} />
-                </motion.div>
-              ))}
+            <div className="grid-container-full-width">
+              <div className="grid-responsive-cards mt-8 mb-8">
+                {paginatedGachas.map((gacha, index) => (
+                  <motion.div
+                    key={gacha.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                    }}
+                  >
+                    <GachaCard gacha={gacha} />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}

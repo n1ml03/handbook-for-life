@@ -215,11 +215,14 @@ export interface ShopListing {
 }
 
 // Document types - matching backend ExtendedDocument schema exactly
+export type DocumentType = 'checklist' | 'guide';
+
 export interface Document {
   id: number;
   unique_key: string;
   title_en: string;
   summary_en?: string;
+  document_type: DocumentType; // Type of document for categorization
   content_json_en?: Record<string, unknown>; // TipTap JSON content
   screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Binary screenshot data
   created_at: string; // ISO datetime string
@@ -533,29 +536,18 @@ export interface DocumentCategory {
 // Document categories data
 export const documentCategoriesData: DocumentCategory[] = [
   {
-    id: 'checklist-creation',
-    name: 'Checklist Creation',
-    description: 'Documents related to creating and managing checklists',
+    id: 'checklist',
+    name: 'Checklist',
+    description: 'Interactive checklists and task management documents',
     color: 'text-blue-600 border-blue-200 bg-blue-50'
   },
   {
-    id: 'checking-guide',
-    name: 'Checking Guide',
-    description: 'Guides for checking and validation processes',
+    id: 'guide',
+    name: 'Guide',
+    description: 'Comprehensive guides and how-to documentation',
     color: 'text-green-600 border-green-200 bg-green-50'
   },
-  {
-    id: 'general',
-    name: 'General',
-    description: 'General documentation and guides',
-    color: 'text-gray-600 border-gray-200 bg-gray-50'
-  },
-  {
-    id: 'tutorial',
-    name: 'Tutorial',
-    description: 'Step-by-step tutorials and how-to guides',
-    color: 'text-purple-600 border-purple-200 bg-purple-50'
-  },
+
   {
     id: 'reference',
     name: 'Reference',

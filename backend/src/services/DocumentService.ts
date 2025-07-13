@@ -37,27 +37,56 @@ export class DocumentService extends BaseService<DocumentModel, ExtendedDocument
    * Get documents by category with validation
    */
   async getDocumentsByCategory(
-    category: string, 
+    category: string,
     options: PaginationOptions = {}
   ): Promise<PaginatedResult<ExtendedDocument>> {
     return this.trackPerformance('getDocumentsByCategory', async () => {
       // Validate category
-      this.validateString(category, 'Category', { 
-        required: true, 
-        minLength: 1, 
+      this.validateString(category, 'Category', {
+        required: true,
+        minLength: 1,
         maxLength: 50
       });
-      
+
       this.logOperationStart('Get documents by category', category, { options });
-      
+
       const validatedOptions = this.validatePaginationOptions(options);
       const result = await this.model.findByCategory(category, validatedOptions);
-      
-      this.logOperationSuccess('Get documents by category', category, { 
+
+      this.logOperationSuccess('Get documents by category', category, {
         count: result.data.length,
-        total: result.pagination.total 
+        total: result.pagination.total
       });
-      
+
+      return this.formatPaginatedDatesForResponse(result);
+    });
+  }
+
+  /**
+   * Get documents by type with validation
+   */
+  async getDocumentsByType(
+    documentType: string,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<ExtendedDocument>> {
+    return this.trackPerformance('getDocumentsByType', async () => {
+      // Validate document type
+      this.validateString(documentType, 'Document type', {
+        required: true,
+        minLength: 1,
+        maxLength: 20
+      });
+
+      this.logOperationStart('Get documents by type', documentType, { options });
+
+      const validatedOptions = this.validatePaginationOptions(options);
+      const result = await this.model.findByType(documentType, validatedOptions);
+
+      this.logOperationSuccess('Get documents by type', documentType, {
+        count: result.data.length,
+        total: result.pagination.total
+      });
+
       return this.formatPaginatedDatesForResponse(result);
     });
   }

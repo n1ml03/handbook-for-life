@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Eye, Save, X, FileText, Edit3, Focus, Settings, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Eye, Save, X, FileText, Edit3, Focus, Settings, ChevronDown, ChevronUp, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormGroup, StatusBadge } from '@/components/ui/spacing';
@@ -7,6 +7,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { cn, extractScreenshotUrls, extractContentText, formatDisplayDateTime } from '@/services/utils';
 import { Document, DocumentCategory } from '@/types';
 import { validateData, documentValidationSchema } from '@/utils/validation';
+import { useDebounce } from '@/hooks/useDebounce';
 import { nanoid } from 'nanoid';
 
 import TiptapEditor from '@/components/features/TiptapEditor';
@@ -40,8 +41,15 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [isContentExpanded, setIsContentExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+
+  // Debounced auto-save functionality
+  const debouncedDocument = useDebounce(document, 2000); // 2 second delay
+  const debouncedJsonContent = useDebounce(jsonContent, 2000);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,10 +114,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
       // Update local state first
       onDocumentChange(documentToSave);
-      
+
       // Then save to backend
       await onSave(documentToSave);
-      
+
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+
     } catch (error) {
       console.error('Error in handleSaveDraft:', error);
       setValidationErrors(['Failed to save document. Please try again.']);
@@ -118,22 +129,62 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     }
   };
 
-  const handleContentChange = (content: string) => {
+  // Auto-save functionality
+  const handleAutoSave = useCallback(async () => {
+    if (!hasUnsavedChanges || isAutoSaving || isSaving) return;
+
+    setIsAutoSaving(true);
+    try {
+      const documentToSave: Document = {
+        ...document,
+        title_en: document.title_en || '',
+        unique_key: document.unique_key || `doc-${nanoid()}`,
+        content_json_en: jsonContent || document.content_json_en,
+        updated_at: new Date().toISOString(),
+        created_at: document.created_at || new Date().toISOString(),
+      };
+
+      // Only auto-save if validation passes
+      const errors = validateDocument(documentToSave);
+      if (errors.length === 0) {
+        onDocumentChange(documentToSave);
+        await onSave(documentToSave);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      // Don't show validation errors for auto-save failures
+    } finally {
+      setIsAutoSaving(false);
+    }
+  }, [document, jsonContent, hasUnsavedChanges, isAutoSaving, isSaving, onDocumentChange, onSave, validateDocument]);
+
+  // Trigger auto-save when debounced content changes
+  useEffect(() => {
+    if (hasUnsavedChanges && !isPreviewMode) {
+      handleAutoSave();
+    }
+  }, [debouncedDocument, debouncedJsonContent, handleAutoSave, hasUnsavedChanges, isPreviewMode]);
+
+  const handleContentChange = useCallback((content: string) => {
     // Update the document with the HTML content
     onDocumentChange({
       ...document,
       content: content
     });
-  };
+    setHasUnsavedChanges(true);
+  }, [document, onDocumentChange]);
 
-  const handleJsonContentChange = (jsonContent: any) => {
+  const handleJsonContentChange = useCallback((jsonContent: any) => {
     setJsonContent(jsonContent);
     // Update the document with the JSON content
     onDocumentChange({
       ...document,
       content_json_en: jsonContent
     });
-  };
+    setHasUnsavedChanges(true);
+  }, [document, onDocumentChange]);
 
   // Enhanced focus mode rendering
   if (isFocusMode) {
@@ -145,6 +196,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <div className="w-2 h-2 bg-accent-cyan rounded-full animate-pulse"></div>
             <span className="text-sm text-muted-foreground">Focus Mode</span>
             <span className="font-medium">{document.title_en || document.title || 'Untitled Document'}</span>
+
+            {/* Auto-save status indicator */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {isAutoSaving && (
+                <>
+                  <Clock className="w-3 h-3 animate-spin" />
+                  <span>Auto-saving...</span>
+                </>
+              )}
+              {!isAutoSaving && lastSaved && (
+                <>
+                  <Clock className="w-3 h-3" />
+                  <span>Saved {formatDisplayDateTime(lastSaved.toISOString())}</span>
+                </>
+              )}
+              {hasUnsavedChanges && !isAutoSaving && (
+                <span className="text-amber-600">Unsaved changes</span>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -348,6 +418,29 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     />
                   </FormGroup>
 
+                  {/* Document Type - Read-only display */}
+                  <FormGroup
+                    label="Document Type"
+                    description="The type of document being created/edited"
+                  >
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border">
+                      {document.document_type === 'checklist' ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-accent-pink" />
+                          <span className="font-medium text-accent-pink">Checklist</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 text-accent-purple" />
+                          <span className="font-medium text-accent-purple">Guide</span>
+                        </>
+                      )}
+                      <span className="text-sm text-muted-foreground ml-auto">
+                        (Set when creating document)
+                      </span>
+                    </div>
+                  </FormGroup>
+
                   {/* Summary */}
                   <FormGroup
                     label="Summary"
@@ -367,7 +460,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
           {/* Screenshots */}
           <FileUpload
-            files={extractScreenshotUrls(document.screenshots_data)}
+            files={extractScreenshotUrls(document.screenshots_data, document.id)}
             onFilesChange={(files) => {
               // Convert files to screenshots_data format
               const screenshotsData = files.map((file, index) => ({
@@ -383,6 +476,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             label="Screenshots"
             description="Upload screenshot images for this document (PNG, JPG, GIF, WebP)"
             disabled={isPreviewMode}
+            showPreview={true}
+            enableReorder={false}
+            screenshotsData={document.screenshots_data}
           />
 
           {/* Content Editor Section*/}

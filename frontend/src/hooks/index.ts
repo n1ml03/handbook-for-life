@@ -7,6 +7,7 @@ export { useScrollDirection } from './useScrollDirection'
 export * from './useLocalStorage'
 export * from './useDebounce'
 export * from './useLoadingState'
+export * from './usePerformanceMonitor'
 
 // Pagination hooks
 export { usePagination, usePaginationWithFilters } from './usePagination'

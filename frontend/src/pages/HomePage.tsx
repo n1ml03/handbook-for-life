@@ -10,7 +10,10 @@ import {
   Filter,
   X,
   Hash,
-  Clock} from 'lucide-react';
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -795,66 +798,233 @@ const ExpandedContent = React.memo(function ExpandedContent({ update }: { update
         </motion.div>
 
         {/* Screenshots */}
-        {update.screenshots && update.screenshots.length > 0 && (
-          <Screenshots screenshots={update.screenshots} />
+        {((update.screenshots && update.screenshots.length > 0) || (update.screenshots_data && update.screenshots_data.length > 0)) && (
+          <Screenshots
+            screenshots={update.screenshots}
+            screenshotsData={update.screenshots_data}
+            updateLogId={update.id}
+          />
         )}
       </motion.div>
     </motion.div>
   );
 });
 
-// Enhanced Screenshots with staggered animations
-const Screenshots = React.memo(function Screenshots({ screenshots }: { screenshots: string[] }) {
+// Enhanced Screenshots with staggered animations - now displays actual images
+const Screenshots = React.memo(function Screenshots({
+  screenshots,
+  screenshotsData,
+  updateLogId
+}: {
+  screenshots?: string[];
+  screenshotsData?: Array<{data: string; mimeType: string; filename: string}>;
+  updateLogId?: number;
+}) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Convert screenshotsData to URLs - use optimized approach when possible
+  const imageUrls = React.useMemo(() => {
+    if (screenshotsData && screenshotsData.length > 0) {
+      if (updateLogId) {
+        // Use optimized API endpoints for update log screenshots
+        return screenshotsData.map((_, index) =>
+          `/api/images/update-log/${updateLogId}/screenshot/${index}`
+        );
+      }
+      // Fallback to base64 for cases without updateLogId
+      return screenshotsData.map(screenshot =>
+        `data:${screenshot.mimeType};base64,${screenshot.data}`
+      );
+    }
+    return screenshots || [];
+  }, [screenshotsData, screenshots, updateLogId]);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+  };
+
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+  };
+
+  const nextImage = () => {
+    if (lightboxIndex !== null) {
+      setLightboxIndex((lightboxIndex + 1) % imageUrls.length);
+    }
+  };
+
+  const previousImage = () => {
+    if (lightboxIndex !== null) {
+      setLightboxIndex(lightboxIndex === 0 ? imageUrls.length - 1 : lightboxIndex - 1);
+    }
+  };
+
+  if (!imageUrls || imageUrls.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+          <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
+          Images ({imageUrls.length})
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
+          {imageUrls.map((imageUrl, screenshotIndex) => (
+            <ScreenshotCard
+              key={screenshotIndex}
+              imageUrl={imageUrl}
+              index={screenshotIndex}
+              filename={screenshotsData?.[screenshotIndex]?.filename}
+              onClick={() => openLightbox(screenshotIndex)}
+            />
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeLightbox}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
+              onClick={closeLightbox}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+
+            {imageUrls.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    previousImage();
+                  }}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </Button>
+              </>
+            )}
+
+            <motion.img
+              key={lightboxIndex}
+              src={imageUrls[lightboxIndex]}
+              alt={`Screenshot ${lightboxIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {imageUrls.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {lightboxIndex + 1} / {imageUrls.length}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+});
+
+// Individual screenshot card component
+const ScreenshotCard = React.memo(({
+  imageUrl,
+  index,
+  filename,
+  onClick
+}: {
+  imageUrl: string;
+  index: number;
+  filename?: string;
+  onClick: () => void;
+}) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   return (
     <motion.div
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 0.2 }}
+      className="relative group cursor-pointer"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: Math.min(index * 0.02 + 0.1, 0.2),
+        duration: 0.15
+      }}
+      whileHover={{ scale: 1.02 }}
+      onClick={onClick}
     >
-      <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-        <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
-        Images
-      </h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
-        {screenshots.map((screenshot, screenshotIndex) => (
-          <motion.div
-            key={screenshotIndex}
-            className="relative group"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: Math.min(screenshotIndex * 0.02 + 0.1, 0.2),
-              duration: 0.15
-            }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="aspect-video bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg border border-border/40 flex items-center justify-center transition-all duration-500 group-hover:border-accent-pink/60 group-hover:shadow-lg group-hover:shadow-accent-pink/20">
-              <div className="text-center space-y-2">
-                <motion.div
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto group-hover:text-accent-pink transition-colors duration-300" />
-                </motion.div>
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">{screenshot}</span>
-              </div>
+      <div className="aspect-video bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg border border-border/40 overflow-hidden transition-all duration-500 group-hover:border-accent-pink/60 group-hover:shadow-lg group-hover:shadow-accent-pink/20">
+        {imageUrl && !imageError ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={filename || `Screenshot ${index + 1}`}
+              className={cn(
+                'w-full h-full object-cover transition-all duration-300',
+                imageLoaded ? 'opacity-100' : 'opacity-0',
+                'group-hover:scale-105'
+              )}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              loading="lazy"
+              decoding="async"
+            />
+
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-muted animate-pulse" />
+            )}
+
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+              <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ opacity: 1, scale: 1 }}
-              className="absolute top-2 right-2"
-            >
-              <Button
-                variant="modern"
-                size="sm"
-                className="transition-all duration-300 hover:scale-110 shadow-lg"
-                aria-label="View screenshot"
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-2">
+              <motion.div
+                whileHover={{ rotate: 5 }}
+                transition={{ type: "spring", stiffness: 400 }}
               >
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-            </motion.div>
-          </motion.div>
-        ))}
+                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto group-hover:text-accent-pink transition-colors duration-300" />
+              </motion.div>
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                {imageError ? 'Failed to load' : filename || `Screenshot ${index + 1}`}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

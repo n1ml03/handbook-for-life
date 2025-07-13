@@ -29,15 +29,26 @@ const DocumentPage = lazy(() => import('@/pages/DocumentPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
-// Simple Loading Component
+// Enhanced Loading Component with better scroll optimization
 function EnhancedLoadingFallback() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-      {/* Simple spinning circle */}
-      <div className="w-12 h-12 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-      
-      {/* Loading text */}
-      <div className="text-gray-600 font-medium">Loading...</div>
+    <div className="page-transition content-container flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+      {/* Optimized loading spinner */}
+      <div className="w-12 h-12 border-3 border-muted/30 border-t-accent-cyan rounded-full animate-spin scroll-optimized"></div>
+
+      {/* Loading text with consistent styling */}
+      <div className="text-muted-foreground font-medium">Loading page...</div>
+
+      {/* Subtle loading indicator */}
+      <div className="flex space-x-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-2 h-2 bg-accent-cyan/60 rounded-full animate-pulse"
+            style={{ animationDelay: `${i * 0.2}s` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -67,14 +78,14 @@ function App() {
               <Header />
               
               {/* Main Content */}
-              <main 
+              <main
                 id="main-content"
-                className="flex-1 overflow-x-hidden safe-area-inset"
+                className="flex-1 overflow-x-hidden safe-area-inset content-container scroll-container"
                 style={{
                   scrollBehavior: 'smooth'
                 }}
               >
-                <div className="modern-container py-responsive">
+                <div className="modern-container py-responsive page-transition">
                   <Suspense fallback={<EnhancedLoadingFallback />}>
                     <Routes>
                       <Route path="/" element={<Navigate to="/home" replace />} />

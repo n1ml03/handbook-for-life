@@ -760,5 +760,28 @@ INSERT INTO `shop_listings` (`shop_type`, `item_id`, `cost_currency_item_id`, `c
 ('EVENT', 25, 19, 1000, '2024-04-29 04:00:00', '2024-05-05 03:59:59');
 
 -- ============================================================================
+-- 11. DOCUMENTS (Documentation and Guides)
+-- ============================================================================
+
+INSERT INTO `documents` (
+  `unique_key`, `title_en`, `summary_en`, `document_type`, `content_json_en`
+) VALUES
+('getting-started-guide', 'Getting Started Guide', 'A comprehensive guide for new players to understand the basics of DOAXVV.', 'guide',
+ '{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Getting Started Guide"}]},{"type":"paragraph","content":[{"type":"text","text":"Welcome to Dead or Alive Xtreme Venus Vacation! This guide will help you get started with the game."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Basic Gameplay"}]},{"type":"paragraph","content":[{"type":"text","text":"Learn the fundamentals of gameplay, character management, and progression systems."}]}]}'),
+
+('daily-checklist', 'Daily Tasks Checklist', 'Essential daily tasks every player should complete to maximize progress.', 'checklist',
+ '{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Daily Tasks Checklist"}]},{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Complete daily missions"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Collect login bonuses"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Participate in events"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Train your characters"}]}]}]}]}'),
+
+('event-participation-guide', 'Event Participation Guide', 'Learn how to effectively participate in various game events and maximize rewards.', 'guide',
+ '{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Event Participation Guide"}]},{"type":"paragraph","content":[{"type":"text","text":"Events are a crucial part of DOAXVV. This guide covers different event types and strategies."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Event Types"}]},{"type":"paragraph","content":[{"type":"text","text":"Festival events, ranking competitions, and special campaigns each require different approaches."}]}]}'),
+
+('weekly-maintenance-checklist', 'Weekly Maintenance Checklist', 'Important weekly tasks to keep your account optimized and up-to-date.', 'checklist',
+ '{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Weekly Maintenance Checklist"}]},{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Review and update character equipment"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Check event schedules and plan participation"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Organize inventory and sell unused items"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Plan skill upgrades and material farming"}]}]}]}]}'),
+
+
+('game-mechanics-overview', 'Game Mechanics Overview', 'Comprehensive overview of core game mechanics and systems.', 'guide',
+ '{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Game Mechanics Overview"}]},{"type":"paragraph","content":[{"type":"text","text":"Understanding the core mechanics is essential for success in DOAXVV."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Core Systems"}]},{"type":"paragraph","content":[{"type":"text","text":"Character stats, equipment, skills, and progression systems work together to create the gameplay experience."}]}]}');
+
+-- ============================================================================
 -- DATA INSERTION COMPLETE
--- ============================================================================ 
+-- ============================================================================

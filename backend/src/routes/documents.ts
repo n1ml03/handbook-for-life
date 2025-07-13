@@ -9,15 +9,22 @@ const router = Router();
 const documentService = new DocumentService();
 
 // GET /api/documents - Get all documents with pagination and filters
-router.get('/', 
+router.get('/',
   validateQuery(schemas.documentSchemas.query),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder, category } = req.query;
-    
+    const { page = 1, limit = 10, sortBy, sortOrder, category, document_type } = req.query;
+
     let result;
-    
+
     // Handle different query types with optimized queries
-    if (category) {
+    if (document_type) {
+      result = await documentService.getDocumentsByType(document_type as string, {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      });
+    } else if (category) {
       result = await documentService.getDocumentsByCategory(category as string, {
         page: Number(page),
         limit: Number(limit),
@@ -35,6 +42,7 @@ router.get('/',
 
     logger.info(`Retrieved ${result.data.length} documents for page ${page}`, {
       category,
+      document_type,
       totalItems: result.pagination.total,
       requestId: (req as any).id
     });
@@ -72,11 +80,11 @@ router.get('/categories/:category',
   asyncHandler(async (req, res) => {
     const { category } = req.params;
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!category?.trim()) {
       throw new AppError('Category is required', 400);
     }
-    
+
     const result = await documentService.getDocumentsByCategory(category, {
       page: Number(page),
       limit: Number(limit),
@@ -85,6 +93,33 @@ router.get('/categories/:category',
     });
 
     logger.info(`Retrieved ${result.data.length} documents for category: ${category}`, {
+      totalItems: result.pagination.total,
+      requestId: (req as any).id
+    });
+
+    res.paginated(result);
+  })
+);
+
+// GET /api/documents/types/:document_type - Get documents by type
+router.get('/types/:document_type',
+  validateQuery(schemas.documentSchemas.query),
+  asyncHandler(async (req, res) => {
+    const { document_type } = req.params;
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    if (!document_type?.trim()) {
+      throw new AppError('Document type is required', 400);
+    }
+
+    const result = await documentService.getDocumentsByType(document_type, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc'
+    });
+
+    logger.info(`Retrieved ${result.data.length} documents for type: ${document_type}`, {
       totalItems: result.pagination.total,
       requestId: (req as any).id
     });

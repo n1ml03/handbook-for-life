@@ -484,6 +484,10 @@ bun run import-csv   # Import CSV data
 # Health & Testing
 bun run health-check # API health check
 bun run health       # Server health status
+
+# Network Configuration
+bun run network-discovery  # Discover network IPs
+bun run network-setup      # Auto-configure network access
 ```
 
 ### **📚 Documentation**
@@ -552,6 +556,17 @@ RATE_LIMIT_ENABLED=false
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=100
 ```
+
+#### **🌐 Network Access**
+```env
+# Enable network access from other machines
+NETWORK_ACCESS_ENABLED=true
+
+# Add network IPs to CORS origins for network access
+# CORS_ORIGINS=http://localhost:3000,http://192.168.1.100:3000
+```
+
+> 📖 **Network Access Guide**: See [docs/NETWORK_ACCESS.md](docs/NETWORK_ACCESS.md) for detailed network configuration instructions.
 
 #### **📝 Logging**
 ```env

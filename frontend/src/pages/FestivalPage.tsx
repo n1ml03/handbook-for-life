@@ -324,20 +324,22 @@ export default function FestivalPage() {
           transition={{ delay: 0.3 }}
           className="mt-8"
         >
-          <div className="grid-responsive-cards mb-8">
-            {paginatedFestivals.map((festival, index) => (
-              <motion.div
-                key={festival.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.15,
-                  delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                }}
-              >
-                <FestivalCard festival={festival as any} />
-              </motion.div>
-            ))}
+          <div className="grid-container-full-width">
+            <div className="grid-responsive-cards mb-8">
+              {paginatedFestivals.map((festival, index) => (
+                <motion.div
+                  key={festival.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
+                >
+                  <FestivalCard festival={festival as any} />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
 

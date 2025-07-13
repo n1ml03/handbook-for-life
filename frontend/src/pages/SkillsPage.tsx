@@ -288,21 +288,23 @@ export default function SkillsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="grid-responsive-cards mb-8"
+            className="grid-container-full-width"
           >
-            {skills.map((skill, index) => (
-              <motion.div
-                key={skill.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.15,
-                  delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                }}
-              >
-                <SkillCard skill={skill} />
-              </motion.div>
-            ))}
+            <div className="grid-responsive-cards mb-8">
+              {skills.map((skill, index) => (
+                <motion.div
+                  key={skill.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
+                >
+                  <SkillCard skill={skill} />
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
 
           {/* Empty State */}

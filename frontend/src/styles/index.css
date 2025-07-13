@@ -53,9 +53,9 @@
   --responsive-padding-mobile: 1rem;
   --responsive-padding-tablet: 1.5rem;
   --responsive-padding-desktop: 2rem;
-  --responsive-gap-mobile: 1rem;
-  --responsive-gap-tablet: 1.5rem;
-  --responsive-gap-desktop: 2rem;
+  --responsive-gap-mobile: 0.75rem;
+  --responsive-gap-tablet: 1rem;
+  --responsive-gap-desktop: 1.25rem;
   --responsive-border-radius-mobile: 0.75rem;
   --responsive-border-radius-desktop: 1rem;
 
@@ -219,6 +219,35 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Enhanced scroll optimization */
+    overflow-x: hidden;
+    /* Prevent horizontal scrolling issues */
+    scroll-padding-top: var(--header-height, 64px);
+    /* Account for fixed header */
+  }
+
+  /* Optimize body for better scrolling performance */
+  body {
+    /* Ensure consistent background to prevent white flashing */
+    background-color: hsl(var(--color-background));
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    /* Prevent layout shifts during scrolling */
+    overflow-x: hidden;
+    /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Optimize paint performance */
+    will-change: scroll-position;
+  }
+
+  /* Optimize main content container for scrolling */
+  main {
+    /* Ensure consistent background */
+    background-color: hsl(var(--color-background));
+    /* Optimize for compositing */
+    contain: layout style paint;
+    /* Prevent unnecessary repaints */
+    isolation: isolate;
   }
 
   body {
@@ -349,6 +378,72 @@
   /* Legacy card support */
   .doax-card {
     @apply modern-card;
+  }
+
+  /* Admin-specific optimized spacing */
+  .admin-card-grid {
+    display: grid;
+    gap: 0.75rem; /* Reduced from default 1rem */
+  }
+
+  .admin-card {
+    @apply doax-card;
+    padding: 1rem; /* Reduced from default 1.5rem */
+  }
+
+  .admin-card-content {
+    padding: 0; /* Minimal internal padding */
+  }
+
+  .admin-card-header {
+    margin-bottom: 0.5rem; /* Reduced spacing */
+  }
+
+  .admin-card-body {
+    margin-bottom: 0.5rem; /* Reduced spacing */
+  }
+
+  .admin-card-footer {
+    margin-top: 0.5rem; /* Reduced spacing */
+  }
+
+  /* Responsive admin spacing */
+  @media (min-width: 640px) {
+    .admin-card-grid {
+      gap: 0.75rem; /* Consistent tight spacing on tablet */
+    }
+
+    .admin-card {
+      padding: 1rem; /* Consistent padding on tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-card-grid {
+      gap: 0.75rem; /* Consistent tight spacing on desktop */
+    }
+
+    .admin-card {
+      padding: 1rem; /* Consistent padding on desktop */
+    }
+  }
+
+  /* Sticky notification enhancements */
+  .sticky-notification {
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+
+  .sticky-notification:hover {
+    z-index: 20;
+  }
+
+  /* Enhanced notification positioning for different screen sizes */
+  @media (max-width: 640px) {
+    .sticky-notification {
+      max-width: calc(100vw - 2rem);
+    }
   }
 
   /* Enhanced Modern Glass Effect - Unified design */
@@ -554,7 +649,6 @@
 
   .light .interactive-element:hover {
     background-color: hsl(var(--color-accent) / 0.15);
-    transform: translateY(-1px);
   }
 
   .light .interactive-element:focus {
@@ -991,6 +1085,71 @@
     background: linear-gradient(90deg, hsl(var(--color-muted)) 25%, hsl(var(--color-muted) / 0.5) 50%, hsl(var(--color-muted)) 75%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+    /* Ensure consistent background during loading */
+    background-color: hsl(var(--color-muted) / 0.3);
+    /* Optimize for compositing */
+    will-change: background-position;
+    /* Prevent layout shifts */
+    min-height: 1rem;
+  }
+
+  /* Enhanced scroll-optimized skeleton states */
+  .scroll-skeleton {
+    background: linear-gradient(90deg,
+      hsl(var(--color-background)) 0%,
+      hsl(var(--color-muted) / 0.2) 25%,
+      hsl(var(--color-muted) / 0.4) 50%,
+      hsl(var(--color-muted) / 0.2) 75%,
+      hsl(var(--color-background)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    /* Prevent repaints */
+    contain: layout style paint;
+  }
+
+  /* Optimized shimmer animation for better performance */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Scroll performance optimizations */
+  .scroll-optimized {
+    /* Enable hardware acceleration */
+    transform: translateZ(0);
+    /* Optimize for compositing */
+    will-change: transform;
+    /* Contain layout calculations */
+    contain: layout style paint;
+  }
+
+  .scroll-container {
+    /* Optimize scrolling performance */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Optimize for GPU */
+    transform: translateZ(0);
+    /* Prevent unnecessary repaints */
+    contain: layout style;
+  }
+
+  /* Prevent white flashing during content loading */
+  .content-container {
+    background-color: hsl(var(--color-background));
+    min-height: 100vh;
+    /* Optimize for compositing */
+    contain: layout style paint;
+    /* Prevent layout shifts */
+    isolation: isolate;
   }
 
   .light .loading-skeleton {
@@ -1547,6 +1706,82 @@
     @apply bg-muted/20;
   }
 
+  /* Enhanced image loading optimizations */
+  .optimized-image {
+    /* Prevent layout shifts */
+    aspect-ratio: attr(width) / attr(height);
+    /* Optimize for compositing */
+    will-change: opacity;
+    /* Smooth transitions */
+    transition: opacity 0.3s ease-out;
+    /* Prevent white flashing */
+    background-color: hsl(var(--color-muted) / 0.1);
+  }
+
+  .optimized-image.loading {
+    opacity: 0;
+    background: linear-gradient(90deg,
+      hsl(var(--color-muted) / 0.1) 25%,
+      hsl(var(--color-muted) / 0.3) 50%,
+      hsl(var(--color-muted) / 0.1) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .optimized-image.loaded {
+    opacity: 1;
+    background: none;
+  }
+
+  /* Grid optimizations for better scrolling */
+  .grid-responsive-cards {
+    /* Optimize for GPU acceleration */
+    transform: translateZ(0);
+    /* Contain layout calculations */
+    contain: layout style;
+    /* Prevent unnecessary repaints during scroll */
+    isolation: isolate;
+  }
+
+  .grid-responsive-cards > * {
+    /* Optimize individual cards */
+    contain: layout style paint;
+    /* Prevent layout shifts */
+    min-height: fit-content;
+  }
+
+  /* Intersection observer optimizations */
+  .lazy-load-trigger {
+    /* Minimal height to trigger intersection */
+    height: 1px;
+    /* Optimize for compositing */
+    contain: layout style;
+    /* Prevent interference with layout */
+    pointer-events: none;
+  }
+
+  /* Page transition optimizations */
+  .page-transition {
+    /* Ensure consistent background */
+    background-color: hsl(var(--color-background));
+    /* Optimize for transitions */
+    will-change: opacity, transform;
+    /* Prevent white flashing */
+    min-height: 100vh;
+  }
+
+  .page-transition.entering {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .page-transition.entered {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+
   /* New utility classes for light mode optimization - Enhanced contrast and readability */
   .light-optimized-text {
     color: hsl(var(--color-foreground));
@@ -2088,25 +2323,97 @@
     }
   }
 
-  /* Responsive grid utilities */
+  /* Enhanced 3-column responsive grid utilities - Full width expansion */
   .grid-responsive-cards {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
     gap: var(--responsive-gap-mobile);
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    justify-content: stretch;
   }
 
   @media (min-width: 640px) {
     .grid-responsive-cards {
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: calc(var(--responsive-gap-tablet) * 0.75);
+      max-width: none;
     }
   }
 
-  @media (min-width: 1280px) {
+  @media (min-width: 1024px) {
     .grid-responsive-cards {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--responsive-gap-desktop);
       max-width: none;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-responsive-cards {
+      gap: calc(var(--responsive-gap-desktop) * 1.2);
+      max-width: none;
+    }
+  }
+
+  /* Full-width grid container for maximum expansion */
+  .grid-container-centered {
+    width: 100vw;
+    max-width: none;
+    margin: 0;
+    padding: 0 1rem;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+
+  @media (min-width: 640px) {
+    .grid-container-centered {
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-container-centered {
+      padding: 0 2rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-container-centered {
+      padding: 0 3rem;
+    }
+  }
+
+  /* Alternative full-width breakout for maximum expansion */
+  .grid-container-full-width {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    padding: 0 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .grid-container-full-width {
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-container-full-width {
+      padding: 0 2rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-container-full-width {
+      padding: 0 3rem;
     }
   }
 
@@ -2114,7 +2421,7 @@
   .grid-responsive-cards.single-row {
     display: flex;
     flex-direction: row;
-    gap: 12px;
+    gap: 8px;
     overflow-x: auto;
     overflow-y: visible;
     padding: 8px 0 4px 0;
@@ -2129,7 +2436,7 @@
   /* Override transform for single-row cards to prevent clipping */
   .grid-responsive-cards.single-row .doax-card:hover,
   .grid-responsive-cards.single-row .modern-card:hover {
-    transform: translateY(-1px) !important;
+    /* No hover effects for flat design */
   }
 
   @media (min-width: 640px) {

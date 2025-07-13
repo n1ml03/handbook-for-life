@@ -159,6 +159,8 @@ CREATE TABLE gachas (
     game_version VARCHAR(30) NULL COMMENT 'Game version associated with the gacha',
     start_date DATETIME NOT NULL COMMENT 'Start time',
     end_date DATETIME NOT NULL COMMENT 'End time',
+    banner_image_data LONGBLOB COMMENT 'Binary data of the gacha banner image',
+    banner_image_mime_type VARCHAR(50) COMMENT 'MIME type of the banner image (e.g., image/jpeg, image/png)',
     INDEX idx_dates (start_date DESC) COMMENT 'Optimized for fetching the latest gachas',
     INDEX idx_game_version (game_version)
 ) ENGINE=InnoDB COMMENT='Data for Gacha banners, used for the GachaPage.';
@@ -181,11 +183,14 @@ CREATE TABLE documents (
     unique_key VARCHAR(150) NOT NULL UNIQUE COMMENT 'Text-based unique identifier, used for URLs',
     title_en VARCHAR(255) NOT NULL COMMENT 'Main title of the document (English)',
     summary_en TEXT COMMENT 'Summary of the document (English)',
+    document_type ENUM('checklist', 'guide') NOT NULL DEFAULT 'checklist' COMMENT 'Type of document for categorization and specialized handling',
     content_json_en JSON NULL COMMENT 'Document content in English, stored as JSON from Tiptap',
     screenshots_data JSON COMMENT 'Array of screenshot objects with binary data and metadata: [{data: LONGBLOB, mimeType: string, filename: string}]',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
-    INDEX idx_unique_key (unique_key) COMMENT 'Optimized for accessing documents by unique key'
+    INDEX idx_unique_key (unique_key) COMMENT 'Optimized for accessing documents by unique key',
+    INDEX idx_document_type (document_type) COMMENT 'Index for filtering documents by type',
+    INDEX idx_document_type_updated (document_type, updated_at DESC) COMMENT 'Composite index for type-based queries with sorting'
 ) ENGINE=InnoDB COMMENT='Manages documents and guide articles.';
 
 CREATE TABLE update_logs (

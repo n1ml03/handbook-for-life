@@ -296,6 +296,8 @@ export interface Gacha {
   start_date: Date; // DATETIME
   end_date: Date; // DATETIME
   game_version?: string; // VARCHAR(30)
+  banner_image_data?: Buffer; // LONGBLOB
+  banner_image_mime_type?: string; // VARCHAR(50)
 }
 
 export interface NewGacha {
@@ -309,6 +311,8 @@ export interface NewGacha {
   start_date: Date;
   end_date: Date;
   game_version?: string;
+  banner_image_data?: Buffer;
+  banner_image_mime_type?: string;
 }
 
 export type ShopType = 'EVENT' | 'VIP' | 'GENERAL' | 'CURRENCY';
@@ -332,11 +336,14 @@ export interface NewShopListing {
   end_date?: Date;
 }
 
+export type DocumentType = 'checklist' | 'guide';
+
 export interface Document {
   id: number; // INT UNSIGNED
   unique_key: string; // VARCHAR(150) UNIQUE
   title_en: string; // VARCHAR(255)
   summary_en?: string; // TEXT
+  document_type: DocumentType; // ENUM - Type of document for categorization
   content_json_en?: any; // JSON - TipTap editor content
   screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // JSON - Array of screenshot objects with base64 data
   created_at: Date; // TIMESTAMP
@@ -347,6 +354,7 @@ export interface NewDocument {
   unique_key: string;
   title_en: string;
   summary_en?: string;
+  document_type?: DocumentType; // Optional, defaults to 'general'
   content_json_en?: any; // TipTap JSON content
   screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Array of screenshot objects with base64 data
 }
@@ -592,10 +600,15 @@ export const GACHA_SUBTYPES: GachaSubtype[] = ['TRENDY', 'NOSTALGIC', 'BIRTHDAY'
 export const SHOP_TYPES: ShopType[] = ['EVENT', 'VIP', 'GENERAL', 'CURRENCY'];
 export const SKILL_SLOTS: SkillSlot[] = ['ACTIVE', 'PASSIVE_1', 'PASSIVE_2', 'POTENTIAL_1', 'POTENTIAL_2', 'POTENTIAL_3', 'POTENTIAL_4'];
 export const POOL_ITEM_TYPES: PoolItemType[] = ['SWIMSUIT', 'BROMIDE', 'ITEM'];
+export const DOCUMENT_TYPES: DocumentType[] = ['checklist', 'guide'];
 
 // Validation helper functions
 export function isValidSwimsuitRarity(rarity: string): rarity is SwimsuitRarity {
   return SWIMSUIT_RARITIES.includes(rarity as SwimsuitRarity);
+}
+
+export function isValidDocumentType(type: string): type is DocumentType {
+  return DOCUMENT_TYPES.includes(type as DocumentType);
 }
 
 export function isValidSuitType(type: string): type is SuitType {

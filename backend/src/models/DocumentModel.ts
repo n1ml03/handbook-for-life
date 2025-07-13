@@ -38,6 +38,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       'unique_key',
       'title_en',
       'summary_en',
+      'document_type',
       'content_json_en',
       'screenshots_data'
     ];
@@ -63,6 +64,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       unique_key: row.unique_key,
       title_en: row.title_en,
       summary_en: row.summary_en,
+      document_type: row.document_type,
       content_json_en: row.content_json_en,
       screenshots_data: row.screenshots_data || [],
       created_at: new Date(row.created_at),
@@ -173,12 +175,13 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
   async create(document: NewDocument): Promise<ExtendedDocument> {
     try {
       const [result] = await executeQuery(
-        `INSERT INTO documents (unique_key, title_en, summary_en, content_json_en, screenshots_data)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO documents (unique_key, title_en, summary_en, document_type, content_json_en, screenshots_data)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           document.unique_key,
           document.title_en,
           document.summary_en ?? null,
+          document.document_type ?? 'general',
           document.content_json_en ? JSON.stringify(document.content_json_en) : null,
           document.screenshots_data ? JSON.stringify(document.screenshots_data) : null,
         ]
@@ -224,6 +227,16 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     return this.findByUniqueKey(key);
   }
 
+  async findByType(documentType: string, options: PaginationOptions = {}): Promise<PaginatedResult<ExtendedDocument>> {
+    return this.getPaginatedResults(
+      'SELECT * FROM documents WHERE document_type = ?',
+      'SELECT COUNT(*) FROM documents WHERE document_type = ?',
+      options,
+      this.mapDocumentRow,
+      [documentType]
+    );
+  }
+
   async update(id: number, updates: Partial<NewDocument>): Promise<ExtendedDocument> {
     const setClause: string[] = [];
     const params: any[] = [];
@@ -239,6 +252,10 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     if (updates.summary_en !== undefined) {
       setClause.push(`summary_en = ?`);
       params.push(updates.summary_en);
+    }
+    if (updates.document_type !== undefined) {
+      setClause.push(`document_type = ?`);
+      params.push(updates.document_type);
     }
     if (updates.content_json_en !== undefined) {
       setClause.push(`content_json_en = ?`);

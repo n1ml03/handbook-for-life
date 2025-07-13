@@ -319,20 +319,22 @@ export default function MemoriesPage() {
               </div>
             </div>
           ) : (
-            <div className="grid-responsive-cards mb-8">
-              {filteredMemories.map((memory, index) => (
-                <motion.div
-                  key={memory.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.15,
-                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                  }}
-                >
-                  <MemoryCard memory={memory} onToggleFavorite={handleToggleFavorite} />
-                </motion.div>
-              ))}
+            <div className="grid-container-full-width">
+              <div className="grid-responsive-cards mb-8">
+                {filteredMemories.map((memory, index) => (
+                  <motion.div
+                    key={memory.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                    }}
+                  >
+                    <MemoryCard memory={memory} onToggleFavorite={handleToggleFavorite} />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>

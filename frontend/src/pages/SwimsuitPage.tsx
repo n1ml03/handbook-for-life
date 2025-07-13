@@ -55,7 +55,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* Show swimsuit image if available, otherwise show placeholder */}
+        {/* Show swimsuit image if available, otherwise show empty state */}
         {((currentView === 'before' && swimsuitImages.beforeImage) || (currentView === 'after' && swimsuitImages.afterImage)) ? (
           <img
             src={currentView === 'before' ? swimsuitImages.beforeImage : swimsuitImages.afterImage}
@@ -65,9 +65,8 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <User className="w-12 h-12 text-gray-400" />
-          </div>
+          // Empty state - just show the background gradient without any icon
+          <div className="absolute inset-0" />
         )}
         
         {/* Rarity Badge */}
@@ -440,23 +439,25 @@ export default function SwimsuitPage() {
         >
 
           {/* Gallery Grid */}
-          <div className="grid-responsive-cards mb-12">
-            {paginatedSwimsuits.map((swimsuit: any, index: number) => (
-              <motion.div
-                key={swimsuit.id}
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  delay: 0.05 * index,
-                  duration: 0.4,
-                  ease: "easeOut"
-                }}
-                whileHover={{ y: -4 }}
-                className="relative"
-              >
-                <SwimsuitCard swimsuit={swimsuit} />
-              </motion.div>
-            ))}
+          <div className="grid-container-full-width">
+            <div className="grid-responsive-cards mb-12">
+              {paginatedSwimsuits.map((swimsuit: any, index: number) => (
+                <motion.div
+                  key={swimsuit.id}
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    delay: 0.05 * index,
+                    duration: 0.4,
+                    ease: "easeOut"
+                  }}
+                  whileHover={{ y: -4 }}
+                  className="relative"
+                >
+                  <SwimsuitCard swimsuit={swimsuit} />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
 

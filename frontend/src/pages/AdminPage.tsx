@@ -3,19 +3,21 @@ import { useState, useCallback, useEffect } from 'react';
 import { FileText, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/services/utils';
-import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
+import { documentCategoriesData, type Document, type DocumentType, type DocumentCategory } from '@/types';
 import { useUpdateLogs } from '@/hooks';
 import { UpdateLog } from '@/types';
 import { Container } from '@/components/ui/spacing';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { useDocuments } from '@/hooks';
+import { usePerformanceMonitor, useRenderPerformance } from '@/hooks/usePerformanceMonitor';
 import {
   DocumentManagement,
   UpdateLogManagement,
   DocumentEditor,
   UpdateLogEditor,
   NotificationToast,
+  AdminErrorBoundary,
   type NotificationState
 } from '@/components/admin';
 
@@ -31,18 +33,23 @@ interface AdminSection {
 }
 
 const AdminPage = () => {
+  // Performance monitoring
+  const { measureOperation, stats } = usePerformanceMonitor();
+  useRenderPerformance('AdminPage');
+
   const { documents, addDocument, updateDocument, deleteDocument, refreshDocuments } = useDocuments();
   const [documentCategories] = useState<DocumentCategory[]>(documentCategoriesData);
   const { updateLogs, addUpdateLog, updateUpdateLog, deleteUpdateLog, refreshUpdateLogs } = useUpdateLogs();
   
   const [activeTab, setActiveTab] = useState<string>('documents');
-  const [activeDocumentSection, setActiveDocumentSection] = useState<'checklist-creation' | 'checking-guide' | 'all'>('all');
+  const [activeDocumentSection, setActiveDocumentSection] = useState<'checklist' | 'guide' | 'all'>('all');
   const [editingLog, setEditingLog] = useState<UpdateLog | null>(null);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [notifications, setNotifications] = useState<NotificationState[]>([]);
+  const [isOperationLoading, setIsOperationLoading] = useState(false);
 
   // Enhanced editing state management
   useEffect(() => {
@@ -85,7 +92,7 @@ const AdminPage = () => {
 
   // Common tag suggestions
   const commonTags = [
-    'tutorial', 'guide', 'beginner', 'advanced', 'tips', 'tricks',
+    'guide', 'beginner', 'advanced', 'tips', 'tricks',
     'documentation', 'reference', 'api', 'examples', 'best-practices',
     'troubleshooting', 'faq', 'getting-started', 'configuration',
     'installation', 'deployment', 'security', 'performance', 'optimization'
@@ -113,7 +120,7 @@ const AdminPage = () => {
   }, [removeNotification]);
 
   // Document handlers
-  const handleCreateNewDocument = useCallback(() => {
+  const handleCreateNewDocument = useCallback((documentType: DocumentType = 'checklist') => {
     // Create a new document object with proper structure for UI compatibility
     // Use 0 for id to indicate this is a new document (not yet saved)
     const newDocument: Document = {
@@ -121,13 +128,14 @@ const AdminPage = () => {
       unique_key: '',
       title_en: '',
       summary_en: '',
+      document_type: documentType, // Set the document type
       content_json_en: undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       // Extended properties required for UI compatibility
       title: '', // Maps to title_en
       content: '', // Maps to content_json_en converted to HTML
-      category: 'game-mechanics', // Default category
+      category: documentType, // Use document type as category
       tags: [], // Empty tags array
       author: 'Admin', // Default author
       screenshots_data: [] // Empty screenshots array
@@ -137,6 +145,8 @@ const AdminPage = () => {
   }, []);
 
   const handleSaveDocument = useCallback(async (document: Document) => {
+    setIsOperationLoading(true);
+
     // Show loading notification
     addNotification({
       type: 'info',
@@ -145,6 +155,10 @@ const AdminPage = () => {
     });
 
     try {
+      // Wrap the entire save operation with performance monitoring
+      await measureOperation(
+        'save-document-operation',
+        async () => {
       // Check if this is an existing document (has a valid ID) or a new one
       const isExistingDocument = editingDocument?.id && editingDocument.id > 0;
 
@@ -215,6 +229,9 @@ const AdminPage = () => {
       setIsEditMode(false);
       setIsPreviewMode(false);
       setIsFocusMode(false);
+        },
+        { documentId: document.id, documentTitle: document.title_en }
+      );
     } catch (error: any) {
       console.error('Error saving document:', error);
 
@@ -250,8 +267,10 @@ const AdminPage = () => {
         message: errorMessage,
         duration: 7000
       });
+    } finally {
+      setIsOperationLoading(false);
     }
-  }, [editingDocument, addDocument, updateDocument, addNotification]);
+  }, [editingDocument, addDocument, updateDocument, addNotification, measureOperation]);
 
   const handleDeleteDocument = useCallback(async (documentId: number) => {
     if (confirm('Are you sure you want to delete this document?')) {
@@ -420,20 +439,10 @@ const AdminPage = () => {
 
   // Filter documents by section
   const getFilteredDocuments = useCallback(() => {
-    switch (activeDocumentSection) {
-      case 'checklist-creation':
-        return documents.filter(doc =>
-          doc.unique_key.includes('checklist') ||
-          (doc.title_en?.toLowerCase() || '').includes('checklist')
-        );
-      case 'checking-guide':
-        return documents.filter(doc =>
-          doc.unique_key.includes('guide') ||
-          (doc.title_en?.toLowerCase() || '').includes('guide')
-        );
-      default:
-        return documents;
+    if (activeDocumentSection === 'all') {
+      return documents;
     }
+    return documents.filter(doc => doc.document_type === activeDocumentSection);
   }, [documents, activeDocumentSection]);
 
   const renderTabContent = () => {
@@ -508,65 +517,159 @@ const AdminPage = () => {
   };
 
   return (
-    <Container>
-      {/* Notifications */}
-      <div className="fixed top-20 right-4 z-[9999] space-y-3 max-w-md pointer-events-none">
-        <div className="pointer-events-auto">
-          <AnimatePresence>
-            {notifications.map(notification => (
-              <motion.div
-                key={notification.id}
-                initial={{ opacity: 0, x: 100, scale: 0.8 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 100, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
-                <NotificationToast
-                  notification={notification}
-                  onRemove={removeNotification}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+    <AdminErrorBoundary>
+      <Container>
+        {/* Enhanced Sticky Notifications */}
+        <div className="fixed top-4 right-4 z-[9999] space-y-2 max-w-sm pointer-events-none">
+          <div className="pointer-events-auto">
+            <AnimatePresence mode="popLayout">
+              {notifications.map((notification, index) => (
+                <motion.div
+                  key={notification.id}
+                  initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                    scale: 1,
+                    y: 0
+                  }}
+                  exit={{
+                    opacity: 0,
+                    x: 100,
+                    scale: 0.9,
+                    transition: { duration: 0.2 }
+                  }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                  }}
+                  layout
+                  className="sticky-notification"
+                >
+                  <NotificationToast
+                    notification={notification}
+                    onRemove={removeNotification}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
 
       {/* Compact Header */}
       {!isEditMode && (
-        <div className="mb-6">
+        <header className="mb-6" role="banner">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
-              Admin Dashboard
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1
+                className="text-2xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent"
+                id="admin-dashboard-title"
+              >
+                Admin Dashboard
+              </h1>
+              {isOperationLoading && (
+                <div
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Processing operation"
+                >
+                  <div
+                    className="w-4 h-4 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin"
+                    aria-hidden="true"
+                  ></div>
+                  <span>Processing...</span>
+                </div>
+              )}
+
+              {/* Performance Stats (Development Only) */}
+              {process.env.NODE_ENV === 'development' && stats.totalOperations > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <span>Ops: {stats.totalOperations}</span>
+                  <span className="mx-2">•</span>
+                  <span>Avg: {stats.averageDuration.toFixed(0)}ms</span>
+                  <span className="mx-2">•</span>
+                  <span>Success: {stats.successRate.toFixed(0)}%</span>
+                </div>
+              )}
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-sm" id="admin-dashboard-description">
             Comprehensive content management system for DOAXVV Handbook
           </p>
-        </div>
+        </header>
       )}
 
       {/* Compact Tab Navigation - Single Row */}
       {!isEditMode && (
-        <Card className="p-3 mb-4 rounded-2xl">
-          <CardContent className="p-0">
-            <div className="grid grid-cols-2 gap-2">
-              {adminSections.map(section => {
-                const IconComponent = section.icon;
-                const isActive = activeTab === section.id;
-                return (
-                  <motion.button
-                    key={section.id}
-                    onClick={() => setActiveTab(section.id)}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className={cn(
-                      'px-3 py-2 rounded-xl transition-all duration-200 group border',
-                      'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
-                      isActive
-                        ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg border-accent-pink/50'
-                        : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80 hover:shadow-md'
-                    )}
-                  >
+        <nav
+          className="mb-4"
+          role="navigation"
+          aria-labelledby="admin-dashboard-title"
+          aria-describedby="admin-dashboard-description"
+        >
+          <Card className="p-3 rounded-2xl">
+            <CardContent className="p-0">
+              <div
+                className="grid grid-cols-2 gap-2"
+                role="tablist"
+                aria-label="Admin dashboard sections"
+              >
+                {adminSections.map((section, index) => {
+                  const IconComponent = section.icon;
+                  const isActive = activeTab === section.id;
+                  return (
+                    <motion.button
+                      key={section.id}
+                      onClick={() => setActiveTab(section.id)}
+                      onKeyDown={(e) => {
+                        // Enhanced keyboard navigation
+                        if (e.key === 'ArrowLeft' && index > 0) {
+                          e.preventDefault();
+                          const prevSection = adminSections[index - 1];
+                          setActiveTab(prevSection.id);
+                          // Focus the previous tab
+                          const prevButton = e.currentTarget.parentElement?.children[index - 1] as HTMLButtonElement;
+                          prevButton?.focus();
+                        } else if (e.key === 'ArrowRight' && index < adminSections.length - 1) {
+                          e.preventDefault();
+                          const nextSection = adminSections[index + 1];
+                          setActiveTab(nextSection.id);
+                          // Focus the next tab
+                          const nextButton = e.currentTarget.parentElement?.children[index + 1] as HTMLButtonElement;
+                          nextButton?.focus();
+                        } else if (e.key === 'Home') {
+                          e.preventDefault();
+                          const firstSection = adminSections[0];
+                          setActiveTab(firstSection.id);
+                          const firstButton = e.currentTarget.parentElement?.children[0] as HTMLButtonElement;
+                          firstButton?.focus();
+                        } else if (e.key === 'End') {
+                          e.preventDefault();
+                          const lastSection = adminSections[adminSections.length - 1];
+                          setActiveTab(lastSection.id);
+                          const lastButton = e.currentTarget.parentElement?.children[adminSections.length - 1] as HTMLButtonElement;
+                          lastButton?.focus();
+                        }
+                      }}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`tabpanel-${section.id}`}
+                      id={`tab-${section.id}`}
+                      tabIndex={isActive ? 0 : -1}
+                      className={cn(
+                        'px-3 py-2 rounded-xl transition-all duration-200 group border',
+                        'focus:ring-2 focus:ring-accent-cyan/30 focus:outline-none focus:ring-offset-2',
+                        isActive
+                          ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white shadow-lg border-accent-pink/50'
+                          : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80 hover:shadow-md'
+                      )}
+                    >
                     <div className="flex items-center justify-center gap-2">
                       <div className={cn(
                         'p-1.5 rounded-lg transition-all',
@@ -597,6 +700,7 @@ const AdminPage = () => {
             </div>
           </CardContent>
         </Card>
+        </nav>
       )}
 
       {/* Enhanced Tab Content */}
@@ -608,11 +712,16 @@ const AdminPage = () => {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className="min-h-96 space-y-6"
+          role="tabpanel"
+          id={`tabpanel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+          tabIndex={0}
         >
           {renderTabContent()}
         </motion.div>
       </AnimatePresence>
     </Container>
+    </AdminErrorBoundary>
   );
 };
 

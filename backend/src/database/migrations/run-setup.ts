@@ -16,7 +16,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mysql from 'mysql2/promise';
-import logger from '../src/config/logger';
+import logger from '../../config/logger';
 
 interface SetupOptions {
   seed: boolean;

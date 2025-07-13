@@ -7,6 +7,7 @@ import {
   Search,
   Camera} from 'lucide-react';
 import { bromidesApi } from '@/services/api';
+import { getBromideArtUrl } from '@/services/utils';
 import { type SortDirection } from '@/types';
 import UnifiedFilter from '@/components/features/UnifiedFilter';
 import { createDecorBromideFilterConfig, bromideSortOptions } from '@/components/features/FilterConfigs';
@@ -51,13 +52,26 @@ function BromideCard({ bromide }: { bromide: any }) {
     name_kr: bromide.name_kr || ''
   };
 
+  const bromideImageUrl = getBromideArtUrl(bromide);
+
   const header = (
     <div className="relative">
       {/* Image Preview */}
       <div className="aspect-video bg-gradient-to-br from-dark-primary/50 to-dark-secondary/50 relative rounded-lg overflow-hidden mb-3">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image className="w-12 h-12 text-gray-400" />
-        </div>
+        {bromideImageUrl ? (
+          <img
+            src={bromideImageUrl}
+            alt={bromide.name_en || bromide.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
+        ) : (
+          // Empty state - just show the background gradient without any icon
+          <div className="w-full h-full" />
+        )}
         {/* Rarity Badge */}
         <div className="absolute top-2 left-2">
           <motion.div
@@ -330,21 +344,30 @@ export default function DecorateBromidePage() {
       />
 
         {/* Bromides Display */}
-        <div className="grid-responsive-cards mt-8 mb-8">
-          {paginatedBromides.map((bromide, index) => (
-            <motion.div
-              key={bromide.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.15,
-                delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-              }}
-            >
-              <BromideCard bromide={bromide} />
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8"
+        >
+          <div className="grid-container-full-width">
+            <div className="grid-responsive-cards mt-8 mb-8">
+              {paginatedBromides.map((bromide, index) => (
+                <motion.div
+                  key={bromide.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
+                >
+                  <BromideCard bromide={bromide} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Pagination */}
         {totalPages > 1 && (

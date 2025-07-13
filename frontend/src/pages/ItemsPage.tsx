@@ -14,7 +14,6 @@ import {
   ChevronRight} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/services/utils';
-import { Grid } from '@/components/ui/spacing';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 
 import { useDashboardOverview } from '@/hooks/useApiQueries';
@@ -32,10 +31,10 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { 
   addTranslationsToItems, 
   type MultiLanguageItem} from '@/services/multiLanguageSearch';
-import { getBromideArtUrl } from '@/services/utils';
+import { getBromideArtUrl, getItemIconUrl } from '@/services/utils';
 import { useMultiLanguageSearch } from '@/services/multiLanguageSearch';
 import React from 'react';
-import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
+import { MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
 
 // Skeleton component for loading states
 const ItemCardSkeleton = React.memo(() => (
@@ -89,27 +88,33 @@ const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageIte
   // Extract the appropriate name and description based on the item type
   let name = '';
   let description = '';
-  
+  let imageUrl = '';
+
   switch (type) {
     case 'swimsuit':
       name = item.name_en || item.name_jp || `Swimsuit ${item.id}`;
       description = item.description_en || '';
+      // Swimsuits don't have icons, they have before/after images handled separately
       break;
     case 'accessory':
       name = item.name || `Accessory ${item.id}`;
       description = item.description || '';
+      imageUrl = getItemIconUrl(item) || '';
       break;
     case 'skill':
       name = item.name_en || item.name_jp || `Skill ${item.id}`;
       description = item.description_en || '';
+      imageUrl = getItemIconUrl(item) || '';
       break;
     case 'bromide':
       name = item.name_en || item.name_jp || `Bromide ${item.id}`;
       description = getBromideArtUrl(item) ? 'Bromide artwork' : '';
+      imageUrl = getBromideArtUrl(item) || '';
       break;
     default:
       name = item.name || `Item ${item.id}`;
       description = item.description || '';
+      imageUrl = getItemIconUrl(item) || '';
   }
 
   return {
@@ -120,7 +125,7 @@ const convertToMultiLanguageItem = (item: any, type: ItemType): MultiLanguageIte
     rarity: item.rarity,
     character: type === 'swimsuit' ? item.character?.name_en : undefined,
     category: type === 'accessory' ? item.type : type === 'skill' ? item.skill_category : undefined,
-    image: `/images/${type}s/${item.id}.jpg`,
+    image: imageUrl,
     stats: item.stats,
     // Add any other relevant properties from the original item
     ...item
@@ -162,8 +167,6 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
-                  const fallback = target.nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = 'flex';
                 }}
                 onLoad={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -171,10 +174,10 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
                 }}
                 style={{ opacity: 0 }}
               />
-            ) : null}
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              {typeIcon}
-            </div>
+            ) : (
+              // Empty state - just show the background gradient without any icon
+              <div className="w-full h-full" />
+            )}
           </div>
         </div>
 
@@ -483,7 +486,8 @@ export default function ItemsPage() {
       />
 
       {/* Items Grid */}
-      <Grid cols={2} gap="md" className="mt-8">
+      <div className="grid-container-full-width mt-8">
+        <div className="grid-responsive-cards">
         {isLoading ? (
           // Show skeleton loading states with faster animation
           Array.from({ length: itemsPerPage }, (_, index) => (
@@ -526,7 +530,7 @@ export default function ItemsPage() {
             </motion.button>
           </motion.div>
         ) : (
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {paginatedItems.map((item, index) => (
               <motion.div
                 key={`${item.type}-${item.id}-${currentPage}`}
@@ -543,7 +547,8 @@ export default function ItemsPage() {
             ))}
           </AnimatePresence>
         )}
-      </Grid>
+        </div>
+      </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

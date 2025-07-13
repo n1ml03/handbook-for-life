@@ -121,8 +121,32 @@ export const SkeletonText = ({ lines = 1, className }: SkeletonTextProps) => (
       <div
         key={i}
         className={cn(
-          'h-4 bg-muted/50 rounded-sm animate-pulse',
+          'h-4 scroll-skeleton rounded-sm',
           i === lines - 1 && lines > 1 ? 'w-3/4' : ''
+        )}
+      />
+    ))}
+  </div>
+);
+
+// Enhanced skeleton text with better performance
+export const OptimizedSkeletonText = ({
+  lines = 1,
+  className,
+  heights = ['h-3', 'h-3', 'h-3'],
+  widths = ['w-full', 'w-5/6', 'w-3/4']
+}: SkeletonTextProps & {
+  heights?: string[];
+  widths?: string[];
+}) => (
+  <div className={cn('space-y-2 scroll-optimized', className)}>
+    {Array.from({ length: lines }).map((_, i) => (
+      <div
+        key={i}
+        className={cn(
+          'scroll-skeleton rounded-sm',
+          heights[i % heights.length] || 'h-3',
+          widths[i % widths.length] || 'w-full'
         )}
       />
     ))}
@@ -134,15 +158,60 @@ export interface SkeletonCardProps {
 }
 
 export const SkeletonCard = ({ className }: SkeletonCardProps) => (
-  <div className={cn('doax-card p-6 space-y-4', className)}>
+  <div className={cn('doax-card p-6 space-y-4 scroll-optimized', className)}>
     <div className="flex items-center gap-3">
-      <div className="w-12 h-12 bg-muted/50 rounded-lg animate-pulse" />
+      <div className="w-12 h-12 scroll-skeleton rounded-lg" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 bg-muted/50 rounded-sm animate-pulse w-1/2" />
-        <div className="h-3 bg-muted/50 rounded-sm animate-pulse w-3/4" />
+        <div className="h-4 scroll-skeleton rounded-sm w-1/2" />
+        <div className="h-3 scroll-skeleton rounded-sm w-3/4" />
       </div>
     </div>
     <SkeletonText lines={3} />
+  </div>
+);
+
+// Enhanced skeleton components for better scroll performance
+export const OptimizedSkeletonCard = ({ className }: SkeletonCardProps) => (
+  <div className={cn('doax-card p-6 space-y-4 scroll-optimized content-container', className)}>
+    {/* Image skeleton */}
+    <div className="w-full aspect-video scroll-skeleton rounded-lg mb-4" />
+
+    {/* Header skeleton */}
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-10 h-10 scroll-skeleton rounded-lg shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 scroll-skeleton rounded-sm w-2/3" />
+        <div className="h-3 scroll-skeleton rounded-sm w-1/2" />
+      </div>
+    </div>
+
+    {/* Content skeleton */}
+    <div className="space-y-3">
+      <div className="h-3 scroll-skeleton rounded-sm w-full" />
+      <div className="h-3 scroll-skeleton rounded-sm w-5/6" />
+      <div className="h-3 scroll-skeleton rounded-sm w-4/5" />
+    </div>
+
+    {/* Footer skeleton */}
+    <div className="flex justify-between items-center pt-4">
+      <div className="h-3 scroll-skeleton rounded-sm w-1/4" />
+      <div className="h-8 scroll-skeleton rounded-lg w-20" />
+    </div>
+  </div>
+);
+
+// Grid skeleton for consistent loading
+export const SkeletonGrid = ({
+  count = 6,
+  className
+}: {
+  count?: number;
+  className?: string;
+}) => (
+  <div className={cn('grid-responsive-cards', className)}>
+    {Array.from({ length: count }, (_, index) => (
+      <OptimizedSkeletonCard key={`skeleton-${index}`} />
+    ))}
   </div>
 );
 

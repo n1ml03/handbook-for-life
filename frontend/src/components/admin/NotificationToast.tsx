@@ -16,23 +16,24 @@ interface NotificationToastProps {
   onRemove: (id: string) => void;
 }
 
-export const NotificationToast = React.memo(function NotificationToast({ 
-  notification, 
-  onRemove 
+export const NotificationToast = React.memo(function NotificationToast({
+  notification,
+  onRemove
 }: NotificationToastProps) {
   return (
     <div className={cn(
-      "flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300",
-      "bg-background/90 backdrop-blur-md border-border/40",
-      "hover:shadow-2xl hover:scale-[1.02] transform",
-      "animate-in slide-in-from-right-5 fade-in duration-300"
+      "flex items-start gap-3 p-3 rounded-xl border transition-all duration-300",
+      "bg-background/95 backdrop-blur-md border-border/50",
+      "hover:bg-background transform hover:scale-[1.01]",
+      "shadow-lg hover:shadow-xl",
+      "animate-in slide-in-from-right-3 fade-in duration-300"
     )}>
       <div className={cn(
         "shrink-0 mt-0.5 p-1.5 rounded-lg",
-        notification.type === 'success' ? "bg-emerald-100/50 text-emerald-600" : "",
-        notification.type === 'error' ? "bg-red-100/50 text-red-600" : "",
-        notification.type === 'warning' ? "bg-amber-100/50 text-amber-600" : "",
-        notification.type === 'info' ? "bg-blue-100/50 text-blue-600" : ""
+        notification.type === 'success' ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : "",
+        notification.type === 'error' ? "bg-red-500/10 text-red-600 border border-red-500/20" : "",
+        notification.type === 'warning' ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" : "",
+        notification.type === 'info' ? "bg-blue-500/10 text-blue-600 border border-blue-500/20" : ""
       )}>
         {notification.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
         {notification.type === 'error' && <AlertCircle className="w-4 h-4" />}
@@ -47,8 +48,8 @@ export const NotificationToast = React.memo(function NotificationToast({
         onClick={() => onRemove(notification.id)}
         className={cn(
           "shrink-0 p-1.5 rounded-lg transition-all duration-200",
-          "bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground",
-          "focus:ring-2 focus:ring-border/50 focus:outline-none",
+          "bg-muted/20 hover:bg-muted/40 text-muted-foreground hover:text-foreground",
+          "focus:ring-2 focus:ring-accent-cyan/30 focus:outline-none",
           "hover:scale-110 active:scale-95"
         )}
         aria-label="Dismiss notification"

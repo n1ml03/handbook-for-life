@@ -28,68 +28,241 @@ export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'e
   }
 }
 
-/**
- * Create data URL from binary image data and mime type
- */
-export function createImageDataUrl(imageData?: string, mimeType?: string): string | undefined {
-  if (!imageData || !mimeType) {
-    return undefined;
-  }
-  return `data:${mimeType};base64,${imageData}`;
-}
+// =============================================================================
+// IMAGE HANDLING - Direct backend API endpoints for optimal performance
+// =============================================================================
+//
+// Image Handling Strategy:
+// - All image functions use direct backend API endpoints (/api/images/...)
+// - No base64 conversion in frontend - images served directly from backend
+// - Maintains existing performance optimizations (lazy loading, caching, etc.)
+// - Simplified codebase with cleaner, more maintainable functions
+// - Backend serves images with proper caching headers (24-hour cache)
+//
+// Note: Legacy base64 conversion functions have been removed for cleaner code
 
 /**
  * Extract character profile image URL from character data
+ * Uses direct backend API endpoint for optimal performance
+ * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getCharacterProfileImageUrl(character: { profile_image_data?: string; profile_image_mime_type?: string }): string | undefined {
-  return createImageDataUrl(character.profile_image_data, character.profile_image_mime_type);
+export function getCharacterProfileImageUrl(character: { id?: number; profile_image_data?: string }): string | undefined {
+  // Only return URL if we have both ID and actual image data
+  if (character?.id && character?.profile_image_data && character.profile_image_data.trim().length > 0) {
+    return `/api/images/character/${character.id}/profile`;
+  }
+  return undefined;
 }
 
 /**
  * Extract swimsuit images from swimsuit data
+ * Uses direct backend API endpoints for optimal performance
+ * Returns undefined for images if no data exists to ensure empty state instead of loading
  */
-export function getSwimsuitImages(swimsuit: { 
-  image_before_data?: string; 
-  image_before_mime_type?: string;
+export function getSwimsuitImages(swimsuit: {
+  id?: number;
+  image_before_data?: string;
   image_after_data?: string;
-  image_after_mime_type?: string;
 }): {
   beforeImage?: string;
   afterImage?: string;
 } {
-  return {
-    beforeImage: createImageDataUrl(swimsuit.image_before_data, swimsuit.image_before_mime_type),
-    afterImage: createImageDataUrl(swimsuit.image_after_data, swimsuit.image_after_mime_type),
-  };
+  const result: { beforeImage?: string; afterImage?: string } = {};
+
+  if (swimsuit?.id) {
+    // Only return URL if we have actual image data
+    if (swimsuit.image_before_data && swimsuit.image_before_data.trim().length > 0) {
+      result.beforeImage = `/api/images/swimsuit/${swimsuit.id}/before`;
+    }
+    if (swimsuit.image_after_data && swimsuit.image_after_data.trim().length > 0) {
+      result.afterImage = `/api/images/swimsuit/${swimsuit.id}/after`;
+    }
+  }
+
+  return result;
 }
 
 /**
  * Extract item icon URL from item data
+ * Uses direct backend API endpoint for optimal performance
+ * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getItemIconUrl(item: { icon_data?: string; icon_mime_type?: string }): string | undefined {
-  return createImageDataUrl(item.icon_data, item.icon_mime_type);
+export function getItemIconUrl(item: { id?: number; icon_data?: string }): string | undefined {
+  // Only return URL if we have both ID and actual image data
+  if (item?.id && item?.icon_data && item.icon_data.trim().length > 0) {
+    return `/api/images/item/${item.id}/icon`;
+  }
+  return undefined;
 }
 
 /**
  * Extract bromide art URL from bromide data
+ * Uses direct backend API endpoint for optimal performance
+ * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getBromideArtUrl(bromide: { art_data?: string; art_mime_type?: string }): string | undefined {
-  return createImageDataUrl(bromide.art_data, bromide.art_mime_type);
+export function getBromideArtUrl(bromide: { id?: number; art_data?: string }): string | undefined {
+  // Only return URL if we have both ID and actual image data
+  if (bromide?.id && bromide?.art_data && bromide.art_data.trim().length > 0) {
+    return `/api/images/bromide/${bromide.id}/art`;
+  }
+  return undefined;
 }
 
 /**
  * Extract screenshot URLs from screenshots_data array
+ * Uses direct backend API endpoints for optimal performance
+ * Returns empty array if no valid screenshot data exists to ensure empty state instead of loading
  */
-export function extractScreenshotUrls(screenshotsData?: Array<{data: string; mimeType: string; filename: string}>): string[] {
-  if (!screenshotsData || !Array.isArray(screenshotsData)) {
+export function extractScreenshotUrls(
+  screenshotsData?: Array<{data: string; mimeType: string; filename: string}>,
+  documentId?: number | string
+): string[] {
+  if (!screenshotsData || !Array.isArray(screenshotsData) || !documentId) {
     return [];
   }
-  
+
   return screenshotsData
-    .filter(screenshot => screenshot.data && screenshot.mimeType)
-    .map(screenshot => createImageDataUrl(screenshot.data, screenshot.mimeType))
-    .filter(Boolean) as string[];
+    .filter(screenshot => screenshot?.data && screenshot.data.trim().length > 0 && screenshot?.mimeType)
+    .map((_, index) => `/api/images/document/${documentId}/screenshot/${index}`);
 }
+
+// Note: convertFilesToScreenshotsData has been removed
+// File upload handling should be done through proper upload endpoints
+
+/**
+ * Validate screenshot data structure
+ */
+export function validateScreenshotData(screenshot: any): screenshot is {data: string; mimeType: string; filename: string} {
+  return (
+    screenshot &&
+    typeof screenshot === 'object' &&
+    typeof screenshot.data === 'string' &&
+    typeof screenshot.mimeType === 'string' &&
+    typeof screenshot.filename === 'string' &&
+    screenshot.data.length > 0 &&
+    screenshot.mimeType.startsWith('image/')
+  );
+}
+
+/**
+ * Clean and validate screenshots_data array
+ */
+export function cleanScreenshotsData(screenshotsData?: any[]): Array<{data: string; mimeType: string; filename: string}> {
+  if (!Array.isArray(screenshotsData)) {
+    return [];
+  }
+
+  return screenshotsData.filter(validateScreenshotData);
+}
+
+/**
+ * Generate optimized image URLs using backend API endpoints
+ * This avoids base64 conversion and uses direct binary serving
+ */
+export function getOptimizedImageUrls(entity: any, entityType: string): Record<string, string> {
+  const urls: Record<string, string> = {};
+
+  switch (entityType) {
+    case 'character':
+      if (entity.id && entity.profile_image_data) {
+        urls.profileImage = `/api/images/character/${entity.id}/profile`;
+      }
+      break;
+
+    case 'swimsuit':
+      if (entity.id) {
+        if (entity.image_before_data) {
+          urls.beforeImage = `/api/images/swimsuit/${entity.id}/before`;
+        }
+        if (entity.image_after_data) {
+          urls.afterImage = `/api/images/swimsuit/${entity.id}/after`;
+        }
+      }
+      break;
+
+    case 'item':
+      if (entity.id && entity.icon_data) {
+        urls.iconImage = `/api/images/item/${entity.id}/icon`;
+      }
+      break;
+
+    case 'bromide':
+      if (entity.id && entity.art_data) {
+        urls.artImage = `/api/images/bromide/${entity.id}/art`;
+      }
+      break;
+
+    case 'gacha':
+      if (entity.id && entity.banner_image_data) {
+        urls.bannerImage = `/api/images/gacha/${entity.id}/banner`;
+      }
+      break;
+
+    case 'document':
+      if (entity.id && entity.screenshots_data) {
+        urls.screenshots = extractScreenshotUrls(entity.screenshots_data, entity.id);
+      }
+      break;
+  }
+
+  return urls;
+}
+
+// Note: The optimized functions have been merged into the main functions above
+// getCharacterProfileImageUrl, getSwimsuitImages, getItemIconUrl, getBromideArtUrl now use direct API endpoints
+
+/**
+ * Auto-detect and return optimized image URL for any entity
+ * This function automatically chooses between API endpoints and base64 fallback
+ */
+export function getAutoOptimizedImageUrl(
+  entity: any,
+  imageType: 'profile' | 'before' | 'after' | 'icon' | 'art' | 'banner' | 'screenshot',
+  screenshotIndex?: number
+): string | undefined {
+  if (!entity || !entity.id) {
+    return undefined;
+  }
+
+  // Determine entity type and construct appropriate API URL
+  if (imageType === 'profile' && entity.profile_image_data) {
+    return `/api/images/character/${entity.id}/profile`;
+  }
+
+  if (imageType === 'before' && entity.image_before_data) {
+    return `/api/images/swimsuit/${entity.id}/before`;
+  }
+
+  if (imageType === 'after' && entity.image_after_data) {
+    return `/api/images/swimsuit/${entity.id}/after`;
+  }
+
+  if (imageType === 'icon' && entity.icon_data) {
+    return `/api/images/item/${entity.id}/icon`;
+  }
+
+  if (imageType === 'art' && entity.art_data) {
+    return `/api/images/bromide/${entity.id}/art`;
+  }
+
+  if (imageType === 'banner' && entity.banner_image_data) {
+    return `/api/images/gacha/${entity.id}/banner`;
+  }
+
+  if (imageType === 'screenshot' && entity.screenshots_data && screenshotIndex !== undefined) {
+    // Check if it's a document or update log based on available fields
+    if (entity.title_en || entity.document_type) {
+      return `/api/images/document/${entity.id}/screenshot/${screenshotIndex}`;
+    } else if (entity.version || entity.title) {
+      return `/api/images/update-log/${entity.id}/screenshot/${screenshotIndex}`;
+    }
+  }
+
+  return undefined;
+}
+
+// Note: resolveImageUrl has been removed as the main functions now handle optimization automatically
+// Use getCharacterProfileImageUrl, getSwimsuitImages, getItemIconUrl, getBromideArtUrl directly
 
 /**
  * Format ISO date string to display format

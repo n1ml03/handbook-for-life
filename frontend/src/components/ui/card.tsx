@@ -11,7 +11,7 @@ const Card = forwardRef<
     className={cn(
       "rounded-responsive border bg-card text-card-foreground modern-shadow glass-effect theme-sync transition-all duration-200",
       // Light mode enhancements - Improved contrast and visibility
-      "light:bg-card light:border-border/80 light:shadow-md light:hover:shadow-lg light:hover:border-border",
+      "light:bg-card light:border-border/80 light:shadow-md",
       // Touch-friendly improvements
       "touch-friendly focus-mobile",
       className

@@ -1,6 +1,9 @@
 /**
- * Image utility functions for handling binary image data and URL conversion
- * Provides compatibility between backend binary storage and frontend URL display
+ * Image utility functions for file upload and processing
+ *
+ * Note: This file now focuses on file upload utilities only.
+ * Image display functions have been moved to services/utils.ts and use direct backend API endpoints.
+ * Legacy base64 conversion functions have been removed for cleaner, more maintainable code.
  */
 
 export interface ImageData {
@@ -15,22 +18,7 @@ export interface ScreenshotData {
   filename: string;
 }
 
-/**
- * Convert binary image data to a data URL for display in the frontend
- */
-export function createImageDataUrl(imageData: ImageData): string {
-  if (!imageData.data || !imageData.mimeType) {
-    throw new Error('Invalid image data: missing data or mimeType');
-  }
-  
-  // Check if data is already a data URL
-  if (imageData.data.startsWith('data:')) {
-    return imageData.data;
-  }
-  
-  // Create data URL from base64 data
-  return `data:${imageData.mimeType};base64,${imageData.data}`;
-}
+// Note: createImageDataUrl has been removed - use direct backend API endpoints instead
 
 /**
  * Convert a File object to ImageData format for backend storage
@@ -71,30 +59,8 @@ export async function fileToScreenshotData(file: File): Promise<ScreenshotData> 
   };
 }
 
-/**
- * Convert screenshot data array to URL array for backward compatibility
- */
-export function screenshotsDataToUrls(screenshotsData?: ScreenshotData[]): string[] {
-  if (!screenshotsData || !Array.isArray(screenshotsData)) {
-    return [];
-  }
-  
-  return screenshotsData.map(screenshot => createImageDataUrl(screenshot));
-}
-
-/**
- * Convert URL array to screenshot data array (for form submissions)
- * Note: This is a placeholder - actual implementation would need to fetch and convert URLs
- */
-export function urlsToScreenshotsData(urls: string[]): ScreenshotData[] {
-  // This is a simplified implementation for backward compatibility
-  // In practice, you'd need to fetch the URLs and convert them to base64
-  return urls.map((_, index) => ({
-    data: '', // Would need to fetch and convert
-    mimeType: 'image/jpeg', // Would need to detect
-    filename: `screenshot_${index + 1}.jpg`
-  }));
-}
+// Note: screenshotsDataToUrls has been deprecated and removed
+// Use extractScreenshotUrls from services/utils.ts instead
 
 /**
  * Validate image file type
@@ -147,51 +113,7 @@ export function createPlaceholderImageUrl(width: number = 300, height: number = 
   `)}`;
 }
 
-/**
- * Get image URL for display, with fallback to placeholder
- */
-export function getImageUrl(imageData?: ImageData, placeholderSize?: { width: number; height: number }): string {
-  if (imageData && imageData.data && imageData.mimeType) {
-    try {
-      return createImageDataUrl(imageData);
-    } catch (error) {
-      console.warn('Failed to create image data URL:', error);
-    }
-  }
-  
-  const { width = 300, height = 200 } = placeholderSize || {};
-  return createPlaceholderImageUrl(width, height);
-}
+// Note: getImageUrl has been removed - use direct backend API endpoints instead
 
-/**
- * Extract image data from entity for backward compatibility
- */
-export function extractImageData(entity: any, imageField: string): ImageData | undefined {
-  const dataField = `${imageField}_data`;
-  const mimeTypeField = `${imageField}_mime_type`;
-  
-  if (entity[dataField] && entity[mimeTypeField]) {
-    return {
-      data: entity[dataField],
-      mimeType: entity[mimeTypeField]
-    };
-  }
-  
-  return undefined;
-}
-
-/**
- * Create backward-compatible URL fields for entities
- */
-export function addCompatibilityUrls<T extends Record<string, any>>(entity: T, imageFields: string[]): T {
-  const result = { ...entity };
-  
-  imageFields.forEach(field => {
-    const imageData = extractImageData(entity, field);
-    if (imageData) {
-      (result as any)[`${field}_url`] = getImageUrl(imageData);
-    }
-  });
-  
-  return result;
-}
+// Note: extractImageData and addCompatibilityUrls have been removed
+// Use direct backend API endpoints instead of backward compatibility functions

@@ -38,10 +38,10 @@ function PageLoadingSpinner() {
   );
 }
 
-export function PageLoadingState({ 
-  isLoading, 
-  children, 
-  message = 'Đang tải nội dung...', 
+export function PageLoadingState({
+  isLoading,
+  children,
+  message = 'Đang tải nội dung...',
   className,
   minHeight = 'min-h-[40vh]'
 }: PageLoadingStateProps) {
@@ -52,16 +52,17 @@ export function PageLoadingState({
         animate={{ opacity: 1 }}
         className={cn(
           'flex flex-col items-center justify-center space-y-6',
+          'content-container page-transition scroll-optimized',
           minHeight,
           className
         )}
       >
-        {/* Loading card */}
+        {/* Enhanced loading card */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.4 }}
-          className="doax-card p-8 text-center max-w-md"
+          className="doax-card p-8 text-center max-w-md scroll-optimized"
         >
           <div className="flex flex-col items-center space-y-4">
             <PageLoadingSpinner />

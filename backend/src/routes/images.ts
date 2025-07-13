@@ -393,4 +393,147 @@ router.get('/document/:id/screenshot/:index',
   })
 );
 
+/**
+ * @swagger
+ * /api/images/gacha/{id}/banner:
+ *   get:
+ *     tags: [Images]
+ *     summary: Get gacha banner image
+ *     description: Retrieve a gacha's banner image directly from database storage
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Gacha ID
+ *     responses:
+ *       200:
+ *         description: Gacha banner image
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Gacha or banner image not found
+ */
+router.get('/gacha/:id/banner',
+  asyncHandler(async (req: Request, res: Response) => {
+    const gachaId = parseInt(req.params.id);
+
+    if (isNaN(gachaId)) {
+      throw new AppError('Invalid gacha ID', 400);
+    }
+
+    const [rows] = await executeQuery(
+      'SELECT banner_image_data, banner_image_mime_type FROM gachas WHERE id = ?',
+      [gachaId]
+    ) as [any[], any];
+
+    if (rows.length === 0) {
+      throw new AppError('Gacha not found', 404);
+    }
+
+    const gacha = rows[0];
+
+    if (!gacha.banner_image_data || !gacha.banner_image_mime_type) {
+      throw new AppError('Gacha banner image not found', 404);
+    }
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', gacha.banner_image_mime_type);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Content-Length', gacha.banner_image_data.length);
+
+    // Send binary data
+    res.send(gacha.banner_image_data);
+  })
+);
+
+/**
+ * @swagger
+ * /api/images/update-log/{id}/screenshot/{index}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Get update log screenshot by index
+ *     description: Retrieve a specific screenshot from an update log by its index
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Update log ID
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Screenshot index (0-based)
+ *     responses:
+ *       200:
+ *         description: Update log screenshot image
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Update log or screenshot not found
+ */
+router.get('/update-log/:id/screenshot/:index',
+  asyncHandler(async (req: Request, res: Response) => {
+    const updateLogId = parseInt(req.params.id);
+    const screenshotIndex = parseInt(req.params.index);
+
+    if (isNaN(updateLogId) || isNaN(screenshotIndex)) {
+      throw new AppError('Invalid update log ID or screenshot index', 400);
+    }
+
+    const [rows] = await executeQuery(
+      'SELECT screenshots_data FROM update_logs WHERE id = ?',
+      [updateLogId]
+    ) as [any[], any];
+
+    if (rows.length === 0) {
+      throw new AppError('Update log not found', 404);
+    }
+
+    const updateLog = rows[0];
+
+    if (!updateLog.screenshots_data) {
+      throw new AppError('Update log has no screenshots', 404);
+    }
+
+    let screenshots: any[];
+    try {
+      screenshots = JSON.parse(updateLog.screenshots_data);
+    } catch (error) {
+      throw new AppError('Invalid screenshots data format', 500);
+    }
+
+    if (!Array.isArray(screenshots) || screenshotIndex >= screenshots.length || screenshotIndex < 0) {
+      throw new AppError('Screenshot not found', 404);
+    }
+
+    const screenshot = screenshots[screenshotIndex];
+
+    if (!screenshot.data || !screenshot.mimeType) {
+      throw new AppError('Invalid screenshot data', 404);
+    }
+
+    // Convert base64 to buffer
+    const imageBuffer = Buffer.from(screenshot.data, 'base64');
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', screenshot.mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Content-Length', imageBuffer.length);
+
+    // Send binary data
+    res.send(imageBuffer);
+  })
+);
+
 export default router;

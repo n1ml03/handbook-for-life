@@ -40,9 +40,9 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   // Memoize grid classes for performance
   const gridClasses = useMemo(() => {
     const gapClasses = {
-      sm: 'gap-3',
-      md: 'gap-4 md:gap-6',
-      lg: 'gap-6 md:gap-8'
+      sm: 'gap-2',
+      md: 'gap-3 md:gap-4',
+      lg: 'gap-4 md:gap-5'
     };
 
     const colClasses = {
@@ -70,7 +70,7 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
     }
   }, [items, loadedCount, enableLazyLoading]);
 
-  // Lazy loading with intersection observer
+  // Enhanced lazy loading with intersection observer
   useEffect(() => {
     if (!enableLazyLoading || !loadMoreRef.current) return;
 
@@ -79,14 +79,20 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
         const [entry] = entries;
         if (entry.isIntersecting && !isLoading && loadedCount < items.length) {
           setIsLoading(true);
-          // Simulate loading delay for better UX
-          setTimeout(() => {
-            setLoadedCount(prev => Math.min(prev + itemsPerPage, items.length));
+
+          // Use requestAnimationFrame for better performance
+          requestAnimationFrame(() => {
+            // Batch update for better performance
+            const nextCount = Math.min(loadedCount + itemsPerPage, items.length);
+            setLoadedCount(nextCount);
             setIsLoading(false);
-          }, 100);
+          });
         }
       },
-      { threshold: 0.1 }
+      {
+        threshold: 0.1,
+        rootMargin: '100px' // Start loading earlier for smoother experience
+      }
     );
 
     observerRef.current.observe(loadMoreRef.current);
@@ -126,21 +132,21 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   }, [renderCard, enableAnimations, animationDelay]);
 
   return (
-    <div className="w-full">
-      <div className={gridClasses}>
+    <div className="w-full scroll-optimized">
+      <div className={cn(gridClasses, 'scroll-container')}>
         {visibleItems.map((item, index) => renderOptimizedCard(item, index))}
       </div>
 
-      {/* Lazy loading trigger */}
+      {/* Enhanced lazy loading trigger */}
       {enableLazyLoading && loadedCount < items.length && (
-        <div ref={loadMoreRef} className="w-full py-8 flex justify-center">
+        <div ref={loadMoreRef} className="lazy-load-trigger w-full py-8 flex justify-center">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <div className="w-4 h-4 border-2 border-accent-cyan border-t-transparent rounded-full animate-spin" />
-              Loading more...
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-4 h-4 border-2 border-muted border-t-accent-cyan rounded-full animate-spin" />
+              <span>Loading more content...</span>
             </div>
           ) : (
-            <div className="text-sm text-gray-500">Scroll to load more</div>
+            <div className="text-sm text-muted-foreground/60">Scroll to load more</div>
           )}
         </div>
       )}
@@ -148,7 +154,7 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   );
 }
 
-// Lightweight card wrapper for better performance
+// Enhanced card wrapper for better scroll performance
 export const OptimizedCard = React.memo<{
   children: React.ReactNode;
   className?: string;
@@ -158,6 +164,7 @@ export const OptimizedCard = React.memo<{
   const cardClasses = useMemo(() => cn(
     'bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg',
     'transition-all duration-200 ease-out',
+    'scroll-optimized content-container', // Add scroll optimization classes
     hover ? 'hover:border-border hover:shadow-lg hover:bg-card' : '',
     onClick ? 'cursor-pointer' : '',
     className

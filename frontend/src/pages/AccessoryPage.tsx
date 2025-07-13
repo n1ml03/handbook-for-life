@@ -62,7 +62,7 @@ const AccessoryCard = React.memo(function AccessoryCard({ accessory }: Accessory
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -5 }}
+      // whileHover={{ scale: 1.02, y: -5 }}
       className="relative modern-card p-6 overflow-hidden group"
     >
       {/* Background Effects */}
@@ -331,20 +331,22 @@ export default function AccessoryPage() {
           transition={{ delay: 0.3 }}
           className="mt-8"
         >
-          <div className="grid-responsive-cards mb-8">
-            {paginatedAccessories.map((accessory, index) => (
-              <motion.div
-                key={accessory.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.15,
-                  delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
-                }}
-              >
-                <AccessoryCard accessory={accessory} />
-              </motion.div>
-            ))}
+          <div className="grid-container-full-width">
+            <div className="grid-responsive-cards mb-8">
+              {paginatedAccessories.map((accessory, index) => (
+                <motion.div
+                  key={accessory.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                  }}
+                >
+                  <AccessoryCard accessory={accessory} />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
 

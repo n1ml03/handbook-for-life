@@ -173,12 +173,12 @@ module.exports = {
         '.grid-responsive-auto': {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: theme('spacing.4'),
+          gap: theme('spacing.3'),
           '@media (min-width: 768px)': {
-            gap: theme('spacing.6'),
+            gap: theme('spacing.4'),
           },
           '@media (min-width: 1024px)': {
-            gap: theme('spacing.8'),
+            gap: theme('spacing.5'),
           },
         },
         // Touch-friendly utilities

@@ -23,6 +23,8 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
       start_date: new Date(row.start_date),
       end_date: new Date(row.end_date),
       game_version: row.game_version,
+      banner_image_data: row.banner_image_data,
+      banner_image_mime_type: row.banner_image_mime_type,
     };
   }
 
@@ -37,7 +39,9 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
       'gacha_subtype',
       'start_date',
       'end_date',
-      'game_version'
+      'game_version',
+      'banner_image_data',
+      'banner_image_mime_type'
     ];
   }
 
@@ -59,6 +63,8 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
       start_date: row.start_date,
       end_date: row.end_date,
       game_version: row.game_version,
+      banner_image_data: row.banner_image_data,
+      banner_image_mime_type: row.banner_image_mime_type,
     };
   }
 
@@ -66,8 +72,8 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
     try {
       const [result] = await executeQuery(
         `INSERT INTO gachas (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         gacha_subtype, start_date, end_date, game_version)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         gacha_subtype, start_date, end_date, game_version, banner_image_data, banner_image_mime_type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           gacha.unique_key,
           gacha.name_jp,
@@ -79,6 +85,8 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
           gacha.start_date,
           gacha.end_date,
           gacha.game_version,
+          gacha.banner_image_data,
+          gacha.banner_image_mime_type,
         ]
       ) as [any, any];
 

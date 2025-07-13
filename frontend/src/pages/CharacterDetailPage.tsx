@@ -211,11 +211,12 @@ export default function CharacterDetailPage() {
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
-                  ) : null}
-                  <User className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 text-accent-cyan hidden" />
+                  ) : (
+                    // Empty state - just show the background gradient without any icon
+                    <div className="w-full h-full" />
+                  )}
                 </div>
               </div>
 

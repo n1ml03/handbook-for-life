@@ -47,8 +47,8 @@ export const Section = ({ children, title, description, action, className }: Sec
   </div>
 );
 
-// Grid with responsive spacing
-export const Grid = ({ children, className, cols = 1, gap = 'md' }: { children: ReactNode; className?: string; cols?: 1 | 2 | 3 | 4; gap?: 'sm' | 'md' | 'lg' }) => {
+// Grid with responsive spacing - Updated to use new 3-column system
+export const Grid = ({ children, className, cols = 3, gap = 'md' }: { children: ReactNode; className?: string; cols?: 1 | 2 | 3 | 4; gap?: 'sm' | 'md' | 'lg' }) => {
   const gridCols = {
     1: 'grid-cols-1',
     2: 'grid-cols-1 md:grid-cols-2',
@@ -56,9 +56,9 @@ export const Grid = ({ children, className, cols = 1, gap = 'md' }: { children: 
     4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
   const gridGap = {
-    sm: 'gap-4',
-    md: 'gap-6',
-    lg: 'gap-6',
+    sm: 'gap-3',
+    md: 'gap-4',
+    lg: 'gap-5',
   };
   return (
     <div className={cn('grid performance-grid', gridCols[cols], gridGap[gap], className)}>{children}</div>

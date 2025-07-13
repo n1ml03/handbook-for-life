@@ -43,7 +43,8 @@ import imageRoutes from '@routes/images';
 import dashboardRoutes from '@routes/dashboard';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Compression middleware - enable gzip compression for JSON responses
 app.use(compression({
@@ -230,8 +231,15 @@ const startServer = async () => {
     // Initialize cache service
     CacheService.initialize();
 
-    server = app.listen(PORT, () => {
-      logger.info(`\n🚀 DOAXVV Handbook API Server Started\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌍 Server running on: http://localhost:${PORT}\n📊 Health check: http://localhost:${PORT}/api/health\n📚 API Documentation: http://localhost:${PORT}/api-docs\n🗃️  Database: Connected to MySQL\n📝 Logging: Console output\n⚡ Environment: ${process.env.NODE_ENV || 'development'}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n      `);
+    server = app.listen(PORT, HOST, () => {
+      logger.info(`🚀 DOAXVV Handbook API Server Started`);
+      logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      logger.info(`🌍 Server running on: http://${HOST}:${PORT}`);
+      logger.info(`📊 Health check: http://${HOST}:${PORT}/api/health`);
+      logger.info(`📚 API Documentation: http://${HOST}:${PORT}/api-docs`);
+      logger.info(`🗃️ Database: Connected to MySQL`);
+      logger.info(`⚠️  Network Note: Configure CORS_ORIGINS for network clients`);
+      logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     });
 
     // Handle graceful shutdown

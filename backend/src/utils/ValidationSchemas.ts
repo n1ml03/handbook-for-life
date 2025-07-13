@@ -192,6 +192,7 @@ const documentBase = z.object({
   unique_key: uniqueKeyPattern,
   title_en: z.string().min(1, 'Title is required').max(255, 'Title too long').trim(),
   summary_en: z.string().max(1000, 'Summary too long').optional(),
+  document_type: z.enum(['checklist', 'guide']).default('checklist'),
   content_json_en: tiptapContentSchema.optional(),
   screenshots_data: z.array(z.object({
     data: z.string().min(1, 'Image data is required'),
@@ -205,6 +206,7 @@ export const documentSchemas = {
   update: documentBase.partial(),
   query: paginationSchema.merge(searchSchema).merge(z.object({
     category: z.string().max(50).optional(),
+    document_type: z.enum(['checklist', 'guide']).optional(),
   })),
 };
 

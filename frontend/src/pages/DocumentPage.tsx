@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search, FileText, Tags, Calendar, User, ArrowLeft,
   Edit3, X, Eye, CheckSquare, ListChecks, BookOpen,
-  CheckCircle2, AlertCircle, AlertTriangle, Info
+  CheckCircle2, AlertCircle, AlertTriangle, Info, Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,9 @@ import {
 import TiptapEditor from '@/components/features/TiptapEditor';
 import { Container, Stack, Inline, StatusBadge, Grid } from '@/components/ui/spacing';
 import { SaveButton } from '@/components/ui/loading';
+import { ScreenshotGallery } from '@/components/ui/ScreenshotGallery';
 import { useDocuments } from '@/hooks';
-import { safeNormalizeTags, safeToString } from '@/services/utils';
+import { safeNormalizeTags, safeToString, extractScreenshotUrls } from '@/services/utils';
 import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { useDebounce } from '@/hooks';
@@ -175,16 +176,16 @@ export default function DocumentPage() {
   const documentSections: DocumentSectionInfo[] = [
     {
       id: 'checklist-creation',
-      title: 'Checklist Creation',
+      title: 'Checklists',
       icon: CheckSquare,
-      description: 'Comprehensive guides for creating effective checklists and task management',
+      description: 'Interactive checklists and task management documents',
       status: 'active'
     },
     {
       id: 'checking-guide',
-      title: 'Verification Guide',
-      icon: ListChecks,
-      description: 'Step-by-step procedures for verification and validation processes',
+      title: 'Guides',
+      icon: FileText,
+      description: 'Comprehensive guides and how-to documentation',
       status: 'active'
     }
   ];
@@ -192,22 +193,12 @@ export default function DocumentPage() {
   // Filter documents based on active section
   const getSectionDocuments = useCallback(() => {
     return documents.filter(doc => {
-      const tags = safeNormalizeTags(doc.tags);
-      
       if (activeSection === 'checklist-creation') {
-        return tags.some(tag => {
-          const tagStr = safeToString(tag).toLowerCase();
-          return tagStr.includes('checklist') || 
-                 tagStr.includes('creation') ||
-                 tagStr.includes('guide');
-        }) || doc.category === 'checklist-creation';
+        // Show documents with document_type = 'checklist'
+        return doc.document_type === 'checklist';
       } else if (activeSection === 'checking-guide') {
-        return tags.some(tag => {
-          const tagStr = safeToString(tag).toLowerCase();
-          return tagStr.includes('checking') || 
-                 tagStr.includes('verification') ||
-                 tagStr.includes('validation');
-        }) || doc.category === 'checking-guide';
+        // Show documents with document_type = 'guide'
+        return doc.document_type === 'guide';
       }
       return false;
     });
@@ -737,6 +728,27 @@ export default function DocumentPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Screenshots Section */}
+      {selectedDocument?.screenshots_data && selectedDocument.screenshots_data.length > 0 && (
+        <Card className="overflow-hidden rounded-2xl">
+          <CardContent className="p-6">
+            <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+              <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
+              Screenshots ({selectedDocument.screenshots_data.length})
+            </h3>
+            <ScreenshotGallery
+              screenshots={selectedDocument.screenshots_data}
+              columns={{ mobile: 1, tablet: 2, desktop: 3 }}
+              showFilenames={true}
+              enableLightbox={true}
+              enableDownload={false}
+              documentId={selectedDocument.id}
+              useOptimizedUrls={true}
+            />
+          </CardContent>
+        </Card>
+      )}
     </Stack>
   );
 

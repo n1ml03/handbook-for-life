@@ -1,11 +1,15 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Load env file based on `mode` in the current working directory.
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -72,12 +76,20 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,
+    host: true, // This allows external connections (0.0.0.0)
+    strictPort: false, // Allow fallback to other ports if 3000 is busy
+    allowedHosts: ['doaxvv.local'], // Allow doaxvv.local host
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
+        configure: (proxy, options) => {
+          // Log proxy requests for debugging
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`🔄 Proxying ${req.method} ${req.url} to ${options.target}`);
+          });
+        },
       },
     },
   },
@@ -121,4 +133,5 @@ export default defineConfig({
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' }
   },
-}) 
+  }
+})
