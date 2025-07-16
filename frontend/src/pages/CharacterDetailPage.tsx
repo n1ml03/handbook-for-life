@@ -207,41 +207,48 @@ export default function CharacterDetailPage() {
           <div className="absolute top-0 right-0 w-48 h-48 sm:w-96 sm:h-96 bg-gradient-radial from-accent-cyan/20 via-accent-purple/10 to-transparent opacity-50" />
 
           <div className="relative z-10">
-            <div className="flex flex-col sm:flex-row lg:flex-row items-center sm:items-start gap-4 sm:gap-6 lg:gap-8">
-              {/* Character Avatar */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-center sm:items-start gap-3 sm:gap-4 lg:gap-5">
+              {/* Character Avatar - Compact */}
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-2xl sm:rounded-3xl flex items-center justify-center border-2 border-accent-cyan/30 overflow-hidden">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-accent-pink/10 rounded-xl sm:rounded-2xl flex items-center justify-center border border-accent-cyan/30 overflow-hidden">
                   {getCharacterProfileImageUrl(character) ? (
                     <img
                       src={getCharacterProfileImageUrl(character)}
                       alt={character.name_en}
-                      className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
+                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         target.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
+<<<<<<< Updated upstream
                   ) : null}
                   <User className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 text-accent-cyan hidden" />
+=======
+                  ) : (
+                    // Empty state - just show the background without any icon
+                    <div className="w-full h-full" />
+                  )}
+>>>>>>> Stashed changes
                 </div>
               </div>
 
-              {/* Character Info */}
+              {/* Character Info - Compact */}
               <div className="flex-1 min-w-0 text-center sm:text-left">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <Badge className="bg-gradient-to-r from-accent-cyan to-accent-purple text-white font-semibold text-xs sm:text-sm">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                  <Badge className="bg-accent-cyan text-white font-semibold text-xs">
                     ID: {character.id}
                   </Badge>
                   {character.game_version && (
-                    <Badge className="bg-gradient-to-r from-indigo-400 to-blue-500 text-white font-semibold text-xs sm:text-sm">
+                    <Badge className="bg-accent-purple text-white font-semibold text-xs">
                       <GitBranch className="w-3 h-3 mr-1" />
                       v{character.game_version}
                     </Badge>
                   )}
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2 sm:mb-4 leading-tight">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight">
                   {character.name_en || character.name_jp}
                 </h1>
 
@@ -249,15 +256,15 @@ export default function CharacterDetailPage() {
                   <p className="text-lg sm:text-xl text-gray-300 mb-3 sm:mb-4">{character.name_jp}</p>
                 )}
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                  <div className="text-center p-2 sm:p-3 bg-dark-primary/30 rounded-lg sm:rounded-xl border border-dark-border/30">
-                    <div className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-cyan">{characterStats?.totalSkills || 0}</div>
-                    <div className="text-xs sm:text-sm text-gray-400">Skills</div>
+                {/* Quick Stats - Compact */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 lg:gap-3">
+                  <div className="text-center p-2 bg-card/50 rounded-lg border border-border/30">
+                    <div className="text-base sm:text-lg lg:text-xl font-bold text-accent-cyan">{characterStats?.totalSkills || 0}</div>
+                    <div className="text-xs text-gray-400">Skills</div>
                   </div>
-                  <div className="text-center p-2 sm:p-3 bg-dark-primary/30 rounded-lg sm:rounded-xl border border-dark-border/30">
-                    <div className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-pink">{characterStats?.totalSwimsuits || 0}</div>
-                    <div className="text-xs sm:text-sm text-gray-400">Swimsuits</div>
+                  <div className="text-center p-2 bg-card/50 rounded-lg border border-border/30">
+                    <div className="text-base sm:text-lg lg:text-xl font-bold text-accent-pink">{characterStats?.totalSwimsuits || 0}</div>
+                    <div className="text-xs text-gray-400">Swimsuits</div>
                   </div>
                   <div className="text-center p-2 sm:p-3 bg-dark-primary/30 rounded-lg sm:rounded-xl border border-dark-border/30">
                     <div className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-purple">{character.unique_key}</div>
@@ -356,36 +363,36 @@ export default function CharacterDetailPage() {
           </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="space-y-6 sm:space-y-8">
+        {/* Tab Content - Compact */}
+        <div className="space-y-4 sm:space-y-6">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
-              {/* Character Details Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Character Details Grid - Tighter spacing */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {character.birthday && (
-                  <div className="modern-card p-4 sm:p-6">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-accent-pink/20 to-accent-pink/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-accent-pink" />
+                  <div className="modern-card p-3 sm:p-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-pink/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-accent-pink" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Birthday</h3>
-                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-pink">{formatBirthday(character.birthday)}</p>
+                        <h3 className="text-sm sm:text-base font-bold text-white">Birthday</h3>
+                        <p className="text-base sm:text-lg lg:text-xl font-bold text-accent-pink">{formatBirthday(character.birthday)}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {character.height && (
-                  <div className="modern-card p-4 sm:p-6">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-accent-cyan/20 to-accent-cyan/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-accent-cyan" />
+                  <div className="modern-card p-3 sm:p-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-cyan/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 sm:w-5 sm:h-5 text-accent-cyan" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Height</h3>
-                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-cyan">{character.height} cm</p>
+                        <h3 className="text-sm sm:text-base font-bold text-white">Height</h3>
+                        <p className="text-base sm:text-lg lg:text-xl font-bold text-accent-cyan">{character.height} cm</p>
                       </div>
                     </div>
                   </div>
@@ -448,28 +455,27 @@ export default function CharacterDetailPage() {
                 )}
               </div>
 
-              {/* Multi-language Names */}
-              <div className="modern-card p-4 sm:p-6 lg:p-8">
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-accent-cyan" />
+              {/* Multi-language Names - Compact */}
+              <div className="modern-card p-3 sm:p-4 lg:p-5">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent-cyan" />
                   Multi-language Names
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {[
-                    { label: 'Japanese', value: character.name_jp, flag: '🇯🇵', color: 'from-red-400 to-pink-500' },
-                    { label: 'English', value: character.name_en, flag: '🇺🇸', color: 'from-blue-400 to-cyan-500' },
-                    { label: 'Chinese', value: character.name_cn, flag: '🇨🇳', color: 'from-red-500 to-yellow-500' },
-                    { label: 'Traditional Chinese', value: character.name_tw, flag: '🇹🇼', color: 'from-green-400 to-blue-500' },
-                    { label: 'Korean', value: character.name_kr, flag: '🇰🇷', color: 'from-purple-400 to-pink-500' }
-                  ].map(({ label, value, flag, color }) => (
+                    { label: 'Japanese', value: character.name_jp, flag: '🇯🇵' },
+                    { label: 'English', value: character.name_en, flag: '🇺🇸' },
+                    { label: 'Chinese', value: character.name_cn, flag: '🇨🇳' },
+                    { label: 'Traditional Chinese', value: character.name_tw, flag: '🇹🇼' },
+                    { label: 'Korean', value: character.name_kr, flag: '🇰🇷' }
+                  ].map(({ label, value, flag }) => (
                     value && (
-                      <div key={label} className="modern-card p-3 sm:p-4 bg-dark-primary/30">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                          <span className="text-xl sm:text-2xl">{flag}</span>
-                          <span className="text-xs sm:text-sm text-gray-400 font-medium">{label}</span>
+                      <div key={label} className="modern-card p-2 sm:p-3 bg-card/30">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-lg sm:text-xl">{flag}</span>
+                          <span className="text-xs text-gray-400 font-medium">{label}</span>
                         </div>
-                        <p className="text-white font-semibold text-base sm:text-lg break-words">{value}</p>
-                        <div className={`h-1 bg-gradient-to-r ${color} rounded-full mt-2`}></div>
+                        <p className="text-white font-semibold text-sm sm:text-base break-words">{value}</p>
                       </div>
                     )
                   ))}

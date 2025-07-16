@@ -1,8 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search, FileText, Tags, Calendar, User, ArrowLeft,
+<<<<<<< Updated upstream
   Edit3, X, Eye, CheckSquare, ListChecks, BookOpen,
   CheckCircle2, AlertCircle, AlertTriangle, Info
+=======
+  Edit3, X, Eye, CheckSquare, BookOpen,
+  CheckCircle2, AlertCircle, AlertTriangle, Info, Image as ImageIcon
+>>>>>>> Stashed changes
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';

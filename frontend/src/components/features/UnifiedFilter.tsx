@@ -327,20 +327,20 @@ export const UnifiedFilter = ({
   };
 
   return (
-    <div className={cn('space-y-6', className)} role="search" aria-label={searchAriaLabel || `Search and filter ${itemLabel}`}>
-      {/* Enhanced Search and Filter Header */}
+    <div className={cn('space-y-4', className)} role="search" aria-label={searchAriaLabel || `Search and filter ${itemLabel}`}>
+      {/* Enhanced Search and Filter Header - Compact */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="space-y-4"
+        className="space-y-3"
       >
-        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-          {/* Enhanced Search Bar */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+          {/* Enhanced Search Bar - Compact */}
           {searchField && (
             <div className={colorScheme.searchContainer}>
               <div className={colorScheme.searchIcon}>
-                {headerIcon || <Search className="w-5 h-5" />}
+                {headerIcon || <Search className="w-4 h-4" />}
               </div>
               <input
                 type="text"
@@ -354,12 +354,12 @@ export const UnifiedFilter = ({
             </div>
           )}
 
-          {/* Filter Controls */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Filter Controls - Compact */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <motion.button
               onClick={() => setShowFilters(!showFilters)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               className={colorScheme.filterButton}
               aria-label={filterAriaLabel || `${showFilters ? 'Hide' : 'Show'} filters`}
               aria-expanded={showFilters}

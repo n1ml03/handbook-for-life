@@ -537,10 +537,10 @@ const UpdateLog = React.memo(function UpdateLog() {
             {/* Timeline Line */}
             <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent-pink via-accent-cyan to-accent-purple opacity-60"></div>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {filteredUpdates.map((update, index) => {
                 const isExpanded = expandedUpdate === update.version;
-                
+
                 return (
                   <motion.div
                     key={update.version}
@@ -639,8 +639,8 @@ const UpdateCard = React.memo(function UpdateCard({
                       <Database className="w-5 h-5" />
                     </motion.div>
                     <div>
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-xl font-bold text-foreground">
+                      <div className="flex items-center space-x-2 mb-1.5">
+                        <h3 className="text-lg font-bold text-foreground">
                           Version {update.version}
                         </h3>
                         {index === 0 && (
@@ -649,16 +649,16 @@ const UpdateCard = React.memo(function UpdateCard({
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.2, type: "spring" }}
                           >
-                            <Badge className="bg-gradient-to-r from-accent-pink to-accent-purple text-white border-0 shadow-lg">
+                            <Badge className="bg-accent-pink text-white border-0 text-xs">
                               <Sparkles className="w-3 h-3 mr-1" />
                               Latest
                             </Badge>
                           </motion.div>
                         )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-3 h-3" />
                           <span>{update.date}</span>
                         </div>
                       </div>
@@ -771,14 +771,181 @@ const ExpandedContent = React.memo(function ExpandedContent({ update }: { update
   );
 });
 
+<<<<<<< Updated upstream
 // Enhanced Screenshots with staggered animations
 const Screenshots = React.memo(function Screenshots({ screenshots }: { screenshots: string[] }) {
+=======
+// Enhanced Screenshots with staggered animations - now displays actual images
+const Screenshots = React.memo(function Screenshots({
+  screenshots,
+  screenshotsData,
+  updateLogId
+}: {
+  screenshots?: string[];
+  screenshotsData?: Array<{data: string; mimeType: string; filename: string}>;
+  updateLogId?: number;
+}) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Convert screenshotsData to URLs - use optimized approach when possible
+  const imageUrls = React.useMemo(() => {
+    if (screenshotsData && screenshotsData.length > 0) {
+      if (updateLogId) {
+        // Use optimized API endpoints for update log screenshots
+        return screenshotsData.map((_, index) =>
+          `/api/images/update-log/${updateLogId}/screenshot/${index}`
+        );
+      }
+      // Fallback to base64 for cases without updateLogId
+      return screenshotsData.map(screenshot =>
+        `data:${screenshot.mimeType};base64,${screenshot.data}`
+      );
+    }
+    return screenshots || [];
+  }, [screenshotsData, screenshots, updateLogId]);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+  };
+
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+  };
+
+  const nextImage = () => {
+    if (lightboxIndex !== null) {
+      setLightboxIndex((lightboxIndex + 1) % imageUrls.length);
+    }
+  };
+
+  const previousImage = () => {
+    if (lightboxIndex !== null) {
+      setLightboxIndex(lightboxIndex === 0 ? imageUrls.length - 1 : lightboxIndex - 1);
+    }
+  };
+
+  if (!imageUrls || imageUrls.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h5 className="text-base font-semibold text-foreground mb-3 flex items-center">
+          <ImageIcon className="w-4 h-4 mr-2 text-accent-pink" />
+          Images ({imageUrls.length})
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {imageUrls.map((imageUrl, screenshotIndex) => (
+            <ScreenshotCard
+              key={screenshotIndex}
+              imageUrl={imageUrl}
+              index={screenshotIndex}
+              filename={screenshotsData?.[screenshotIndex]?.filename}
+              onClick={() => openLightbox(screenshotIndex)}
+            />
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeLightbox}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
+              onClick={closeLightbox}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+
+            {imageUrls.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    previousImage();
+                  }}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </Button>
+              </>
+            )}
+
+            <motion.img
+              key={lightboxIndex}
+              src={imageUrls[lightboxIndex]}
+              alt={`Screenshot ${lightboxIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {imageUrls.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {lightboxIndex + 1} / {imageUrls.length}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+});
+
+// Individual screenshot card component
+const ScreenshotCard = React.memo(({
+  imageUrl,
+  index,
+  filename,
+  onClick
+}: {
+  imageUrl: string;
+  index: number;
+  filename?: string;
+  onClick: () => void;
+}) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+>>>>>>> Stashed changes
   return (
     <motion.div
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
     >
+<<<<<<< Updated upstream
       <h5 className="text-lg font-semibold text-foreground mb-4 flex items-center">
         <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
         Images
@@ -817,6 +984,36 @@ const Screenshots = React.memo(function Screenshots({ screenshots }: { screensho
                 size="sm"
                 className="transition-all duration-300 hover:scale-110 shadow-lg"
                 aria-label="View screenshot"
+=======
+      <div className="aspect-video bg-accent-pink/10 rounded-lg border border-border/40 overflow-hidden transition-colors duration-200">
+        {imageUrl && !imageError ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={filename || `Screenshot ${index + 1}`}
+              className={cn(
+                'w-full h-full object-cover transition-opacity duration-300',
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              )}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              loading="lazy"
+              decoding="async"
+            />
+
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-muted animate-pulse" />
+            )}
+
+
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-2">
+              <motion.div
+                whileHover={{ rotate: 5 }}
+                transition={{ type: "spring", stiffness: 400 }}
+>>>>>>> Stashed changes
               >
                 <ExternalLink className="w-4 h-4" />
               </Button>

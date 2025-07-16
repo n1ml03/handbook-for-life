@@ -9,9 +9,15 @@ const Card = forwardRef<
   <div
     ref={ref}
     className={cn(
+<<<<<<< Updated upstream
       "rounded-responsive border bg-card text-card-foreground modern-shadow glass-effect theme-sync transition-all duration-200",
       // Light mode enhancements
       "light:bg-card light:border-border light:shadow-sm light:hover:shadow-md light:hover:border-border/80",
+=======
+      "rounded-responsive border bg-card text-card-foreground theme-sync transition-colors duration-200",
+      // Light mode enhancements - Flat design with strong borders
+      "light:bg-card light:border-border/70",
+>>>>>>> Stashed changes
       // Touch-friendly improvements
       "touch-friendly focus-mobile",
       className
@@ -27,7 +33,7 @@ const CardHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1 p-responsive", className)}
+    className={cn("flex flex-col space-y-1 p-3", className)}
     {...props}
   />
 ))
@@ -69,7 +75,7 @@ const CardContent = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("px-responsive pb-responsive pt-0", className)} {...props} />
+  <div ref={ref} className={cn("px-3 pb-3 pt-0", className)} {...props} />
 ))
 CardContent.displayName = "CardContent"
 
@@ -79,7 +85,7 @@ const CardFooter = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center px-responsive pb-responsive pt-0 gap-responsive", className)}
+    className={cn("flex items-center px-3 pb-3 pt-0 gap-2", className)}
     {...props}
   />
 ))

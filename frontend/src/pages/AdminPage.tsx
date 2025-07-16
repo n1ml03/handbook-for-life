@@ -6,7 +6,7 @@ import { cn } from '@/services/utils';
 import { documentCategoriesData, type Document, type DocumentCategory } from '@/types';
 import { useUpdateLogs } from '@/hooks';
 import { UpdateLog } from '@/types';
-import { Container } from '@/components/ui/spacing';
+import { Container, StatusBadge } from '@/components/ui/spacing';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { useDocuments } from '@/hooks';
@@ -506,26 +506,79 @@ const AdminPage = () => {
         </div>
       </div>
 
-      {/* Compact Header */}
+      {/* Hero Space - Exact match with DocumentPage */}
       {!isEditMode && (
+<<<<<<< Updated upstream
         <div className="mb-6">
+=======
+        <div className="mb-6 mt-8">
+>>>>>>> Stashed changes
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
+<<<<<<< Updated upstream
           </div>
           <p className="text-muted-foreground text-sm">
             Comprehensive content management system for DOAXVV Handbook
+=======
+            <StatusBadge status="info" className="px-3 py-1 text-sm">
+              <Settings className="w-4 h-4 mr-1" />
+              {adminSections.length} Tools
+            </StatusBadge>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Comprehensive content management system for DOAX Venus Vacation handbook
+>>>>>>> Stashed changes
           </p>
         </div>
       )}
 
+<<<<<<< Updated upstream
       {/* Compact Tab Navigation - Single Row */}
       {!isEditMode && (
         <Card className="p-3 mb-4 rounded-2xl">
           <CardContent className="p-0">
             <div className="grid grid-cols-2 gap-2">
               {adminSections.map(section => {
+=======
+      {/* Additional status indicators - positioned outside hero space to not affect spacing */}
+      {!isEditMode && (isOperationLoading || (process.env.NODE_ENV === 'development' && stats.totalOperations > 0)) && (
+        <div className="flex items-center gap-3 mb-4 -mt-2">
+          {isOperationLoading && (
+            <div
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+              role="status"
+              aria-live="polite"
+              aria-label="Processing operation"
+            >
+              <div
+                className="w-4 h-4 border-2 border-accent-cyan/30 border-t-accent-cyan rounded-full animate-spin"
+                aria-hidden="true"
+              ></div>
+              <span>Processing...</span>
+            </div>
+          )}
+          {/* Performance Stats (Development Only) */}
+          {process.env.NODE_ENV === 'development' && stats.totalOperations > 0 && (
+            <div className="text-xs text-muted-foreground">
+              <span>Ops: {stats.totalOperations}</span>
+              <span className="mx-2">•</span>
+              <span>Avg: {stats.averageDuration.toFixed(0)}ms</span>
+              <span className="mx-2">•</span>
+              <span>Success: {stats.successRate.toFixed(0)}%</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Section Navigation - Similar to DocumentPage */}
+      {!isEditMode && (
+        <Card className="p-4 mb-5 rounded-2xl">
+          <CardContent className="p-0">
+            <div className="flex gap-3">
+              {adminSections.map((section) => {
+>>>>>>> Stashed changes
                 const IconComponent = section.icon;
                 const isActive = activeTab === section.id;
                 return (
@@ -535,6 +588,7 @@ const AdminPage = () => {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     className={cn(
+<<<<<<< Updated upstream
                       'px-3 py-2 rounded-xl transition-all duration-200 group border',
                       'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
                       isActive
@@ -548,23 +602,37 @@ const AdminPage = () => {
                         isActive
                           ? 'bg-white/20'
                           : 'bg-accent-cyan/10 group-hover:bg-accent-cyan/20'
+=======
+                      'flex-1 px-5 py-4 rounded-xl transition-all duration-200 flex items-center gap-3 font-medium group',
+                      'focus:ring-2 focus:ring-accent-cyan/20 focus:outline-hidden',
+                      'border transition-all min-h-[64px]',
+                      isActive
+                        ? 'bg-gradient-to-r from-accent-pink to-accent-purple text-white border-accent-pink/50'
+                        : 'bg-card/50 text-muted-foreground hover:text-foreground border-border/30 hover:border-accent-cyan/30 hover:bg-card/80'
+                    )}
+                  >
+                    <div className={cn(
+                      'p-2.5 rounded-xl transition-all flex-shrink-0',
+                      isActive
+                        ? 'bg-white/20'
+                        : 'bg-accent-cyan/10 group-hover:bg-accent-cyan/20'
+                    )}>
+                      <IconComponent className={cn(
+                        'w-5 h-5 transition-colors',
+                        isActive ? 'text-white' : 'text-accent-cyan'
+                      )} />
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold mb-1 truncate">{section.title}</h3>
+                      <p className={cn(
+                        'text-xs leading-relaxed line-clamp-2',
+                        isActive ? 'text-white/80' : 'text-muted-foreground'
+>>>>>>> Stashed changes
                       )}>
-                        <IconComponent className={cn(
-                          'w-4 h-4 transition-colors',
-                          isActive ? 'text-white' : section.color
-                        )} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold">{section.title}</h3>
-                        {section.stats && (
-                          <div className={cn(
-                            'text-xs font-medium',
-                            isActive ? 'text-white/90' : 'text-muted-foreground'
-                          )}>
-                            {section.stats.count} {section.stats.label}
-                          </div>
-                        )}
-                      </div>
+                        {section.id === 'documents' && 'Manage guides and checklists'}
+                        {section.id === 'update-logs' && 'Track version updates'}
+                        {section.id === 'testing-tools' && 'Development utilities'}
+                      </p>
                     </div>
                   </motion.button>
                 );

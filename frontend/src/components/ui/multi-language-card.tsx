@@ -122,9 +122,19 @@ const LanguageBadge = React.memo<{
   }
 
   return (
+<<<<<<< Updated upstream
     <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-200">
       <div className={cn(
         'w-8 h-8 rounded-full flex items-center justify-center text-sm',
+=======
+    <div className={cn(
+      'flex items-center gap-2 sm:gap-2.5 p-1.5 sm:p-2 rounded-lg transition-colors duration-200',
+      'hover:bg-white/5 light:hover:bg-black/5'
+    )}>
+      <div className={cn(
+        'w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center',
+        'text-sm sm:text-base',
+>>>>>>> Stashed changes
         langConfig.bg,
         langConfig.border,
         'border'
@@ -134,6 +144,12 @@ const LanguageBadge = React.memo<{
       <div className="flex-1 min-w-0">
         <div className={cn('text-xs font-semibold uppercase tracking-wider', langConfig.color)}>
           {langConfig.name}
+<<<<<<< Updated upstream
+=======
+        </div> */}
+        <div className="text-white/90 light:text-foreground font-medium leading-tight text-xs sm:text-sm">
+          <span className="line-clamp-2">{name}</span>
+>>>>>>> Stashed changes
         </div>
         <div className="text-white/90 truncate font-medium text-sm">{name}</div>
       </div>
@@ -179,6 +195,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
 
   if (variant === 'minimal') {
     return (
+<<<<<<< Updated upstream
       <div className="space-y-4">
         <div className="relative">
           <h3 className="text-xl font-bold text-white leading-tight tracking-tight">{primaryName}</h3>
@@ -187,6 +204,18 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+=======
+      <div className="space-y-2 sm:space-y-3">
+        <div className="relative">
+          <h3 className="text-base sm:text-lg md:text-xl font-bold text-white light:text-foreground leading-tight tracking-tight pr-6">
+            {primaryName}
+          </h3>
+          <div className="absolute top-0 right-0 text-base sm:text-lg opacity-80">
+            {LANGUAGES[primaryLanguage].flag}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 sm:gap-1.5">
+>>>>>>> Stashed changes
           {otherLanguagesData.map(({ lang, name }) => (
             <LanguageBadge
               key={lang}
@@ -230,13 +259,23 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
     );
   }
 
-  // Compact variant (default)
+  // Compact variant (default) - Ultra compact
   return (
+<<<<<<< Updated upstream
     <div className="space-y-5">
       {/* Primary name with elegant styling */}
       <div className="relative">
         <div className="flex items-start justify-between gap-4">
           <h3 className="text-xl font-bold text-white leading-tight tracking-tight flex-1">{primaryName}</h3>
+=======
+    <div className="space-y-2 sm:space-y-3">
+      {/* Primary name with elegant styling */}
+      <div className="relative">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <h3 className="text-sm sm:text-lg md:text-lg font-bold text-white light:text-foreground leading-tight tracking-tight flex-1">
+            {primaryName}
+          </h3>
+>>>>>>> Stashed changes
           <LanguageBadge
             lang={primaryLanguage}
             name={primaryName}
@@ -246,10 +285,21 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(({
         </div>
       </div>
 
-      {/* Other languages with modern grid layout */}
+      {/* Other languages with compact flat layout */}
       {otherLanguagesData.length > 0 && (
+<<<<<<< Updated upstream
         <div className="bg-gradient-to-br from-slate-900/40 via-slate-800/20 to-slate-900/40 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+=======
+        <div className={cn(
+          'rounded-lg p-2 sm:p-3 border',
+          // Dark mode styling - flat design
+          'bg-card border-border/30',
+          // Light mode styling - pure flat design
+          'light:bg-card light:border-border/50'
+        )}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+>>>>>>> Stashed changes
             {otherLanguagesData.map(({ lang, name }) => (
               <LanguageBadge
                 key={lang}
@@ -292,6 +342,19 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(({
   sideContent,
   hover = true
 }) => {
+<<<<<<< Updated upstream
+=======
+  // Memoize density-based padding and spacing - Optimized for compact design
+  const densityConfig = useMemo(() => {
+    const configs = {
+      compact: { padding: 'p-2 sm:p-3', spacing: 'space-y-1 sm:space-y-2', textSpacing: 'space-y-0.5 sm:space-y-1' },
+      comfortable: { padding: 'p-3 sm:p-4', spacing: 'space-y-2 sm:space-y-3', textSpacing: 'space-y-1 sm:space-y-2' },
+      spacious: { padding: 'p-4 sm:p-5', spacing: 'space-y-3 sm:space-y-4', textSpacing: 'space-y-2 sm:space-y-3' }
+    };
+    return configs[density];
+  }, [density]);
+
+>>>>>>> Stashed changes
   // Memoize card classes to prevent recalculation
   const cardClasses = useMemo(() => ({
     base: cn(

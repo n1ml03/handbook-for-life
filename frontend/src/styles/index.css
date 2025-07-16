@@ -42,13 +42,14 @@
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 
-  /* Enhanced Layout Variables */
-  --header-height: 64px;
-  --header-height-mobile: 56px;
-  --content-padding: 24px;
+  /* Enhanced Layout Variables - Compact design */
+  --header-height: 56px;
+  --header-height-mobile: 48px;
+  --content-padding: 20px;
   --container-max-width: 1200px;
-  --container-padding: 1rem;
+  --container-padding: 0.75rem;
 
+<<<<<<< Updated upstream
   /* Responsive Layout Variables */
   --responsive-padding-mobile: 1rem;
   --responsive-padding-tablet: 1.5rem;
@@ -56,6 +57,15 @@
   --responsive-gap-mobile: 1rem;
   --responsive-gap-tablet: 1.5rem;
   --responsive-gap-desktop: 2rem;
+=======
+  /* Responsive Layout Variables - Optimized for compact design */
+  --responsive-padding-mobile: 0.75rem;   /* Reduced from 1rem */
+  --responsive-padding-tablet: 1rem;      /* Reduced from 1.5rem */
+  --responsive-padding-desktop: 1.25rem;  /* Reduced from 2rem */
+  --responsive-gap-mobile: 0.5rem;        /* Reduced from 0.75rem */
+  --responsive-gap-tablet: 0.75rem;       /* Reduced from 1rem */
+  --responsive-gap-desktop: 1rem;         /* Reduced from 1.25rem */
+>>>>>>> Stashed changes
   --responsive-border-radius-mobile: 0.75rem;
   --responsive-border-radius-desktop: 1rem;
 
@@ -76,23 +86,23 @@
   --mobile-menu-transition-duration: 0.3s;
   --micro-interaction-duration: 0.1s;
 
-  /* Enhanced Spacing System */
+  /* Enhanced Spacing System - Optimized for compact design */
   --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 0.75rem;
-  --spacing-lg: 1rem;
-  --spacing-xl: 1.5rem;
-  --spacing-2xl: 2rem;
-  --spacing-3xl: 3rem;
+  --spacing-sm: 0.375rem;  /* Reduced from 0.5rem */
+  --spacing-md: 0.5rem;    /* Reduced from 0.75rem */
+  --spacing-lg: 0.75rem;   /* Reduced from 1rem */
+  --spacing-xl: 1rem;      /* Reduced from 1.5rem */
+  --spacing-2xl: 1.5rem;   /* Reduced from 2rem */
+  --spacing-3xl: 2rem;     /* Reduced from 3rem */
 
-  /* Enhanced Typography Scale */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
+  /* Enhanced Typography Scale - Optimized for information density */
+  --text-xs: 0.7rem;     /* Reduced from 0.75rem */
+  --text-sm: 0.8rem;     /* Reduced from 0.875rem */
+  --text-base: 0.9rem;   /* Reduced from 1rem */
+  --text-lg: 1rem;       /* Reduced from 1.125rem */
+  --text-xl: 1.125rem;   /* Reduced from 1.25rem */
+  --text-2xl: 1.375rem;  /* Reduced from 1.5rem */
+  --text-3xl: 1.75rem;   /* Reduced from 1.875rem */
 
   /* Enhanced Shadow System */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -301,18 +311,17 @@
 }
 
 @layer utilities {
-  /* Enhanced Modern Card System - Unified design */
+  /* Enhanced Modern Card System - Pure flat design */
   .modern-card {
-    background-color: hsl(var(--color-card) / 0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--color-border) / 0.3);
+    background-color: hsl(var(--color-card));
+    border: 1px solid hsl(var(--color-border) / 0.5);
     border-radius: var(--radius-lg);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
-    transition: all var(--theme-transition-duration) var(--theme-transition-easing);
+    transition: border-color var(--theme-transition-duration) var(--theme-transition-easing);
     position: relative;
     overflow: hidden;
   }
 
+<<<<<<< Updated upstream
   .modern-card::before {
     content: '';
     position: absolute;
@@ -344,6 +353,12 @@
 
   .light .modern-card:hover {
     /* No hover effects for flat design */
+=======
+  /* Light mode specific card enhancements - Pure flat design */
+  .light .modern-card {
+    background-color: hsl(var(--color-card));
+    border-color: hsl(var(--color-border) / 0.7);  /* Stronger border for better definition without shadows */
+>>>>>>> Stashed changes
   }
 
   /* Legacy card support */
@@ -351,6 +366,75 @@
     @apply modern-card;
   }
 
+<<<<<<< Updated upstream
+=======
+  /* Admin-specific optimized spacing - Ultra compact */
+  .admin-card-grid {
+    display: grid;
+    gap: 0.5rem; /* Further reduced for tighter layout */
+  }
+
+  .admin-card {
+    @apply doax-card;
+    padding: 0.75rem; /* Further reduced for compact design */
+  }
+
+  .admin-card-content {
+    padding: 0; /* Minimal internal padding */
+  }
+
+  .admin-card-header {
+    margin-bottom: 0.375rem; /* Tighter spacing */
+  }
+
+  .admin-card-body {
+    margin-bottom: 0.375rem; /* Tighter spacing */
+  }
+
+  .admin-card-footer {
+    margin-top: 0.375rem; /* Tighter spacing */
+  }
+
+  /* Responsive admin spacing - Consistent compact design */
+  @media (min-width: 640px) {
+    .admin-card-grid {
+      gap: 0.5rem; /* Consistent ultra-tight spacing on tablet */
+    }
+
+    .admin-card {
+      padding: 0.75rem; /* Consistent compact padding on tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-card-grid {
+      gap: 0.75rem; /* Consistent tight spacing on desktop */
+    }
+
+    .admin-card {
+      padding: 1rem; /* Consistent padding on desktop */
+    }
+  }
+
+  /* Sticky notification enhancements */
+  .sticky-notification {
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+
+  .sticky-notification:hover {
+    z-index: 20;
+  }
+
+  /* Enhanced notification positioning for different screen sizes */
+  @media (max-width: 640px) {
+    .sticky-notification {
+      max-width: calc(100vw - 2rem);
+    }
+  }
+
+>>>>>>> Stashed changes
   /* Enhanced Modern Glass Effect - Unified design */
   .modern-glass {
     background-color: hsl(var(--color-background) / 0.8);
@@ -649,14 +733,8 @@
 
   .gaming-card {
     @apply doax-card;
-    background: linear-gradient(135deg,
-      hsl(var(--color-card) / 0.8) 0%,
-      hsl(var(--color-card) / 0.6) 100%);
-    border-color: hsl(var(--color-accent-pink) / 0.2);
-  }
-
-  .gaming-card:hover {
-    /* No hover effects for flat design */
+    background-color: hsl(var(--color-card));
+    border-color: hsl(var(--color-accent-pink) / 0.3);
   }
 
   .interactive-element {
@@ -690,22 +768,25 @@
     animation: var(--animate-shimmer);
   }
 
-  /* Enhanced Header Navigation Styling */
+  /* Enhanced Header Navigation Styling - Flat design */
   .header-nav {
-    @apply sticky top-0 transition-all duration-300;
+    @apply sticky top-0 transition-colors duration-300;
     z-index: var(--z-sticky);
-    background-color: hsl(var(--color-background) / 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid hsl(var(--color-border) / 0.5);
+    background-color: hsl(var(--color-background) / 0.95);
+    border-bottom: 1px solid hsl(var(--color-border) / 0.6);
     height: var(--header-height);
     contain: layout style;
-    box-shadow: var(--shadow-sm);
   }
 
   .light .header-nav {
+<<<<<<< Updated upstream
     background-color: hsl(var(--color-background) / 0.95);
     border-bottom-color: hsl(var(--color-border) / 0.8);
     box-shadow: var(--shadow-md);
+=======
+    background-color: hsl(var(--color-background));
+    border-bottom-color: hsl(var(--color-border) / 0.8);
+>>>>>>> Stashed changes
   }
 
   /* Mobile header adjustments */
@@ -2020,7 +2101,11 @@
     }
   }
 
+<<<<<<< Updated upstream
   /* Responsive grid utilities */
+=======
+  /* Enhanced 3-column responsive grid utilities - Compact spacing */
+>>>>>>> Stashed changes
   .grid-responsive-cards {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
@@ -2030,7 +2115,12 @@
   @media (min-width: 640px) {
     .grid-responsive-cards {
       grid-template-columns: repeat(2, 1fr);
+<<<<<<< Updated upstream
       gap: 12px;
+=======
+      gap: var(--responsive-gap-tablet);
+      max-width: none;
+>>>>>>> Stashed changes
     }
   }
 
@@ -2042,6 +2132,105 @@
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  /* Add 4-column layout for very large screens */
+  @media (min-width: 1600px) {
+    .grid-responsive-cards {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--responsive-gap-desktop);
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-responsive-cards {
+      gap: calc(var(--responsive-gap-desktop) * 1.2);
+      max-width: none;
+    }
+  }
+
+  /* Full-width grid container for maximum expansion */
+  .grid-container-centered {
+    width: 100vw;
+    max-width: none;
+    margin: 0;
+    padding: 0 1rem;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+
+  @media (min-width: 640px) {
+    .grid-container-centered {
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-container-centered {
+      padding: 0 2rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-container-centered {
+      padding: 0 3rem;
+    }
+  }
+
+  /* Alternative full-width breakout for maximum expansion */
+  .grid-container-full-width {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    padding: 0 1rem;
+  }
+
+  /* Enhanced Mobile Responsive Utilities - Compact design */
+  .mobile-optimized {
+    @apply text-sm leading-snug;
+  }
+
+  .mobile-card {
+    @apply p-2 sm:p-3 md:p-4;
+  }
+
+  .mobile-spacing {
+    @apply space-y-2 sm:space-y-3 md:space-y-4;
+  }
+
+  .mobile-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4;
+  }
+
+  .mobile-compact {
+    @apply p-1.5 sm:p-2 md:p-3 space-y-1.5 sm:space-y-2 md:space-y-3;
+  }
+
+  @media (min-width: 640px) {
+    .grid-container-full-width {
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-container-full-width {
+      padding: 0 2rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .grid-container-full-width {
+      padding: 0 3rem;
+    }
+  }
+
+>>>>>>> Stashed changes
   /* Custom single row layout for specific components */
   .grid-responsive-cards.single-row {
     display: flex;

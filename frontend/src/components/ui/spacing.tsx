@@ -12,19 +12,19 @@ export interface SectionProps extends SpacingProps {
   action?: ReactNode;
 }
 
-// Enhanced container with optimal spacing
+// Enhanced container with optimal spacing - Optimized for compact design
 export const Container = ({ children, className }: SpacingProps) => (
-  <div className={cn('viewport-optimized space-y-8', className)}>{children}</div>
+  <div className={cn('viewport-optimized space-y-4', className)}>{children}</div>
 );
 
-// Card with enhanced spacing and visual hierarchy
+// Card with enhanced spacing and visual hierarchy - More compact
 export const SpacingCard = ({ children, className }: SpacingProps) => (
-  <div className={cn('doax-card p-8 space-y-6', className)}>{children}</div>
+  <div className={cn('doax-card p-4 space-y-3', className)}>{children}</div>
 );
 
-// Compact card for dense layouts
+// Compact card for dense layouts - Ultra compact
 export const CompactCard = ({ children, className }: SpacingProps) => (
-  <div className={cn('doax-card p-6 space-y-4', className)}>{children}</div>
+  <div className={cn('doax-card p-3 space-y-2', className)}>{children}</div>
 );
 
 // Section with header and content
@@ -56,22 +56,28 @@ export const Grid = ({ children, className, cols = 1, gap = 'md' }: { children: 
     4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
   const gridGap = {
+<<<<<<< Updated upstream
     sm: 'gap-4',
     md: 'gap-6',
     lg: 'gap-8',
+=======
+    sm: 'gap-2',
+    md: 'gap-3',
+    lg: 'gap-4',
+>>>>>>> Stashed changes
   };
   return (
     <div className={cn('grid performance-grid', gridCols[cols], gridGap[gap], className)}>{children}</div>
   );
 };
 
-// Stack with consistent vertical spacing
+// Stack with consistent vertical spacing - Optimized for compact design
 export const Stack = ({ children, className, spacing = 'md' }: { children: ReactNode; className?: string; spacing?: 'sm' | 'md' | 'lg' | 'xl' }) => {
   const spacingClasses = {
-    sm: 'space-y-3',
-    md: 'space-y-4',
-    lg: 'space-y-6',
-    xl: 'space-y-8',
+    sm: 'space-y-2',
+    md: 'space-y-3',
+    lg: 'space-y-4',
+    xl: 'space-y-6',
   };
   return <div className={cn(spacingClasses[spacing], className)}>{children}</div>;
 };
@@ -138,13 +144,13 @@ export const StatusBadge = ({ status, children, className }: { status: 'success'
   );
 };
 
-// Page components for layout
+// Page components for layout - Optimized for compact design
 export const PageSection = ({ children, className }: SpacingProps) => (
-  <div className={cn('space-y-6', className)}>{children}</div>
+  <div className={cn('space-y-4', className)}>{children}</div>
 );
 
 export const PageCard = ({ children, className, hover = true }: SpacingProps & { hover?: boolean }) => (
-  <div className={cn('doax-card p-6', hover ? 'hover:shadow-lg transition-shadow' : '', className)}>{children}</div>
+  <div className={cn('doax-card p-4', hover ? 'transition-colors' : '', className)}>{children}</div>
 );
 
 // Standard page layout replacement

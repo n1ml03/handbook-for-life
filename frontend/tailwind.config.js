@@ -88,20 +88,20 @@ module.exports = {
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
       },
-      // Enhanced responsive font sizes
+      // Enhanced responsive font sizes - Optimized for information density
       fontSize: {
-        'xs': ['var(--text-xs)', { lineHeight: '1.4' }],
-        'sm': ['var(--text-sm)', { lineHeight: '1.5' }],
-        'base': ['var(--text-base)', { lineHeight: '1.6' }],
-        'lg': ['var(--text-lg)', { lineHeight: '1.6' }],
-        'xl': ['var(--text-xl)', { lineHeight: '1.6' }],
-        '2xl': ['var(--text-2xl)', { lineHeight: '1.5' }],
-        '3xl': ['var(--text-3xl)', { lineHeight: '1.4' }],
-        // Responsive typography
-        'responsive-xs': ['clamp(0.7rem, 0.5vw + 0.6rem, 0.75rem)', { lineHeight: '1.4' }],
-        'responsive-sm': ['clamp(0.8rem, 0.6vw + 0.7rem, 0.875rem)', { lineHeight: '1.5' }],
-        'responsive-base': ['clamp(0.9rem, 0.8vw + 0.8rem, 1rem)', { lineHeight: '1.6' }],
-        'responsive-lg': ['clamp(1rem, 1vw + 0.9rem, 1.125rem)', { lineHeight: '1.6' }],
+        'xs': ['var(--text-xs)', { lineHeight: '1.3' }],
+        'sm': ['var(--text-sm)', { lineHeight: '1.4' }],
+        'base': ['var(--text-base)', { lineHeight: '1.5' }],
+        'lg': ['var(--text-lg)', { lineHeight: '1.5' }],
+        'xl': ['var(--text-xl)', { lineHeight: '1.5' }],
+        '2xl': ['var(--text-2xl)', { lineHeight: '1.4' }],
+        '3xl': ['var(--text-3xl)', { lineHeight: '1.3' }],
+        // Responsive typography - Compact
+        'responsive-xs': ['clamp(0.65rem, 0.4vw + 0.55rem, 0.7rem)', { lineHeight: '1.3' }],
+        'responsive-sm': ['clamp(0.75rem, 0.5vw + 0.65rem, 0.8rem)', { lineHeight: '1.4' }],
+        'responsive-base': ['clamp(0.85rem, 0.7vw + 0.75rem, 0.9rem)', { lineHeight: '1.5' }],
+        'responsive-lg': ['clamp(0.95rem, 0.9vw + 0.85rem, 1rem)', { lineHeight: '1.5' }],
         'responsive-xl': ['clamp(1.1rem, 1.2vw + 1rem, 1.25rem)', { lineHeight: '1.6' }],
         'responsive-2xl': ['clamp(1.25rem, 1.5vw + 1.1rem, 1.5rem)', { lineHeight: '1.5' }],
         'responsive-3xl': ['clamp(1.5rem, 2vw + 1.3rem, 1.875rem)', { lineHeight: '1.4' }],

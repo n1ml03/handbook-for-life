@@ -49,11 +49,11 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
 
   const header = (
     <div className="relative">
-      {/* Image Preview - Clickable */}
-      <motion.div 
-        className="aspect-video bg-gradient-to-br from-dark-primary/50 to-dark-secondary/50 relative rounded-lg overflow-hidden mb-3 cursor-pointer"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+      {/* Image Preview - Compact */}
+      <motion.div
+        className="aspect-video bg-card/50 relative rounded-lg overflow-hidden mb-2 cursor-pointer"
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
       >
         {/* Show swimsuit image if available, otherwise show placeholder */}
         {((currentView === 'before' && swimsuitImages.beforeImage) || (currentView === 'after' && swimsuitImages.afterImage)) ? (
@@ -123,13 +123,13 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
     </div>
   );
 
-  // Skills and release info
+  // Skills and release info - Compact
   const skillsInfo = (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Skills Summary */}
       {swimsuit.skills && swimsuit.skills.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center">
               <Sparkles className="w-3 h-3 mr-1" />
               Skills
@@ -142,7 +142,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
             {(swimsuit.skills || []).slice(0, 3).map((skill: any) => (
               <div
                 key={skill.id || skill.skill_id}
-                className={`px-2 py-1 rounded text-xs font-medium border ${
+                className={`px-1.5 py-0.5 rounded text-xs font-medium border ${
                   skill.type === 'power' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                   skill.type === 'technique' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
                   skill.type === 'stamina' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
@@ -153,7 +153,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({ swimsuit }: SwimsuitCard
               </div>
             ))}
             {(swimsuit.skills || []).length > 3 && (
-              <div className="px-2 py-1 rounded text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
+              <div className="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
                 +{(swimsuit.skills || []).length - 3}
               </div>
             )}
@@ -439,6 +439,7 @@ export default function SwimsuitPage() {
           className="mt-8"
         >
 
+<<<<<<< Updated upstream
           {/* Gallery Grid */}
           <div className="grid-responsive-cards mb-12">
             {paginatedSwimsuits.map((swimsuit: any, index: number) => (
@@ -457,6 +458,28 @@ export default function SwimsuitPage() {
                 <SwimsuitCard swimsuit={swimsuit} />
               </motion.div>
             ))}
+=======
+          {/* Gallery Grid - Compact */}
+          <div className="grid-container-full-width">
+            <div className="grid-responsive-cards mb-8">
+              {paginatedSwimsuits.map((swimsuit: any, index: number) => (
+                <motion.div
+                  key={swimsuit.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    delay: 0.03 * index,
+                    duration: 0.3,
+                    ease: "easeOut"
+                  }}
+                  whileHover={{ y: -2 }}
+                  className="relative"
+                >
+                  <SwimsuitCard swimsuit={swimsuit} />
+                </motion.div>
+              ))}
+            </div>
+>>>>>>> Stashed changes
           </div>
         </motion.div>
 

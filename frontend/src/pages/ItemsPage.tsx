@@ -149,9 +149,9 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        {/* Enhanced Item Icon */}
+        {/* Compact Item Icon */}
         <div className="relative">
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-muted/60 to-muted/40 shrink-0 border border-border/20 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted/40 shrink-0 border border-border/30 flex items-center justify-center">
             {item.image ? (
               <img
                 src={item.image}
@@ -171,20 +171,27 @@ const ItemCard = React.memo(function ItemCard({ item }: { item: UnifiedItem & Mu
                 }}
                 style={{ opacity: 0 }}
               />
+<<<<<<< Updated upstream
             ) : null}
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
               {typeIcon}
             </div>
+=======
+            ) : (
+              // Empty state - just show the background without any icon
+              <div className="w-full h-full" />
+            )}
+>>>>>>> Stashed changes
           </div>
         </div>
 
         <div className="flex-1">
           {/* Item Type Badge */}
-          <Badge variant="outline" className={cn('text-xs mb-2 shadow-xs', typeColor)}>
+          <Badge variant="outline" className={cn('text-xs mb-1', typeColor)}>
             {typeIcon}
             <span className="ml-1 capitalize font-medium">{item.type}</span>
           </Badge>
-          
+
           {/* Item ID */}
           <div className="text-xs text-gray-400">
             ID: {item.id}

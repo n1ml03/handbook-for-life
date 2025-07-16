@@ -50,12 +50,12 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
 
   const header = (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-lg flex items-center justify-center border border-accent-cyan/20">
+      <div className="flex items-center gap-2">
+        <div className="w-10 h-10 bg-accent-pink/10 rounded-lg flex items-center justify-center border border-accent-cyan/20">
           {getCategoryIcon(skill.skill_category)}
         </div>
         <div>
-          <div className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg ${getCategoryColor(skill.skill_category)} mb-1`}>
+          <div className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold text-white ${getCategoryColor(skill.skill_category)} mb-1`}>
             {getCategoryIcon(skill.skill_category)}
             <span>{skill.skill_category}</span>
           </div>
@@ -77,10 +77,10 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
         </div>
       )}
 
-      {/* Effect Type */}
+      {/* Effect Type - Compact */}
       {skill.effect_type && (
-        <div className="p-3 bg-gradient-to-r from-accent-purple/10 to-accent-pink/10 rounded-lg border border-accent-purple/20">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="p-2 bg-accent-purple/10 rounded-lg border border-accent-purple/20">
+          <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-3 h-3 text-accent-purple" />
             <span className="text-xs font-medium text-accent-purple">Effect Type</span>
           </div>
