@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Font Preloading for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" as="style">
+    
+    <!-- Load fonts with font-display: swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Critical CSS for font fallbacks -->
+    <style>
+      /* Font fallback system for better loading performance */
+      :root {
+        --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        --font-mono: "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Courier New", monospace;
+      }
+      
+      /* Prevent FOUT (Flash of Unstyled Text) */
+      body {
+        font-family: var(--font-inter);
+        font-display: swap;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      
+      /* Reduce layout shift during font loading */
+      * {
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+
+    <title>Handbook</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html> 

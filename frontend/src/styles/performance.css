@@ -1,0 +1,168 @@
+/* Performance Optimizations */
+
+/* GPU acceleration for common transforms and animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.will-change-auto {
+  will-change: auto;
+}
+
+/* Optimized animations using GPU layers */
+@keyframes optimized-fade-in {
+  from {
+    opacity: 0;
+    transform: translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0);
+  }
+}
+
+@keyframes optimized-slide-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes optimized-scale-in {
+  from {
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Enhanced performance classes */
+.performance-optimized {
+  /* Force GPU acceleration */
+  transform: translateZ(0);
+  /* Optimize repaints */
+  will-change: transform;
+  /* Use hardware acceleration for better performance */
+  backface-visibility: hidden;
+  /* Optimize text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.performance-button {
+  /* Optimize button interactions */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* Smooth transitions without layout shifts */
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.performance-button:hover {
+  transform: scale3d(1.02, 1.02, 1);
+}
+
+.performance-button:active {
+  transform: scale3d(0.98, 0.98, 1);
+}
+
+/* Optimized card animations */
+.performance-card {
+  transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.performance-card:hover {
+  transform: translate3d(0, -4px, 0);
+}
+
+/* Theme transition optimization */
+.theme-transition {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Optimized loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Text rendering optimizations */
+.text-optimized {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "pnum" 1, "tnum" 0, "onum" 0, "lnum" 1, "dlig" 0;
+}
+
+/* Scroll performance */
+.scroll-optimized {
+  -webkit-overflow-scrolling: touch;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+}
+
+/* Image loading optimization */
+.image-optimized {
+  image-rendering: optimizeQuality;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Container query optimizations */
+.container-optimized {
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Layout optimization for frequently updated elements */
+.layout-optimized {
+  contain: layout;
+  will-change: auto;
+}

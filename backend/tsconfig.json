@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "declaration": false,
+    "removeComments": true,
+    "noEmitOnError": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@config/*": ["config/*"],
+      "@middleware/*": ["middleware/*"],
+      "@routes/*": ["routes/*"],
+      "@services/*": ["services/*"],
+      "@models/*": ["models/*"],
+      "@utils/*": ["utils/*"],
+      "@types/*": ["types/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "src/types/bun.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+} 

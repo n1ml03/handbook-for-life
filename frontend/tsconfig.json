@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "downlevelIteration": true,
+    "types": ["node"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "src/types/bun.d.ts",
+    "src/types/minimatch.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    { "path": "./tsconfig.node.json" }
+  ]
+}
