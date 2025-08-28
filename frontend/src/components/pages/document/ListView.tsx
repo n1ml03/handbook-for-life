@@ -1,14 +1,21 @@
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search, FileText, Tags, Calendar, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/services/utils';
-import { Stack, Inline, Grid } from '@/components/ui/spacing';
-import { documentCategoriesData, type Document, type SortDirection } from '@/types';
-import UnifiedFilter, { FilterField, SortOption as UnifiedSortOption } from '@/components/features/UnifiedFilter';
-import { safeNormalizeTags, safeToString } from '@/services/utils';
+import React, { useMemo } from "react";
+import { motion } from "framer-motion";
+import { Search, FileText, Tags, Calendar, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/services/utils";
+import { Stack, Inline, Grid } from "@/components/ui/spacing";
+import {
+  documentCategoriesData,
+  type Document,
+  type SortDirection,
+} from "@/types";
+import UnifiedFilter, {
+  FilterField,
+  SortOption as UnifiedSortOption,
+} from "@/components/features/UnifiedFilter";
+import { safeNormalizeTags, safeToString } from "@/services/utils";
 
 interface ListViewProps {
   documents: Document[];
@@ -35,29 +42,37 @@ export const ListView: React.FC<ListViewProps> = ({
   sortDirection,
   onSortChange,
   onDocumentClick,
-  debouncedSearch
+  debouncedSearch,
 }) => {
   // Extract plain text from HTML content
   const extractPlainText = (content: string) => {
-    const tempDiv = document.createElement('div');
+    const tempDiv = document.createElement("div");
     tempDiv.innerHTML = content;
-    return tempDiv.textContent || tempDiv.innerText || '';
+    return tempDiv.textContent || tempDiv.innerText || "";
   };
 
   // Filter documents
   const filteredDocuments = useMemo(() => {
-    const filtered = documents.filter(doc => {
+    const filtered = documents.filter((doc) => {
       const tags = safeNormalizeTags(doc.tags);
-      
-      const searchTerm = String(filterValues.search || '').toLowerCase();
-      const matchesSearch = !searchTerm ||
+
+      const searchTerm = String(filterValues.search || "").toLowerCase();
+      const matchesSearch =
+        !searchTerm ||
         doc.title.toLowerCase().includes(searchTerm) ||
         doc.content.toLowerCase().includes(searchTerm) ||
-        tags.some(tag => safeToString(tag).toLowerCase().includes(searchTerm));
-      
-      const matchesCategory = !filterValues.category || filterValues.category === 'all' || doc.category === filterValues.category;
-      const authorValue = String(filterValues.author || '');
-      const matchesAuthor = !authorValue || doc.author.toLowerCase().includes(authorValue.toLowerCase());
+        tags.some((tag) =>
+          safeToString(tag).toLowerCase().includes(searchTerm),
+        );
+
+      const matchesCategory =
+        !filterValues.category ||
+        filterValues.category === "all" ||
+        doc.category === filterValues.category;
+      const authorValue = String(filterValues.author || "");
+      const matchesAuthor =
+        !authorValue ||
+        doc.author.toLowerCase().includes(authorValue.toLowerCase());
 
       return matchesSearch && matchesCategory && matchesAuthor;
     });
@@ -65,63 +80,70 @@ export const ListView: React.FC<ListViewProps> = ({
     // Sorting
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
-        case 'date':
-          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        case "date":
+          comparison =
+            new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
           break;
-        case 'title':
+        case "title":
           comparison = a.title.localeCompare(b.title);
           break;
-        case 'category':
+        case "category":
           comparison = a.category.localeCompare(b.category);
           break;
-        case 'author':
+        case "author":
           comparison = a.author.localeCompare(b.author);
           break;
       }
-      
-      return sortDirection === 'desc' ? -comparison : comparison;
+
+      return sortDirection === "desc" ? -comparison : comparison;
     });
 
     return filtered;
   }, [documents, filterValues, sortBy, sortDirection]);
 
   // Filter configuration for UnifiedFilter
-  const filterFields: FilterField[] = useMemo(() => [
-    {
-      key: 'search',
-      label: 'Search',
-      type: 'text',
-      placeholder: 'Search documents, content, or tags...',
-      icon: <Search className="w-3 h-3 mr-1" />,
-    },
-    {
-      key: 'category',
-      label: 'Category',
-      type: 'select',
-      placeholder: 'All Categories',
-      options: [
-        { value: 'all', label: 'All Categories' },
-        ...documentCategoriesData.map(cat => ({ value: cat.id, label: cat.name }))
-      ],
-      icon: <Tags className="w-3 h-3 mr-1" />,
-    },
-    {
-      key: 'author',
-      label: 'Author',
-      type: 'text',
-      placeholder: 'Filter by author...',
-      icon: <User className="w-3 h-3 mr-1" />,
-    }
-  ], []);
+  const filterFields: FilterField[] = useMemo(
+    () => [
+      {
+        key: "search",
+        label: "Search",
+        type: "text",
+        placeholder: "Search documents, content, or tags...",
+        icon: <Search className="w-3 h-3 mr-1" />,
+      },
+      {
+        key: "category",
+        label: "Category",
+        type: "select",
+        placeholder: "All Categories",
+        options: [
+          { value: "all", label: "All Categories" },
+          ...documentCategoriesData.map((cat) => ({
+            value: cat.id,
+            label: cat.name,
+          })),
+        ],
+        icon: <Tags className="w-3 h-3 mr-1" />,
+      },
+      {
+        key: "author",
+        label: "Author",
+        type: "text",
+        placeholder: "Filter by author...",
+        icon: <User className="w-3 h-3 mr-1" />,
+      },
+    ],
+    [],
+  );
 
   // Sort options for UnifiedFilter
   const sortOptions: UnifiedSortOption[] = [
-    { key: 'date', label: 'Date' },
-    { key: 'title', label: 'Title' },
-    { key: 'category', label: 'Category' },
-    { key: 'author', label: 'Author' }
+    { key: "date", label: "Date" },
+    { key: "title", label: "Title" },
+    { key: "category", label: "Category" },
+    { key: "author", label: "Author" },
   ];
 
   return (
@@ -158,12 +180,13 @@ export const ListView: React.FC<ListViewProps> = ({
           >
             <FileText className="w-16 h-16 text-accent-cyan/50" />
           </motion.div>
-          <h3 className="text-2xl font-bold text-gray-300 mb-3">No documents found</h3>
+          <h3 className="text-2xl font-bold text-gray-300 mb-3">
+            No documents found
+          </h3>
           <p className="text-muted-foreground mb-6">
-            {debouncedSearch ?
-              'Try adjusting your search terms or clear the search to see all documents.' :
-              'Try adjusting your filters or clear them to see all documents.'
-            }
+            {debouncedSearch
+              ? "Try adjusting your search terms or clear the search to see all documents."
+              : "Try adjusting your filters or clear them to see all documents."}
           </p>
           <Button
             onClick={onClearFilters}
@@ -181,7 +204,7 @@ export const ListView: React.FC<ListViewProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.15,
-                delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                delay: Math.min(index * 0.02, 0.1), // Limit max delay to 0.1s
               }}
             >
               <Card
@@ -199,35 +222,51 @@ export const ListView: React.FC<ListViewProps> = ({
                           variant="outline"
                           className={cn(
                             "text-xs px-2 py-1",
-                            documentCategoriesData.find(cat => cat.id === document.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
+                            documentCategoriesData.find(
+                              (cat) => cat.id === document.category,
+                            )?.color ||
+                              "text-muted-foreground border-border/30 bg-muted/10",
                           )}
                         >
-                          {documentCategoriesData.find(cat => cat.id === document.category)?.name || document.category}
+                          {documentCategoriesData.find(
+                            (cat) => cat.id === document.category,
+                          )?.name || document.category}
                         </Badge>
                       </Inline>
 
                       <p className="text-muted-foreground leading-relaxed text-base mb-4 line-clamp-2">
                         {extractPlainText(document.content).slice(0, 200)}
-                        {extractPlainText(document.content).length > 200 && '...'}
+                        {extractPlainText(document.content).length > 200 &&
+                          "..."}
                       </p>
 
                       {document.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-4">
                           {document.tags.slice(0, 3).map((tag: string) => (
-                            <Badge key={tag} variant="outline" className="text-xs bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan">
+                            <Badge
+                              key={tag}
+                              variant="outline"
+                              className="text-xs bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan"
+                            >
                               <Tags className="w-3 h-3 mr-1" />
                               {tag}
                             </Badge>
                           ))}
                           {document.tags.length > 3 && (
-                            <Badge variant="outline" className="text-xs bg-muted/10">
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-muted/10"
+                            >
                               +{document.tags.length - 3}
                             </Badge>
                           )}
                         </div>
                       )}
 
-                      <Inline spacing="lg" className="text-sm text-muted-foreground">
+                      <Inline
+                        spacing="lg"
+                        className="text-sm text-muted-foreground"
+                      >
                         <Inline spacing="sm">
                           <User className="w-4 h-4 text-accent-purple" />
                           <span className="font-medium">{document.author}</span>

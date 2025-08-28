@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Home, ArrowLeft, Search, Star, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/services/utils';
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Home, ArrowLeft, Search, Star, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/services/utils";
 
 export default function NotFoundPage() {
   const floatingIcons = [
@@ -22,21 +22,21 @@ export default function NotFoundPage() {
             key={index}
             className="absolute"
             initial={{ opacity: 0, scale: 0 }}
-            animate={{ 
-              opacity: [0, 1, 0], 
+            animate={{
+              opacity: [0, 1, 0],
               scale: [0, 1, 0],
               x: [0, item.x, 0],
-              y: [0, item.y, 0]
+              y: [0, item.y, 0],
             }}
             transition={{
               duration: 3,
               delay: item.delay,
               repeat: Infinity,
-              repeatDelay: 2
+              repeatDelay: 2,
             }}
             style={{
-              left: `${20 + (index * 13) % 60}%`,
-              top: `${20 + (index * 17) % 60}%`
+              left: `${20 + ((index * 13) % 60)}%`,
+              top: `${20 + ((index * 17) % 60)}%`,
             }}
           >
             <item.icon className="w-8 h-8 text-accent-pink" />
@@ -81,8 +81,8 @@ export default function NotFoundPage() {
             Oops! Page Not Found
           </h2>
           <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-            The page you're looking for seems to have gone on vacation. 
-            Don't worry, even our best guides sometimes get lost!
+            The page you're looking for seems to have gone on vacation. Don't
+            worry, even our best guides sometimes get lost!
           </p>
         </motion.div>
 
@@ -98,18 +98,15 @@ export default function NotFoundPage() {
             <span className="text-sm font-medium">What you can do:</span>
           </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/home">
-                <Button 
+                <Button
                   className={cn(
                     "w-full h-auto p-6 bg-gradient-to-r from-accent-pink to-accent-purple",
                     "hover:from-accent-pink/80 hover:to-accent-purple/80",
                     "text-white font-semibold shadow-lg hover:shadow-xl",
-                    "transition-all duration-300"
+                    "transition-all duration-300",
                   )}
                 >
                   <div className="flex flex-col items-center space-y-2">
@@ -120,17 +117,14 @@ export default function NotFoundPage() {
               </Link>
             </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
                 onClick={() => window.history.back()}
                 variant="outline"
                 className={cn(
                   "w-full h-auto p-6 border-accent-cyan text-accent-cyan",
                   "hover:bg-accent-cyan/10 hover:border-accent-cyan/80",
-                  "font-semibold transition-all duration-300"
+                  "font-semibold transition-all duration-300",
                 )}
               >
                 <div className="flex flex-col items-center space-y-2">
@@ -143,13 +137,15 @@ export default function NotFoundPage() {
 
           {/* Popular Links */}
           <div className="pt-6 border-t border-border/50">
-            <p className="text-sm text-muted-foreground mb-4">Popular sections:</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Popular sections:
+            </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[
-                { label: 'Girls', path: '/girls' },
-                { label: 'Swimsuits', path: '/swimsuit' },
-                { label: 'Memories', path: '/memories' },
-                { label: 'Shop', path: '/shop' }
+                { label: "Girls", path: "/girls" },
+                { label: "Swimsuits", path: "/swimsuit" },
+                { label: "Memories", path: "/memories" },
+                { label: "Shop", path: "/shop" },
               ].map((link, index) => (
                 <motion.div
                   key={link.path}
@@ -157,13 +153,13 @@ export default function NotFoundPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 + index * 0.1 }}
                 >
-                  <Link 
+                  <Link
                     to={link.path}
                     className={cn(
                       "inline-flex items-center px-4 py-2 rounded-full",
                       "bg-accent-ocean/10 text-accent-ocean",
                       "hover:bg-accent-ocean/20 hover:scale-105",
-                      "transition-all duration-200 text-sm font-medium"
+                      "transition-all duration-200 text-sm font-medium",
                     )}
                   >
                     {link.label}
@@ -176,4 +172,4 @@ export default function NotFoundPage() {
       </motion.div>
     </div>
   );
-} 
+}

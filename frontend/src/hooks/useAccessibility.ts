@@ -1,4 +1,4 @@
-import { useAccessibilityStore } from '@/stores';
+import { useAccessibilityStore } from "@/stores";
 
 export function useAccessibility() {
   return useAccessibilityStore();

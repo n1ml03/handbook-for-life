@@ -1,6 +1,20 @@
+-- ============================================================================
+-- DOAX Venus Vacation Handbook - Consolidated Migration
+-- ============================================================================
+-- File: consolidated_migration.sql
+-- Description: Complete database migration combining all individual migrations
+-- Version: Consolidated from migrations 001-004
+-- Created: 2024-12-19
+-- ============================================================================
+
+-- Create database if it doesn't exist
 CREATE DATABASE IF NOT EXISTS doaxvv_handbook
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE doaxvv_handbook;
+
+-- ============================================================================
+-- MIGRATION 001: Enhanced Schema with Core Tables
+-- ============================================================================
 
 -- ============================================================================
 -- 1. CORE TABLES (Core Entities)
@@ -125,7 +139,6 @@ CREATE TABLE episodes (
     INDEX idx_game_version (game_version)
 ) ENGINE=InnoDB COMMENT='Data for story episodes, used for the MemoriesPage.';
 
-
 -- ============================================================================
 -- 2. CONTENT & EVENT TABLES
 -- ============================================================================
@@ -247,3 +260,78 @@ UNION ALL
     SELECT 'GACHA' AS type, unique_key, start_date AS activity_date, name_en AS title FROM gachas
 )
 ORDER BY activity_date DESC;
+
+-- ============================================================================
+-- MIGRATION 002: Add PDF Support to Documents Table
+-- ============================================================================
+
+-- Add PDF storage fields to documents table
+ALTER TABLE documents
+ADD COLUMN pdf_data LONGBLOB COMMENT 'Binary PDF file data',
+ADD COLUMN pdf_filename VARCHAR(255) COMMENT 'Original PDF filename',
+ADD COLUMN pdf_mime_type VARCHAR(100) DEFAULT 'application/pdf' COMMENT 'PDF MIME type',
+ADD COLUMN pdf_size INT UNSIGNED COMMENT 'PDF file size in bytes',
+ADD COLUMN has_pdf_file BOOLEAN DEFAULT FALSE COMMENT 'Flag indicating if document has PDF attachment';
+
+-- Create index for faster queries on documents with PDF files
+CREATE INDEX idx_documents_has_pdf ON documents(has_pdf_file);
+CREATE INDEX idx_documents_pdf_filename ON documents(pdf_filename);
+
+-- Update existing documents to set has_pdf_file flag
+UPDATE documents SET has_pdf_file = FALSE WHERE has_pdf_file IS NULL;
+
+-- ============================================================================
+-- MIGRATION 003: Add PDF Metadata Support to Documents Table
+-- ============================================================================
+
+-- Add PDF metadata JSON column to store extracted PDF information
+ALTER TABLE documents
+ADD COLUMN pdf_metadata JSON DEFAULT NULL COMMENT 'PDF metadata including page count, text content info, and extraction details';
+
+-- Update existing PDF documents with empty metadata (will be populated on next upload)
+UPDATE documents
+SET pdf_metadata = JSON_OBJECT(
+    'pages', 0,
+    'hasText', false,
+    'textLength', 0,
+    'version', 'unknown',
+    'info', JSON_OBJECT(),
+    'extractedAt', NOW(),
+    'textPreview', ''
+)
+WHERE has_pdf_file = TRUE AND pdf_metadata IS NULL;
+
+-- ============================================================================
+-- MIGRATION 004: Add Tutorial Document Type
+-- ============================================================================
+
+-- Add 'tutorial' to the document_type enum
+ALTER TABLE documents
+MODIFY COLUMN document_type ENUM('checklist', 'guide', 'tutorial') NOT NULL DEFAULT 'guide'
+COMMENT 'Type of document for categorization and specialized handling';
+
+-- Update index comment to reflect the new document type
+DROP INDEX idx_document_type ON documents;
+CREATE INDEX idx_document_type ON documents (document_type)
+COMMENT 'Index for filtering documents by type (checklist, guide, tutorial)';
+
+-- Update composite index comment as well
+DROP INDEX idx_document_type_updated ON documents;
+CREATE INDEX idx_document_type_updated ON documents (document_type, updated_at DESC)
+COMMENT 'Composite index for type-based queries with sorting (includes tutorial)';
+
+-- Update table comment to reflect tutorial support
+ALTER TABLE documents
+COMMENT 'Manages documents and guide articles. Supports checklist, guide, and tutorial types with PDF attachment support for tutorials';
+
+-- ============================================================================
+-- Migration Complete
+-- ============================================================================
+-- This consolidated migration includes all changes from:
+-- - 001_enhanced_schema_mysql.sql: Core database schema
+-- - 002_add_pdf_support.sql: PDF file storage capabilities
+-- - 003_add_pdf_metadata.sql: PDF metadata extraction support
+-- - 004_add_tutorial_document_type.sql: Tutorial document type support
+--
+-- All migrations have been applied in the correct sequential order
+-- ensuring data integrity and proper foreign key relationships.

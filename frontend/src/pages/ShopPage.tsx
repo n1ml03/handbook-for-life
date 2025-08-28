@@ -1,24 +1,35 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
+import {
+  ChevronLeft,
   ChevronRight,
   ShoppingCart,
   Coins,
   Calendar,
   Clock,
   Tag,
-  Star
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { PageLoadingState, MultiLanguageCard, type MultiLanguageNames } from '@/components/ui';
-import UnifiedFilter from '@/components/features/UnifiedFilter';
-import type { FilterField, SortOption, SortDirection } from '@/components/features/UnifiedFilter';
-import { type ShopListing } from '@/types';
-import { shopApi } from '@/services/api';
-import { safeExtractArrayData, safeExtractPaginationData } from '@/services/utils';
-import { useDebounce } from '@/hooks/useDebounce';
-import React from 'react';
+  Star,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  PageLoadingState,
+  MultiLanguageCard,
+  type MultiLanguageNames,
+} from "@/components/ui";
+import UnifiedFilter from "@/components/features/UnifiedFilter";
+import type {
+  FilterField,
+  SortOption,
+  SortDirection,
+} from "@/components/features/UnifiedFilter";
+import { type ShopListing } from "@/types";
+import { shopApi } from "@/services/api";
+import {
+  safeExtractArrayData,
+  safeExtractPaginationData,
+} from "@/services/utils";
+import { useDebounce } from "@/hooks/useDebounce";
+import React from "react";
 
 // Shop Listing Card Component
 interface ShopListingCardProps {
@@ -26,15 +37,20 @@ interface ShopListingCardProps {
   onClick?: () => void;
 }
 
-const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopListingCardProps) {
-  const costItemName = listing.cost_currency_item?.name_en || listing.cost_currency_item?.name_jp || 'Unknown Currency';
+const ShopListingCard = React.memo(function ShopListingCard({
+  listing,
+}: ShopListingCardProps) {
+  const costItemName =
+    listing.cost_currency_item?.name_en ||
+    listing.cost_currency_item?.name_jp ||
+    "Unknown Currency";
 
   const names: MultiLanguageNames = {
-    name_jp: listing.item?.name_jp || '',
-    name_en: listing.item?.name_en || '',
-    name_cn: listing.item?.name_cn || '',
-    name_tw: listing.item?.name_tw || '',
-    name_kr: listing.item?.name_kr || ''
+    name_jp: listing.item?.name_jp || "",
+    name_en: listing.item?.name_en || "",
+    name_cn: listing.item?.name_cn || "",
+    name_tw: listing.item?.name_tw || "",
+    name_kr: listing.item?.name_kr || "",
   };
 
   const header = (
@@ -48,19 +64,22 @@ const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopLis
             {listing.item?.rarity && (
               <div className="flex items-center gap-1 px-2 py-1 rounded bg-accent-pink/20 border border-accent-pink/30">
                 <Star className="w-3 h-3 text-accent-pink" />
-                <span className="text-xs font-bold text-accent-pink">{listing.item.rarity}</span>
+                <span className="text-xs font-bold text-accent-pink">
+                  {listing.item.rarity}
+                </span>
               </div>
             )}
           </div>
           <div className="flex items-center gap-2">
             <Tag className="w-3 h-3 text-accent-cyan" />
-            <span className="text-xs text-accent-cyan font-medium">{listing.shop_type}</span>
+            <span className="text-xs text-accent-cyan font-medium">
+              {listing.shop_type}
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
-
 
   const itemDetails = (
     <div className="space-y-3">
@@ -83,9 +102,7 @@ const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopLis
           <div className="text-lg font-bold text-accent-gold">
             {listing.cost_amount}
           </div>
-          <div className="text-xs text-gray-400">
-            {costItemName}
-          </div>
+          <div className="text-xs text-gray-400">{costItemName}</div>
         </div>
       </div>
 
@@ -94,7 +111,9 @@ const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopLis
         <div className="flex items-center gap-2 p-2 bg-dark-primary/20 rounded-lg border border-white/10">
           <Tag className="w-3 h-3 text-accent-purple" />
           <span className="text-xs font-medium text-gray-400">Category:</span>
-          <span className="text-xs font-bold text-white">{listing.item.item_category}</span>
+          <span className="text-xs font-bold text-white">
+            {listing.item.item_category}
+          </span>
         </div>
       )}
 
@@ -122,7 +141,6 @@ const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopLis
     </div>
   );
 
-
   return (
     <MultiLanguageCard
       names={names}
@@ -135,14 +153,14 @@ const ShopListingCard = React.memo(function ShopListingCard({ listing }: ShopLis
   );
 });
 
-ShopListingCard.displayName = 'ShopListingCard';
+ShopListingCard.displayName = "ShopListingCard";
 
 export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
   // Filter state management with improved type safety
   const [filterValues, setFilterValues] = useState<{
     search: string;
@@ -151,10 +169,10 @@ export default function ShopPage() {
     item_category: string;
     available_only: boolean;
   }>({
-    search: '',
-    shop_type: '',
-    rarity: '',
-    item_category: '',
+    search: "",
+    shop_type: "",
+    rarity: "",
+    item_category: "",
     available_only: false,
   });
 
@@ -172,16 +190,16 @@ export default function ShopPage() {
   // Fetch shop listings
   const fetchShopListings = useCallback(async () => {
     try {
-      setShopData(prev => ({ ...prev, loading: true, error: null }));
-      
+      setShopData((prev) => ({ ...prev, loading: true, error: null }));
+
       // Build query parameters
       const params: Record<string, any> = {
         page: currentPage,
-        limit: 24
+        limit: 24,
       };
-      
+
       // Only add sortBy if it's a valid field (not 'name' which doesn't exist)
-      if (sortBy && sortBy !== 'name') {
+      if (sortBy && sortBy !== "name") {
         params.sortBy = sortBy;
         params.sortOrder = sortDirection; // Backend expects sortOrder, not sortDirection
       }
@@ -190,127 +208,158 @@ export default function ShopPage() {
       if (debouncedSearch) params.search = debouncedSearch;
       if (filterValues.shop_type) params.shop_type = filterValues.shop_type;
       if (filterValues.rarity) params.rarity = filterValues.rarity;
-      if (filterValues.item_category) params.item_category = filterValues.item_category;
-      if (filterValues.available_only) params.available_only = filterValues.available_only;
+      if (filterValues.item_category)
+        params.item_category = filterValues.item_category;
+      if (filterValues.available_only)
+        params.available_only = filterValues.available_only;
 
       const response = await shopApi.getShopListings(params);
-      
+
       // Safely extract data and pagination
-      const responseData = safeExtractArrayData<ShopListing>(response, 'shop listings API');
-      const paginationData = safeExtractPaginationData(response, responseData.length);
-      
+      const responseData = safeExtractArrayData<ShopListing>(
+        response,
+        "shop listings API",
+      );
+      const paginationData = safeExtractPaginationData(
+        response,
+        responseData.length,
+      );
+
       setShopData({
         listings: responseData,
         loading: false,
         error: null,
-        totalListings: paginationData.total
+        totalListings: paginationData.total,
       });
-
     } catch (err) {
-      console.error('Failed to fetch shop listings:', err);
-      setShopData(prev => ({
+      console.error("Failed to fetch shop listings:", err);
+      setShopData((prev) => ({
         ...prev,
         loading: false,
-        error: 'Failed to fetch shop listings. Please try again.'
+        error: "Failed to fetch shop listings. Please try again.",
       }));
     }
-  }, [currentPage, sortBy, sortDirection, debouncedSearch, filterValues.shop_type, filterValues.rarity, filterValues.item_category, filterValues.available_only]);
+  }, [
+    currentPage,
+    sortBy,
+    sortDirection,
+    debouncedSearch,
+    filterValues.shop_type,
+    filterValues.rarity,
+    filterValues.item_category,
+    filterValues.available_only,
+  ]);
 
   useEffect(() => {
     fetchShopListings();
   }, [fetchShopListings]);
 
   // Filter configuration
-  const filterFields: FilterField[] = useMemo(() => [
-    {
-      key: 'search',
-      label: 'Search Shop Items',
-      type: 'text',
-      placeholder: 'Search by item name...',
-      gridCols: 2
-    },
-    {
-      key: 'shop_type',
-      label: 'Shop Type',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Shop Types' },
-        { value: 'event', label: 'Event Shop' },
-        { value: 'general', label: 'General Shop' },
-        { value: 'vip', label: 'VIP Shop' },
-        { value: 'special', label: 'Special Shop' }
-      ]
-    },
-    {
-      key: 'item_category',
-      label: 'Item Category',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Categories' },
-        { value: 'ACCESSORY', label: 'Accessories' },
-        { value: 'CURRENCY', label: 'Currency' },
-        { value: 'CONSUMABLE', label: 'Consumables' },
-        { value: 'DECORATION', label: 'Decorations' }
-      ]
-    },
-    {
-      key: 'rarity',
-      label: 'Rarity',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Rarities' },
-        { value: 'R', label: 'R (Common)' },
-        { value: 'SR', label: 'SR (Rare)' },
-        { value: 'SSR', label: 'SSR (Super Rare)' }
-      ]
-    },
-    {
-      key: 'available_only',
-      label: 'Available Only',
-      type: 'checkbox'
-    }
-  ], []);
+  const filterFields: FilterField[] = useMemo(
+    () => [
+      {
+        key: "search",
+        label: "Search Shop Items",
+        type: "text",
+        placeholder: "Search by item name...",
+        gridCols: 2,
+      },
+      {
+        key: "shop_type",
+        label: "Shop Type",
+        type: "select",
+        options: [
+          { value: "", label: "All Shop Types" },
+          { value: "event", label: "Event Shop" },
+          { value: "general", label: "General Shop" },
+          { value: "vip", label: "VIP Shop" },
+          { value: "special", label: "Special Shop" },
+        ],
+      },
+      {
+        key: "item_category",
+        label: "Item Category",
+        type: "select",
+        options: [
+          { value: "", label: "All Categories" },
+          { value: "ACCESSORY", label: "Accessories" },
+          { value: "CURRENCY", label: "Currency" },
+          { value: "CONSUMABLE", label: "Consumables" },
+          { value: "DECORATION", label: "Decorations" },
+        ],
+      },
+      {
+        key: "rarity",
+        label: "Rarity",
+        type: "select",
+        options: [
+          { value: "", label: "All Rarities" },
+          { value: "R", label: "R (Common)" },
+          { value: "SR", label: "SR (Rare)" },
+          { value: "SSR", label: "SSR (Super Rare)" },
+        ],
+      },
+      {
+        key: "available_only",
+        label: "Available Only",
+        type: "checkbox",
+      },
+    ],
+    [],
+  );
 
-  const sortOptions: SortOption[] = useMemo(() => [
-    { key: 'id', label: 'ID' },
-    { key: 'cost_amount', label: 'Cost' },
-    { key: 'start_date', label: 'Start Date' },
-    { key: 'end_date', label: 'End Date' }
-  ], []);
+  const sortOptions: SortOption[] = useMemo(
+    () => [
+      { key: "id", label: "ID" },
+      { key: "cost_amount", label: "Cost" },
+      { key: "start_date", label: "Start Date" },
+      { key: "end_date", label: "End Date" },
+    ],
+    [],
+  );
 
   // Pagination
   const itemsPerPage = 24;
   const totalPages = Math.ceil(shopData.totalListings / itemsPerPage);
 
   // Optimized event handlers with useCallback
-  const handleFilterChange = useCallback((key: string, value: string | number | boolean) => {
-    if (key === 'available_only') {
-      setFilterValues(prev => ({ ...prev, [key]: Boolean(value) }));
-    } else {
-      setFilterValues(prev => ({ ...prev, [key]: String(value) }));
-    }
-    setCurrentPage(1);
-  }, []);
+  const handleFilterChange = useCallback(
+    (key: string, value: string | number | boolean) => {
+      if (key === "available_only") {
+        setFilterValues((prev) => ({ ...prev, [key]: Boolean(value) }));
+      } else {
+        setFilterValues((prev) => ({ ...prev, [key]: String(value) }));
+      }
+      setCurrentPage(1);
+    },
+    [],
+  );
 
-  const handleSortChange = useCallback((newSortBy: string, newSortDirection: SortDirection) => {
-    setSortBy(newSortBy);
-    setSortDirection(newSortDirection);
-    setCurrentPage(1);
-  }, []);
+  const handleSortChange = useCallback(
+    (newSortBy: string, newSortDirection: SortDirection) => {
+      setSortBy(newSortBy);
+      setSortDirection(newSortDirection);
+      setCurrentPage(1);
+    },
+    [],
+  );
 
   const clearFilters = useCallback(() => {
     setFilterValues({
-      search: '',
-      shop_type: '',
-      rarity: '',
-      item_category: '',
+      search: "",
+      shop_type: "",
+      rarity: "",
+      item_category: "",
       available_only: false,
     });
     setCurrentPage(1);
   }, []);
 
   return (
-    <PageLoadingState isLoading={shopData.loading} message="Loading shop listings...">
+    <PageLoadingState
+      isLoading={shopData.loading}
+      message="Loading shop listings..."
+    >
       <div className="modern-page">
         <div className="modern-container-xl">
           {/* Header */}
@@ -319,9 +368,7 @@ export default function ShopPage() {
             animate={{ opacity: 1, y: 0 }}
             className="modern-page-header"
           >
-            <h1 className="modern-page-title">
-              Shop Collection
-            </h1>
+            <h1 className="modern-page-title">Shop Collection</h1>
           </motion.div>
 
           <motion.div
@@ -329,7 +376,6 @@ export default function ShopPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-
             {/* Filters */}
             <UnifiedFilter
               showFilters={showFilters}
@@ -364,7 +410,7 @@ export default function ShopPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
                       duration: 0.15,
-                      delay: Math.min(index * 0.02, 0.1) // Limit max delay to 0.1s
+                      delay: Math.min(index * 0.02, 0.1), // Limit max delay to 0.1s
                     }}
                   >
                     <ShopListingCard listing={listing} />
@@ -390,7 +436,7 @@ export default function ShopPage() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                
+
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     const pageNum = i + 1;
@@ -398,11 +444,14 @@ export default function ShopPage() {
                       <Button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        variant={currentPage === pageNum ? "default" : "outline"}
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
                         size="sm"
-                        className={currentPage === pageNum 
-                          ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white" 
-                          : "border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
+                        className={
+                          currentPage === pageNum
+                            ? "bg-gradient-to-r from-accent-cyan to-accent-purple text-white"
+                            : "border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10"
                         }
                       >
                         {pageNum}
@@ -412,7 +461,9 @@ export default function ShopPage() {
                 </div>
 
                 <Button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   variant="outline"
                   size="sm"
@@ -433,20 +484,21 @@ export default function ShopPage() {
                 <div className="w-24 h-24 bg-gradient-to-br from-accent-pink/20 to-accent-purple/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-accent-cyan/20">
                   <ShoppingCart className="w-12 h-12 text-accent-cyan/60" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">No shop listings found</h3>
+                <h3 className="text-2xl font-bold text-foreground mb-3">
+                  No shop listings found
+                </h3>
                 <p className="text-muted-foreground mb-6">
-                  {debouncedSearch ?
-                    'Try adjusting your search terms or clear the search to see all shop listings.' :
-                    'Try adjusting your filters or clear them to see all shop listings.'
-                  }
+                  {debouncedSearch
+                    ? "Try adjusting your search terms or clear the search to see all shop listings."
+                    : "Try adjusting your filters or clear them to see all shop listings."}
                 </p>
-                <Button 
+                <Button
                   onClick={() => {
                     setFilterValues({
-                      search: '',
-                      shop_type: '',
-                      rarity: '',
-                      item_category: '',
+                      search: "",
+                      shop_type: "",
+                      rarity: "",
+                      item_category: "",
                       available_only: false,
                     });
                     setCurrentPage(1);
@@ -462,4 +514,4 @@ export default function ShopPage() {
       </div>
     </PageLoadingState>
   );
-} 
+}

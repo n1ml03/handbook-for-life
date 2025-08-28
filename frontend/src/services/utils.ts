@@ -1,13 +1,13 @@
-import React from 'react'
-import { twMerge } from "tailwind-merge"
-import { Language, MultiLanguageNames } from '@/types'
-import { format } from 'date-fns/format'
-import { parseISO } from 'date-fns/parseISO'
-import { isValid } from 'date-fns/isValid'
-import DOMPurify from 'dompurify'
+import React from "react";
+import { twMerge } from "tailwind-merge";
+import { Language, MultiLanguageNames } from "@/types";
+import { format } from "date-fns/format";
+import { parseISO } from "date-fns/parseISO";
+import { isValid } from "date-fns/isValid";
+import DOMPurify from "dompurify";
 
 export function cn(...inputs: (string | undefined)[]) {
-  return twMerge(...inputs.filter(Boolean))
+  return twMerge(...inputs.filter(Boolean));
 }
 
 // =============================================================================
@@ -17,14 +17,23 @@ export function cn(...inputs: (string | undefined)[]) {
 /**
  * Extract localized name from multi-language entity
  */
-export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'en'): string {
+export function getLocalizedName(
+  entity: MultiLanguageNames,
+  lang: Language = "en",
+): string {
   switch (lang) {
-    case 'jp': return entity.name_jp || entity.name_en || '';
-    case 'en': return entity.name_en || entity.name_jp || '';
-    case 'cn': return entity.name_cn || entity.name_en || '';
-    case 'tw': return entity.name_tw || entity.name_en || '';
-    case 'kr': return entity.name_kr || entity.name_en || '';
-    default: return entity.name_en || entity.name_jp || '';
+    case "jp":
+      return entity.name_jp || entity.name_en || "";
+    case "en":
+      return entity.name_en || entity.name_jp || "";
+    case "cn":
+      return entity.name_cn || entity.name_en || "";
+    case "tw":
+      return entity.name_tw || entity.name_en || "";
+    case "kr":
+      return entity.name_kr || entity.name_en || "";
+    default:
+      return entity.name_en || entity.name_jp || "";
   }
 }
 
@@ -46,9 +55,16 @@ export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'e
  * Uses direct backend API endpoint for optimal performance
  * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getCharacterProfileImageUrl(character: { id?: number; profile_image_data?: string }): string | undefined {
+export function getCharacterProfileImageUrl(character: {
+  id?: number;
+  profile_image_data?: string;
+}): string | undefined {
   // Only return URL if we have both ID and actual image data
-  if (character?.id && character?.profile_image_data && character.profile_image_data.trim().length > 0) {
+  if (
+    character?.id &&
+    character?.profile_image_data &&
+    character.profile_image_data.trim().length > 0
+  ) {
     return `/api/images/character/${character.id}/profile`;
   }
   return undefined;
@@ -71,10 +87,16 @@ export function getSwimsuitImages(swimsuit: {
 
   if (swimsuit?.id) {
     // Only return URL if we have actual image data
-    if (swimsuit.image_before_data && swimsuit.image_before_data.trim().length > 0) {
+    if (
+      swimsuit.image_before_data &&
+      swimsuit.image_before_data.trim().length > 0
+    ) {
       result.beforeImage = `/api/images/swimsuit/${swimsuit.id}/before`;
     }
-    if (swimsuit.image_after_data && swimsuit.image_after_data.trim().length > 0) {
+    if (
+      swimsuit.image_after_data &&
+      swimsuit.image_after_data.trim().length > 0
+    ) {
       result.afterImage = `/api/images/swimsuit/${swimsuit.id}/after`;
     }
   }
@@ -87,7 +109,10 @@ export function getSwimsuitImages(swimsuit: {
  * Uses direct backend API endpoint for optimal performance
  * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getItemIconUrl(item: { id?: number; icon_data?: string }): string | undefined {
+export function getItemIconUrl(item: {
+  id?: number;
+  icon_data?: string;
+}): string | undefined {
   // Only return URL if we have both ID and actual image data
   if (item?.id && item?.icon_data && item.icon_data.trim().length > 0) {
     return `/api/images/item/${item.id}/icon`;
@@ -100,7 +125,10 @@ export function getItemIconUrl(item: { id?: number; icon_data?: string }): strin
  * Uses direct backend API endpoint for optimal performance
  * Returns undefined if no image data exists to ensure empty state instead of loading
  */
-export function getBromideArtUrl(bromide: { id?: number; art_data?: string }): string | undefined {
+export function getBromideArtUrl(bromide: {
+  id?: number;
+  art_data?: string;
+}): string | undefined {
   // Only return URL if we have both ID and actual image data
   if (bromide?.id && bromide?.art_data && bromide.art_data.trim().length > 0) {
     return `/api/images/bromide/${bromide.id}/art`;
@@ -114,16 +142,23 @@ export function getBromideArtUrl(bromide: { id?: number; art_data?: string }): s
  * Returns empty array if no valid screenshot data exists to ensure empty state instead of loading
  */
 export function extractScreenshotUrls(
-  screenshotsData?: Array<{data: string; mimeType: string; filename: string}>,
-  documentId?: number | string
+  screenshotsData?: Array<{ data: string; mimeType: string; filename: string }>,
+  documentId?: number | string,
 ): string[] {
   if (!screenshotsData || !Array.isArray(screenshotsData) || !documentId) {
     return [];
   }
 
   return screenshotsData
-    .filter(screenshot => screenshot?.data && screenshot.data.trim().length > 0 && screenshot?.mimeType)
-    .map((_, index) => `/api/images/document/${documentId}/screenshot/${index}`);
+    .filter(
+      (screenshot) =>
+        screenshot?.data &&
+        screenshot.data.trim().length > 0 &&
+        screenshot?.mimeType,
+    )
+    .map(
+      (_, index) => `/api/images/document/${documentId}/screenshot/${index}`,
+    );
 }
 
 // Note: convertFilesToScreenshotsData has been removed
@@ -132,22 +167,26 @@ export function extractScreenshotUrls(
 /**
  * Validate screenshot data structure
  */
-export function validateScreenshotData(screenshot: any): screenshot is {data: string; mimeType: string; filename: string} {
+export function validateScreenshotData(
+  screenshot: any,
+): screenshot is { data: string; mimeType: string; filename: string } {
   return (
     screenshot &&
-    typeof screenshot === 'object' &&
-    typeof screenshot.data === 'string' &&
-    typeof screenshot.mimeType === 'string' &&
-    typeof screenshot.filename === 'string' &&
+    typeof screenshot === "object" &&
+    typeof screenshot.data === "string" &&
+    typeof screenshot.mimeType === "string" &&
+    typeof screenshot.filename === "string" &&
     screenshot.data.length > 0 &&
-    screenshot.mimeType.startsWith('image/')
+    screenshot.mimeType.startsWith("image/")
   );
 }
 
 /**
  * Clean and validate screenshots_data array
  */
-export function cleanScreenshotsData(screenshotsData?: any[]): Array<{data: string; mimeType: string; filename: string}> {
+export function cleanScreenshotsData(
+  screenshotsData?: any[],
+): Array<{ data: string; mimeType: string; filename: string }> {
   if (!Array.isArray(screenshotsData)) {
     return [];
   }
@@ -159,17 +198,20 @@ export function cleanScreenshotsData(screenshotsData?: any[]): Array<{data: stri
  * Generate optimized image URLs using backend API endpoints
  * This avoids base64 conversion and uses direct binary serving
  */
-export function getOptimizedImageUrls(entity: any, entityType: string): Record<string, string> {
+export function getOptimizedImageUrls(
+  entity: any,
+  entityType: string,
+): Record<string, string> {
   const urls: Record<string, string> = {};
 
   switch (entityType) {
-    case 'character':
+    case "character":
       if (entity.id && entity.profile_image_data) {
         urls.profileImage = `/api/images/character/${entity.id}/profile`;
       }
       break;
 
-    case 'swimsuit':
+    case "swimsuit":
       if (entity.id) {
         if (entity.image_before_data) {
           urls.beforeImage = `/api/images/swimsuit/${entity.id}/before`;
@@ -180,27 +222,30 @@ export function getOptimizedImageUrls(entity: any, entityType: string): Record<s
       }
       break;
 
-    case 'item':
+    case "item":
       if (entity.id && entity.icon_data) {
         urls.iconImage = `/api/images/item/${entity.id}/icon`;
       }
       break;
 
-    case 'bromide':
+    case "bromide":
       if (entity.id && entity.art_data) {
         urls.artImage = `/api/images/bromide/${entity.id}/art`;
       }
       break;
 
-    case 'gacha':
+    case "gacha":
       if (entity.id && entity.banner_image_data) {
         urls.bannerImage = `/api/images/gacha/${entity.id}/banner`;
       }
       break;
 
-    case 'document':
+    case "document":
       if (entity.id && entity.screenshots_data) {
-        const screenshotUrls = extractScreenshotUrls(entity.screenshots_data, entity.id);
+        const screenshotUrls = extractScreenshotUrls(
+          entity.screenshots_data,
+          entity.id,
+        );
         screenshotUrls.forEach((url, index) => {
           urls[`screenshot_${index}`] = url;
         });
@@ -220,39 +265,50 @@ export function getOptimizedImageUrls(entity: any, entityType: string): Record<s
  */
 export function getAutoOptimizedImageUrl(
   entity: any,
-  imageType: 'profile' | 'before' | 'after' | 'icon' | 'art' | 'banner' | 'screenshot',
-  screenshotIndex?: number
+  imageType:
+    | "profile"
+    | "before"
+    | "after"
+    | "icon"
+    | "art"
+    | "banner"
+    | "screenshot",
+  screenshotIndex?: number,
 ): string | undefined {
   if (!entity || !entity.id) {
     return undefined;
   }
 
   // Determine entity type and construct appropriate API URL
-  if (imageType === 'profile' && entity.profile_image_data) {
+  if (imageType === "profile" && entity.profile_image_data) {
     return `/api/images/character/${entity.id}/profile`;
   }
 
-  if (imageType === 'before' && entity.image_before_data) {
+  if (imageType === "before" && entity.image_before_data) {
     return `/api/images/swimsuit/${entity.id}/before`;
   }
 
-  if (imageType === 'after' && entity.image_after_data) {
+  if (imageType === "after" && entity.image_after_data) {
     return `/api/images/swimsuit/${entity.id}/after`;
   }
 
-  if (imageType === 'icon' && entity.icon_data) {
+  if (imageType === "icon" && entity.icon_data) {
     return `/api/images/item/${entity.id}/icon`;
   }
 
-  if (imageType === 'art' && entity.art_data) {
+  if (imageType === "art" && entity.art_data) {
     return `/api/images/bromide/${entity.id}/art`;
   }
 
-  if (imageType === 'banner' && entity.banner_image_data) {
+  if (imageType === "banner" && entity.banner_image_data) {
     return `/api/images/gacha/${entity.id}/banner`;
   }
 
-  if (imageType === 'screenshot' && entity.screenshots_data && screenshotIndex !== undefined) {
+  if (
+    imageType === "screenshot" &&
+    entity.screenshots_data &&
+    screenshotIndex !== undefined
+  ) {
     // Check if it's a document or update log based on available fields
     if (entity.title_en || entity.document_type) {
       return `/api/images/document/${entity.id}/screenshot/${screenshotIndex}`;
@@ -272,12 +328,12 @@ export function getAutoOptimizedImageUrl(
  */
 export function formatDisplayDate(isoDateString?: string): string {
   if (!isoDateString) {
-    return '';
+    return "";
   }
 
   try {
     const date = parseISO(isoDateString);
-    return isValid(date) ? format(date, 'MMM d, yyyy') : isoDateString;
+    return isValid(date) ? format(date, "MMM d, yyyy") : isoDateString;
   } catch {
     return isoDateString;
   }
@@ -288,12 +344,14 @@ export function formatDisplayDate(isoDateString?: string): string {
  */
 export function formatDisplayDateTime(isoDateTimeString?: string): string {
   if (!isoDateTimeString) {
-    return '';
+    return "";
   }
 
   try {
     const date = parseISO(isoDateTimeString);
-    return isValid(date) ? format(date, 'MMM d, yyyy h:mm a') : isoDateTimeString;
+    return isValid(date)
+      ? format(date, "MMM d, yyyy h:mm a")
+      : isoDateTimeString;
   } catch {
     return isoDateTimeString;
   }
@@ -302,64 +360,78 @@ export function formatDisplayDateTime(isoDateTimeString?: string): string {
 /**
  * Extract content HTML from TipTap JSON content
  */
-export function extractContentHtml(contentJson?: Record<string, unknown>): string {
-  if (!contentJson || typeof contentJson !== 'object') {
-    return '';
+export function extractContentHtml(
+  contentJson?: Record<string, unknown>,
+): string {
+  if (!contentJson || typeof contentJson !== "object") {
+    return "";
   }
-  
+
   // This is a simple extraction for TipTap JSON
   // For a full implementation, you might want to use a TipTap HTML serializer
   try {
     const content = contentJson.content as any[];
     if (!Array.isArray(content)) {
-      return '';
+      return "";
     }
-    
+
     return content
-      .map(node => {
-        if (node.type === 'paragraph' && node.content) {
+      .map((node) => {
+        if (node.type === "paragraph" && node.content) {
           return node.content
-            .map((textNode: any) => textNode.text || '')
-            .join('');
+            .map((textNode: any) => textNode.text || "")
+            .join("");
         }
-        return '';
+        return "";
       })
-      .filter(text => text.length > 0)
-      .join('\n\n');
+      .filter((text) => text.length > 0)
+      .join("\n\n");
   } catch {
-    return '';
+    return "";
   }
 }
 
 /**
  * Extract plain text from TipTap JSON content for search/display
  */
-export function extractContentText(contentJson?: Record<string, unknown>): string {
+export function extractContentText(
+  contentJson?: Record<string, unknown>,
+): string {
   const html = extractContentHtml(contentJson);
   // Remove HTML tags if any were preserved
-  return html.replace(/<[^>]*>/g, '').trim();
+  return html.replace(/<[^>]*>/g, "").trim();
 }
 
 /**
  * Check if an event is currently active based on start/end dates
  */
-export function isEventActive(event: { start_date: string; end_date: string }): boolean {
+export function isEventActive(event: {
+  start_date: string;
+  end_date: string;
+}): boolean {
   const now = new Date();
   const startDate = parseISO(event.start_date);
   const endDate = parseISO(event.end_date);
 
-  return isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate;
+  return (
+    isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate
+  );
 }
 
 /**
  * Check if a gacha is currently active based on start/end dates
  */
-export function isGachaActive(gacha: { start_date: string; end_date: string }): boolean {
+export function isGachaActive(gacha: {
+  start_date: string;
+  end_date: string;
+}): boolean {
   const now = new Date();
   const startDate = parseISO(gacha.start_date);
   const endDate = parseISO(gacha.end_date);
 
-  return isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate;
+  return (
+    isValid(startDate) && isValid(endDate) && now >= startDate && now <= endDate
+  );
 }
 
 /**
@@ -371,34 +443,34 @@ export function generateDocumentCategory(document: {
   summary_en?: string;
 }): string {
   // Safely handle potentially undefined title_en
-  const title = document.title_en?.toLowerCase() || '';
-  const summary = document.summary_en?.toLowerCase() || '';
+  const title = document.title_en?.toLowerCase() || "";
+  const summary = document.summary_en?.toLowerCase() || "";
   const content = extractContentText(document.content_json_en).toLowerCase();
   const text = `${title} ${summary} ${content}`;
 
-  if (text.includes('character') || text.includes('girl')) {
-    return 'characters';
+  if (text.includes("character") || text.includes("girl")) {
+    return "characters";
   }
-  if (text.includes('swimsuit') || text.includes('outfit')) {
-    return 'swimsuits';
+  if (text.includes("swimsuit") || text.includes("outfit")) {
+    return "swimsuits";
   }
-  if (text.includes('skill') || text.includes('ability')) {
-    return 'skills';
+  if (text.includes("skill") || text.includes("ability")) {
+    return "skills";
   }
-  if (text.includes('event') || text.includes('festival')) {
-    return 'events';
+  if (text.includes("event") || text.includes("festival")) {
+    return "events";
   }
-  if (text.includes('item') || text.includes('currency')) {
-    return 'items';
+  if (text.includes("item") || text.includes("currency")) {
+    return "items";
   }
-  if (text.includes('guide') || text.includes('tutorial')) {
-    return 'guides';
+  if (text.includes("guide") || text.includes("tutorial")) {
+    return "guides";
   }
-  if (text.includes('update') || text.includes('changelog')) {
-    return 'updates';
+  if (text.includes("update") || text.includes("changelog")) {
+    return "updates";
   }
 
-  return 'general';
+  return "general";
 }
 
 /**
@@ -413,28 +485,28 @@ export function generateDocumentTags(document: {
   const tags = [category];
 
   // Safely handle potentially undefined title_en
-  const title = document.title_en?.toLowerCase() || '';
-  const summary = document.summary_en?.toLowerCase() || '';
+  const title = document.title_en?.toLowerCase() || "";
+  const summary = document.summary_en?.toLowerCase() || "";
   const content = extractContentText(document.content_json_en).toLowerCase();
   const text = `${title} ${summary} ${content}`;
-  
+
   // Add specific tags based on content
   const tagPatterns = [
-    { pattern: /beginner|new|start/i, tag: 'beginner' },
-    { pattern: /advanced|expert|pro/i, tag: 'advanced' },
-    { pattern: /strategy|tactic|tip/i, tag: 'strategy' },
-    { pattern: /stats|number|calculation/i, tag: 'stats' },
-    { pattern: /ssr\+|ssr|sr|r|n/i, tag: 'rarity' },
-    { pattern: /limited|exclusive|special/i, tag: 'limited' },
-    { pattern: /malfunction|awakening/i, tag: 'enhancement' },
+    { pattern: /beginner|new|start/i, tag: "beginner" },
+    { pattern: /advanced|expert|pro/i, tag: "advanced" },
+    { pattern: /strategy|tactic|tip/i, tag: "strategy" },
+    { pattern: /stats|number|calculation/i, tag: "stats" },
+    { pattern: /ssr\+|ssr|sr|r|n/i, tag: "rarity" },
+    { pattern: /limited|exclusive|special/i, tag: "limited" },
+    { pattern: /malfunction|awakening/i, tag: "enhancement" },
   ];
-  
+
   tagPatterns.forEach(({ pattern, tag }) => {
     if (pattern.test(text) && !tags.includes(tag)) {
       tags.push(tag);
     }
   });
-  
+
   return tags;
 }
 
@@ -450,12 +522,18 @@ export function compareEntityIds(id1: any, id2: any): boolean {
  */
 export function getRarityColorClass(rarity: string): string {
   switch (rarity.toUpperCase()) {
-    case 'SSR+': return 'text-rainbow bg-gradient-to-r from-purple-400 via-pink-400 to-red-400';
-    case 'SSR': return 'text-yellow-400';
-    case 'SR': return 'text-purple-400';
-    case 'R': return 'text-blue-400';
-    case 'N': return 'text-gray-400';
-    default: return 'text-gray-400';
+    case "SSR+":
+      return "text-rainbow bg-gradient-to-r from-purple-400 via-pink-400 to-red-400";
+    case "SSR":
+      return "text-yellow-400";
+    case "SR":
+      return "text-purple-400";
+    case "R":
+      return "text-blue-400";
+    case "N":
+      return "text-gray-400";
+    default:
+      return "text-gray-400";
   }
 }
 
@@ -464,11 +542,16 @@ export function getRarityColorClass(rarity: string): string {
  */
 export function getSuitTypeColorClass(suitType: string): string {
   switch (suitType.toUpperCase()) {
-    case 'POW': return 'text-red-400';
-    case 'TEC': return 'text-blue-400';
-    case 'STM': return 'text-green-400';
-    case 'APL': return 'text-pink-400';
-    default: return 'text-gray-400';
+    case "POW":
+      return "text-red-400";
+    case "TEC":
+      return "text-blue-400";
+    case "STM":
+      return "text-green-400";
+    case "APL":
+      return "text-pink-400";
+    default:
+      return "text-gray-400";
   }
 }
 
@@ -494,22 +577,28 @@ export type KeysOfType<T, U> = {
 }[keyof T];
 
 // React utility types
-export type ComponentProps<T> = T extends React.ComponentType<infer P> ? P : never;
+export type ComponentProps<T> =
+  T extends React.ComponentType<infer P> ? P : never;
 
 export type PropsWithChildren<P = unknown> = P & { children?: React.ReactNode };
 
-export type StrictPropsWithChildren<P = unknown> = P & { children: React.ReactNode };
+export type StrictPropsWithChildren<P = unknown> = P & {
+  children: React.ReactNode;
+};
 
 // Event handler types
 export type ClickHandler = (event: React.MouseEvent<HTMLElement>) => void;
-export type ChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => void;
+export type ChangeHandler = (
+  event: React.ChangeEvent<HTMLInputElement>,
+) => void;
 export type SubmitHandler = (event: React.FormEvent<HTMLFormElement>) => void;
 export type KeyboardHandler = (event: React.KeyboardEvent<HTMLElement>) => void;
 
 // API utility types
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type WithOptional<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
 
 export type PickByType<T, U> = Pick<T, KeysOfType<T, U>>;
 
@@ -525,7 +614,7 @@ export type AsyncState<T> = {
   error: string | null;
 };
 
-export type RequestState = 'idle' | 'loading' | 'success' | 'error';
+export type RequestState = "idle" | "loading" | "success" | "error";
 
 // Form utility types
 export type FormField<T> = {
@@ -582,8 +671,8 @@ export type PaginatedData<T> = {
 export type SortableCollection<T> = {
   items: T[];
   sortBy: keyof T;
-  sortDirection: 'asc' | 'desc';
-  sort: (field: keyof T, direction?: 'asc' | 'desc') => void;
+  sortDirection: "asc" | "desc";
+  sort: (field: keyof T, direction?: "asc" | "desc") => void;
 };
 
 export type FilterableCollection<T> = {
@@ -610,14 +699,20 @@ export type SearchState<T> = {
 };
 
 // Theme and styling utility types
-export type ThemeVariant = 'light' | 'dark' | 'auto';
-export type ColorScheme = 'blue' | 'green' | 'purple' | 'pink' | 'orange' | 'gray';
-export type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type ThemeVariant = "light" | "dark" | "auto";
+export type ColorScheme =
+  | "blue"
+  | "green"
+  | "purple"
+  | "pink"
+  | "orange"
+  | "gray";
+export type Size = "xs" | "sm" | "md" | "lg" | "xl";
 export type Spacing = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 16 | 20 | 24;
 
 // Animation utility types
-export type AnimationState = 'idle' | 'enter' | 'exit';
-export type TransitionDuration = 'fast' | 'normal' | 'slow';
+export type AnimationState = "idle" | "enter" | "exit";
+export type TransitionDuration = "fast" | "normal" | "slow";
 
 // Validation utility types
 export type ValidationRule<T> = {
@@ -632,16 +727,20 @@ export type ValidationResult = {
 
 // Type guards
 export const isNonNull = <T>(value: T | null): value is T => value !== null;
-export const isNonUndefined = <T>(value: T | undefined): value is T => value !== undefined;
-export const isNonNullish = <T>(value: T | null | undefined): value is T => 
+export const isNonUndefined = <T>(value: T | undefined): value is T =>
+  value !== undefined;
+export const isNonNullish = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 
-export const isString = (value: any): value is string => typeof value === 'string';
-export const isNumber = (value: any): value is number => typeof value === 'number';
-export const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
+export const isString = (value: any): value is string =>
+  typeof value === "string";
+export const isNumber = (value: any): value is number =>
+  typeof value === "number";
+export const isBoolean = (value: any): value is boolean =>
+  typeof value === "boolean";
 export const isArray = <T>(value: any): value is T[] => Array.isArray(value);
-export const isObject = (value: any): value is object => 
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+export const isObject = (value: any): value is object =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 // Helper function types
 export type Predicate<T> = (value: T) => boolean;
@@ -650,7 +749,7 @@ export type Reducer<T, U> = (accumulator: U, current: T) => U;
 export type Comparator<T> = (a: T, b: T) => number;
 
 // Error handling types
-export type Result<T, E = Error> = 
+export type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
@@ -662,20 +761,28 @@ export type FeatureFlags = Record<string, boolean>;
 
 // Branded types for better type safety
 export type Brand<T, B> = T & { __brand: B };
-export type ID<T = string> = Brand<T, 'ID'>;
-export type Email = Brand<string, 'Email'>;
-export type URL = Brand<string, 'URL'>;
-export type Timestamp = Brand<number, 'Timestamp'>;
+export type ID<T = string> = Brand<T, "ID">;
+export type Email = Brand<string, "Email">;
+export type URL = Brand<string, "URL">;
+export type Timestamp = Brand<number, "Timestamp">;
 
 // Helper to create branded types
-export const createBrand = <T, B>(value: T): Brand<T, B> => value as Brand<T, B>;
+export const createBrand = <T, B>(value: T): Brand<T, B> =>
+  value as Brand<T, B>;
 
 // Constants for type safety
-export const SORT_DIRECTIONS = ['asc', 'desc'] as const;
-export const VIEW_MODES = ['gallery', 'showcase', 'minimal', 'list', 'card', 'table'] as const;
-export const LANGUAGES = ['EN', 'CN', 'TW', 'KO', 'JP'] as const;
-export const SIZES = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
-export const THEME_VARIANTS = ['light', 'dark', 'auto'] as const;
+export const SORT_DIRECTIONS = ["asc", "desc"] as const;
+export const VIEW_MODES = [
+  "gallery",
+  "showcase",
+  "minimal",
+  "list",
+  "card",
+  "table",
+] as const;
+export const LANGUAGES = ["EN", "CN", "TW", "KO", "JP"] as const;
+export const SIZES = ["xs", "sm", "md", "lg", "xl"] as const;
+export const THEME_VARIANTS = ["light", "dark", "auto"] as const;
 
 // =============================================================================
 // API UTILITIES - Consolidated from apiHelpers.ts
@@ -685,16 +792,16 @@ export const THEME_VARIANTS = ['light', 'dark', 'auto'] as const;
  * Safely extracts array data from API responses
  */
 export function safeExtractArrayData<T>(
-  response: any, 
-  apiName: string = 'API'
+  response: any,
+  apiName: string = "API",
 ): T[] {
   const responseData = response?.data || [];
-  
+
   if (!Array.isArray(responseData)) {
     console.warn(`Expected array from ${apiName}, received:`, responseData);
     return [];
   }
-  
+
   return responseData;
 }
 
@@ -702,14 +809,14 @@ export function safeExtractArrayData<T>(
  * Safely extracts single object data from API responses
  */
 export function safeExtractObjectData<T>(
-  response: any, 
-  apiName: string = 'API'
+  response: any,
+  apiName: string = "API",
 ): T | null {
   if (!response?.data) {
     console.warn(`Expected data from ${apiName}, received:`, response);
     return null;
   }
-  
+
   return response.data;
 }
 
@@ -718,20 +825,20 @@ export function safeExtractObjectData<T>(
  */
 export function safeToString(value: any): string {
   if (value === null || value === undefined) {
-    return '';
+    return "";
   }
-  
-  if (typeof value === 'string') {
+
+  if (typeof value === "string") {
     return value;
   }
-  
-  if (typeof value === 'object') {
+
+  if (typeof value === "object") {
     // If it's an object with name property, use that
-    if (value.name && typeof value.name === 'string') {
+    if (value.name && typeof value.name === "string") {
       return value.name;
     }
     // If it's an object with title property, use that
-    if (value.title && typeof value.title === 'string') {
+    if (value.title && typeof value.title === "string") {
       return value.title;
     }
     // If it's an object with id property, use that
@@ -745,7 +852,7 @@ export function safeToString(value: any): string {
       return String(value);
     }
   }
-  
+
   return String(value);
 }
 
@@ -756,12 +863,12 @@ export function safeNormalizeTags(tags: any): string[] {
   if (!tags) {
     return [];
   }
-  
+
   // If it's already an array, normalize each element to string
   if (Array.isArray(tags)) {
-    return tags.map(tag => safeToString(tag)).filter(tag => tag.length > 0);
+    return tags.map((tag) => safeToString(tag)).filter((tag) => tag.length > 0);
   }
-  
+
   // If it's a single value, convert to string and wrap in array
   const stringValue = safeToString(tags);
   return stringValue.length > 0 ? [stringValue] : [];
@@ -785,8 +892,8 @@ export function safeIdCompare(id1: any, id2: any): boolean {
  * Safely extracts pagination data from API responses
  */
 export function safeExtractPaginationData(
-  response: any, 
-  dataLength: number = 0
+  response: any,
+  dataLength: number = 0,
 ): {
   totalPages: number;
   total: number;
@@ -794,7 +901,7 @@ export function safeExtractPaginationData(
   limit?: number;
 } {
   const paginationData = response?.pagination || {};
-  
+
   return {
     totalPages: paginationData.totalPages || 1,
     total: paginationData.total || dataLength,
@@ -810,7 +917,10 @@ export function safeExtractPaginationData(
 /**
  * Calculate total pages from item count and items per page
  */
-export function calculateTotalPages(totalItems: number, itemsPerPage: number): number {
+export function calculateTotalPages(
+  totalItems: number,
+  itemsPerPage: number,
+): number {
   return Math.ceil(totalItems / itemsPerPage);
 }
 
@@ -818,9 +928,9 @@ export function calculateTotalPages(totalItems: number, itemsPerPage: number): n
  * Get paginated slice of items
  */
 export function getPaginatedItems<T>(
-  items: T[], 
-  currentPage: number, 
-  itemsPerPage: number
+  items: T[],
+  currentPage: number,
+  itemsPerPage: number,
 ): T[] {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -833,17 +943,17 @@ export function getPaginatedItems<T>(
 export function createPaginationMetadata(
   totalItems: number,
   currentPage: number,
-  itemsPerPage: number
+  itemsPerPage: number,
 ): PaginatedData<never> {
   const totalPages = calculateTotalPages(totalItems, itemsPerPage);
-  
+
   return {
     items: [],
     totalItems,
     currentPage,
     totalPages,
     hasNextPage: currentPage < totalPages,
-    hasPrevPage: currentPage > 1
+    hasPrevPage: currentPage > 1,
   };
 }
 
@@ -857,12 +967,30 @@ export function createPaginationMetadata(
  */
 export function sanitizeHtml(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'],
-    ALLOWED_ATTR: ['class', 'id'],
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "em",
+      "u",
+      "ol",
+      "ul",
+      "li",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "blockquote",
+      "code",
+      "pre",
+    ],
+    ALLOWED_ATTR: ["class", "id"],
     ALLOW_DATA_ATTR: false,
     SANITIZE_DOM: true,
     RETURN_DOM: false,
-    RETURN_DOM_FRAGMENT: false
+    RETURN_DOM_FRAGMENT: false,
   });
 }
 
@@ -873,18 +1001,55 @@ export function sanitizeHtml(dirty: string): string {
 export function sanitizeRichText(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS: [
-      'p', 'br', 'strong', 'em', 'u', 's', 'sub', 'sup',
-      'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'blockquote', 'code', 'pre', 'a', 'img', 'table', 'thead',
-      'tbody', 'tr', 'td', 'th', 'hr', 'div', 'span'
+      "p",
+      "br",
+      "strong",
+      "em",
+      "u",
+      "s",
+      "sub",
+      "sup",
+      "ol",
+      "ul",
+      "li",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "blockquote",
+      "code",
+      "pre",
+      "a",
+      "img",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "td",
+      "th",
+      "hr",
+      "div",
+      "span",
     ],
     ALLOWED_ATTR: [
-      'href', 'src', 'alt', 'title', 'class', 'id', 'style',
-      'target', 'rel', 'colspan', 'rowspan'
+      "href",
+      "src",
+      "alt",
+      "title",
+      "class",
+      "id",
+      "style",
+      "target",
+      "rel",
+      "colspan",
+      "rowspan",
     ],
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     RETURN_DOM: false,
-    RETURN_DOM_FRAGMENT: false
+    RETURN_DOM_FRAGMENT: false,
   });
 }
 
@@ -897,6 +1062,6 @@ export function sanitizePlainText(dirty: string): string {
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
     RETURN_DOM: false,
-    RETURN_DOM_FRAGMENT: false
+    RETURN_DOM_FRAGMENT: false,
   });
 }

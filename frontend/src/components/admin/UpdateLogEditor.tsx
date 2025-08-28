@@ -1,17 +1,29 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from "react";
 import {
-  Eye, Save, X, FileText, Edit3, Settings,
-  Focus, ChevronDown, ChevronUp, AlertCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { FormGroup, StatusBadge } from '@/components/ui/spacing';
-import { FileUpload } from '@/components/ui/FileUpload';
-import { cn, extractScreenshotUrls, formatDisplayDateTime } from '@/services/utils';
-import { UpdateLog } from '@/types';
-import { validateData, updateLogValidationSchema } from '@/utils/validation';
-import { TagInput } from './TagInput';
-import TiptapEditor from '@/components/features/TiptapEditor';
+  Eye,
+  Save,
+  X,
+  FileText,
+  Edit3,
+  Settings,
+  Focus,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FormGroup, StatusBadge } from "@/components/ui/spacing";
+import { FileUpload } from "@/components/ui/FileUpload";
+import {
+  cn,
+  extractScreenshotUrls,
+  formatDisplayDateTime,
+} from "@/services/utils";
+import { UpdateLog } from "@/types";
+import { validateData, updateLogValidationSchema } from "@/utils/validation";
+import { TagInput } from "./TagInput";
+import TiptapEditor from "@/components/features/TiptapEditor";
 
 interface UpdateLogEditorProps {
   updateLog: UpdateLog;
@@ -34,7 +46,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   onPreviewModeChange,
   isFocusMode = false,
   onFocusModeChange,
-  commonTags
+  commonTags,
 }) => {
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(true);
@@ -50,13 +62,14 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
       if (!editorRef.current || isPreviewMode) return;
 
       const editorRect = editorRef.current.getBoundingClientRect();
-      const isEditorVisible = editorRect.top < window.innerHeight && editorRect.bottom > 0;
+      const isEditorVisible =
+        editorRect.top < window.innerHeight && editorRect.bottom > 0;
 
       setShowFloatingToolbar(isEditorVisible && editorRect.top < 100);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [isPreviewMode]);
 
   // Enhanced validation function using Zod schema
@@ -68,7 +81,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
       content: log.content,
       date: log.date,
       description: log.description,
-      tags: log.tags
+      tags: log.tags,
     };
 
     // Use Zod validation
@@ -91,10 +104,10 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
       const logToSave: UpdateLog = {
         ...updateLog,
         // Ensure required fields are present
-        version: updateLog.version || '',
-        title: updateLog.title || '',
-        content: updateLog.content || '',
-        description: updateLog.description || '',
+        version: updateLog.version || "",
+        title: updateLog.title || "",
+        content: updateLog.content || "",
+        description: updateLog.description || "",
         // Ensure arrays exist
         tags: updateLog.tags || [],
         screenshots_data: updateLog.screenshots_data || [],
@@ -102,13 +115,13 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
         updated_at: new Date().toISOString(),
         created_at: updateLog.created_at || new Date().toISOString(),
         // Set date if not provided
-        date: updateLog.date || new Date().toISOString().split('T')[0],
+        date: updateLog.date || new Date().toISOString().split("T")[0],
         // Ensure metrics exist
         metrics: updateLog.metrics || {
-          performanceImprovement: '0%',
-          userSatisfaction: '0%',
-          bugReports: 0
-        }
+          performanceImprovement: "0%",
+          userSatisfaction: "0%",
+          bugReports: 0,
+        },
       };
 
       // Validate the update log
@@ -120,13 +133,12 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
       // Update local state first
       onUpdateLogChange(logToSave);
-      
+
       // Then save to backend
       await onSave(logToSave);
-      
     } catch (error) {
-      console.error('Error in handleSaveDraft:', error);
-      setValidationErrors(['Failed to save update log. Please try again.']);
+      console.error("Error in handleSaveDraft:", error);
+      setValidationErrors(["Failed to save update log. Please try again."]);
     } finally {
       setIsSaving(false);
     }
@@ -135,8 +147,6 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
   const handleContentChange = (content: string) => {
     onUpdateLogChange({ ...updateLog, content });
   };
-
-
 
   // Enhanced focus mode rendering
   if (isFocusMode) {
@@ -147,9 +157,13 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-accent-pink rounded-full animate-pulse"></div>
             <span className="text-sm text-muted-foreground">Focus Mode</span>
-            <span className="font-medium">{updateLog.title || `Version ${updateLog.version}` || 'Untitled Update'}</span>
+            <span className="font-medium">
+              {updateLog.title ||
+                `Version ${updateLog.version}` ||
+                "Untitled Update"}
+            </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -157,12 +171,12 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               onClick={() => onPreviewModeChange(!isPreviewMode)}
               className={cn(
                 "transition-colors",
-                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan" : ""
+                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan" : "",
               )}
             >
               <Eye className="w-4 h-4" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -175,16 +189,17 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
         {/* Full Editor Area */}
         <div className="flex-1 p-6 overflow-auto">
-          <div className={cn(
-            "max-w-6xl mx-auto",
-            "border-0 rounded-2xl overflow-hidden",
-            "bg-background",
-            "transition-all duration-300 ease-out"
-          )}>
+          <div
+            className={cn(
+              "max-w-6xl mx-auto",
+              "border-0 rounded-2xl overflow-hidden",
+              "bg-background",
+              "transition-all duration-300 ease-out",
+            )}
+          >
             <TiptapEditor
               content={updateLog.content}
               onChange={handleContentChange}
-
               editable={!isPreviewMode}
               placeholder="Describe the update in detail... What's new? What's fixed? What's improved?"
               showToolbar={!isPreviewMode}
@@ -194,7 +209,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               stickyToolbar={true}
               className={cn(
                 "border-0 bg-transparent",
-                "min-h-[calc(100vh-200px)]"
+                "min-h-[calc(100vh-200px)]",
               )}
             />
           </div>
@@ -212,7 +227,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                 className="h-10 px-4"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save'}
+                {isSaving ? "Saving..." : "Save"}
               </Button>
               <Button
                 size="sm"
@@ -235,7 +250,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold">
-            {updateLog.id ? 'Edit Update Log' : 'Create New Update Log'}
+            {updateLog.id ? "Edit Update Log" : "Create New Update Log"}
           </h3>
 
           <div className="flex items-center gap-2">
@@ -244,11 +259,13 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               size="sm"
               onClick={() => onPreviewModeChange(!isPreviewMode)}
               className={cn(
-                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan border-accent-cyan/30" : ""
+                isPreviewMode
+                  ? "bg-accent-cyan/20 text-accent-cyan border-accent-cyan/30"
+                  : "",
               )}
             >
               <Eye className="w-4 h-4 mr-2" />
-              {isPreviewMode ? 'Edit' : 'Preview'}
+              {isPreviewMode ? "Edit" : "Preview"}
             </Button>
 
             <Button
@@ -293,7 +310,8 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                     Update Log Settings
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Configure your update log's version information and publication settings
+                    Configure your update log's version information and
+                    publication settings
                   </p>
                 </div>
               </div>
@@ -307,98 +325,136 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
             {isMetadataExpanded && (
               <div className="px-4 pb-4 border-t border-border/50">
                 <div className="pt-4">
+                  <div className="space-y-4">
+                    {/* Version and Date in responsive grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
+                      <FormGroup
+                        label="Version"
+                        description="Semantic version number (e.g., v2.1.0)"
+                        required
+                      >
+                        <Input
+                          value={updateLog.version}
+                          onChange={(e) =>
+                            onUpdateLogChange({
+                              ...updateLog,
+                              version: e.target.value,
+                            })
+                          }
+                          placeholder="v2.1.0"
+                          className="font-medium h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
+                        />
+                      </FormGroup>
 
-                <div className="space-y-4">
-                  {/* Version and Date in responsive grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-responsive">
+                      <FormGroup
+                        label="Release Date"
+                        description="When this update was released"
+                        required
+                      >
+                        <Input
+                          type="date"
+                          value={
+                            updateLog.date ? updateLog.date.split("T")[0] : ""
+                          }
+                          onChange={(e) =>
+                            onUpdateLogChange({
+                              ...updateLog,
+                              date: e.target.value,
+                            })
+                          }
+                          className="font-medium h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
+                        />
+                      </FormGroup>
+                    </div>
+
+                    {/* Title - Full width for better visibility */}
                     <FormGroup
-                      label="Version"
-                      description="Semantic version number (e.g., v2.1.0)"
+                      label="Update Title"
+                      description="A clear, descriptive title for this update"
                       required
                     >
                       <Input
-                        value={updateLog.version}
-                        onChange={(e) => onUpdateLogChange({ ...updateLog, version: e.target.value })}
-                        placeholder="v2.1.0"
+                        value={updateLog.title}
+                        onChange={(e) =>
+                          onUpdateLogChange({
+                            ...updateLog,
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder="Enter a clear, descriptive title for this update..."
                         className="font-medium h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
                       />
                     </FormGroup>
 
+                    {/* Description */}
                     <FormGroup
-                      label="Release Date"
-                      description="When this update was released"
-                      required
+                      label="Brief Description"
+                      description="A short summary of what this update includes"
                     >
                       <Input
-                        type="date"
-                        value={updateLog.date ? updateLog.date.split('T')[0] : ''}
-                        onChange={(e) => onUpdateLogChange({ ...updateLog, date: e.target.value })}
-                        className="font-medium h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
+                        value={updateLog.description}
+                        onChange={(e) =>
+                          onUpdateLogChange({
+                            ...updateLog,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Brief description of the update..."
+                        className="h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
                       />
                     </FormGroup>
+
+                    {/* Tags */}
+                    <TagInput
+                      tags={updateLog.tags || []}
+                      onTagsChange={(tags) =>
+                        onUpdateLogChange({ ...updateLog, tags })
+                      }
+                      suggestions={commonTags}
+                      label="Tags"
+                      description="Add tags to categorize this update (e.g., ui, bugfix, performance)"
+                      placeholder="Type tags and press Enter or comma to add... (e.g., ui, bugfix, performance)"
+                      quickAddTags={[
+                        "bugfix",
+                        "feature",
+                        "ui",
+                        "ux",
+                        "performance",
+                        "security",
+                      ]}
+                    />
+
+                    {/* Screenshots */}
+                    <FileUpload
+                      files={extractScreenshotUrls(
+                        updateLog.screenshots_data,
+                        updateLog.id,
+                      )}
+                      onFilesChange={(files) => {
+                        // Convert files to screenshots_data format
+                        const screenshotsData = files.map((file, index) => ({
+                          data: file.split(",")[1] || file, // Remove data URL prefix
+                          mimeType: file.startsWith("data:")
+                            ? file.split(";")[0].split(":")[1]
+                            : "image/jpeg",
+                          filename: `screenshot-${index + 1}.jpg`,
+                        }));
+                        onUpdateLogChange({
+                          ...updateLog,
+                          screenshots_data: screenshotsData,
+                        });
+                      }}
+                      maxFiles={10}
+                      accept="image/*"
+                      maxSize={5 * 1024 * 1024} // 5MB
+                      label="Screenshots"
+                      description="Upload screenshot images for this update (PNG, JPG, GIF, WebP)"
+                      disabled={isPreviewMode}
+                      showPreview={true}
+                      enableReorder={false}
+                      screenshotsData={updateLog.screenshots_data}
+                    />
                   </div>
-
-                  {/* Title - Full width for better visibility */}
-                  <FormGroup
-                    label="Update Title"
-                    description="A clear, descriptive title for this update"
-                    required
-                  >
-                    <Input
-                      value={updateLog.title}
-                      onChange={(e) => onUpdateLogChange({ ...updateLog, title: e.target.value })}
-                      placeholder="Enter a clear, descriptive title for this update..."
-                      className="font-medium h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
-                    />
-                  </FormGroup>
-
-                  {/* Description */}
-                  <FormGroup
-                    label="Brief Description"
-                    description="A short summary of what this update includes"
-                  >
-                    <Input
-                      value={updateLog.description}
-                      onChange={(e) => onUpdateLogChange({ ...updateLog, description: e.target.value })}
-                      placeholder="Brief description of the update..."
-                      className="h-10 px-3 border border-border rounded-xl focus:ring-2 focus:ring-accent-pink/20 focus:border-accent-pink focus:outline-none"
-                    />
-                  </FormGroup>
-
-                  {/* Tags */}
-                  <TagInput
-                    tags={updateLog.tags || []}
-                    onTagsChange={(tags) => onUpdateLogChange({ ...updateLog, tags })}
-                    suggestions={commonTags}
-                    label="Tags"
-                    description="Add tags to categorize this update (e.g., ui, bugfix, performance)"
-                    placeholder="Type tags and press Enter or comma to add... (e.g., ui, bugfix, performance)"
-                    quickAddTags={['bugfix', 'feature', 'ui', 'ux', 'performance', 'security']}
-                  />
-
-                  {/* Screenshots */}
-                  <FileUpload
-                    files={extractScreenshotUrls(updateLog.screenshots_data, updateLog.id)}
-                    onFilesChange={(files) => {
-                      // Convert files to screenshots_data format
-                      const screenshotsData = files.map((file, index) => ({
-                        data: file.split(',')[1] || file, // Remove data URL prefix
-                        mimeType: file.startsWith('data:') ? file.split(';')[0].split(':')[1] : 'image/jpeg',
-                        filename: `screenshot-${index + 1}.jpg`
-                      }));
-                      onUpdateLogChange({ ...updateLog, screenshots_data: screenshotsData });
-                    }}
-                    maxFiles={10}
-                    accept="image/*"
-                    maxSize={5 * 1024 * 1024} // 5MB
-                    label="Screenshots"
-                    description="Upload screenshot images for this update (PNG, JPG, GIF, WebP)"
-                    disabled={isPreviewMode}
-                    showPreview={true}
-                    enableReorder={false}
-                    screenshotsData={updateLog.screenshots_data}
-                  />
-                </div>
                 </div>
               </div>
             )}
@@ -406,7 +462,10 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
         </div>
 
         {/* Content Editor Section - Bottom (Full Width) */}
-        <div className="border border-border rounded-xl bg-background mt-6" ref={editorRef}>
+        <div
+          className="border border-border rounded-xl bg-background mt-6"
+          ref={editorRef}
+        >
           <div
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={() => setIsContentExpanded(!isContentExpanded)}
@@ -418,7 +477,8 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                   Update Content
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Describe the update in detail. Include new features, bug fixes, improvements
+                  Describe the update in detail. Include new features, bug
+                  fixes, improvements
                 </p>
               </div>
             </div>
@@ -431,14 +491,15 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
 
           {isContentExpanded && (
             <div className="border-t border-border/50">
-              <div className={cn(
-                "border-0 rounded-none overflow-hidden",
-                "bg-background"
-              )}>
+              <div
+                className={cn(
+                  "border-0 rounded-none overflow-hidden",
+                  "bg-background",
+                )}
+              >
                 <TiptapEditor
                   content={updateLog.content}
                   onChange={handleContentChange}
-
                   editable={!isPreviewMode}
                   placeholder="Describe the update in detail... What's new? What's fixed? What's improved?"
                   showToolbar={!isPreviewMode}
@@ -448,7 +509,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                   stickyToolbar={true}
                   className={cn(
                     "border-0 bg-transparent",
-                    "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]"
+                    "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]",
                   )}
                 />
               </div>
@@ -464,7 +525,9 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-accent-pink rounded-full animate-pulse"></div>
-                  <span className="text-xs font-medium text-muted-foreground">Quick Actions</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Quick Actions
+                  </span>
                 </div>
                 <div className="w-px h-4 bg-border"></div>
                 <div className="flex items-center gap-1">
@@ -484,7 +547,7 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                     className="h-8 px-2 text-xs bg-accent-pink text-white"
                   >
                     <Save className="w-3 h-3 mr-1" />
-                    {isSaving ? 'Saving...' : 'Save'}
+                    {isSaving ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </div>
@@ -504,14 +567,21 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <div className="w-2 h-2 bg-accent-purple rounded-full"></div>
                     <span className="font-medium">
-                      ~{Math.max(1, Math.ceil(updateLog.content.split(' ').length / 200))} min read
+                      ~
+                      {Math.max(
+                        1,
+                        Math.ceil(updateLog.content.split(" ").length / 200),
+                      )}{" "}
+                      min read
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Last edited: just now</span>
                   <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                  <span className="text-muted-foreground font-medium">Manual save required</span>
+                  <span className="text-muted-foreground font-medium">
+                    Manual save required
+                  </span>
                 </div>
               </div>
             </div>
@@ -527,9 +597,16 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               <div className="w-2 h-2 bg-accent-pink rounded-full"></div>
               <span className="text-muted-foreground">
                 {updateLog.id ? (
-                  <>Last saved: <span className="font-medium text-foreground">{formatDisplayDateTime(updateLog.updated_at)}</span></>
+                  <>
+                    Last saved:{" "}
+                    <span className="font-medium text-foreground">
+                      {formatDisplayDateTime(updateLog.updated_at)}
+                    </span>
+                  </>
                 ) : (
-                  <span className="text-yellow-600 font-medium">New update log - not saved yet</span>
+                  <span className="text-yellow-600 font-medium">
+                    New update log - not saved yet
+                  </span>
                 )}
               </span>
             </div>
@@ -569,7 +646,11 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
               className="bg-accent-pink text-white font-semibold focus:ring-2 focus:ring-accent-pink/20 focus:outline-none order-1 sm:order-3"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : (updateLog.id ? 'Save Changes' : 'Create Update Log')}
+              {isSaving
+                ? "Saving..."
+                : updateLog.id
+                  ? "Save Changes"
+                  : "Create Update Log"}
             </Button>
           </div>
         </div>

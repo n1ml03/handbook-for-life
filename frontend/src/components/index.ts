@@ -1,13 +1,19 @@
 // UI Components
-export * from '../components/ui'
+export * from "../components/ui";
 
 // Layout Components
-export * from './layout'
+export * from "./layout";
 
 // Feature Components
-export * from './features/FilterConfigs'
-export { default as UnifiedFilter, type UnifiedFilterProps } from './features/UnifiedFilter'
-export { default as TiptapEditor, type TiptapEditorProps } from './features/TiptapEditor'
+export * from "./features/FilterConfigs";
+export {
+  default as UnifiedFilter,
+  type UnifiedFilterProps,
+} from "./features/UnifiedFilter";
+export {
+  default as TiptapEditor,
+  type TiptapEditorProps,
+} from "./features/TiptapEditor";
 
 // Admin Components
-export * from './admin'
+export * from "./admin";

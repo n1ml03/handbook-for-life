@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useLoadingStore } from '@/stores';
-import { cn } from '@/services/utils';
+import { motion, AnimatePresence } from "framer-motion";
+import { useLoadingStore } from "@/stores";
+import { cn } from "@/services/utils";
 
 interface PulseWaveProps {
   delay?: number;
@@ -12,18 +12,18 @@ function PulseWave({ delay = 0, className }: PulseWaveProps) {
     <motion.div
       className={cn(
         "absolute inset-0 rounded-full border-2 border-accent-cyan/30",
-        className
+        className,
       )}
       initial={{ scale: 0, opacity: 1 }}
-      animate={{ 
+      animate={{
         scale: [0, 1.5, 2],
-        opacity: [1, 0.5, 0]
+        opacity: [1, 0.5, 0],
       }}
       transition={{
         duration: 2,
         delay,
         repeat: Infinity,
-        ease: "easeOut"
+        ease: "easeOut",
       }}
     />
   );
@@ -39,10 +39,10 @@ function LoadingSpinnerEnhanced() {
         transition={{
           duration: 1.5,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
       />
-      
+
       {/* Inner spinning ring */}
       <motion.div
         className="absolute inset-2 rounded-full border-3 border-transparent border-b-accent-purple border-l-accent-pink"
@@ -50,24 +50,24 @@ function LoadingSpinnerEnhanced() {
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
       />
-      
+
       {/* Center pulsing dot */}
       <motion.div
         className="absolute inset-6 rounded-full bg-gradient-to-r from-accent-cyan to-accent-pink"
-        animate={{ 
+        animate={{
           scale: [1, 1.2, 1],
-          opacity: [0.7, 1, 0.7]
+          opacity: [0.7, 1, 0.7],
         }}
         transition={{
           duration: 1.5,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
-      
+
       {/* Pulse waves */}
       <PulseWave delay={0} />
       <PulseWave delay={0.5} />
@@ -77,7 +77,8 @@ function LoadingSpinnerEnhanced() {
 }
 
 export function GlobalLoadingOverlay() {
-  const { isGlobalLoading, loadingMessage, loadingProgress } = useLoadingStore();
+  const { isGlobalLoading, loadingMessage, loadingProgress } =
+    useLoadingStore();
 
   return (
     <AnimatePresence>
@@ -88,12 +89,12 @@ export function GlobalLoadingOverlay() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ backdropFilter: 'blur(8px)' }}
+          style={{ backdropFilter: "blur(8px)" }}
         >
           {/* Background with gradient */}
           <div className="absolute inset-0 bg-background/90" />
           <div className="absolute inset-0 bg-gradient-to-br from-accent-pink/5 via-accent-cyan/5 to-accent-purple/5" />
-          
+
           {/* Loading content */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -105,7 +106,7 @@ export function GlobalLoadingOverlay() {
             <div className="flex flex-col items-center gap-6">
               {/* Enhanced loading spinner */}
               <LoadingSpinnerEnhanced />
-              
+
               {/* Loading text with animation */}
               <div className="text-center space-y-3">
                 <motion.h3
@@ -115,15 +116,17 @@ export function GlobalLoadingOverlay() {
                 >
                   {loadingMessage}
                 </motion.h3>
-                
+
                 {/* Progress bar */}
                 {loadingProgress !== undefined && (
                   <div className="w-full space-y-2">
                     <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
-                      <motion.div 
+                      <motion.div
                         className="h-full bg-gradient-to-r from-accent-cyan via-accent-pink to-accent-purple rounded-full"
                         initial={{ width: 0 }}
-                        animate={{ width: `${Math.max(0, Math.min(100, loadingProgress))}%` }}
+                        animate={{
+                          width: `${Math.max(0, Math.min(100, loadingProgress))}%`,
+                        }}
                         transition={{ duration: 0.3, ease: "easeOut" }}
                       />
                     </div>
@@ -132,22 +135,22 @@ export function GlobalLoadingOverlay() {
                     </p>
                   </div>
                 )}
-                
+
                 {/* Animated dots */}
                 <div className="flex justify-center gap-1">
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
                       className="w-2 h-2 rounded-full bg-accent-cyan/60"
-                      animate={{ 
+                      animate={{
                         scale: [1, 1.3, 1],
-                        opacity: [0.5, 1, 0.5]
+                        opacity: [0.5, 1, 0.5],
                       }}
                       transition={{
                         duration: 1.5,
                         delay: i * 0.2,
                         repeat: Infinity,
-                        ease: "easeInOut"
+                        ease: "easeInOut",
                       }}
                     />
                   ))}
@@ -159,4 +162,4 @@ export function GlobalLoadingOverlay() {
       )}
     </AnimatePresence>
   );
-} 
+}

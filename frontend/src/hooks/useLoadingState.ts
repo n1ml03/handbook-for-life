@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useLoadingStore } from '@/stores';
+import { useCallback } from "react";
+import { useLoadingStore } from "@/stores";
 
 export interface UseLoadingStateReturn {
   showGlobalLoading: (message?: string, progress?: number) => void;
@@ -17,26 +17,26 @@ export function useLoadingState(): UseLoadingStateReturn {
     isGlobalLoading,
     showGlobalLoading: storeShowGlobalLoading,
     hideGlobalLoading: storeHideGlobalLoading,
-    updateLoadingProgress: storeUpdateLoadingProgress
+    updateLoadingProgress: storeUpdateLoadingProgress,
   } = useLoadingStore();
 
-  const showGlobalLoading = useCallback((
-    message: string = 'Đang tải dữ liệu...',
-    progress?: number
-  ) => {
-    storeShowGlobalLoading(message, progress);
-  }, [storeShowGlobalLoading]);
+  const showGlobalLoading = useCallback(
+    (message: string = "Đang tải dữ liệu...", progress?: number) => {
+      storeShowGlobalLoading(message, progress);
+    },
+    [storeShowGlobalLoading],
+  );
 
   const hideGlobalLoading = useCallback(() => {
     storeHideGlobalLoading();
   }, [storeHideGlobalLoading]);
 
-  const updateLoadingProgress = useCallback((
-    progress: number,
-    message?: string
-  ) => {
-    storeUpdateLoadingProgress(progress, message);
-  }, [storeUpdateLoadingProgress]);
+  const updateLoadingProgress = useCallback(
+    (progress: number, message?: string) => {
+      storeUpdateLoadingProgress(progress, message);
+    },
+    [storeUpdateLoadingProgress],
+  );
 
   return {
     showGlobalLoading,
@@ -55,7 +55,7 @@ export function useLoading() {
     loadingMessage,
     loadingProgress,
     setGlobalLoading,
-    clearGlobalLoading
+    clearGlobalLoading,
   } = useLoadingStore();
 
   return {
@@ -72,19 +72,22 @@ export function useLoading() {
  */
 export function withLoading<T extends any[], R>(
   asyncFn: (...args: T) => Promise<R>,
-  loadingMessage: string = 'Đang xử lý...'
+  loadingMessage: string = "Đang xử lý...",
 ) {
   return function useWithLoading() {
     const { showGlobalLoading, hideGlobalLoading } = useLoadingState();
 
-    return useCallback(async (...args: T): Promise<R> => {
-      try {
-        showGlobalLoading(loadingMessage);
-        const result = await asyncFn(...args);
-        return result;
-      } finally {
-        hideGlobalLoading();
-      }
-    }, [showGlobalLoading, hideGlobalLoading]);
+    return useCallback(
+      async (...args: T): Promise<R> => {
+        try {
+          showGlobalLoading(loadingMessage);
+          const result = await asyncFn(...args);
+          return result;
+        } finally {
+          hideGlobalLoading();
+        }
+      },
+      [showGlobalLoading, hideGlobalLoading],
+    );
   };
-} 
+}

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 // ============================================================================
 // CORE ENTITY TYPES - Matching Backend Database Schema
@@ -34,8 +34,8 @@ export interface Character {
 }
 
 // Swimsuit types and enums
-export type SwimsuitRarity = 'N' | 'R' | 'SR' | 'SSR' | 'SSR+';
-export type SuitType = 'POW' | 'TEC' | 'STM' | 'APL' | 'N/A';
+export type SwimsuitRarity = "N" | "R" | "SR" | "SSR" | "SSR+";
+export type SuitType = "POW" | "TEC" | "STM" | "APL" | "N/A";
 
 export interface Swimsuit {
   id: number;
@@ -65,8 +65,15 @@ export interface Swimsuit {
 }
 
 // Skill types and enums
-export type SkillCategory = 'ACTIVE' | 'PASSIVE' | 'POTENTIAL';
-export type SkillSlot = 'ACTIVE' | 'PASSIVE_1' | 'PASSIVE_2' | 'POTENTIAL_1' | 'POTENTIAL_2' | 'POTENTIAL_3' | 'POTENTIAL_4';
+export type SkillCategory = "ACTIVE" | "PASSIVE" | "POTENTIAL";
+export type SkillSlot =
+  | "ACTIVE"
+  | "PASSIVE_1"
+  | "PASSIVE_2"
+  | "POTENTIAL_1"
+  | "POTENTIAL_2"
+  | "POTENTIAL_3"
+  | "POTENTIAL_4";
 
 export interface Skill {
   id: number;
@@ -90,8 +97,15 @@ export interface SwimsuitSkill {
 }
 
 // Item types and enums
-export type ItemCategory = 'CURRENCY' | 'UPGRADE_MATERIAL' | 'CONSUMABLE' | 'GIFT' | 'ACCESSORY' | 'FURNITURE' | 'SPECIAL';
-export type ItemRarity = 'N' | 'R' | 'SR' | 'SSR';
+export type ItemCategory =
+  | "CURRENCY"
+  | "UPGRADE_MATERIAL"
+  | "CONSUMABLE"
+  | "GIFT"
+  | "ACCESSORY"
+  | "FURNITURE"
+  | "SPECIAL";
+export type ItemRarity = "N" | "R" | "SR" | "SSR";
 
 export interface Item {
   id: number;
@@ -112,8 +126,8 @@ export interface Item {
 }
 
 // Bromide types and enums
-export type BromideType = 'DECO' | 'OWNER';
-export type BromideRarity = 'R' | 'SR' | 'SSR';
+export type BromideType = "DECO" | "OWNER";
+export type BromideRarity = "R" | "SR" | "SSR";
 
 export interface Bromide {
   id: number;
@@ -135,7 +149,7 @@ export interface Bromide {
 }
 
 // Episode types and enums
-export type EpisodeType = 'MAIN' | 'CHARACTER' | 'EVENT' | 'SWIMSUIT' | 'ITEM';
+export type EpisodeType = "MAIN" | "CHARACTER" | "EVENT" | "SWIMSUIT" | "ITEM";
 
 export interface Episode {
   id: number;
@@ -153,7 +167,14 @@ export interface Episode {
 }
 
 // Event types and enums
-export type EventType = 'FESTIVAL_RANKING' | 'FESTIVAL_CUMULATIVE' | 'TOWER' | 'ROCK_CLIMBING' | 'BUTT_BATTLE' | 'LOGIN_BONUS' | 'STORY';
+export type EventType =
+  | "FESTIVAL_RANKING"
+  | "FESTIVAL_CUMULATIVE"
+  | "TOWER"
+  | "ROCK_CLIMBING"
+  | "BUTT_BATTLE"
+  | "LOGIN_BONUS"
+  | "STORY";
 
 export interface Event {
   id: number;
@@ -171,8 +192,15 @@ export interface Event {
 }
 
 // Gacha types and enums
-export type GachaSubtype = 'TRENDY' | 'NOSTALGIC' | 'BIRTHDAY' | 'ANNIVERSARY' | 'PAID' | 'FREE' | 'ETC';
-export type PoolItemType = 'SWIMSUIT' | 'BROMIDE' | 'ITEM';
+export type GachaSubtype =
+  | "TRENDY"
+  | "NOSTALGIC"
+  | "BIRTHDAY"
+  | "ANNIVERSARY"
+  | "PAID"
+  | "FREE"
+  | "ETC";
+export type PoolItemType = "SWIMSUIT" | "BROMIDE" | "ITEM";
 
 export interface Gacha {
   id: number;
@@ -199,7 +227,7 @@ export interface GachaPool {
 }
 
 // Shop types and enums
-export type ShopType = 'EVENT' | 'VIP' | 'GENERAL' | 'CURRENCY';
+export type ShopType = "EVENT" | "VIP" | "GENERAL" | "CURRENCY";
 
 export interface ShopListing {
   id: number;
@@ -215,7 +243,7 @@ export interface ShopListing {
 }
 
 // Document types - matching backend ExtendedDocument schema exactly
-export type DocumentType = 'checklist' | 'guide' | 'tutorial';
+export type DocumentType = "checklist" | "guide" | "tutorial";
 
 export interface Document {
   id: number;
@@ -224,7 +252,11 @@ export interface Document {
   summary_en?: string;
   document_type: DocumentType; // Type of document for categorization
   content_json_en?: Record<string, unknown>; // TipTap JSON content
-  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Binary screenshot data
+  screenshots_data?: Array<{
+    data: string;
+    mimeType: string;
+    filename: string;
+  }>; // Binary screenshot data
   // PDF file storage fields
   pdf_data?: string; // Base64 encoded PDF data
   pdf_filename?: string; // Original PDF filename
@@ -242,7 +274,7 @@ export interface Document {
     textPreview?: string; // First 200 chars of extracted text
     // Compression metadata
     compressed?: boolean; // Whether PDF was compressed
-    compressionQuality?: 'low' | 'medium' | 'high'; // Compression quality used
+    compressionQuality?: "low" | "medium" | "high"; // Compression quality used
     originalSize?: number; // Original file size before compression
     compressedSize?: number; // Final file size after compression
     savings?: number; // Bytes saved through compression
@@ -269,7 +301,11 @@ export interface UpdateLog {
   description?: string;
   date: string; // ISO date string
   tags?: string[]; // JSON array from backend
-  screenshots_data?: Array<{data: string; mimeType: string; filename: string}>; // Binary screenshot data
+  screenshots_data?: Array<{
+    data: string;
+    mimeType: string;
+    filename: string;
+  }>; // Binary screenshot data
   metrics?: {
     performanceImprovement: string;
     userSatisfaction: string;
@@ -281,7 +317,7 @@ export interface UpdateLog {
 
 // Timeline view (for HomePage)
 export interface TimelineView {
-  type: 'EVENT' | 'GACHA';
+  type: "EVENT" | "GACHA";
   unique_key: string;
   activity_date: string; // ISO datetime string
   title: string;
@@ -339,7 +375,7 @@ export interface PaginationQuery {
   page?: string;
   limit?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface SearchQuery extends PaginationQuery {
@@ -385,7 +421,10 @@ export interface BromideQueryParams extends PaginationQuery, SearchQuery {
   rarity?: string;
 }
 
-export interface EventQueryParams extends PaginationQuery, SearchQuery, DateRangeQuery {
+export interface EventQueryParams
+  extends PaginationQuery,
+    SearchQuery,
+    DateRangeQuery {
   type?: string;
   is_active?: string;
 }
@@ -404,10 +443,22 @@ export interface DocumentQueryParams extends PaginationQuery, SearchQuery {
 // UTILITY TYPES
 // ============================================================================
 
-export type SortDirection = 'asc' | 'desc';
-export type ViewMode = 'gallery' | 'showcase' | 'minimal' | 'list' | 'card' | 'table';
-export type FilterType = 'text' | 'select' | 'number' | 'checkbox' | 'range' | 'date';
-export type Language = 'jp' | 'en' | 'cn' | 'tw' | 'kr';
+export type SortDirection = "asc" | "desc";
+export type ViewMode =
+  | "gallery"
+  | "showcase"
+  | "minimal"
+  | "list"
+  | "card"
+  | "table";
+export type FilterType =
+  | "text"
+  | "select"
+  | "number"
+  | "checkbox"
+  | "range"
+  | "date";
+export type Language = "jp" | "en" | "cn" | "tw" | "kr";
 
 export interface FilterOption {
   value: string;
@@ -485,7 +536,8 @@ export interface DashboardOverviewData {
   };
 }
 
-export interface DashboardOverviewResponse extends ApiSuccess<DashboardOverviewData> {}
+export interface DashboardOverviewResponse
+  extends ApiSuccess<DashboardOverviewData> {}
 
 export interface DashboardCharacterStatsResponse {
   totalCharacters: number;
@@ -539,14 +591,17 @@ export interface FilterState {
 // ADMIN TYPES
 // ============================================================================
 
-export type DocumentViewMode = 'list' | 'document';
-export type DocumentSection = 'checklist-creation' | 'checking-guide' | 'tutorial';
+export type DocumentViewMode = "list" | "document";
+export type DocumentSection =
+  | "checklist-creation"
+  | "checking-guide"
+  | "tutorial";
 
 export interface DocumentSectionInfo {
   id: DocumentSection;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  status: 'active' | 'inactive' | 'draft';
+  status: "active" | "inactive" | "draft";
 }
 
 export interface DocumentCategory {
@@ -559,21 +614,21 @@ export interface DocumentCategory {
 // Document categories data
 export const documentCategoriesData: DocumentCategory[] = [
   {
-    id: 'checklist',
-    name: 'Checklist',
-    color: 'text-blue-600 border-blue-200 bg-blue-50'
+    id: "checklist",
+    name: "Checklist",
+    color: "text-blue-600 border-blue-200 bg-blue-50",
   },
   {
-    id: 'guide',
-    name: 'Guide',
-    color: 'text-green-600 border-green-200 bg-green-50'
+    id: "guide",
+    name: "Guide",
+    color: "text-green-600 border-green-200 bg-green-50",
   },
 
   {
-    id: 'reference',
-    name: 'Reference',
-    color: 'text-orange-600 border-orange-200 bg-orange-50'
-  }
+    id: "reference",
+    name: "Reference",
+    color: "text-orange-600 border-orange-200 bg-orange-50",
+  },
 ];
 
 export interface AdminSection {
@@ -582,11 +637,11 @@ export interface AdminSection {
   icon: React.ComponentType<{ className?: string }>;
   description: string;
   lastUpdated: string;
-  status: 'active' | 'inactive' | 'draft';
+  status: "active" | "inactive" | "draft";
 }
 
 export interface ExportOptions {
-  format: 'csv' | 'excel' | 'json';
+  format: "csv" | "excel" | "json";
   selectedColumns: string[];
   filters: {
     dateRange?: { start: string; end: string };
@@ -604,14 +659,22 @@ export interface TestingTool {
   description: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
-  category: 'database' | 'api' | 'monitoring' | 'testing' | 'documentation' | 'server' | 'tool' | 'health';
-  status: 'active' | 'inactive' | 'maintenance';
+  category:
+    | "database"
+    | "api"
+    | "monitoring"
+    | "testing"
+    | "documentation"
+    | "server"
+    | "tool"
+    | "health";
+  status: "active" | "inactive" | "maintenance";
   port?: number;
 }
 
 export interface NotificationState {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info" | "loading";
   title: string;
   message: string;
   timestamp: number;
@@ -679,7 +742,9 @@ export interface PaginationProps {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-export function isApiSuccess<T>(response: ApiResponse<T>): response is ApiSuccess<T> {
+export function isApiSuccess<T>(
+  response: ApiResponse<T>,
+): response is ApiSuccess<T> {
   return response.success === true;
 }
 
@@ -687,14 +752,23 @@ export function isApiError(response: ApiResponse): response is ApiError {
   return response.success === false;
 }
 
-export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'en'): string {
+export function getLocalizedName(
+  entity: MultiLanguageNames,
+  lang: Language = "en",
+): string {
   switch (lang) {
-    case 'jp': return entity.name_jp;
-    case 'en': return entity.name_en;
-    case 'cn': return entity.name_cn;
-    case 'tw': return entity.name_tw;
-    case 'kr': return entity.name_kr;
-    default: return entity.name_en;
+    case "jp":
+      return entity.name_jp;
+    case "en":
+      return entity.name_en;
+    case "cn":
+      return entity.name_cn;
+    case "tw":
+      return entity.name_tw;
+    case "kr":
+      return entity.name_kr;
+    default:
+      return entity.name_en;
   }
 }
 
@@ -702,7 +776,7 @@ export function getLocalizedName(entity: MultiLanguageNames, lang: Language = 'e
 // UNIFIED ITEM TYPES
 // ============================================================================
 
-export type ItemType = 'swimsuit' | 'accessory' | 'skill' | 'bromide';
+export type ItemType = "swimsuit" | "accessory" | "skill" | "bromide";
 
 export interface UnifiedItem {
   id: string;
@@ -719,10 +793,13 @@ export interface UnifiedItem {
   character?: string;
   description?: string;
   image?: string;
-  translations?: Record<Language, {
-    name?: string;
-    description?: string;
-  }>;
+  translations?: Record<
+    Language,
+    {
+      name?: string;
+      description?: string;
+    }
+  >;
 }
 
 // ============================================================================
@@ -736,4 +813,4 @@ export interface PaginationMetadata {
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
-} 
+}

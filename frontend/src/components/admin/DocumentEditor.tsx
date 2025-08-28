@@ -1,15 +1,33 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Eye, Save, X, FileText, Edit3, Focus, Settings, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, GraduationCap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { FormGroup, StatusBadge } from '@/components/ui/spacing';
-import { FileUpload } from '@/components/ui/FileUpload';
-import { cn, extractScreenshotUrls, extractContentText, formatDisplayDateTime } from '@/services/utils';
-import { Document, DocumentCategory } from '@/types';
-import { validateData, documentValidationSchema } from '@/utils/validation';
-import { nanoid } from 'nanoid';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import {
+  Eye,
+  Save,
+  X,
+  FileText,
+  Edit3,
+  Focus,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  CheckCircle2,
+  GraduationCap,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FormGroup, StatusBadge } from "@/components/ui/spacing";
+import { FileUpload } from "@/components/ui/FileUpload";
+import {
+  cn,
+  extractScreenshotUrls,
+  extractContentText,
+  formatDisplayDateTime,
+} from "@/services/utils";
+import { Document, DocumentCategory } from "@/types";
+import { validateData, documentValidationSchema } from "@/utils/validation";
+import { nanoid } from "nanoid";
 
-import TiptapEditor from '@/components/features/TiptapEditor';
+import TiptapEditor from "@/components/features/TiptapEditor";
 
 export interface DocumentEditorProps {
   document: Document;
@@ -32,7 +50,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   isPreviewMode,
   onPreviewModeChange,
   isFocusMode = false,
-  onFocusModeChange
+  onFocusModeChange,
 }) => {
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
   const [jsonContent, setJsonContent] = useState<any>(null);
@@ -45,34 +63,38 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // Enhanced validation function using Zod schema
-  const validateDocument = useCallback((doc: Document): string[] => {
-    const documentData = {
-      unique_key: doc.unique_key,
-      title_en: doc.title_en,
-      summary_en: doc.summary_en,
-      content_json_en: doc.content_json_en || jsonContent,
-      screenshots_data: doc.screenshots_data
-    };
+  const validateDocument = useCallback(
+    (doc: Document): string[] => {
+      const documentData = {
+        unique_key: doc.unique_key,
+        title_en: doc.title_en,
+        summary_en: doc.summary_en,
+        content_json_en: doc.content_json_en || jsonContent,
+        screenshots_data: doc.screenshots_data,
+      };
 
-    const validation = validateData(documentValidationSchema, documentData);
-    if (validation.success) {
-      return [];
-    }
-    return validation.fieldErrors || [];
-  }, [jsonContent]);
+      const validation = validateData(documentValidationSchema, documentData);
+      if (validation.success) {
+        return [];
+      }
+      return validation.fieldErrors || [];
+    },
+    [jsonContent],
+  );
 
   useEffect(() => {
     const handleScroll = () => {
       if (!editorRef.current || isPreviewMode) return;
 
       const editorRect = editorRef.current.getBoundingClientRect();
-      const isEditorVisible = editorRect.top < window.innerHeight && editorRect.bottom > 0;
+      const isEditorVisible =
+        editorRect.top < window.innerHeight && editorRect.bottom > 0;
 
       setShowFloatingToolbar(isEditorVisible && editorRect.top < 100);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [isPreviewMode]);
 
   const handleSaveDraft = async () => {
@@ -83,7 +105,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       // Create a properly formatted document for saving
       const documentToSave: Document = {
         ...document,
-        title_en: document.title_en || '',
+        title_en: document.title_en || "",
         unique_key: document.unique_key || `doc-${nanoid()}`,
         content_json_en: jsonContent || document.content_json_en,
         updated_at: new Date().toISOString(),
@@ -102,35 +124,40 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
       // Then save to backend
       await onSave(documentToSave);
-      
-      setHasUnsavedChanges(false);
 
+      setHasUnsavedChanges(false);
     } catch (error) {
-      console.error('Error in handleSaveDraft:', error);
-      setValidationErrors(['Failed to save document. Please try again.']);
+      console.error("Error in handleSaveDraft:", error);
+      setValidationErrors(["Failed to save document. Please try again."]);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleContentChange = useCallback((content: string) => {
-    // Update the document with the HTML content (display only)
-    onDocumentChange({
-      ...document,
-      content: content
-    });
-    setHasUnsavedChanges(true);
-  }, [document, onDocumentChange]);
+  const handleContentChange = useCallback(
+    (content: string) => {
+      // Update the document with the HTML content (display only)
+      onDocumentChange({
+        ...document,
+        content: content,
+      });
+      setHasUnsavedChanges(true);
+    },
+    [document, onDocumentChange],
+  );
 
-  const handleJsonContentChange = useCallback((jsonContent: any) => {
-    setJsonContent(jsonContent);
-    // Update the document with the JSON content
-    onDocumentChange({
-      ...document,
-      content_json_en: jsonContent
-    });
-    setHasUnsavedChanges(true);
-  }, [document, onDocumentChange]);
+  const handleJsonContentChange = useCallback(
+    (jsonContent: any) => {
+      setJsonContent(jsonContent);
+      // Update the document with the JSON content
+      onDocumentChange({
+        ...document,
+        content_json_en: jsonContent,
+      });
+      setHasUnsavedChanges(true);
+    },
+    [document, onDocumentChange],
+  );
 
   // Enhanced focus mode rendering
   if (isFocusMode) {
@@ -141,7 +168,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-accent-cyan rounded-full animate-pulse"></div>
             <span className="text-sm text-muted-foreground">Focus Mode</span>
-            <span className="font-medium">{document.title_en || document.title || 'Untitled Document'}</span>
+            <span className="font-medium">
+              {document.title_en || document.title || "Untitled Document"}
+            </span>
 
             {/* Unsaved changes indicator */}
             {hasUnsavedChanges && (
@@ -150,19 +179,19 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onPreviewModeChange(!isPreviewMode)}
               className={cn(
-                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan" : ""
+                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan" : "",
               )}
             >
               <Eye className="w-4 h-4" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -190,11 +219,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
         {/* Full Editor Area */}
         <div className="flex-1 p-6 overflow-auto">
-          <div className={cn(
-            "max-w-6xl mx-auto",
-            "border-0 rounded-2xl overflow-hidden",
-            "bg-background"
-          )}>
+          <div
+            className={cn(
+              "max-w-6xl mx-auto",
+              "border-0 rounded-2xl overflow-hidden",
+              "bg-background",
+            )}
+          >
             <TiptapEditor
               content={document.content}
               onChange={handleContentChange}
@@ -208,7 +239,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               stickyToolbar={true}
               className={cn(
                 "border-0 bg-transparent",
-                "min-h-[calc(100vh-200px)]"
+                "min-h-[calc(100vh-200px)]",
               )}
             />
           </div>
@@ -226,7 +257,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 className="h-10 px-4"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save'}
+                {isSaving ? "Saving..." : "Save"}
               </Button>
               <Button
                 size="sm"
@@ -250,7 +281,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold">
-            {document.id ? 'Edit Document' : 'Create New Document'}
+            {document.id ? "Edit Document" : "Create New Document"}
           </h3>
 
           <div className="flex items-center gap-2">
@@ -259,11 +290,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               size="sm"
               onClick={() => onPreviewModeChange(!isPreviewMode)}
               className={cn(
-                isPreviewMode ? "bg-accent-cyan/20 text-accent-cyan border-accent-cyan/30" : ""
+                isPreviewMode
+                  ? "bg-accent-cyan/20 text-accent-cyan border-accent-cyan/30"
+                  : "",
               )}
             >
               <Eye className="w-4 h-4 mr-2" />
-              {isPreviewMode ? 'Edit' : 'Preview'}
+              {isPreviewMode ? "Edit" : "Preview"}
             </Button>
 
             <Button
@@ -308,7 +341,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     Document Settings
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Configure your document's basic information and publication settings
+                    Configure your document's basic information and publication
+                    settings
                   </p>
                 </div>
               </div>
@@ -322,85 +356,99 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             {isMetadataExpanded && (
               <div className="px-4 pb-4 border-t border-border/50">
                 <div className="pt-4">
+                  <div className="space-y-6">
+                    {/* Title - Full width for better visibility */}
+                    <FormGroup
+                      label="Document Title"
+                      description="Choose a clear, descriptive title for your document"
+                      required
+                    >
+                      <Input
+                        value={document.title_en || ""}
+                        onChange={(e) => {
+                          onDocumentChange({
+                            ...document,
+                            title_en: e.target.value,
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                        placeholder="Enter a clear, descriptive title for your document..."
+                        className="text-lg font-medium h-12 px-4 border border-border rounded-xl focus:ring-2 focus:ring-accent-cyan/20 focus:border-accent-cyan focus:outline-none"
+                      />
+                    </FormGroup>
 
-                <div className="space-y-6">
-                  {/* Title - Full width for better visibility */}
-                  <FormGroup
-                    label="Document Title"
-                    description="Choose a clear, descriptive title for your document"
-                    required
-                  >
-                    <Input
-                      value={document.title_en || ''}
-                      onChange={(e) => {
-                        onDocumentChange({ ...document, title_en: e.target.value });
-                        setHasUnsavedChanges(true);
-                      }}
-                      placeholder="Enter a clear, descriptive title for your document..."
-                      className="text-lg font-medium h-12 px-4 border border-border rounded-xl focus:ring-2 focus:ring-accent-cyan/20 focus:border-accent-cyan focus:outline-none"
-                    />
-                  </FormGroup>
+                    {/* Unique Key */}
+                    <FormGroup
+                      label="Unique Key"
+                      description="A unique identifier for this document (auto-generated if empty)"
+                      required
+                    >
+                      <Input
+                        value={document.unique_key || ""}
+                        onChange={(e) => {
+                          onDocumentChange({
+                            ...document,
+                            unique_key: e.target.value,
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                        placeholder="e.g., swimsuit-guide-2024"
+                        className="font-mono text-sm"
+                      />
+                    </FormGroup>
 
-                  {/* Unique Key */}
-                  <FormGroup
-                    label="Unique Key"
-                    description="A unique identifier for this document (auto-generated if empty)"
-                    required
-                  >
-                    <Input
-                      value={document.unique_key || ''}
-                      onChange={(e) => {
-                        onDocumentChange({ ...document, unique_key: e.target.value });
-                        setHasUnsavedChanges(true);
-                      }}
-                      placeholder="e.g., swimsuit-guide-2024"
-                      className="font-mono text-sm"
-                    />
-                  </FormGroup>
+                    {/* Document Type - Read-only display */}
+                    <FormGroup
+                      label="Document Type"
+                      description="The type of document being created/edited"
+                    >
+                      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border">
+                        {document.document_type === "checklist" ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-accent-pink" />
+                            <span className="font-medium text-accent-pink">
+                              Checklist
+                            </span>
+                          </>
+                        ) : document.document_type === "tutorial" ? (
+                          <>
+                            <GraduationCap className="w-4 h-4 text-accent-gold" />
+                            <span className="font-medium text-accent-gold">
+                              Tutorial
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4 text-accent-purple" />
+                            <span className="font-medium text-accent-purple">
+                              Guide
+                            </span>
+                          </>
+                        )}
+                        <span className="text-sm text-muted-foreground ml-auto">
+                          (Set when creating document)
+                        </span>
+                      </div>
+                    </FormGroup>
 
-                  {/* Document Type - Read-only display */}
-                  <FormGroup
-                    label="Document Type"
-                    description="The type of document being created/edited"
-                  >
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border">
-                      {document.document_type === 'checklist' ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 text-accent-pink" />
-                          <span className="font-medium text-accent-pink">Checklist</span>
-                        </>
-                      ) : document.document_type === 'tutorial' ? (
-                        <>
-                          <GraduationCap className="w-4 h-4 text-accent-gold" />
-                          <span className="font-medium text-accent-gold">Tutorial</span>
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="w-4 h-4 text-accent-purple" />
-                          <span className="font-medium text-accent-purple">Guide</span>
-                        </>
-                      )}
-                      <span className="text-sm text-muted-foreground ml-auto">
-                        (Set when creating document)
-                      </span>
-                    </div>
-                  </FormGroup>
-
-                  {/* Summary */}
-                  <FormGroup
-                    label="Summary"
-                    description="Brief description of what this document covers"
-                  >
-                    <Input
-                      value={document.summary_en || ''}
-                      onChange={(e) => {
-                        onDocumentChange({ ...document, summary_en: e.target.value });
-                        setHasUnsavedChanges(true);
-                      }}
-                      placeholder="Enter a brief summary..."
-                    />
-                  </FormGroup>
-                </div>
+                    {/* Summary */}
+                    <FormGroup
+                      label="Summary"
+                      description="Brief description of what this document covers"
+                    >
+                      <Input
+                        value={document.summary_en || ""}
+                        onChange={(e) => {
+                          onDocumentChange({
+                            ...document,
+                            summary_en: e.target.value,
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                        placeholder="Enter a brief summary..."
+                      />
+                    </FormGroup>
+                  </div>
                 </div>
               </div>
             )}
@@ -408,17 +456,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
           {/* Screenshots */}
           <FileUpload
-            files={extractScreenshotUrls(document.screenshots_data, document.id)}
-                          onFilesChange={(files) => {
-                // Convert files to screenshots_data format
-                const screenshotsData = files.map((file, index) => ({
-                  data: file.split(',')[1] || file, // Remove data URL prefix
-                  mimeType: file.startsWith('data:') ? file.split(';')[0].split(':')[1] : 'image/jpeg',
-                  filename: `screenshot-${index + 1}.jpg`
-                }));
-                onDocumentChange({ ...document, screenshots_data: screenshotsData });
-                setHasUnsavedChanges(true);
-              }}
+            files={extractScreenshotUrls(
+              document.screenshots_data,
+              document.id,
+            )}
+            onFilesChange={(files) => {
+              // Convert files to screenshots_data format
+              const screenshotsData = files.map((file, index) => ({
+                data: file.split(",")[1] || file, // Remove data URL prefix
+                mimeType: file.startsWith("data:")
+                  ? file.split(";")[0].split(":")[1]
+                  : "image/jpeg",
+                filename: `screenshot-${index + 1}.jpg`,
+              }));
+              onDocumentChange({
+                ...document,
+                screenshots_data: screenshotsData,
+              });
+              setHasUnsavedChanges(true);
+            }}
             maxFiles={10}
             accept="image/*"
             maxSize={5 * 1024 * 1024} // 5MB
@@ -431,7 +487,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           />
 
           {/* PDF Upload for Tutorial Type */}
-          {document.document_type === 'tutorial' && (
+          {document.document_type === "tutorial" && (
             <div className="border border-border rounded-xl bg-background">
               <div className="p-4 border-b border-border/50">
                 <div className="flex items-center gap-3">
@@ -448,18 +504,22 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </div>
               <div className="p-4">
                 <FileUpload
-                  files={document.pdf_data ? [`data:application/pdf;base64,${document.pdf_data}`] : []}
+                  files={
+                    document.pdf_data
+                      ? [`data:application/pdf;base64,${document.pdf_data}`]
+                      : []
+                  }
                   onFilesChange={(files) => {
                     if (files.length > 0) {
                       const file = files[0];
-                      const base64Data = file.split(',')[1] || file;
+                      const base64Data = file.split(",")[1] || file;
                       onDocumentChange({
                         ...document,
                         pdf_data: base64Data,
-                        pdf_filename: `tutorial-${document.unique_key || 'untitled'}.pdf`,
-                        pdf_mime_type: 'application/pdf',
+                        pdf_filename: `tutorial-${document.unique_key || "untitled"}.pdf`,
+                        pdf_mime_type: "application/pdf",
                         has_pdf_file: true,
-                        pdf_size: Math.round(base64Data.length * 0.75) // Approximate size from base64
+                        pdf_size: Math.round(base64Data.length * 0.75), // Approximate size from base64
                       });
                     } else {
                       onDocumentChange({
@@ -468,7 +528,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                         pdf_filename: undefined,
                         pdf_mime_type: undefined,
                         has_pdf_file: false,
-                        pdf_size: undefined
+                        pdf_size: undefined,
                       });
                     }
                     setHasUnsavedChanges(true);
@@ -482,14 +542,18 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                   showPreview={true}
                   enableReorder={false}
                 />
-                
+
                 {/* PDF Info Display */}
                 {document.pdf_filename && (
                   <div className="mt-4 p-3 bg-accent-gold/10 border border-accent-gold/20 rounded-lg">
                     <div className="flex items-center gap-2 text-sm">
                       <FileText className="w-4 h-4 text-accent-gold" />
-                      <span className="font-medium text-accent-gold">PDF Attached:</span>
-                      <span className="text-muted-foreground">{document.pdf_filename}</span>
+                      <span className="font-medium text-accent-gold">
+                        PDF Attached:
+                      </span>
+                      <span className="text-muted-foreground">
+                        {document.pdf_filename}
+                      </span>
                       {document.pdf_size && (
                         <span className="text-xs text-muted-foreground ml-auto">
                           {(document.pdf_size / 1024 / 1024).toFixed(1)} MB
@@ -508,7 +572,10 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           )}
 
           {/* Content Editor Section*/}
-          <div className="border border-border rounded-xl bg-background" ref={editorRef}>
+          <div
+            className="border border-border rounded-xl bg-background"
+            ref={editorRef}
+          >
             <div
               className="flex items-center justify-between p-4 cursor-pointer"
               onClick={() => setIsContentExpanded(!isContentExpanded)}
@@ -520,7 +587,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     Document Content
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Create rich, formatted content using our advanced text editor
+                    Create rich, formatted content using our advanced text
+                    editor
                   </p>
                 </div>
               </div>
@@ -533,12 +601,14 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
             {isContentExpanded && (
               <div className="border-t border-border/50">
-                <div className={cn(
-                  "border-0 rounded-none overflow-hidden",
-                  "bg-background"      
-                  )}>
+                <div
+                  className={cn(
+                    "border-0 rounded-none overflow-hidden",
+                    "bg-background",
+                  )}
+                >
                   <TiptapEditor
-                    content={document.content || ''}
+                    content={document.content || ""}
                     onChange={handleContentChange}
                     onJsonChange={handleJsonContentChange}
                     editable={!isPreviewMode}
@@ -550,7 +620,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     stickyToolbar={true}
                     className={cn(
                       "border-0 bg-transparent",
-                      "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]"
+                      "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]",
                     )}
                   />
                 </div>
@@ -566,7 +636,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-accent-cyan rounded-full animate-pulse"></div>
-                    <span className="text-xs font-medium text-muted-foreground">Quick Actions</span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Quick Actions
+                    </span>
                   </div>
                   <div className="w-px h-4 bg-border"></div>
                   <div className="flex items-center gap-1">
@@ -586,7 +658,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                       className="h-8 px-2 text-xs bg-accent-cyan text-white"
                     >
                       <Save className="w-3 h-3 mr-1" />
-                      {isSaving ? 'Saving...' : 'Save'}
+                      {isSaving ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </div>
@@ -600,20 +672,32 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
                       <span className="font-medium">
-                        {extractContentText(document.content_json_en).length} characters
+                        {extractContentText(document.content_json_en).length}{" "}
+                        characters
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <div className="w-2 h-2 bg-accent-purple rounded-full"></div>
                       <span className="font-medium">
-                        ~{Math.max(1, Math.ceil(extractContentText(document.content_json_en).split(' ').length / 200))} min read
+                        ~
+                        {Math.max(
+                          1,
+                          Math.ceil(
+                            extractContentText(document.content_json_en).split(
+                              " ",
+                            ).length / 200,
+                          ),
+                        )}{" "}
+                        min read
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Last edited: just now</span>
                     <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                    <span className="text-muted-foreground font-medium">Manual save required</span>
+                    <span className="text-muted-foreground font-medium">
+                      Manual save required
+                    </span>
                   </div>
                 </div>
               </div>
@@ -629,9 +713,16 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 <div className="w-2 h-2 bg-accent-cyan rounded-full"></div>
                 <span className="text-muted-foreground">
                   {document.id ? (
-                    <>Last saved: <span className="font-medium text-foreground">{formatDisplayDateTime(document.updated_at)}</span></>
+                    <>
+                      Last saved:{" "}
+                      <span className="font-medium text-foreground">
+                        {formatDisplayDateTime(document.updated_at)}
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-yellow-600 font-medium">New document - not saved yet</span>
+                    <span className="text-yellow-600 font-medium">
+                      New document - not saved yet
+                    </span>
                   )}
                 </span>
               </div>
@@ -671,7 +762,11 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 className="bg-accent-cyan text-white font-semibold focus:ring-2 focus:ring-accent-cyan/20 focus:outline-none order-1 sm:order-3"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Saving...' : (document.id ? 'Save Changes' : 'Create Document')}
+                {isSaving
+                  ? "Saving..."
+                  : document.id
+                    ? "Save Changes"
+                    : "Create Document"}
               </Button>
             </div>
           </div>
@@ -679,4 +774,4 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       </div>
     </div>
   );
-}; 
+};

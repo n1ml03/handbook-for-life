@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   charactersApi,
   swimsuitsApi,
@@ -6,27 +6,26 @@ import {
   itemsApi,
   eventsApi,
   bromidesApi,
-  dashboardApi
-} from '@/services/api';
-
+  dashboardApi,
+} from "@/services/api";
 
 // Query keys for consistent cache management
 export const queryKeys = {
-  characters: ['characters'] as const,
-  character: (id: string) => ['characters', id] as const,
-  swimsuits: ['swimsuits'] as const,
-  swimsuit: (id: string) => ['swimsuits', id] as const,
-  skills: ['skills'] as const,
-  skill: (id: string) => ['skills', id] as const,
-  items: ['items'] as const,
-  item: (id: string) => ['items', id] as const,
-  events: ['events'] as const,
-  event: (id: string) => ['events', id] as const,
-  bromides: ['bromides'] as const,
-  bromide: (id: string) => ['bromides', id] as const,
+  characters: ["characters"] as const,
+  character: (id: string) => ["characters", id] as const,
+  swimsuits: ["swimsuits"] as const,
+  swimsuit: (id: string) => ["swimsuits", id] as const,
+  skills: ["skills"] as const,
+  skill: (id: string) => ["skills", id] as const,
+  items: ["items"] as const,
+  item: (id: string) => ["items", id] as const,
+  events: ["events"] as const,
+  event: (id: string) => ["events", id] as const,
+  bromides: ["bromides"] as const,
+  bromide: (id: string) => ["bromides", id] as const,
   dashboard: {
-    overview: ['dashboard', 'overview'] as const,
-    characterStats: ['dashboard', 'character-stats'] as const,
+    overview: ["dashboard", "overview"] as const,
+    characterStats: ["dashboard", "character-stats"] as const,
   },
 };
 
@@ -35,7 +34,7 @@ export function useCharacters(params?: {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.characters, params],
@@ -60,7 +59,7 @@ export function useSwimsuits(params?: {
   characterId?: number;
   rarity?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.swimsuits, params],
@@ -85,7 +84,7 @@ export function useSkills(params?: {
   search?: string;
   category?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.skills, params],
@@ -110,7 +109,7 @@ export function useItems(params?: {
   category?: string;
   rarity?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.items, params],
@@ -125,7 +124,7 @@ export function useEvents(params?: {
   limit?: number;
   type?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.events, params],
@@ -139,7 +138,7 @@ export function useBromides(params?: {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: [...queryKeys.bromides, params],

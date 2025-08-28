@@ -192,13 +192,36 @@ const documentBase = z.object({
   unique_key: uniqueKeyPattern,
   title_en: z.string().min(1, 'Title is required').max(255, 'Title too long').trim(),
   summary_en: z.string().max(1000, 'Summary too long').optional(),
-  document_type: z.enum(['checklist', 'guide']).default('checklist'),
+  document_type: z.enum(['checklist', 'guide', 'tutorial']).default('checklist'),
   content_json_en: tiptapContentSchema.optional(),
   screenshots_data: z.array(z.object({
     data: z.string().min(1, 'Image data is required'),
     mimeType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']),
     filename: z.string().min(1, 'Filename is required')
   })).max(20, 'Cannot have more than 20 screenshots').optional(),
+  // PDF file fields
+  pdf_data: z.string().optional(), // Base64 encoded PDF data
+  pdf_filename: z.string().max(255, 'PDF filename too long').optional(),
+  pdf_mime_type: z.enum(['application/pdf']).optional(),
+  pdf_size: z.number().int().positive('PDF size must be positive').max(50 * 1024 * 1024, 'PDF too large (max 50MB)').optional(), // 50MB limit
+  has_pdf_file: z.boolean().optional(),
+  pdf_metadata: z.object({
+    pages: z.number().int().positive('Pages must be positive').optional(),
+    hasText: z.boolean().optional(),
+    textLength: z.number().int().nonnegative('Text length must be non-negative').optional(),
+    version: z.string().max(20, 'Version too long').optional(),
+    info: z.record(z.any()).optional(),
+    extractedAt: z.string().datetime('Invalid extraction timestamp').optional(),
+    textPreview: z.string().max(500, 'Text preview too long').optional(),
+    // Compression metadata
+    compressed: z.boolean().optional(),
+    compressionQuality: z.enum(['low', 'medium', 'high']).optional(),
+    originalSize: z.number().int().positive('Original size must be positive').optional(),
+    compressedSize: z.number().int().positive('Compressed size must be positive').optional(),
+    savings: z.number().int().nonnegative('Savings must be non-negative').optional(),
+    savingsPercentage: z.number().nonnegative('Savings percentage must be non-negative').max(100, 'Savings percentage cannot exceed 100%').optional(),
+    compressionRatio: z.number().positive('Compression ratio must be positive').optional(),
+  }).optional(),
 });
 
 export const documentSchemas = {
@@ -206,7 +229,7 @@ export const documentSchemas = {
   update: documentBase.partial(),
   query: paginationSchema.merge(searchSchema).merge(z.object({
     category: z.string().max(50).optional(),
-    document_type: z.enum(['checklist', 'guide']).optional(),
+    document_type: z.enum(['checklist', 'guide', 'tutorial']).optional(),
   })),
 };
 

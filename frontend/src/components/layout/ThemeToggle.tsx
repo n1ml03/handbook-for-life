@@ -1,8 +1,8 @@
-import React, { memo, useCallback } from 'react';
-import { Moon, Sun } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useTheme } from '@/hooks/useTheme';
-import { cn } from '@/services/utils';
+import { memo, useCallback } from "react";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/useTheme";
+import { cn } from "@/services/utils";
 
 export interface ThemeToggleProps {
   className?: string;
@@ -10,10 +10,10 @@ export interface ThemeToggleProps {
 
 const ThemeToggle = memo<ThemeToggleProps>(({ className }) => {
   const { theme, setTheme } = useTheme();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
   const toggleTheme = useCallback(() => {
-    setTheme(isDark ? 'light' : 'dark');
+    setTheme(isDark ? "light" : "dark");
   }, [isDark, setTheme]);
 
   return (
@@ -33,39 +33,39 @@ const ThemeToggle = memo<ThemeToggleProps>(({ className }) => {
         "bg-background/80 backdrop-blur-sm border-border/50",
         // Theme-specific styling
         isDark ? "hover:border-accent-cyan/30" : "hover:border-accent-pink/30",
-        className
+        className,
       )}
-      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
       {/* Icon with smooth transitions */}
       <div className="relative w-5 h-5 flex items-center justify-center">
         {isDark ? (
-          <Moon 
-            className="w-4 h-4 transition-all duration-300 rotate-0 scale-100 text-foreground" 
+          <Moon
+            className="w-4 h-4 transition-all duration-300 rotate-0 scale-100 text-foreground"
             strokeWidth={2}
           />
         ) : (
-          <Sun 
-            className="w-4 h-4 transition-all duration-300 rotate-0 scale-100 text-foreground" 
+          <Sun
+            className="w-4 h-4 transition-all duration-300 rotate-0 scale-100 text-foreground"
             strokeWidth={2}
           />
         )}
       </div>
 
       {/* Subtle hover glow effect */}
-      <div 
+      <div
         className={cn(
           "absolute inset-0 rounded-md opacity-0 transition-opacity duration-200",
           "hover:opacity-100 pointer-events-none",
-          isDark 
-            ? "bg-gradient-to-r from-accent-cyan/5 via-accent-cyan/10 to-accent-cyan/5" 
-            : "bg-gradient-to-r from-accent-pink/5 via-accent-pink/10 to-accent-pink/5"
+          isDark
+            ? "bg-gradient-to-r from-accent-cyan/5 via-accent-cyan/10 to-accent-cyan/5"
+            : "bg-gradient-to-r from-accent-pink/5 via-accent-pink/10 to-accent-pink/5",
         )}
       />
     </Button>
   );
 });
 
-ThemeToggle.displayName = 'ThemeToggle';
+ThemeToggle.displayName = "ThemeToggle";
 
 export default ThemeToggle;

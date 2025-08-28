@@ -1,7 +1,7 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Props {
   children: ReactNode;
@@ -23,7 +23,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorId: ''
+      errorId: "",
     };
   }
 
@@ -32,17 +32,17 @@ export class AdminErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorId: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      errorId: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error details
-    console.error('AdminErrorBoundary caught an error:', error, errorInfo);
-    
+    console.error("AdminErrorBoundary caught an error:", error, errorInfo);
+
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Call optional error handler
@@ -51,7 +51,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
     }
 
     // In production, you might want to log this to an error reporting service
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // Example: logErrorToService(error, errorInfo);
     }
   }
@@ -61,7 +61,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorId: ''
+      errorId: "",
     });
   };
 
@@ -70,7 +70,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   render() {
@@ -88,18 +88,19 @@ export class AdminErrorBoundary extends Component<Props, State> {
               <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-red-500/10">
                 <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
-              
+
               <h2 className="text-2xl font-bold mb-4 text-foreground">
                 Something went wrong in the Admin Panel
               </h2>
-              
+
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                We encountered an unexpected error while loading the admin interface. 
-                This has been logged and our team will investigate the issue.
+                We encountered an unexpected error while loading the admin
+                interface. This has been logged and our team will investigate
+                the issue.
               </p>
 
               {/* Error Details (Development Only) */}
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {process.env.NODE_ENV === "development" && this.state.error && (
                 <details className="mb-6 text-left">
                   <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground mb-2">
                     <Bug className="w-4 h-4 inline mr-2" />
@@ -114,7 +115,9 @@ export class AdminErrorBoundary extends Component<Props, State> {
                     </div>
                     {this.state.errorInfo && (
                       <div className="mt-4 pt-4 border-t border-border">
-                        <div className="text-amber-600 font-semibold mb-2">Component Stack:</div>
+                        <div className="text-amber-600 font-semibold mb-2">
+                          Component Stack:
+                        </div>
                         <div className="text-muted-foreground whitespace-pre-wrap">
                           {this.state.errorInfo.componentStack}
                         </div>
@@ -127,7 +130,10 @@ export class AdminErrorBoundary extends Component<Props, State> {
               {/* Error ID for Support */}
               <div className="mb-6 p-3 bg-muted/30 rounded-lg">
                 <p className="text-xs text-muted-foreground">
-                  Error ID: <code className="font-mono text-foreground">{this.state.errorId}</code>
+                  Error ID:{" "}
+                  <code className="font-mono text-foreground">
+                    {this.state.errorId}
+                  </code>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Please include this ID when reporting the issue.
@@ -143,19 +149,13 @@ export class AdminErrorBoundary extends Component<Props, State> {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Try Again
                 </Button>
-                
-                <Button
-                  onClick={this.handleReload}
-                  variant="outline"
-                >
+
+                <Button onClick={this.handleReload} variant="outline">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Reload Page
                 </Button>
-                
-                <Button
-                  onClick={this.handleGoHome}
-                  variant="outline"
-                >
+
+                <Button onClick={this.handleGoHome} variant="outline">
                   <Home className="w-4 h-4 mr-2" />
                   Go Home
                 </Button>
@@ -164,7 +164,8 @@ export class AdminErrorBoundary extends Component<Props, State> {
               {/* Additional Help */}
               <div className="mt-6 pt-6 border-t border-border">
                 <p className="text-xs text-muted-foreground">
-                  If this problem persists, please try clearing your browser cache or contact support.
+                  If this problem persists, please try clearing your browser
+                  cache or contact support.
                 </p>
               </div>
             </CardContent>
@@ -180,7 +181,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
 // Higher-order component for easier usage
 export function withAdminErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorHandler?: (error: Error, errorInfo: ErrorInfo) => void
+  errorHandler?: (error: Error, errorInfo: ErrorInfo) => void,
 ) {
   return function WrappedComponent(props: P) {
     return (
@@ -194,10 +195,10 @@ export function withAdminErrorBoundary<P extends object>(
 // Hook for error reporting
 export function useErrorHandler() {
   const reportError = (error: Error, context?: string) => {
-    console.error(`Error in ${context || 'Admin Panel'}:`, error);
-    
+    console.error(`Error in ${context || "Admin Panel"}:`, error);
+
     // In production, send to error reporting service
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // Example: errorReportingService.captureException(error, { context });
     }
   };

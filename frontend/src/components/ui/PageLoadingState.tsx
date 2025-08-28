@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
-import { cn } from '@/services/utils';
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
+import { cn } from "@/services/utils";
 
 interface PageLoadingStateProps {
   isLoading: boolean;
@@ -20,10 +20,10 @@ function PageLoadingSpinner() {
         transition={{
           duration: 1.2,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
       />
-      
+
       {/* Inner accent */}
       <motion.div
         className="absolute inset-2 rounded-full border-2 border-transparent border-b-accent-purple"
@@ -31,7 +31,7 @@ function PageLoadingSpinner() {
         transition={{
           duration: 0.8,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
       />
     </div>
@@ -41,9 +41,9 @@ function PageLoadingSpinner() {
 export function PageLoadingState({
   isLoading,
   children,
-  message = 'Đang tải nội dung...',
+  message = "Đang tải nội dung...",
   className,
-  minHeight = 'min-h-[40vh]'
+  minHeight = "min-h-[40vh]",
 }: PageLoadingStateProps) {
   if (isLoading) {
     return (
@@ -51,10 +51,10 @@ export function PageLoadingState({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className={cn(
-          'flex flex-col items-center justify-center space-y-6',
-          'content-container page-transition scroll-optimized',
+          "flex flex-col items-center justify-center space-y-6",
+          "content-container page-transition scroll-optimized",
           minHeight,
-          className
+          className,
         )}
       >
         {/* Enhanced loading card */}
@@ -66,7 +66,7 @@ export function PageLoadingState({
         >
           <div className="flex flex-col items-center space-y-4">
             <PageLoadingSpinner />
-            
+
             <div className="space-y-2">
               <motion.p
                 className="text-lg font-medium text-foreground"
@@ -75,21 +75,21 @@ export function PageLoadingState({
               >
                 {message}
               </motion.p>
-              
+
               <div className="flex justify-center space-x-1">
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
                     className="w-1.5 h-1.5 rounded-full bg-accent-cyan"
-                    animate={{ 
+                    animate={{
                       opacity: [0.3, 1, 0.3],
-                      scale: [1, 1.2, 1]
+                      scale: [1, 1.2, 1],
                     }}
                     transition={{
                       duration: 1.5,
                       delay: i * 0.3,
                       repeat: Infinity,
-                      ease: "easeInOut"
+                      ease: "easeInOut",
                     }}
                   />
                 ))}
@@ -113,14 +113,14 @@ export function PageLoadingState({
 }
 
 // Quick loading states for different content types
-export const QuickPageLoader = ({ 
-  message = 'Đang tải...',
-  className 
-}: { 
-  message?: string; 
-  className?: string; 
+export const QuickPageLoader = ({
+  message = "Đang tải...",
+  className,
+}: {
+  message?: string;
+  className?: string;
 }) => (
-  <div className={cn('flex items-center justify-center py-12', className)}>
+  <div className={cn("flex items-center justify-center py-12", className)}>
     <div className="flex items-center space-x-3">
       <PageLoadingSpinner />
       <span className="text-muted-foreground">{message}</span>
@@ -129,29 +129,37 @@ export const QuickPageLoader = ({
 );
 
 // Inline loading for sections
-export const InlinePageLoader = ({ 
-  message = 'Đang tải...',
-  size = 'sm',
-  className 
-}: { 
-  message?: string; 
-  size?: 'sm' | 'md';
-  className?: string; 
+export const InlinePageLoader = ({
+  message = "Đang tải...",
+  size = "sm",
+  className,
+}: {
+  message?: string;
+  size?: "sm" | "md";
+  className?: string;
 }) => {
-  const spinnerSize = size === 'sm' ? 'w-4 h-4' : 'w-6 h-6';
-  
+  const spinnerSize = size === "sm" ? "w-4 h-4" : "w-6 h-6";
+
   return (
-    <div className={cn('flex items-center space-x-2 text-muted-foreground', className)}>
+    <div
+      className={cn(
+        "flex items-center space-x-2 text-muted-foreground",
+        className,
+      )}
+    >
       <motion.div
-        className={cn('rounded-full border-2 border-muted/30 border-t-accent-cyan', spinnerSize)}
+        className={cn(
+          "rounded-full border-2 border-muted/30 border-t-accent-cyan",
+          spinnerSize,
+        )}
         animate={{ rotate: 360 }}
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
       />
       <span className="text-sm">{message}</span>
     </div>
   );
-}; 
+};

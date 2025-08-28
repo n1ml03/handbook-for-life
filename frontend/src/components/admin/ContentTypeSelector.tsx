@@ -1,15 +1,21 @@
-import React from 'react';
-import { Plus, FileText, GraduationCap, BookOpen, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { 
+import React from "react";
+import {
+  Plus,
+  FileText,
+  GraduationCap,
+  BookOpen,
+  ChevronDown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DocumentType } from '@/types';
+} from "@/components/ui/dropdown-menu";
+import { DocumentType } from "@/types";
 
 export interface ContentTypeSelectorProps {
   onCreateDocument: (type: DocumentType) => void;
@@ -19,24 +25,24 @@ export interface ContentTypeSelectorProps {
 
 const contentOptions = [
   {
-    id: 'document',
-    type: 'guide' as DocumentType,
-    title: 'New Document',
-    description: 'Tạo hướng dẫn chi tiết',
+    id: "document",
+    type: "guide" as DocumentType,
+    title: "New Document",
+    description: "Tạo hướng dẫn chi tiết",
     icon: FileText,
   },
   {
-    id: 'tutorial', 
-    type: 'tutorial' as DocumentType,
-    title: 'New Tutorial',
-    description: 'Hướng dẫn từng bước',
+    id: "tutorial",
+    type: "tutorial" as DocumentType,
+    title: "New Tutorial",
+    description: "Hướng dẫn từng bước",
     icon: GraduationCap,
   },
   {
-    id: 'update-log',
-    type: 'update-log' as const,
-    title: 'New Update Log',
-    description: 'Ghi lại cập nhật hệ thống',
+    id: "update-log",
+    type: "update-log" as const,
+    title: "New Update Log",
+    description: "Ghi lại cập nhật hệ thống",
     icon: BookOpen,
   },
 ];
@@ -44,10 +50,10 @@ const contentOptions = [
 export const ContentTypeSelector: React.FC<ContentTypeSelectorProps> = ({
   onCreateDocument,
   onCreateUpdateLog,
-  className
+  className,
 }) => {
-  const handleCreateContent = (option: typeof contentOptions[0]) => {
-    if (option.type === 'update-log') {
+  const handleCreateContent = (option: (typeof contentOptions)[0]) => {
+    if (option.type === "update-log") {
       onCreateUpdateLog();
     } else {
       onCreateDocument(option.type);
@@ -67,16 +73,16 @@ export const ContentTypeSelector: React.FC<ContentTypeSelectorProps> = ({
             <ChevronDown className="w-4 h-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
-        
+
         <DropdownMenuContent className="w-64" align="center" sideOffset={5}>
           <DropdownMenuLabel className="text-base font-semibold">
             Choose Content Type
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
+
           {contentOptions.map((option) => {
             const IconComponent = option.icon;
-            
+
             return (
               <DropdownMenuItem
                 key={option.id}

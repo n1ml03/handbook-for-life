@@ -1,1 +1,1 @@
-export { PerformanceProvider } from './PerformanceProvider';
+export { PerformanceProvider } from "./PerformanceProvider";

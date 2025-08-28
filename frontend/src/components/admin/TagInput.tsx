@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from 'react';
-import { X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { FormGroup } from '@/components/ui/spacing';
-import { cn } from '@/services/utils';
-import { safeToString } from '@/services/utils';
+import React, { useState, useCallback } from "react";
+import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FormGroup } from "@/components/ui/spacing";
+import { cn } from "@/services/utils";
+import { safeToString } from "@/services/utils";
 
 export interface TagInputProps {
   tags: string[];
@@ -24,36 +24,46 @@ export const TagInput: React.FC<TagInputProps> = ({
   description = "Add tags to categorize and organize",
   placeholder = "Type to add tags...",
   quickAddTags = [],
-  className
+  className,
 }) => {
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedTagIndex, setSelectedTagIndex] = useState(-1);
 
-  const getFilteredTagSuggestions = useCallback((input: string) => {
-    if (!input.trim()) return [];
-    const inputLower = input.toLowerCase();
-    return suggestions
-      .filter(tag =>
-        safeToString(tag).toLowerCase().includes(inputLower) &&
-        !tags.includes(safeToString(tag))
-      )
-      .slice(0, 8);
-  }, [suggestions, tags]);
+  const getFilteredTagSuggestions = useCallback(
+    (input: string) => {
+      if (!input.trim()) return [];
+      const inputLower = input.toLowerCase();
+      return suggestions
+        .filter(
+          (tag) =>
+            safeToString(tag).toLowerCase().includes(inputLower) &&
+            !tags.includes(safeToString(tag)),
+        )
+        .slice(0, 8);
+    },
+    [suggestions, tags],
+  );
 
-  const addTag = useCallback((tag: string) => {
-    const trimmedTag = safeToString(tag).trim().toLowerCase();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      onTagsChange([...tags, trimmedTag]);
-    }
-    setTagInput('');
-    setShowTagSuggestions(false);
-    setSelectedTagIndex(-1);
-  }, [tags, onTagsChange]);
+  const addTag = useCallback(
+    (tag: string) => {
+      const trimmedTag = safeToString(tag).trim().toLowerCase();
+      if (trimmedTag && !tags.includes(trimmedTag)) {
+        onTagsChange([...tags, trimmedTag]);
+      }
+      setTagInput("");
+      setShowTagSuggestions(false);
+      setSelectedTagIndex(-1);
+    },
+    [tags, onTagsChange],
+  );
 
-  const removeTag = useCallback((tagToRemove: string) => {
-    onTagsChange(tags.filter(tag => tag !== tagToRemove));
-  }, [tags, onTagsChange]);
+  const removeTag = useCallback(
+    (tagToRemove: string) => {
+      onTagsChange(tags.filter((tag) => tag !== tagToRemove));
+    },
+    [tags, onTagsChange],
+  );
 
   return (
     <FormGroup label={label} description={description} className={className}>
@@ -92,24 +102,27 @@ export const TagInput: React.FC<TagInputProps> = ({
             onKeyDown={(e) => {
               const filteredSuggestions = getFilteredTagSuggestions(tagInput);
 
-              if (e.key === 'Enter' || e.key === ',') {
+              if (e.key === "Enter" || e.key === ",") {
                 e.preventDefault();
-                if (selectedTagIndex >= 0 && filteredSuggestions[selectedTagIndex]) {
+                if (
+                  selectedTagIndex >= 0 &&
+                  filteredSuggestions[selectedTagIndex]
+                ) {
                   addTag(filteredSuggestions[selectedTagIndex]);
                 } else if (tagInput.trim()) {
                   addTag(tagInput);
                 }
-              } else if (e.key === 'ArrowDown') {
+              } else if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setSelectedTagIndex(prev =>
-                  prev < filteredSuggestions.length - 1 ? prev + 1 : 0
+                setSelectedTagIndex((prev) =>
+                  prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
                 );
-              } else if (e.key === 'ArrowUp') {
+              } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                setSelectedTagIndex(prev =>
-                  prev > 0 ? prev - 1 : filteredSuggestions.length - 1
+                setSelectedTagIndex((prev) =>
+                  prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
                 );
-              } else if (e.key === 'Escape') {
+              } else if (e.key === "Escape") {
                 setShowTagSuggestions(false);
                 setSelectedTagIndex(-1);
               }
@@ -137,7 +150,7 @@ export const TagInput: React.FC<TagInputProps> = ({
                     "w-full px-4 py-2 text-left text-sm transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl",
                     index === selectedTagIndex
                       ? "bg-accent-cyan/20 text-accent-cyan"
-                      : "text-foreground hover:bg-muted/50"
+                      : "text-foreground hover:bg-muted/50",
                   )}
                 >
                   {suggestion}
@@ -145,7 +158,8 @@ export const TagInput: React.FC<TagInputProps> = ({
               ))}
               {getFilteredTagSuggestions(tagInput).length === 0 && (
                 <div className="px-4 py-2 text-sm text-muted-foreground">
-                  No suggestions found. Press Enter to add "{tagInput}" as a new tag.
+                  No suggestions found. Press Enter to add "{tagInput}" as a new
+                  tag.
                 </div>
               )}
             </div>
@@ -155,11 +169,13 @@ export const TagInput: React.FC<TagInputProps> = ({
         {/* Quick Tag Suggestions */}
         {quickAddTags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-muted-foreground font-medium py-1">Quick add:</span>
+            <span className="text-xs text-muted-foreground font-medium py-1">
+              Quick add:
+            </span>
             {quickAddTags
-              .filter(tag => !tags.includes(tag))
+              .filter((tag) => !tags.includes(tag))
               .slice(0, 6)
-              .map(tag => (
+              .map((tag) => (
                 <button
                   key={tag}
                   type="button"
@@ -174,4 +190,4 @@ export const TagInput: React.FC<TagInputProps> = ({
       </div>
     </FormGroup>
   );
-}; 
+};

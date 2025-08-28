@@ -1,4 +1,4 @@
-@import './performance.css';
+@import "./performance.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,7 +27,10 @@ body.app-ready {
 }
 
 /* Monospace elements */
-code, pre, kbd, samp {
+code,
+pre,
+kbd,
+samp {
   font-family: var(--font-mono) !important;
 }
 
@@ -75,8 +78,27 @@ code, pre, kbd, samp {
   --radius: 0.75rem;
 
   /* Font families with enhanced fallbacks */
-  --font-sans: var(--font-inter, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif);
-  --font-mono: var(--font-mono, "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Courier New", monospace);
+  --font-sans: var(
+    --font-inter,
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Helvetica Neue",
+    Arial,
+    sans-serif
+  );
+  --font-mono: var(
+    --font-mono,
+    "JetBrains Mono",
+    "SF Mono",
+    Monaco,
+    Inconsolata,
+    "Roboto Mono",
+    "Courier New",
+    monospace
+  );
 
   /* Enhanced Layout Variables */
   --header-height: 64px;
@@ -133,8 +155,10 @@ code, pre, kbd, samp {
   /* Enhanced Shadow System */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* Enhanced Z-Index Scale */
   --z-dropdown: 1000;
@@ -155,33 +179,53 @@ code, pre, kbd, samp {
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  0% { transform: translateY(10px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideDown {
-  0% { transform: translateY(-10px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes tooltipFadeIn {
-  0% { 
-    opacity: 0; 
-    transform: scale(0.95) translateY(-5px); 
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
   }
-  100% { 
-    opacity: 1; 
-    transform: scale(1) translateY(0); 
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -200,27 +244,27 @@ code, pre, kbd, samp {
 .light {
   /* Core backgrounds - Enhanced contrast and depth */
   --color-background: 210 20% 98%;
-  --color-foreground: 220 20% 5%;  /* Increased contrast from 8% to 5% for better readability */
+  --color-foreground: 220 20% 5%; /* Increased contrast from 8% to 5% for better readability */
   --color-card: 0 0% 100%;
-  --color-card-foreground: 220 20% 5%;  /* Increased contrast from 8% to 5% */
+  --color-card-foreground: 220 20% 5%; /* Increased contrast from 8% to 5% */
   --color-popover: 0 0% 100%;
-  --color-popover-foreground: 220 20% 5%;  /* Increased contrast from 8% to 5% */
+  --color-popover-foreground: 220 20% 5%; /* Increased contrast from 8% to 5% */
 
   /* Primary colors - Improved contrast for better readability */
-  --color-primary: 220 20% 5%;  /* Increased contrast from 8% to 5% */
+  --color-primary: 220 20% 5%; /* Increased contrast from 8% to 5% */
   --color-primary-foreground: 210 20% 98%;
 
   /* Secondary colors - Better visual hierarchy */
-  --color-secondary: 210 15% 90%;  /* Slightly darker for better contrast */
-  --color-secondary-foreground: 220 20% 8%;  /* Increased contrast from 12% to 8% */
+  --color-secondary: 210 15% 90%; /* Slightly darker for better contrast */
+  --color-secondary-foreground: 220 20% 8%; /* Increased contrast from 12% to 8% */
 
   /* Muted colors - Enhanced contrast for accessibility */
-  --color-muted: 210 15% 92%;  /* Slightly darker for better contrast */
-  --color-muted-foreground: 215 20% 20%;  /* Increased contrast from 25% to 20% for better readability */
+  --color-muted: 210 15% 92%; /* Slightly darker for better contrast */
+  --color-muted-foreground: 215 20% 20%; /* Increased contrast from 25% to 20% for better readability */
 
   /* Accent colors - Improved interaction feedback */
-  --color-accent: 210 15% 88%;  /* Slightly darker for better contrast */
-  --color-accent-foreground: 220 20% 8%;  /* Increased contrast for better readability */
+  --color-accent: 210 15% 88%; /* Slightly darker for better contrast */
+  --color-accent-foreground: 220 20% 8%; /* Increased contrast for better readability */
 
   /* Destructive colors - Better visibility and contrast */
   --color-destructive: 0 75% 42%;
@@ -239,8 +283,10 @@ code, pre, kbd, samp {
   * {
     @apply border-border;
     transition:
-      background-color var(--theme-transition-duration) var(--theme-transition-easing),
-      border-color var(--theme-transition-duration) var(--theme-transition-easing),
+      background-color var(--theme-transition-duration)
+        var(--theme-transition-easing),
+      border-color var(--theme-transition-duration)
+        var(--theme-transition-easing),
       color var(--theme-transition-duration) var(--theme-transition-easing),
       box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
   }
@@ -288,7 +334,9 @@ code, pre, kbd, samp {
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
     line-height: var(--optimal-line-height);
     font-size: var(--min-font-size);
     min-height: 100vh;
@@ -372,20 +420,27 @@ code, pre, kbd, samp {
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--color-border) / 0.3);
     border-radius: var(--radius-lg);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
-    transition: all var(--theme-transition-duration) var(--theme-transition-easing);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.08),
+      0 2px 4px -2px rgba(0, 0, 0, 0.08);
+    transition: all var(--theme-transition-duration)
+      var(--theme-transition-easing);
     position: relative;
     overflow: hidden;
   }
 
   .modern-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink) / 0.02), hsl(var(--color-accent-cyan) / 0.02));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink) / 0.02),
+      hsl(var(--color-accent-cyan) / 0.02)
+    );
     opacity: 0;
     transition: opacity var(--hover-transition-duration);
     pointer-events: none;
@@ -403,8 +458,12 @@ code, pre, kbd, samp {
   /* Light mode specific card enhancements - Improved visual hierarchy */
   .light .modern-card {
     background-color: hsl(var(--color-card));
-    border-color: hsl(var(--color-border) / 0.6);  /* Increased border opacity for better definition */
-    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);  /* Slightly stronger shadow for better depth */
+    border-color: hsl(
+      var(--color-border) / 0.6
+    ); /* Increased border opacity for better definition */
+    box-shadow:
+      0 2px 4px -1px rgb(0 0 0 / 0.08),
+      0 1px 2px -1px rgb(0 0 0 / 0.08); /* Slightly stronger shadow for better depth */
   }
 
   .light .modern-card:hover {
@@ -492,13 +551,18 @@ code, pre, kbd, samp {
   }
 
   .modern-glass::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--color-accent-cyan) / 0.3), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--color-accent-cyan) / 0.3),
+      transparent
+    );
     opacity: 0.5;
   }
 
@@ -509,12 +573,22 @@ code, pre, kbd, samp {
   }
 
   .light .modern-glass::before {
-    background: linear-gradient(90deg, transparent, hsl(var(--color-accent-cyan) / 0.2), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--color-accent-cyan) / 0.2),
+      transparent
+    );
   }
 
   /* Gradient Text */
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink)), hsl(var(--color-accent-cyan)), hsl(var(--color-accent-purple)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink)),
+      hsl(var(--color-accent-cyan)),
+      hsl(var(--color-accent-purple))
+    );
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -523,8 +597,13 @@ code, pre, kbd, samp {
   }
 
   @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
   }
 
   /* Modern Button Variants - Enhanced for light mode */
@@ -547,12 +626,16 @@ code, pre, kbd, samp {
   }
 
   .light .btn-modern {
-    background-color: hsl(var(--color-accent-pink) / 0.08);  /* Increased opacity for better visibility */
+    background-color: hsl(
+      var(--color-accent-pink) / 0.08
+    ); /* Increased opacity for better visibility */
     border-color: hsl(var(--color-accent-pink) / 0.4);
   }
 
   .light .btn-modern:hover {
-    background-color: hsl(var(--color-accent-pink) / 0.15);  /* Enhanced hover state for better feedback */
+    background-color: hsl(
+      var(--color-accent-pink) / 0.15
+    ); /* Enhanced hover state for better feedback */
     border-color: hsl(var(--color-accent-pink) / 0.6);
   }
 
@@ -573,25 +656,31 @@ code, pre, kbd, samp {
   }
 
   .light .btn-modern-ghost {
-    @apply hover:bg-accent/20 hover:border-accent/40;  /* Enhanced hover state for better visibility */
-    border: 1px solid hsl(var(--color-border) / 0.3);  /* Subtle border for better definition */
+    @apply hover:bg-accent/20 hover:border-accent/40; /* Enhanced hover state for better visibility */
+    border: 1px solid hsl(var(--color-border) / 0.3); /* Subtle border for better definition */
   }
 
   /* Enhanced button styling for light mode - Improved visibility and contrast */
   .light button[class*="bg-primary"] {
-    box-shadow: 0 2px 3px 0 rgb(0 0 0 / 0.08);  /* Slightly stronger shadow for better depth */
+    box-shadow: 0 2px 3px 0 rgb(0 0 0 / 0.08); /* Slightly stronger shadow for better depth */
   }
 
   .light button[class*="bg-primary"]:hover {
-    box-shadow: 0 3px 6px 0 rgb(0 0 0 / 0.12), 0 2px 4px 0 rgb(0 0 0 / 0.08);  /* Enhanced hover shadow */
+    box-shadow:
+      0 3px 6px 0 rgb(0 0 0 / 0.12),
+      0 2px 4px 0 rgb(0 0 0 / 0.08); /* Enhanced hover shadow */
   }
 
   .light button[class*="border"] {
-    border-color: hsl(var(--color-border) / 0.8);  /* Stronger border for better definition */
+    border-color: hsl(
+      var(--color-border) / 0.8
+    ); /* Stronger border for better definition */
   }
 
   .light button[class*="border"]:hover {
-    border-color: hsl(var(--color-border));  /* Full opacity on hover for better feedback */
+    border-color: hsl(
+      var(--color-border)
+    ); /* Full opacity on hover for better feedback */
   }
 
   /* Enhanced form styling for light mode - Improved visibility and contrast */
@@ -603,9 +692,11 @@ code, pre, kbd, samp {
   .light textarea,
   .light select {
     background-color: hsl(var(--color-input));
-    border-color: hsl(var(--color-border) / 0.8);  /* Stronger border for better definition */
+    border-color: hsl(
+      var(--color-border) / 0.8
+    ); /* Stronger border for better definition */
     color: hsl(var(--color-foreground));
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);  /* Subtle shadow for better depth */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Subtle shadow for better depth */
   }
 
   .light input[type="text"]:focus,
@@ -616,13 +707,15 @@ code, pre, kbd, samp {
   .light textarea:focus,
   .light select:focus {
     border-color: hsl(var(--color-ring));
-    box-shadow: 0 0 0 3px hsl(var(--color-ring) / 0.25), 0 1px 2px 0 rgb(0 0 0 / 0.05);  /* Enhanced focus ring with depth */
+    box-shadow:
+      0 0 0 3px hsl(var(--color-ring) / 0.25),
+      0 1px 2px 0 rgb(0 0 0 / 0.05); /* Enhanced focus ring with depth */
   }
 
   .light input::placeholder,
   .light textarea::placeholder {
     color: hsl(var(--color-muted-foreground));
-    opacity: 0.7;  /* Slightly more visible placeholder text for better readability */
+    opacity: 0.7; /* Slightly more visible placeholder text for better readability */
   }
 
   /* Enhanced card styling for light mode - Improved visual hierarchy */
@@ -630,8 +723,12 @@ code, pre, kbd, samp {
   .light .doax-card,
   .light .gaming-card {
     background-color: hsl(var(--color-card));
-    border-color: hsl(var(--color-border) / 0.8);  /* Stronger border for better definition */
-    box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.12), 0 1px 2px -1px rgb(0 0 0 / 0.12);  /* Enhanced shadow for better depth perception */
+    border-color: hsl(
+      var(--color-border) / 0.8
+    ); /* Stronger border for better definition */
+    box-shadow:
+      0 2px 4px 0 rgb(0 0 0 / 0.12),
+      0 1px 2px -1px rgb(0 0 0 / 0.12); /* Enhanced shadow for better depth perception */
   }
 
   .light .modern-card:hover,
@@ -649,14 +746,22 @@ code, pre, kbd, samp {
 
   /* Glass effect improvements for light mode - Enhanced visual hierarchy */
   .light .glass-effect {
-    background-color: hsl(var(--color-background) / 0.97);  /* More opaque for better definition */
-    backdrop-filter: blur(10px);  /* Slightly stronger blur for better separation */
-    border-color: hsl(var(--color-border) / 0.8);  /* Stronger border for better definition */
+    background-color: hsl(
+      var(--color-background) / 0.97
+    ); /* More opaque for better definition */
+    backdrop-filter: blur(
+      10px
+    ); /* Slightly stronger blur for better separation */
+    border-color: hsl(
+      var(--color-border) / 0.8
+    ); /* Stronger border for better definition */
   }
 
   /* Enhanced navigation styling for light mode - Improved contrast and visibility */
   .light .doax-nav-item {
-    color: hsl(var(--color-text-medium-contrast));  /* Better contrast for navigation items */
+    color: hsl(
+      var(--color-text-medium-contrast)
+    ); /* Better contrast for navigation items */
   }
 
   .light .doax-nav-item:hover {
@@ -664,17 +769,25 @@ code, pre, kbd, samp {
   }
 
   .light .doax-nav-item:focus {
-    background-color: hsl(var(--color-accent) / 0.2);  /* Stronger focus background */
-    --tw-ring-color: hsl(var(--color-accent-pink) / 0.5);  /* More visible focus ring */
-    outline: 2px solid hsl(var(--color-ring));  /* Additional outline for better accessibility */
+    background-color: hsl(
+      var(--color-accent) / 0.2
+    ); /* Stronger focus background */
+    --tw-ring-color: hsl(
+      var(--color-accent-pink) / 0.5
+    ); /* More visible focus ring */
+    outline: 2px solid hsl(var(--color-ring)); /* Additional outline for better accessibility */
     outline-offset: 2px;
   }
 
   /* Mobile menu enhancements for light mode - Improved visual separation */
   .light .mobile-menu {
     background-color: hsl(var(--color-background));
-    border-color: hsl(var(--color-border) / 0.9);  /* Stronger border for better definition */
-    box-shadow: 0 6px 12px -2px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.15);  /* Enhanced shadow for better depth */
+    border-color: hsl(
+      var(--color-border) / 0.9
+    ); /* Stronger border for better definition */
+    box-shadow:
+      0 6px 12px -2px rgb(0 0 0 / 0.15),
+      0 4px 6px -2px rgb(0 0 0 / 0.15); /* Enhanced shadow for better depth */
   }
 
   /* Enhanced interactive element states for light mode */
@@ -705,28 +818,36 @@ code, pre, kbd, samp {
 
   /* Focus ring improvements for light mode - Enhanced accessibility */
   .light *:focus-visible {
-    outline: 3px solid hsl(var(--color-ring));  /* Thicker outline for better visibility */
+    outline: 3px solid hsl(var(--color-ring)); /* Thicker outline for better visibility */
     outline-offset: 2px;
     --tw-ring-color: hsl(var(--color-ring));
     --tw-ring-offset-color: hsl(var(--color-background));
-    box-shadow: 0 0 0 1px hsl(var(--color-background)), 0 0 0 4px hsl(var(--color-ring) / 0.3);  /* Additional ring for better contrast */
+    box-shadow:
+      0 0 0 1px hsl(var(--color-background)),
+      0 0 0 4px hsl(var(--color-ring) / 0.3); /* Additional ring for better contrast */
   }
 
   /* Tooltip and popover enhancements for light mode - Improved contrast and visibility */
   .light .tooltip,
   .light .popover {
     background-color: hsl(var(--color-popover));
-    border-color: hsl(var(--color-border) / 0.9);  /* Stronger border for better definition */
-    color: hsl(var(--color-text-high-contrast));  /* High contrast text for better readability */
-    box-shadow: 0 6px 12px -2px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.15);  /* Enhanced shadow for better depth */
+    border-color: hsl(
+      var(--color-border) / 0.9
+    ); /* Stronger border for better definition */
+    color: hsl(
+      var(--color-text-high-contrast)
+    ); /* High contrast text for better readability */
+    box-shadow:
+      0 6px 12px -2px rgb(0 0 0 / 0.15),
+      0 4px 6px -2px rgb(0 0 0 / 0.15); /* Enhanced shadow for better depth */
   }
 
   /* WCAG 2.1 AA Accessibility Enhancements for Light Mode */
   .light {
     /* Ensure minimum contrast ratios - Enhanced for better readability */
-    --color-text-high-contrast: 220 25% 3%;  /* Darker for maximum contrast */
-    --color-text-medium-contrast: 220 20% 10%;  /* Improved medium contrast */
-    --color-text-low-contrast: 220 15% 25%;  /* Better low contrast for secondary text */
+    --color-text-high-contrast: 220 25% 3%; /* Darker for maximum contrast */
+    --color-text-medium-contrast: 220 20% 10%; /* Improved medium contrast */
+    --color-text-low-contrast: 220 15% 25%; /* Better low contrast for secondary text */
 
     /* Enhanced focus indicators */
     --focus-ring-color: 220 15% 8%;
@@ -739,12 +860,19 @@ code, pre, kbd, samp {
   }
 
   /* High contrast text for critical elements */
-  .light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
+  .light h1,
+  .light h2,
+  .light h3,
+  .light h4,
+  .light h5,
+  .light h6 {
     color: hsl(var(--color-text-high-contrast));
     font-weight: 600;
   }
 
-  .light p, .light span, .light div {
+  .light p,
+  .light span,
+  .light div {
     color: hsl(var(--color-foreground));
   }
 
@@ -752,7 +880,8 @@ code, pre, kbd, samp {
   .light *:focus-visible {
     outline: var(--focus-ring-width) solid hsl(var(--focus-ring-color));
     outline-offset: var(--focus-ring-offset);
-    box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) hsl(var(--focus-ring-color) / 0.2);
+    box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset))
+      hsl(var(--focus-ring-color) / 0.2);
   }
 
   /* Ensure interactive elements meet touch target requirements */
@@ -769,13 +898,13 @@ code, pre, kbd, samp {
   /* High contrast mode support - Enhanced for maximum accessibility */
   @media (prefers-contrast: high) {
     .light {
-      --color-foreground: 0 0% 0%;  /* Pure black for maximum contrast */
-      --color-background: 0 0% 100%;  /* Pure white background */
-      --color-border: 0 0% 15%;  /* Darker borders for better definition */
-      --color-muted-foreground: 0 0% 25%;  /* Improved muted text contrast */
-      --color-text-high-contrast: 0 0% 0%;  /* Pure black for high contrast text */
-      --color-text-medium-contrast: 0 0% 10%;  /* Very dark for medium contrast */
-      --color-text-low-contrast: 0 0% 20%;  /* Darker low contrast text */
+      --color-foreground: 0 0% 0%; /* Pure black for maximum contrast */
+      --color-background: 0 0% 100%; /* Pure white background */
+      --color-border: 0 0% 15%; /* Darker borders for better definition */
+      --color-muted-foreground: 0 0% 25%; /* Improved muted text contrast */
+      --color-text-high-contrast: 0 0% 0%; /* Pure black for high contrast text */
+      --color-text-medium-contrast: 0 0% 10%; /* Very dark for medium contrast */
+      --color-text-low-contrast: 0 0% 20%; /* Darker low contrast text */
     }
 
     .light button,
@@ -809,9 +938,11 @@ code, pre, kbd, samp {
 
   .gaming-card {
     @apply doax-card;
-    background: linear-gradient(135deg,
+    background: linear-gradient(
+      135deg,
       hsl(var(--color-card) / 0.8) 0%,
-      hsl(var(--color-card) / 0.6) 100%);
+      hsl(var(--color-card) / 0.6) 100%
+    );
     border-color: hsl(var(--color-accent-pink) / 0.2);
   }
 
@@ -840,9 +971,14 @@ code, pre, kbd, samp {
 
   .shimmer-effect::before {
     @apply absolute inset-0;
-    content: '';
+    content: "";
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
     animation: var(--animate-shimmer);
   }
 
@@ -863,9 +999,15 @@ code, pre, kbd, samp {
   }
 
   .light .header-nav {
-    background-color: hsl(var(--color-background) / 0.98);  /* More opaque for better definition */
-    border-bottom-color: hsl(var(--color-border));  /* Stronger border for clear separation */
-    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);  /* Enhanced shadow for better depth */
+    background-color: hsl(
+      var(--color-background) / 0.98
+    ); /* More opaque for better definition */
+    border-bottom-color: hsl(
+      var(--color-border)
+    ); /* Stronger border for clear separation */
+    box-shadow:
+      0 2px 4px -1px rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1); /* Enhanced shadow for better depth */
   }
 
   /* Mobile header adjustments */
@@ -903,13 +1045,17 @@ code, pre, kbd, samp {
   }
 
   .header-nav-item::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink) / 0.1), hsl(var(--color-accent-cyan) / 0.1));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink) / 0.1),
+      hsl(var(--color-accent-cyan) / 0.1)
+    );
     opacity: 0;
     transition: opacity var(--hover-transition-duration);
     border-radius: inherit;
@@ -930,7 +1076,11 @@ code, pre, kbd, samp {
   }
 
   .header-nav-item.active {
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink) / 0.15), hsl(var(--color-accent-cyan) / 0.1));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink) / 0.15),
+      hsl(var(--color-accent-cyan) / 0.1)
+    );
     color: hsl(var(--color-accent-pink));
     border: 1px solid hsl(var(--color-accent-pink) / 0.3);
     box-shadow: var(--shadow-sm);
@@ -1012,7 +1162,8 @@ code, pre, kbd, samp {
     background-color: hsl(var(--color-background) / 0.95);
     backdrop-filter: blur(16px);
     border-top: 1px solid hsl(var(--color-border) / 0.6);
-    animation: mobileMenuSlideDown var(--mobile-menu-transition-duration) ease-out;
+    animation: mobileMenuSlideDown var(--mobile-menu-transition-duration)
+      ease-out;
     box-shadow: var(--shadow-lg);
   }
 
@@ -1038,13 +1189,17 @@ code, pre, kbd, samp {
   }
 
   .mobile-menu-item::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink) / 0.1), hsl(var(--color-accent-cyan) / 0.05));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink) / 0.1),
+      hsl(var(--color-accent-cyan) / 0.05)
+    );
     opacity: 0;
     transition: opacity var(--hover-transition-duration);
     border-radius: inherit;
@@ -1062,7 +1217,11 @@ code, pre, kbd, samp {
   }
 
   .mobile-menu-item.active {
-    background: linear-gradient(135deg, hsl(var(--color-accent-pink) / 0.15), hsl(var(--color-accent-cyan) / 0.1));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-accent-pink) / 0.15),
+      hsl(var(--color-accent-cyan) / 0.1)
+    );
     color: hsl(var(--color-accent-pink));
     border: 1px solid hsl(var(--color-accent-pink) / 0.3);
   }
@@ -1118,7 +1277,12 @@ code, pre, kbd, samp {
 
   /* Enhanced Loading States and Micro-interactions */
   .loading-skeleton {
-    background: linear-gradient(90deg, hsl(var(--color-muted)) 25%, hsl(var(--color-muted) / 0.5) 50%, hsl(var(--color-muted)) 75%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--color-muted)) 25%,
+      hsl(var(--color-muted) / 0.5) 50%,
+      hsl(var(--color-muted)) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
     /* Ensure consistent background during loading */
@@ -1131,7 +1295,8 @@ code, pre, kbd, samp {
 
   /* Enhanced scroll-optimized skeleton states */
   .scroll-skeleton {
-    background: linear-gradient(90deg,
+    background: linear-gradient(
+      90deg,
       hsl(var(--color-background)) 0%,
       hsl(var(--color-muted) / 0.2) 25%,
       hsl(var(--color-muted) / 0.4) 50%,
@@ -1189,7 +1354,12 @@ code, pre, kbd, samp {
   }
 
   .light .loading-skeleton {
-    background: linear-gradient(90deg, hsl(var(--color-muted) / 0.3) 25%, hsl(var(--color-muted) / 0.1) 50%, hsl(var(--color-muted) / 0.3) 75%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--color-muted) / 0.3) 25%,
+      hsl(var(--color-muted) / 0.1) 50%,
+      hsl(var(--color-muted) / 0.3) 75%
+    );
   }
 
   /* Pulse animation for loading states */
@@ -1198,7 +1368,8 @@ code, pre, kbd, samp {
   }
 
   @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -1278,7 +1449,7 @@ code, pre, kbd, samp {
   }
 
   .ripple-effect::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1287,7 +1458,9 @@ code, pre, kbd, samp {
     border-radius: 50%;
     background: hsl(var(--color-accent-pink) / 0.3);
     transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    transition:
+      width 0.6s,
+      height 0.6s;
   }
 
   .ripple-effect:active::after {
@@ -1301,7 +1474,7 @@ code, pre, kbd, samp {
   }
 
   .focus-ring::before {
-    content: '';
+    content: "";
     position: absolute;
     top: -2px;
     left: -2px;
@@ -1709,18 +1882,20 @@ code, pre, kbd, samp {
   }
 
   .light .modern-interactive {
-    @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;  /* Enhanced focus ring for better visibility */
+    @apply focus:ring-2 focus:ring-ring focus:ring-offset-2; /* Enhanced focus ring for better visibility */
     /* Hover effects disabled for flat design */
-    border: 1px solid hsl(var(--color-border) / 0.4);  /* Subtle border for better definition */
+    border: 1px solid hsl(var(--color-border) / 0.4); /* Subtle border for better definition */
   }
 
   .light .modern-interactive:focus {
-    --tw-ring-width: 3px;  /* Custom thicker ring width for better accessibility */
+    --tw-ring-width: 3px; /* Custom thicker ring width for better accessibility */
   }
 
   .light .modern-interactive:hover {
     /* No hover effects for flat design */
-    border-color: hsl(var(--color-border) / 0.6);  /* Slightly stronger border on hover for feedback */
+    border-color: hsl(
+      var(--color-border) / 0.6
+    ); /* Slightly stronger border on hover for feedback */
   }
 
   .modern-loading {
@@ -1729,7 +1904,12 @@ code, pre, kbd, samp {
 
   .light .modern-loading {
     @apply bg-muted/30;
-    background: linear-gradient(90deg, hsl(var(--color-muted)) 25%, hsl(var(--color-muted) / 0.5) 50%, hsl(var(--color-muted)) 75%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--color-muted)) 25%,
+      hsl(var(--color-muted) / 0.5) 50%,
+      hsl(var(--color-muted)) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -1756,7 +1936,8 @@ code, pre, kbd, samp {
 
   .optimized-image.loading {
     opacity: 0;
-    background: linear-gradient(90deg,
+    background: linear-gradient(
+      90deg,
       hsl(var(--color-muted) / 0.1) 25%,
       hsl(var(--color-muted) / 0.3) 50%,
       hsl(var(--color-muted) / 0.1) 75%
@@ -1815,7 +1996,9 @@ code, pre, kbd, samp {
   .page-transition.entered {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.3s ease-out;
   }
 
   /* New utility classes for light mode optimization - Enhanced contrast and readability */
@@ -1832,9 +2015,11 @@ code, pre, kbd, samp {
 
   .light-optimized-surface {
     background-color: hsl(var(--color-card));
-    border: 1px solid hsl(var(--color-border) / 0.8);  /* Stronger border for better definition */
+    border: 1px solid hsl(var(--color-border) / 0.8); /* Stronger border for better definition */
     border-radius: var(--radius-lg);
-    box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.12), 0 1px 2px -1px rgb(0 0 0 / 0.12);  /* Enhanced shadow for better depth */
+    box-shadow:
+      0 2px 4px 0 rgb(0 0 0 / 0.12),
+      0 1px 2px -1px rgb(0 0 0 / 0.12); /* Enhanced shadow for better depth */
   }
 
   /* Additional utility classes for enhanced light mode contrast */
@@ -1866,16 +2051,22 @@ code, pre, kbd, samp {
   .light .light-optimized-surface {
     background-color: hsl(var(--color-card));
     border-color: hsl(var(--color-border));
-    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 2px 4px -1px rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
   }
 
   .light-optimized-surface:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   .light .light-optimized-surface:hover {
-    box-shadow: 0 8px 12px -2px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.15);
+    box-shadow:
+      0 8px 12px -2px rgb(0 0 0 / 0.15),
+      0 4px 6px -4px rgb(0 0 0 / 0.15);
   }
 
   /* Enhanced focus states for light mode */
@@ -1905,7 +2096,7 @@ code, pre, kbd, samp {
   }
 
   /* Light mode optimization complete - Enhanced for accessibility, performance, and visual appeal */
-/* CSS file has been optimized for better browser compatibility and performance */
+  /* CSS file has been optimized for better browser compatibility and performance */
 
   /* ProseMirror editor styles */
   .ProseMirror {
@@ -1932,7 +2123,8 @@ code, pre, kbd, samp {
     @apply mb-3 leading-relaxed;
   }
 
-  .ProseMirror ul, .ProseMirror ol {
+  .ProseMirror ul,
+  .ProseMirror ol {
     @apply mb-3 pl-6;
   }
 
@@ -2025,7 +2217,9 @@ code, pre, kbd, samp {
   .header-dropdown-portal {
     z-index: 100;
     position: absolute;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.2),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-lg);
     background: hsl(var(--color-background) / 0.95);
     backdrop-filter: blur(8px);
@@ -2037,7 +2231,9 @@ code, pre, kbd, samp {
   .light .header-dropdown-portal {
     background: hsl(var(--color-popover));
     border-color: hsl(var(--color-border));
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
   /* Optimized dropdown menu item styling */
@@ -2168,7 +2364,7 @@ code, pre, kbd, samp {
   }
 
   .writing-zone::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -2198,7 +2394,7 @@ code, pre, kbd, samp {
       padding: 1rem;
       font-size: 1rem;
     }
-    
+
     .toolbar-sticky {
       position: relative;
     }
@@ -2218,43 +2414,83 @@ code, pre, kbd, samp {
 }
 
 .shop-section-card.active-owner {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.2),
+    rgba(6, 182, 212, 0.2)
+  );
   border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.2);
+  box-shadow:
+    0 20px 25px -5px rgba(59, 130, 246, 0.2),
+    0 8px 10px -6px rgba(59, 130, 246, 0.2);
 }
 
 .shop-section-card.active-event {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.2),
+    rgba(236, 72, 153, 0.2)
+  );
   border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 20px 25px -5px rgba(168, 85, 247, 0.2), 0 8px 10px -6px rgba(168, 85, 247, 0.2);
+  box-shadow:
+    0 20px 25px -5px rgba(168, 85, 247, 0.2),
+    0 8px 10px -6px rgba(168, 85, 247, 0.2);
 }
 
 .shop-section-card.active-venus {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2),
+    rgba(6, 182, 212, 0.2)
+  );
   border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.2), 0 8px 10px -6px rgba(16, 185, 129, 0.2);
+  box-shadow:
+    0 20px 25px -5px rgba(16, 185, 129, 0.2),
+    0 8px 10px -6px rgba(16, 185, 129, 0.2);
 }
 
 .shop-section-card.active-vip {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 146, 60, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.2),
+    rgba(251, 146, 60, 0.2)
+  );
   border-color: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2), 0 8px 10px -6px rgba(245, 158, 11, 0.2);
+  box-shadow:
+    0 20px 25px -5px rgba(245, 158, 11, 0.2),
+    0 8px 10px -6px rgba(245, 158, 11, 0.2);
 }
 
 .shop-section-gradient-owner {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.2),
+    rgba(6, 182, 212, 0.2)
+  );
 }
 
 .shop-section-gradient-event {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.2),
+    rgba(236, 72, 153, 0.2)
+  );
 }
 
 .shop-section-gradient-venus {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2),
+    rgba(6, 182, 212, 0.2)
+  );
 }
 
 .shop-section-gradient-vip {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 146, 60, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.2),
+    rgba(251, 146, 60, 0.2)
+  );
 }
 
 /* Enhanced Responsive Utilities */
@@ -2479,7 +2715,7 @@ code, pre, kbd, samp {
     .grid-responsive-cards.single-row {
       gap: 16px;
     }
-    
+
     .grid-responsive-cards.single-row > * {
       min-width: 250px;
     }
@@ -2555,13 +2791,14 @@ code, pre, kbd, samp {
 }
 
 .search-focus-ring:focus-within::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: inherit;
-  background: linear-gradient(45deg, 
-    rgba(6, 182, 212, 0.3), 
-    rgba(236, 72, 153, 0.3), 
+  background: linear-gradient(
+    45deg,
+    rgba(6, 182, 212, 0.3),
+    rgba(236, 72, 153, 0.3),
     rgba(147, 51, 234, 0.3)
   );
   z-index: -1;
@@ -2575,7 +2812,8 @@ code, pre, kbd, samp {
 
 /* Floating particles animation for search empty state */
 @keyframes floatParticle {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
     opacity: 0.3;
   }
@@ -2608,14 +2846,20 @@ code, pre, kbd, samp {
 /* Enhanced gradient borders for search components */
 .gradient-border {
   position: relative;
-  background: linear-gradient(var(--color-background), var(--color-background)) padding-box,
-              linear-gradient(45deg, rgba(6, 182, 212, 0.3), rgba(236, 72, 153, 0.3)) border-box;
+  background:
+    linear-gradient(var(--color-background), var(--color-background))
+      padding-box,
+    linear-gradient(45deg, rgba(6, 182, 212, 0.3), rgba(236, 72, 153, 0.3))
+      border-box;
   border: 1px solid transparent;
 }
 
 .gradient-border-active {
-  background: linear-gradient(var(--color-background), var(--color-background)) padding-box,
-              linear-gradient(45deg, rgba(6, 182, 212, 0.6), rgba(236, 72, 153, 0.6)) border-box;
+  background:
+    linear-gradient(var(--color-background), var(--color-background))
+      padding-box,
+    linear-gradient(45deg, rgba(6, 182, 212, 0.6), rgba(236, 72, 153, 0.6))
+      border-box;
   border: 1px solid transparent;
 }
 
@@ -2627,7 +2871,7 @@ code, pre, kbd, samp {
 }
 
 .search-tag::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -2654,11 +2898,11 @@ code, pre, kbd, samp {
   .search-focus-ring:focus-within::after {
     inset: -1px;
   }
-  
+
   .floating-particle {
     animation-duration: 2s;
   }
-  
+
   .search-tag {
     touch-action: manipulation;
   }

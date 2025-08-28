@@ -54,7 +54,6 @@ export type {
   MultiLanguageSearchParams,
   DateRangeParams,
   HealthCheckResponse,
-  CSVImportResult,
   BulkCreateResult,
   
   // API types

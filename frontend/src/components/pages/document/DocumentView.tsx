@@ -1,14 +1,29 @@
-import React from 'react';
-import { ArrowLeft, Edit3, X, Eye, User, Calendar, Tags, Image as ImageIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/services/utils';
-import { Stack, Inline, StatusBadge } from '@/components/ui/spacing';
-import { SaveButton } from '@/components/ui/loading';
-import { ScreenshotGallery } from '@/components/ui/ScreenshotGallery';
-import { documentCategoriesData, type Document, type DocumentSectionInfo } from '@/types';
-import TiptapEditor from '@/components/features/TiptapEditor';
+import React from "react";
+import {
+  ArrowLeft,
+  Edit3,
+  X,
+  Eye,
+  User,
+  Calendar,
+  Tags,
+  Image as ImageIcon,
+  FileText,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/services/utils";
+import { Stack, Inline, StatusBadge } from "@/components/ui/spacing";
+import { SaveButton } from "@/components/ui/loading";
+import { ScreenshotGallery } from "@/components/ui/ScreenshotGallery";
+import { PDFViewer } from "@/components/ui/PDFViewer";
+import {
+  documentCategoriesData,
+  type Document,
+  type DocumentSectionInfo,
+} from "@/types";
+import TiptapEditor from "@/components/features/TiptapEditor";
 
 interface DocumentViewProps {
   selectedDocument: Document;
@@ -35,7 +50,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   onEditToggle,
   onSaveDocument,
   onContentChange,
-  onJsonContentChange
+  onJsonContentChange,
 }) => {
   return (
     <Stack spacing="md">
@@ -49,7 +64,8 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
               className="px-6 py-3 hover:bg-accent-cyan/10 hover:text-accent-cyan hover:border-accent-cyan/30"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to {documentSections.find(s => s.id === activeSection)?.title}
+              Back to{" "}
+              {documentSections.find((s) => s.id === activeSection)?.title}
             </Button>
 
             <Inline spacing="sm">
@@ -102,17 +118,26 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                   variant="outline"
                   className={cn(
                     "text-sm px-4 py-2 font-medium",
-                    documentCategoriesData.find(cat => cat.id === selectedDocument.category)?.color || 'text-muted-foreground border-border/30 bg-muted/10'
+                    documentCategoriesData.find(
+                      (cat) => cat.id === selectedDocument.category,
+                    )?.color ||
+                      "text-muted-foreground border-border/30 bg-muted/10",
                   )}
                 >
-                  {documentCategoriesData.find(cat => cat.id === selectedDocument.category)?.name || selectedDocument.category}
+                  {documentCategoriesData.find(
+                    (cat) => cat.id === selectedDocument.category,
+                  )?.name || selectedDocument.category}
                 </Badge>
               </Inline>
 
               {selectedDocument.tags && selectedDocument.tags.length > 0 && (
                 <div className="flex flex-wrap gap-3 mb-6">
                   {selectedDocument.tags.map((tag: string) => (
-                    <Badge key={tag} variant="outline" className="text-sm px-3 py-1 bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan">
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="text-sm px-3 py-1 bg-accent-cyan/5 border-accent-cyan/20 text-accent-cyan"
+                    >
                       <Tags className="w-3 h-3 mr-1" />
                       {tag}
                     </Badge>
@@ -120,10 +145,16 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                 </div>
               )}
 
-              <Inline spacing="lg" className="text-sm text-muted-foreground" wrap>
+              <Inline
+                spacing="lg"
+                className="text-sm text-muted-foreground"
+                wrap
+              >
                 <Inline spacing="sm">
                   <User className="w-5 h-5 text-accent-purple" />
-                  <span className="font-medium">By {selectedDocument.author}</span>
+                  <span className="font-medium">
+                    By {selectedDocument.author}
+                  </span>
                 </Inline>
                 <Inline spacing="sm">
                   <Calendar className="w-5 h-5 text-accent-cyan" />
@@ -141,10 +172,12 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
 
       {/* Content Card */}
       <Card className="overflow-hidden rounded-2xl">
-        <CardContent className={cn(
-          "transition-all duration-300",
-          isEditMode ? "p-6" : "p-8"
-        )}>
+        <CardContent
+          className={cn(
+            "transition-all duration-300",
+            isEditMode ? "p-6" : "p-8",
+          )}
+        >
           {isEditMode ? (
             <Stack spacing="lg">
               <Inline align="between" className="mb-6">
@@ -173,7 +206,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
           ) : (
             <div className="prose prose-xl max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-accent-pink hover:prose-a:text-accent-purple">
               <TiptapEditor
-                content={selectedDocument.content || ''}
+                content={selectedDocument.content || ""}
                 onChange={() => {}}
                 editable={false}
                 showToolbar={false}
@@ -185,24 +218,53 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
       </Card>
 
       {/* Screenshots Section */}
-      {selectedDocument.screenshots_data && selectedDocument.screenshots_data.length > 0 && (
-        <Card className="overflow-hidden rounded-2xl">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
-              <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
-              Screenshots ({selectedDocument.screenshots_data.length})
-            </h3>
-            <ScreenshotGallery
-              screenshots={selectedDocument.screenshots_data}
-              columns={{ mobile: 1, tablet: 2, desktop: 3 }}
-              showFilenames={true}
-              enableLightbox={true}
-              enableDownload={false}
-              documentId={selectedDocument.id}
-              useOptimizedUrls={true}
-            />
-          </CardContent>
-        </Card>
+      {selectedDocument.screenshots_data &&
+        selectedDocument.screenshots_data.length > 0 && (
+          <Card className="overflow-hidden rounded-2xl">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+                <ImageIcon className="w-5 h-5 mr-2 text-accent-pink" />
+                Screenshots ({selectedDocument.screenshots_data.length})
+              </h3>
+              <ScreenshotGallery
+                screenshots={selectedDocument.screenshots_data}
+                columns={{ mobile: 1, tablet: 2, desktop: 3 }}
+                showFilenames={true}
+                enableLightbox={true}
+                enableDownload={false}
+                documentId={selectedDocument.id}
+                useOptimizedUrls={true}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+      {/* PDF Viewer Section */}
+      {(selectedDocument.has_pdf_file || selectedDocument.pdf_data) && (
+        <div>
+          <div className="flex items-center mb-4">
+            <FileText className="w-5 h-5 mr-2 text-accent-cyan" />
+            <h2 className="text-xl font-semibold text-foreground">
+              Attached PDF Document
+            </h2>
+          </div>
+
+          <PDFViewer
+            document={selectedDocument}
+            showMetadata={true}
+            enableAnnotations={true}
+            enableFullscreen={true}
+            enableTableOfContents={true}
+            onPageChange={(page) => {
+              // Handle page change for progress tracking
+              console.log(`Navigated to page ${page}`);
+            }}
+            onZoomChange={(zoom) => {
+              // Handle zoom change for analytics
+              console.log(`Zoom level changed to ${zoom}`);
+            }}
+          />
+        </div>
       )}
     </Stack>
   );

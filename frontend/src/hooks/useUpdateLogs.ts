@@ -1,4 +1,4 @@
-import { useUpdateLogsStore } from '@/stores';
+import { useUpdateLogsStore } from "@/stores";
 
 export const useUpdateLogs = () => {
   return useUpdateLogsStore();

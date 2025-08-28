@@ -134,9 +134,6 @@ app.get('/api-docs.json', (_req, res) => {
   res.json(specs);
 });
 
-// API routes (health check has no additional rate limiting)
-app.use('/api/health', healthRoutes);
-
 // Authentication routes removed for local development
 
 // API routes with appropriate rate limiting
@@ -237,13 +234,13 @@ const startServer = async () => {
     logger.info('Rate limiting configuration:', rateLimitStatus);
 
     server = app.listen(PORT, HOST, () => {
-      logger.info(`🚀 DOAXVV Handbook API Server Started`);
+      logger.info(`DOAXVV Handbook API Server Started`);
       logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      logger.info(`🌍 Server running on: http://${HOST}:${PORT}`);
-      logger.info(`📊 Health check: http://${HOST}:${PORT}/api/health`);
-      logger.info(`📚 API Documentation: http://${HOST}:${PORT}/api-docs`);
-      logger.info(`🗃️ Database: Connected to MySQL`);
-      logger.info(`⚠️  Network Note: Configure CORS_ORIGINS for network clients`);
+      logger.info(`Server running on: http://${HOST}:${PORT}`);
+      logger.info(`Health check: http://${HOST}:${PORT}/api/health`);
+      logger.info(`API Documentation: http://${HOST}:${PORT}/api-docs`);
+      logger.info(`Database: Connected to MySQL`);
+      logger.info(`Network Note: Configure CORS_ORIGINS for network clients`);
       logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     });
 

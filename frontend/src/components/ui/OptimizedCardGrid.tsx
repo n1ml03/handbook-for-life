@@ -1,6 +1,12 @@
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/services/utils';
+import React, {
+  useMemo,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/services/utils";
 
 interface OptimizedCardGridProps<T> {
   items: T[];
@@ -14,7 +20,7 @@ interface OptimizedCardGridProps<T> {
     tablet: number;
     desktop: number;
   };
-  gap?: 'sm' | 'md' | 'lg';
+  gap?: "sm" | "md" | "lg";
   animationDelay?: number;
   enableAnimations?: boolean;
 }
@@ -27,9 +33,9 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   itemsPerPage = 20,
   enableLazyLoading = true,
   gridCols = { mobile: 1, tablet: 2, desktop: 3 },
-  gap = 'md',
+  gap = "md",
   animationDelay = 0.02,
-  enableAnimations = true
+  enableAnimations = true,
 }: OptimizedCardGridProps<T>) {
   const [visibleItems, setVisibleItems] = useState<T[]>([]);
   const [loadedCount, setLoadedCount] = useState(itemsPerPage);
@@ -40,24 +46,24 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   // Memoize grid classes for performance
   const gridClasses = useMemo(() => {
     const gapClasses = {
-      sm: 'gap-2',
-      md: 'gap-3 md:gap-4',
-      lg: 'gap-4 md:gap-5'
+      sm: "gap-2",
+      md: "gap-3 md:gap-4",
+      lg: "gap-4 md:gap-5",
     };
 
     const colClasses = {
       mobile: `grid-cols-${gridCols.mobile}`,
       tablet: `md:grid-cols-${gridCols.tablet}`,
-      desktop: `lg:grid-cols-${gridCols.desktop}`
+      desktop: `lg:grid-cols-${gridCols.desktop}`,
     };
 
     return cn(
-      'grid',
+      "grid",
       gapClasses[gap],
       colClasses.mobile,
       colClasses.tablet,
       colClasses.desktop,
-      className
+      className,
     );
   }, [gap, gridCols, className]);
 
@@ -83,7 +89,10 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
           // Use requestAnimationFrame for better performance
           requestAnimationFrame(() => {
             // Batch update for better performance
-            const nextCount = Math.min(loadedCount + itemsPerPage, items.length);
+            const nextCount = Math.min(
+              loadedCount + itemsPerPage,
+              items.length,
+            );
             setLoadedCount(nextCount);
             setIsLoading(false);
           });
@@ -91,8 +100,8 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
       },
       {
         threshold: 0.1,
-        rootMargin: '100px' // Start loading earlier for smoother experience
-      }
+        rootMargin: "100px", // Start loading earlier for smoother experience
+      },
     );
 
     observerRef.current.observe(loadMoreRef.current);
@@ -105,48 +114,56 @@ export function OptimizedCardGrid<T extends { id: string | number }>({
   }, [enableLazyLoading, isLoading, loadedCount, items.length, itemsPerPage]);
 
   // Optimized card renderer with memoization
-  const renderOptimizedCard = useCallback((item: T, index: number) => {
-    if (!enableAnimations) {
-      return (
-        <div key={item.id} className="w-full">
-          {renderCard(item, index)}
-        </div>
-      );
-    }
+  const renderOptimizedCard = useCallback(
+    (item: T, index: number) => {
+      if (!enableAnimations) {
+        return (
+          <div key={item.id} className="w-full">
+            {renderCard(item, index)}
+          </div>
+        );
+      }
 
-    return (
-      <motion.div
-        key={item.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          delay: Math.min(index * animationDelay, 0.1),
-          duration: 0.15,
-          ease: "easeOut"
-        }}
-        className="w-full"
-      >
-        {renderCard(item, index)}
-      </motion.div>
-    );
-  }, [renderCard, enableAnimations, animationDelay]);
+      return (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: Math.min(index * animationDelay, 0.1),
+            duration: 0.15,
+            ease: "easeOut",
+          }}
+          className="w-full"
+        >
+          {renderCard(item, index)}
+        </motion.div>
+      );
+    },
+    [renderCard, enableAnimations, animationDelay],
+  );
 
   return (
     <div className="w-full scroll-optimized">
-      <div className={cn(gridClasses, 'scroll-container')}>
+      <div className={cn(gridClasses, "scroll-container")}>
         {visibleItems.map((item, index) => renderOptimizedCard(item, index))}
       </div>
 
       {/* Enhanced lazy loading trigger */}
       {enableLazyLoading && loadedCount < items.length && (
-        <div ref={loadMoreRef} className="lazy-load-trigger w-full py-8 flex justify-center">
+        <div
+          ref={loadMoreRef}
+          className="lazy-load-trigger w-full py-8 flex justify-center"
+        >
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-4 h-4 border-2 border-muted border-t-accent-cyan rounded-full animate-spin" />
               <span>Loading more content...</span>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground/60">Scroll to load more</div>
+            <div className="text-sm text-muted-foreground/60">
+              Scroll to load more
+            </div>
           )}
         </div>
       )}
@@ -161,14 +178,18 @@ export const OptimizedCard = React.memo<{
   onClick?: () => void;
   hover?: boolean;
 }>(({ children, className, onClick, hover = true }) => {
-  const cardClasses = useMemo(() => cn(
-    'bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg',
-    'transition-all duration-200 ease-out',
-    'scroll-optimized content-container', // Add scroll optimization classes
-    hover ? 'hover:border-border hover:shadow-lg hover:bg-card' : '',
-    onClick ? 'cursor-pointer' : '',
-    className
-  ), [className, hover, onClick]);
+  const cardClasses = useMemo(
+    () =>
+      cn(
+        "bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg",
+        "transition-all duration-200 ease-out",
+        "scroll-optimized content-container", // Add scroll optimization classes
+        hover ? "hover:border-border hover:shadow-lg hover:bg-card" : "",
+        onClick ? "cursor-pointer" : "",
+        className,
+      ),
+    [className, hover, onClick],
+  );
 
   if (onClick) {
     return (
@@ -178,14 +199,10 @@ export const OptimizedCard = React.memo<{
     );
   }
 
-  return (
-    <div className={cardClasses}>
-      {children}
-    </div>
-  );
+  return <div className={cardClasses}>{children}</div>;
 });
 
-OptimizedCard.displayName = 'OptimizedCard';
+OptimizedCard.displayName = "OptimizedCard";
 
 // Performance-optimized pagination component
 export const OptimizedPagination = React.memo<{
@@ -199,14 +216,16 @@ export const OptimizedPagination = React.memo<{
     const range = [];
     const rangeWithDots = [];
 
-    for (let i = Math.max(2, currentPage - delta); 
-         i <= Math.min(totalPages - 1, currentPage + delta); 
-         i++) {
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
       range.push(i);
     }
 
     if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
+      rangeWithDots.push(1, "...");
     } else {
       rangeWithDots.push(1);
     }
@@ -214,7 +233,7 @@ export const OptimizedPagination = React.memo<{
     rangeWithDots.push(...range);
 
     if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
+      rangeWithDots.push("...", totalPages);
     } else {
       rangeWithDots.push(totalPages);
     }
@@ -225,19 +244,19 @@ export const OptimizedPagination = React.memo<{
   if (totalPages <= 1) return null;
 
   return (
-    <div className={cn('flex items-center justify-center gap-1', className)}>
+    <div className={cn("flex items-center justify-center gap-1", className)}>
       {pages.map((page, index) => (
         <button
           key={index}
-          onClick={() => typeof page === 'number' && onPageChange(page)}
-          disabled={page === '...' || page === currentPage}
+          onClick={() => typeof page === "number" && onPageChange(page)}
+          disabled={page === "..." || page === currentPage}
           className={cn(
-            'px-3 py-1.5 text-sm rounded-md transition-colors duration-150',
+            "px-3 py-1.5 text-sm rounded-md transition-colors duration-150",
             page === currentPage
-              ? 'bg-accent-cyan text-white'
-              : typeof page === 'number'
-              ? 'text-gray-400 hover:text-white hover:bg-white/10'
-              : 'text-gray-600 cursor-default'
+              ? "bg-accent-cyan text-white"
+              : typeof page === "number"
+                ? "text-gray-400 hover:text-white hover:bg-white/10"
+                : "text-gray-600 cursor-default",
           )}
         >
           {page}
@@ -247,6 +266,6 @@ export const OptimizedPagination = React.memo<{
   );
 });
 
-OptimizedPagination.displayName = 'OptimizedPagination';
+OptimizedPagination.displayName = "OptimizedPagination";
 
 export default OptimizedCardGrid;

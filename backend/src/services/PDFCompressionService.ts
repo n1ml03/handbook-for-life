@@ -131,7 +131,8 @@ export class PDFCompressionService {
             
             metadataFields.forEach(field => {
               try {
-                infoObject.delete(field);
+                // Set metadata fields to undefined to remove them
+                (infoObject as any)[field] = undefined;
               } catch (e) {
                 // Ignore individual field deletion errors
               }

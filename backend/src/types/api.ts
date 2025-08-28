@@ -508,6 +508,38 @@ export interface DocumentApiResponse {
 }
 
 // ============================================================================
+// PAGINATION TYPES
+// ============================================================================
+
+// Type alias for pagination metadata (extracted from PaginatedResult)
+export type PaginationMetadata = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+};
+
+// ============================================================================
+// BROMIDE API TYPES
+// ============================================================================
+
+export interface BromideApiResponse {
+  id: number;
+  unique_key: string;
+  name_jp: string;
+  name_en: string;
+  name_cn: string;
+  name_tw: string;
+  name_kr: string;
+  bromide_type: 'DECO' | 'OWNER';
+  rarity: 'R' | 'SR' | 'SSR';
+  skill_id?: number;
+  art_url?: string;
+}
+
+// ============================================================================
 // DASHBOARD API TYPES
 // ============================================================================
 

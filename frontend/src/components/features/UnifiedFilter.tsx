@@ -1,10 +1,10 @@
-import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, ChevronRight, SortAsc, Zap, X, Search } from 'lucide-react';
-import { cn } from '@/services/utils';
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, ChevronRight, SortAsc, Zap, X, Search } from "lucide-react";
+import { cn } from "@/services/utils";
 
 // Base types for the filter system
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = "asc" | "desc";
 
 export interface FilterOption {
   value: string;
@@ -14,7 +14,7 @@ export interface FilterOption {
 export interface FilterField {
   key: string;
   label: string;
-  type: 'text' | 'select' | 'number' | 'checkbox' | 'range';
+  type: "text" | "select" | "number" | "checkbox" | "range";
   placeholder?: string;
   options?: FilterOption[];
   min?: number;
@@ -97,26 +97,30 @@ export const UnifiedFilter = ({
   headerIcon,
   className = "",
   searchAriaLabel,
-  filterAriaLabel
+  filterAriaLabel,
 }: UnifiedFilterProps) => {
   // Split filter fields into main and expandable sections
-  const mainFields = filterFields.filter(field => !field.key.startsWith('min') || !expandableStats);
-  const expandableFields = expandableStats ? filterFields.filter(field => field.key.startsWith('min')) : [];
-  const searchField = filterFields.find(field => field.key === 'search');
+  const mainFields = filterFields.filter(
+    (field) => !field.key.startsWith("min") || !expandableStats,
+  );
+  const expandableFields = expandableStats
+    ? filterFields.filter((field) => field.key.startsWith("min"))
+    : [];
+  const searchField = filterFields.find((field) => field.key === "search");
 
   const handleSortClick = (key: string) => {
     if (sortBy === key) {
-      onSortChange(key, sortDirection === 'asc' ? 'desc' : 'asc');
+      onSortChange(key, sortDirection === "asc" ? "desc" : "asc");
     } else {
-      onSortChange(key, 'asc');
+      onSortChange(key, "asc");
     }
   };
 
   // Check if any filters are active
-  const hasActiveFilters = Object.values(filterValues).some(value => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') return value.trim() !== '';
-    if (typeof value === 'number') return value > 0;
+  const hasActiveFilters = Object.values(filterValues).some((value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") return value.trim() !== "";
+    if (typeof value === "number") return value > 0;
     return false;
   });
 
@@ -124,55 +128,57 @@ export const UnifiedFilter = ({
   const getColorScheme = () => {
     return {
       // Search bar styling
-      searchContainer: 'relative flex-1',
+      searchContainer: "relative flex-1",
       searchInput: cn(
-        'w-full pl-12 pr-4 py-3 text-base',
-        'modern-glass border-2 transition-all duration-300',
-        'border-border/30 hover:border-border/50',
-        'focus:border-accent-cyan focus:ring-2 focus:ring-accent-cyan/20',
-        'placeholder:text-muted-foreground',
-        'rounded-xl backdrop-blur-sm'
+        "w-full pl-12 pr-4 py-3 text-base",
+        "modern-glass border-2 transition-all duration-300",
+        "border-border/30 hover:border-border/50",
+        "focus:border-accent-cyan focus:ring-2 focus:ring-accent-cyan/20",
+        "placeholder:text-muted-foreground",
+        "rounded-xl backdrop-blur-sm",
       ),
-      searchIcon: 'absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground',
+      searchIcon:
+        "absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground",
 
       // Filter button styling
       filterButton: cn(
-        'px-6 py-3 rounded-xl font-medium transition-all duration-200',
-        'flex items-center gap-2 min-h-[44px]',
+        "px-6 py-3 rounded-xl font-medium transition-all duration-200",
+        "flex items-center gap-2 min-h-[44px]",
         showFilters
-          ? 'bg-accent-cyan text-white shadow-lg border border-accent-cyan'
-          : 'modern-glass border border-border/30 hover:border-accent-cyan/50 text-foreground hover:text-accent-cyan'
+          ? "bg-accent-cyan text-white shadow-lg border border-accent-cyan"
+          : "modern-glass border border-border/30 hover:border-accent-cyan/50 text-foreground hover:text-accent-cyan",
       ),
 
       // Sort button styling
-      sortButton: (active: boolean) => cn(
-        'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-        'flex items-center gap-2 min-h-[36px]',
-        active
-          ? 'bg-accent-cyan text-white shadow-md border border-accent-cyan'
-          : 'modern-glass border border-border/30 hover:border-accent-cyan/50 text-muted-foreground hover:text-accent-cyan'
-      ),
+      sortButton: (active: boolean) =>
+        cn(
+          "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+          "flex items-center gap-2 min-h-[36px]",
+          active
+            ? "bg-accent-cyan text-white shadow-md border border-accent-cyan"
+            : "modern-glass border border-border/30 hover:border-accent-cyan/50 text-muted-foreground hover:text-accent-cyan",
+        ),
 
       // Input styling
       inputClasses: cn(
-        'w-full px-3 py-2 text-sm rounded-lg transition-all duration-200',
-        'modern-glass border border-border/30',
-        'hover:border-border/50 focus:border-accent-cyan',
-        'focus:ring-2 focus:ring-accent-cyan/20',
-        'placeholder:text-muted-foreground'
+        "w-full px-3 py-2 text-sm rounded-lg transition-all duration-200",
+        "modern-glass border border-border/30",
+        "hover:border-border/50 focus:border-accent-cyan",
+        "focus:ring-2 focus:ring-accent-cyan/20",
+        "placeholder:text-muted-foreground",
       ),
 
       // Checkbox styling
       checkboxClasses: cn(
-        'w-4 h-4 rounded border-2 border-border',
-        'text-accent-cyan focus:ring-accent-cyan/20 focus:ring-2',
-        'transition-colors duration-200'
+        "w-4 h-4 rounded border-2 border-border",
+        "text-accent-cyan focus:ring-accent-cyan/20 focus:ring-2",
+        "transition-colors duration-200",
       ),
 
       // Container styling
       filterContainer: cn(
-        'modern-glass rounded-2xl border border-border/30 p-6',
-        'backdrop-blur-xl shadow-xl'
+        "modern-glass rounded-2xl border border-border/30 p-6",
+        "backdrop-blur-xl shadow-xl",
       ),
 
       // Text colors
@@ -181,29 +187,37 @@ export const UnifiedFilter = ({
 
       // Results counter
       resultsCounter: cn(
-        'px-4 py-3 rounded-xl text-sm font-medium',
-        'modern-glass border border-border/30',
-        'text-muted-foreground'
-      )
+        "px-4 py-3 rounded-xl text-sm font-medium",
+        "modern-glass border border-border/30",
+        "text-muted-foreground",
+      ),
     };
   };
 
   const colorScheme = getColorScheme();
 
-  const SortButton = ({ sortKey, children, icon }: { sortKey: string; children: React.ReactNode; icon?: React.ReactNode }) => (
+  const SortButton = ({
+    sortKey,
+    children,
+    icon,
+  }: {
+    sortKey: string;
+    children: React.ReactNode;
+    icon?: React.ReactNode;
+  }) => (
     <motion.button
       onClick={() => handleSortClick(sortKey)}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={colorScheme.sortButton(sortBy === sortKey)}
-      aria-label={`Sort by ${children} ${sortBy === sortKey ? (sortDirection === 'asc' ? 'ascending' : 'descending') : ''}`}
+      aria-label={`Sort by ${children} ${sortBy === sortKey ? (sortDirection === "asc" ? "ascending" : "descending") : ""}`}
       aria-pressed={sortBy === sortKey}
     >
       {icon && <span className="w-4 h-4">{icon}</span>}
       <span>{children}</span>
       {sortBy === sortKey && (
         <motion.div
-          animate={{ rotate: sortDirection === 'desc' ? 180 : 0 }}
+          animate={{ rotate: sortDirection === "desc" ? 180 : 0 }}
           transition={{ duration: 0.2 }}
           className="w-4 h-4"
         >
@@ -219,14 +233,17 @@ export const UnifiedFilter = ({
     const isDisabled = field.disabled || false;
 
     switch (field.type) {
-      case 'text':
+      case "text":
         return (
           <input
             id={fieldId}
             type="text"
-            value={String(filterValues[field.key] || '')}
+            value={String(filterValues[field.key] || "")}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
-            className={cn(colorScheme.inputClasses, isDisabled ? 'opacity-50 cursor-not-allowed' : '')}
+            className={cn(
+              colorScheme.inputClasses,
+              isDisabled ? "opacity-50 cursor-not-allowed" : "",
+            )}
             placeholder={field.placeholder}
             required={isRequired}
             disabled={isDisabled}
@@ -234,33 +251,43 @@ export const UnifiedFilter = ({
           />
         );
 
-      case 'select':
+      case "select":
         return (
           <select
             id={fieldId}
-            value={String(filterValues[field.key] || '')}
+            value={String(filterValues[field.key] || "")}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
-            className={cn(colorScheme.inputClasses, isDisabled ? 'opacity-50 cursor-not-allowed' : '')}
+            className={cn(
+              colorScheme.inputClasses,
+              isDisabled ? "opacity-50 cursor-not-allowed" : "",
+            )}
             required={isRequired}
             disabled={isDisabled}
             aria-label={field.label}
           >
-            <option value="">{field.placeholder || `All ${field.label}`}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            <option value="">
+              {field.placeholder || `All ${field.label}`}
+            </option>
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         );
 
-      case 'number':
+      case "number":
         return (
           <input
             id={fieldId}
             type="number"
-            value={String(filterValues[field.key] || '')}
+            value={String(filterValues[field.key] || "")}
             onChange={(e) => onFilterChange(field.key, e.target.value)}
-            className={cn(colorScheme.inputClasses, isDisabled ? 'opacity-50 cursor-not-allowed' : '')}
-            placeholder={field.placeholder || '0'}
+            className={cn(
+              colorScheme.inputClasses,
+              isDisabled ? "opacity-50 cursor-not-allowed" : "",
+            )}
+            placeholder={field.placeholder || "0"}
             min={field.min}
             max={field.max}
             required={isRequired}
@@ -269,13 +296,13 @@ export const UnifiedFilter = ({
           />
         );
 
-      case 'checkbox':
+      case "checkbox":
         return (
           <label
             className={cn(
-              'flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer',
-              'modern-glass border-border/30 hover:border-accent-cyan/50',
-              isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+              "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+              "modern-glass border-border/30 hover:border-accent-cyan/50",
+              isDisabled ? "opacity-50 cursor-not-allowed" : "",
             )}
             htmlFor={fieldId}
           >
@@ -292,15 +319,20 @@ export const UnifiedFilter = ({
           </label>
         );
 
-      case 'range':
+      case "range":
         return (
           <div className="flex items-center space-x-2">
             <input
               id={`${fieldId}-min`}
               type="number"
-              value={String(filterValues[`${field.key}Min`] || '')}
-              onChange={(e) => onFilterChange(`${field.key}Min`, e.target.value)}
-              className={cn(colorScheme.inputClasses, isDisabled ? 'opacity-50 cursor-not-allowed' : '')}
+              value={String(filterValues[`${field.key}Min`] || "")}
+              onChange={(e) =>
+                onFilterChange(`${field.key}Min`, e.target.value)
+              }
+              className={cn(
+                colorScheme.inputClasses,
+                isDisabled ? "opacity-50 cursor-not-allowed" : "",
+              )}
               placeholder="Min"
               min={field.min}
               disabled={isDisabled}
@@ -310,9 +342,14 @@ export const UnifiedFilter = ({
             <input
               id={`${fieldId}-max`}
               type="number"
-              value={String(filterValues[`${field.key}Max`] || '')}
-              onChange={(e) => onFilterChange(`${field.key}Max`, e.target.value)}
-              className={cn(colorScheme.inputClasses, isDisabled ? 'opacity-50 cursor-not-allowed' : '')}
+              value={String(filterValues[`${field.key}Max`] || "")}
+              onChange={(e) =>
+                onFilterChange(`${field.key}Max`, e.target.value)
+              }
+              className={cn(
+                colorScheme.inputClasses,
+                isDisabled ? "opacity-50 cursor-not-allowed" : "",
+              )}
               placeholder="Max"
               max={field.max}
               disabled={isDisabled}
@@ -327,7 +364,11 @@ export const UnifiedFilter = ({
   };
 
   return (
-    <div className={cn('space-y-6', className)} role="search" aria-label={searchAriaLabel || `Search and filter ${itemLabel}`}>
+    <div
+      className={cn("space-y-6", className)}
+      role="search"
+      aria-label={searchAriaLabel || `Search and filter ${itemLabel}`}
+    >
       {/* Enhanced Search and Filter Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -344,10 +385,12 @@ export const UnifiedFilter = ({
               </div>
               <input
                 type="text"
-                value={String(filterValues.search || '')}
-                onChange={(e) => onFilterChange('search', e.target.value)}
+                value={String(filterValues.search || "")}
+                onChange={(e) => onFilterChange("search", e.target.value)}
                 className={colorScheme.searchInput}
-                placeholder={searchField.placeholder || `Search ${itemLabel}...`}
+                placeholder={
+                  searchField.placeholder || `Search ${itemLabel}...`
+                }
                 aria-label={searchAriaLabel || `Search ${itemLabel}`}
                 role="searchbox"
               />
@@ -361,14 +404,19 @@ export const UnifiedFilter = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={colorScheme.filterButton}
-              aria-label={filterAriaLabel || `${showFilters ? 'Hide' : 'Show'} filters`}
+              aria-label={
+                filterAriaLabel || `${showFilters ? "Hide" : "Show"} filters`
+              }
               aria-expanded={showFilters}
               aria-controls="filter-panel"
             >
               <Filter className="w-4 h-4" />
               <span>Filters</span>
               {hasActiveFilters && (
-                <span className="w-2 h-2 bg-accent-pink rounded-full" aria-label="Active filters" />
+                <span
+                  className="w-2 h-2 bg-accent-pink rounded-full"
+                  aria-label="Active filters"
+                />
               )}
             </motion.button>
 
@@ -389,7 +437,7 @@ export const UnifiedFilter = ({
         {showFilters && (
           <motion.div
             initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
             exit={{ opacity: 0, height: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
@@ -401,7 +449,9 @@ export const UnifiedFilter = ({
               {/* Enhanced Filter Header */}
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-foreground flex items-center">
-                  <Filter className={`w-5 h-5 mr-2 ${colorScheme.headerIcon}`} />
+                  <Filter
+                    className={`w-5 h-5 mr-2 ${colorScheme.headerIcon}`}
+                  />
                   Advanced Filters
                 </h3>
                 <motion.button
@@ -409,11 +459,11 @@ export const UnifiedFilter = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                    'flex items-center gap-2 min-h-[36px]',
-                    'modern-glass border border-border/30',
-                    'hover:border-destructive/50 hover:text-destructive',
-                    'focus:ring-2 focus:ring-destructive/20'
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                    "flex items-center gap-2 min-h-[36px]",
+                    "modern-glass border border-border/30",
+                    "hover:border-destructive/50 hover:text-destructive",
+                    "focus:ring-2 focus:ring-destructive/20",
                   )}
                   disabled={!hasActiveFilters}
                   aria-label="Clear all filters"
@@ -431,9 +481,15 @@ export const UnifiedFilter = ({
                       htmlFor={`filter-${field.key}`}
                       className="block text-sm font-medium text-foreground flex items-center gap-2"
                     >
-                      {field.icon && <span className={field.color || colorScheme.accentText}>{field.icon}</span>}
+                      {field.icon && (
+                        <span className={field.color || colorScheme.accentText}>
+                          {field.icon}
+                        </span>
+                      )}
                       <span>{field.label}</span>
-                      {field.required && <span className="text-destructive">*</span>}
+                      {field.required && (
+                        <span className="text-destructive">*</span>
+                      )}
                     </label>
                     {renderFilterField(field)}
                   </div>
@@ -441,67 +497,69 @@ export const UnifiedFilter = ({
               </div>
 
               {/* Enhanced Expandable Stats Section */}
-              {expandableStats && expandableFields.length > 0 && setIsFilterExpanded && (
-                <>
-                  <motion.button
-                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className={cn(
-                      'w-full mb-4 p-4 rounded-xl transition-all',
-                      'flex items-center justify-between',
-                      'modern-glass border border-border/30',
-                      'hover:border-accent-cyan/50',
-                      'focus:ring-2 focus:ring-accent-cyan/20'
-                    )}
-                    aria-expanded={isFilterExpanded}
-                    aria-controls="expandable-stats"
-                  >
-                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-accent-gold" />
-                      Advanced Stats Filters
-                    </span>
-                    <motion.div
-                      animate={{ rotate: isFilterExpanded ? 90 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="w-4 h-4 text-muted-foreground"
+              {expandableStats &&
+                expandableFields.length > 0 &&
+                setIsFilterExpanded && (
+                  <>
+                    <motion.button
+                      onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className={cn(
+                        "w-full mb-4 p-4 rounded-xl transition-all",
+                        "flex items-center justify-between",
+                        "modern-glass border border-border/30",
+                        "hover:border-accent-cyan/50",
+                        "focus:ring-2 focus:ring-accent-cyan/20",
+                      )}
+                      aria-expanded={isFilterExpanded}
+                      aria-controls="expandable-stats"
                     >
-                      <ChevronRight className="w-4 h-4" />
-                    </motion.div>
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {isFilterExpanded && (
+                      <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-accent-gold" />
+                        Advanced Stats Filters
+                      </span>
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                        id="expandable-stats"
+                        animate={{ rotate: isFilterExpanded ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-4 h-4 text-muted-foreground"
                       >
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-responsive mb-6 p-responsive rounded-xl modern-glass border border-border/20">
-                          {expandableFields.map((field) => (
-                            <div key={field.key} className="space-y-2">
-                              <label
-                                htmlFor={`filter-${field.key}`}
-                                className={cn(
-                                  'block text-sm font-medium flex items-center gap-2',
-                                  field.color || colorScheme.accentText
-                                )}
-                              >
-                                {field.icon}
-                                <span>{field.label}</span>
-                              </label>
-                              {renderFilterField(field)}
-                            </div>
-                          ))}
-                        </div>
+                        <ChevronRight className="w-4 h-4" />
                       </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {isFilterExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
+                          id="expandable-stats"
+                        >
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-responsive mb-6 p-responsive rounded-xl modern-glass border border-border/20">
+                            {expandableFields.map((field) => (
+                              <div key={field.key} className="space-y-2">
+                                <label
+                                  htmlFor={`filter-${field.key}`}
+                                  className={cn(
+                                    "block text-sm font-medium flex items-center gap-2",
+                                    field.color || colorScheme.accentText,
+                                  )}
+                                >
+                                  {field.icon}
+                                  <span>{field.label}</span>
+                                </label>
+                                {renderFilterField(field)}
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                )}
 
               {/* Additional Filters */}
               {additionalFilters && (
@@ -517,7 +575,11 @@ export const UnifiedFilter = ({
                   Sort by:
                 </span>
                 {sortOptions.map((option) => (
-                  <SortButton key={option.key} sortKey={option.key} icon={option.icon}>
+                  <SortButton
+                    key={option.key}
+                    sortKey={option.key}
+                    icon={option.icon}
+                  >
                     {option.label}
                   </SortButton>
                 ))}
@@ -530,4 +592,4 @@ export const UnifiedFilter = ({
   );
 };
 
-export default UnifiedFilter; 
+export default UnifiedFilter;

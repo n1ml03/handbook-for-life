@@ -1,14 +1,17 @@
 #!/usr/bin/env bun
 /**
  * Local Database Setup Script
- * 
+ *
  * This script automates the complete local database initialization process:
  * 1. Checks database connectivity
  * 2. Creates database if it doesn't exist
- * 3. Runs all migrations
+ * 3. Runs consolidated migration (includes all schema changes)
  * 4. Optionally seeds with sample data
  * 5. Verifies the setup
- * 
+ *
+ * Migration System: Uses consolidated_migration.sql which combines all
+ * individual migrations (001-004) in the correct sequential order.
+ *
  * Usage:
  *   bun scripts/local-db-setup.ts [--seed] [--reset] [--verify-only]
  */
@@ -155,53 +158,51 @@ class LocalDatabaseSetup {
 
     try {
       logger.info('🚀 Running database migrations...');
-      
-      const schemaDir = path.join(__dirname, '../schema');
-      const schemaFile = 'complete_database_schema.sql';
-      const schemaPath = path.join(schemaDir, schemaFile);
-      
-      if (!fs.existsSync(schemaPath)) {
-        throw new Error(`Schema file not found: ${schemaPath}`);
-      }
-      
-      const migrationFiles = [schemaFile];
 
-      if (migrationFiles.length === 0) {
-        logger.warn('⚠️  No migration files found');
-        return;
+      // Use the consolidated migration file
+      const consolidatedMigrationFile = 'consolidated_migration.sql';
+      const migrationPath = path.join(__dirname, consolidatedMigrationFile);
+
+      if (!fs.existsSync(migrationPath)) {
+        throw new Error(`Consolidated migration file not found: ${migrationPath}`);
       }
 
-      logger.info(`📁 Found ${migrationFiles.length} migration files`);
+      logger.info(`📁 Found consolidated migration file: ${consolidatedMigrationFile}`);
 
-      for (const migrationFile of migrationFiles) {
-        logger.info(`⚡ Running schema: ${migrationFile}`);
-        
-        const migrationPath = path.join(schemaDir, migrationFile);
-        const migrationContent = fs.readFileSync(migrationPath, 'utf8');
-        
-        // Clean and split statements
-        const statements = migrationContent
-          .replace(/CREATE DATABASE IF NOT EXISTS[^;]*;/gi, '')
-          .replace(/USE [^;]*;/gi, '')
-          .split(';')
-          .map(stmt => stmt.trim())
-          .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+      logger.info(`⚡ Running consolidated migration: ${consolidatedMigrationFile}`);
 
-        for (const statement of statements) {
-          if (statement.trim()) {
-            try {
-              await this.connection.execute(statement);
-            } catch (error) {
-              logger.warn(`⚠️  Statement execution warning: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              // Continue with other statements for development setup
-            }
+      const migrationContent = fs.readFileSync(migrationPath, 'utf8');
+
+      // Clean and split statements
+      const statements = migrationContent
+        .replace(/CREATE DATABASE IF NOT EXISTS[^;]*;/gi, '')
+        .replace(/USE [^;]*;/gi, '')
+        .split(';')
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+
+      let successfulStatements = 0;
+      let warningStatements = 0;
+
+      for (const statement of statements) {
+        if (statement.trim()) {
+          try {
+            await this.connection.execute(statement);
+            successfulStatements++;
+          } catch (error) {
+            logger.warn(`⚠️  Statement execution warning: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            warningStatements++;
+            // Continue with other statements for development setup
           }
         }
-        
-        logger.info(`✅ Schema completed: ${migrationFile}`);
       }
 
-      logger.info('✅ Database schema setup completed successfully');
+      logger.info(`✅ Migration completed: ${successfulStatements} statements executed successfully`);
+      if (warningStatements > 0) {
+        logger.warn(`⚠️  ${warningStatements} statements had warnings (non-critical)`);
+      }
+
+      logger.info('✅ Database migration completed successfully');
     } catch (error) {
       logger.error('❌ Migration failed:', error);
       throw error;

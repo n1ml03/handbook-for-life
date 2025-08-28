@@ -1,12 +1,25 @@
-import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
-import { Document, UpdateLog, Character, Swimsuit, Skill, Event, Bromide, DashboardOverviewResponse, DashboardCharacterStatsResponse } from '@/types';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from "axios";
+import {
+  Document,
+  UpdateLog,
+  Character,
+  Swimsuit,
+  Skill,
+  Event,
+  Bromide,
+  DashboardOverviewResponse,
+  DashboardCharacterStatsResponse,
+} from "@/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
@@ -15,7 +28,7 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 seconds timeout
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -24,14 +37,16 @@ apiClient.interceptors.request.use(
   (config) => {
     // Log requests in development
     if (import.meta.env.DEV) {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log(
+        `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`,
+      );
     }
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error("❌ Request Error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor for error handling and logging
@@ -46,7 +61,10 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Log errors in development
     if (import.meta.env.DEV) {
-      console.error(`❌ API Error: ${error.response?.status} ${error.config?.url}`, error);
+      console.error(
+        `❌ API Error: ${error.response?.status} ${error.config?.url}`,
+        error,
+      );
     }
 
     // Handle different error types
@@ -54,21 +72,26 @@ apiClient.interceptors.response.use(
       // Server responded with error status
       const errorData = error.response.data as any;
       throw new ApiError(
-        errorData?.error || errorData?.message || `HTTP ${error.response.status}: ${error.response.statusText}`,
-        error.response.status
+        errorData?.error ||
+          errorData?.message ||
+          `HTTP ${error.response.status}: ${error.response.statusText}`,
+        error.response.status,
       );
     } else if (error.request) {
       // Request was made but no response received
-      throw new ApiError('Network error - no response received', 0);
+      throw new ApiError("Network error - no response received", 0);
     } else {
       // Something else happened
-      throw new ApiError(error.message || 'Request setup error', 0);
+      throw new ApiError(error.message || "Request setup error", 0);
     }
-  }
+  },
 );
 
 // Enhanced API request function using Axios
-async function apiRequest<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
+async function apiRequest<T>(
+  endpoint: string,
+  options: AxiosRequestConfig = {},
+): Promise<T> {
   try {
     const response = await apiClient.request<T>({
       url: endpoint,
@@ -81,7 +104,7 @@ async function apiRequest<T>(endpoint: string, options: AxiosRequestConfig = {})
       throw error;
     }
     // This shouldn't happen due to interceptor, but just in case
-    throw new ApiError('Unexpected error', 500);
+    throw new ApiError("Unexpected error", 500);
   }
 }
 
@@ -93,10 +116,10 @@ export const documentsApi = {
     limit?: number;
     category?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Document[]; pagination: any }> {
-    return apiRequest('/documents', {
-      method: 'GET',
+    return apiRequest("/documents", {
+      method: "GET",
       params,
     });
   },
@@ -104,22 +127,27 @@ export const documentsApi = {
   // Get a specific document by ID
   async getDocument(id: string): Promise<Document> {
     return apiRequest(`/documents/${id}`, {
-      method: 'GET',
+      method: "GET",
     });
   },
 
   // Create a new document
-  async createDocument(document: Omit<Document, 'id' | 'created_at' | 'updated_at'>): Promise<Document> {
-    return apiRequest('/documents', {
-      method: 'POST',
+  async createDocument(
+    document: Omit<Document, "id" | "created_at" | "updated_at">,
+  ): Promise<Document> {
+    return apiRequest("/documents", {
+      method: "POST",
       data: document,
     });
   },
 
   // Update an existing document
-  async updateDocument(id: string, updates: Partial<Document>): Promise<Document> {
+  async updateDocument(
+    id: string,
+    updates: Partial<Document>,
+  ): Promise<Document> {
     return apiRequest(`/documents/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -127,17 +155,20 @@ export const documentsApi = {
   // Delete a document
   async deleteDocument(id: string): Promise<void> {
     return apiRequest(`/documents/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
   // Get documents by category
-  async getDocumentsByCategory(category: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: Document[]; pagination: any }> {
+  async getDocumentsByCategory(
+    category: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: Document[]; pagination: any }> {
     return this.getDocuments({ ...params, category });
   },
 };
@@ -149,10 +180,10 @@ export const updateLogsApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: UpdateLog[]; pagination: any }> {
-    return apiRequest('/update-logs', {
-      method: 'GET',
+    return apiRequest("/update-logs", {
+      method: "GET",
       params,
     });
   },
@@ -160,22 +191,27 @@ export const updateLogsApi = {
   // Get a specific update log by ID
   async getUpdateLog(id: string): Promise<UpdateLog> {
     return apiRequest(`/update-logs/${id}`, {
-      method: 'GET',
+      method: "GET",
     });
   },
 
   // Create a new update log
-  async createUpdateLog(updateLog: Omit<UpdateLog, 'id' | 'created_at' | 'updated_at'>): Promise<UpdateLog> {
-    return apiRequest('/update-logs', {
-      method: 'POST',
+  async createUpdateLog(
+    updateLog: Omit<UpdateLog, "id" | "created_at" | "updated_at">,
+  ): Promise<UpdateLog> {
+    return apiRequest("/update-logs", {
+      method: "POST",
       data: updateLog,
     });
   },
 
   // Update an existing update log
-  async updateUpdateLog(id: string, updates: Partial<UpdateLog>): Promise<UpdateLog> {
+  async updateUpdateLog(
+    id: string,
+    updates: Partial<UpdateLog>,
+  ): Promise<UpdateLog> {
     return apiRequest(`/update-logs/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -183,7 +219,7 @@ export const updateLogsApi = {
   // Delete an update log
   async deleteUpdateLog(id: string): Promise<void> {
     return apiRequest(`/update-logs/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -195,10 +231,10 @@ export const charactersApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Character[]; pagination: any }> {
-    return apiRequest('/characters', {
-      method: 'GET',
+    return apiRequest("/characters", {
+      method: "GET",
       params,
     });
   },
@@ -206,38 +242,49 @@ export const charactersApi = {
   // Get a specific character by ID
   async getCharacter(id: string): Promise<{ data: Character }> {
     return apiRequest(`/characters/${id}`, {
-      method: 'GET',
+      method: "GET",
     });
   },
 
   // Get character skills
   async getCharacterSkills(id: string): Promise<Skill[]> {
-    const response = await apiRequest<{ data: Skill[] }>(`/characters/${id}/skills`, {
-      method: 'GET',
-    });
+    const response = await apiRequest<{ data: Skill[] }>(
+      `/characters/${id}/skills`,
+      {
+        method: "GET",
+      },
+    );
     return response.data;
   },
 
   // Get character swimsuits
   async getCharacterSwimsuits(id: string): Promise<Swimsuit[]> {
-    const response = await apiRequest<{ data: Swimsuit[] }>(`/characters/${id}/swimsuits`, {
-      method: 'GET',
-    });
+    const response = await apiRequest<{ data: Swimsuit[] }>(
+      `/characters/${id}/swimsuits`,
+      {
+        method: "GET",
+      },
+    );
     return response.data;
   },
 
   // Create a new character
-  async createCharacter(character: Omit<Character, 'id' | 'created_at' | 'updated_at'>): Promise<Character> {
-    return apiRequest('/characters', {
-      method: 'POST',
+  async createCharacter(
+    character: Omit<Character, "id" | "created_at" | "updated_at">,
+  ): Promise<Character> {
+    return apiRequest("/characters", {
+      method: "POST",
       data: character,
     });
   },
 
   // Update an existing character
-  async updateCharacter(id: string, updates: Partial<Character>): Promise<Character> {
+  async updateCharacter(
+    id: string,
+    updates: Partial<Character>,
+  ): Promise<Character> {
     return apiRequest(`/characters/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -245,7 +292,7 @@ export const charactersApi = {
   // Delete a character
   async deleteCharacter(id: string): Promise<void> {
     return apiRequest(`/characters/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -257,10 +304,10 @@ export const swimsuitsApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Swimsuit[]; pagination: any }> {
-    return apiRequest('/swimsuits', {
-      method: 'GET',
+    return apiRequest("/swimsuits", {
+      method: "GET",
       params,
     });
   },
@@ -271,17 +318,22 @@ export const swimsuitsApi = {
   },
 
   // Create a new swimsuit
-  async createSwimsuit(swimsuit: Omit<Swimsuit, 'id' | 'created_at' | 'updated_at'>): Promise<Swimsuit> {
-    return apiRequest('/swimsuits', {
-      method: 'POST',
+  async createSwimsuit(
+    swimsuit: Omit<Swimsuit, "id" | "created_at" | "updated_at">,
+  ): Promise<Swimsuit> {
+    return apiRequest("/swimsuits", {
+      method: "POST",
       data: swimsuit,
     });
   },
 
   // Update an existing swimsuit
-  async updateSwimsuit(id: string, updates: Partial<Swimsuit>): Promise<Swimsuit> {
+  async updateSwimsuit(
+    id: string,
+    updates: Partial<Swimsuit>,
+  ): Promise<Swimsuit> {
     return apiRequest(`/swimsuits/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -289,7 +341,7 @@ export const swimsuitsApi = {
   // Delete a swimsuit
   async deleteSwimsuit(id: string): Promise<void> {
     return apiRequest(`/swimsuits/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -303,11 +355,11 @@ export const skillsApi = {
     search?: string;
     category?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Skill[]; pagination: any }> {
-    return apiRequest('/skills', {
-      method: 'GET',
-      params: params
+    return apiRequest("/skills", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -317,23 +369,28 @@ export const skillsApi = {
   },
 
   // Search skills
-  async searchSkills(query: string, params?: {
-    page?: number;
-    limit?: number;
-    category?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: Skill[]; pagination: any }> {
-    return apiRequest('/skills/search', {
-      method: 'GET',
-      params: { q: query, ...params }
+  async searchSkills(
+    query: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      category?: string;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: Skill[]; pagination: any }> {
+    return apiRequest("/skills/search", {
+      method: "GET",
+      params: { q: query, ...params },
     });
   },
 
   // Create a new skill
-  async createSkill(skill: Omit<Skill, 'id' | 'created_at' | 'updated_at'>): Promise<Skill> {
-    return apiRequest('/skills', {
-      method: 'POST',
+  async createSkill(
+    skill: Omit<Skill, "id" | "created_at" | "updated_at">,
+  ): Promise<Skill> {
+    return apiRequest("/skills", {
+      method: "POST",
       data: skill,
     });
   },
@@ -341,7 +398,7 @@ export const skillsApi = {
   // Update an existing skill
   async updateSkill(id: string, updates: Partial<Skill>): Promise<Skill> {
     return apiRequest(`/skills/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -349,7 +406,7 @@ export const skillsApi = {
   // Delete a skill
   async deleteSkill(id: string): Promise<void> {
     return apiRequest(`/skills/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -362,11 +419,11 @@ export const eventsApi = {
     limit?: number;
     type?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Event[]; pagination: any }> {
-    return apiRequest('/events', {
-      method: 'GET',
-      params: params
+    return apiRequest("/events", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -376,9 +433,11 @@ export const eventsApi = {
   },
 
   // Create a new event
-  async createEvent(event: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event> {
-    return apiRequest('/events', {
-      method: 'POST',
+  async createEvent(
+    event: Omit<Event, "id" | "created_at" | "updated_at">,
+  ): Promise<Event> {
+    return apiRequest("/events", {
+      method: "POST",
       data: event,
     });
   },
@@ -386,29 +445,32 @@ export const eventsApi = {
   // Update an existing event
   async updateEvent(id: string, updates: Partial<Event>): Promise<Event> {
     return apiRequest(`/events/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
 
   // Search events
-  async searchEvents(query: string, params?: {
-    page?: number;
-    limit?: number;
-    type?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: Event[]; pagination: any }> {
-    return apiRequest('/events/search', {
-      method: 'GET',
-      params: { q: query, ...params }
+  async searchEvents(
+    query: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      type?: string;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: Event[]; pagination: any }> {
+    return apiRequest("/events/search", {
+      method: "GET",
+      params: { q: query, ...params },
     });
   },
 
   // Delete an event
   async deleteEvent(id: string): Promise<void> {
     return apiRequest(`/events/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -422,11 +484,11 @@ export const itemsApi = {
     category?: string;
     rarity?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/items', {
-      method: 'GET',
-      params: params
+    return apiRequest("/items", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -442,27 +504,32 @@ export const itemsApi = {
 
   // Get currency items
   async getCurrencyItems(): Promise<any[]> {
-    const response = await apiRequest<{ data: any[] }>('/items?category=CURRENCY');
+    const response = await apiRequest<{ data: any[] }>(
+      "/items?category=CURRENCY",
+    );
     return response.data;
   },
 
   // Search items
-  async searchItems(query: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/items/search', {
-      method: 'GET',
-      params: { q: query, ...params }
+  async searchItems(
+    query: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
+    return apiRequest("/items/search", {
+      method: "GET",
+      params: { q: query, ...params },
     });
   },
 
   // Create a new item
   async createItem(item: any): Promise<any> {
-    return apiRequest('/items', {
-      method: 'POST',
+    return apiRequest("/items", {
+      method: "POST",
       data: item,
     });
   },
@@ -470,7 +537,7 @@ export const itemsApi = {
   // Update an existing item
   async updateItem(id: string, updates: any): Promise<any> {
     return apiRequest(`/items/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -478,7 +545,7 @@ export const itemsApi = {
   // Delete an item
   async deleteItem(id: string): Promise<void> {
     return apiRequest(`/items/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -494,11 +561,11 @@ export const episodesApi = {
     entityId?: number;
     search?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/episodes', {
-      method: 'GET',
-      params: params
+    return apiRequest("/episodes", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -517,44 +584,50 @@ export const episodesApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/episodes/main-story', {
-      method: 'GET',
-      params: params
+    return apiRequest("/episodes/main-story", {
+      method: "GET",
+      params: params,
     });
   },
 
   // Get character episodes
-  async getCharacterEpisodes(characterId: number, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
+  async getCharacterEpisodes(
+    characterId: number,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
     return apiRequest(`/episodes/character/${characterId}`, {
-      method: 'GET',
-      params: params
+      method: "GET",
+      params: params,
     });
   },
 
   // Search episodes
-  async searchEpisodes(query: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/episodes/search', {
-      method: 'GET',
-      params: { q: query, ...params }
+  async searchEpisodes(
+    query: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
+    return apiRequest("/episodes/search", {
+      method: "GET",
+      params: { q: query, ...params },
     });
   },
 
   // Create a new episode
   async createEpisode(episode: any): Promise<any> {
-    return apiRequest('/episodes', {
-      method: 'POST',
+    return apiRequest("/episodes", {
+      method: "POST",
       data: episode,
     });
   },
@@ -562,7 +635,7 @@ export const episodesApi = {
   // Update an existing episode
   async updateEpisode(id: string, updates: any): Promise<any> {
     return apiRequest(`/episodes/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -570,7 +643,7 @@ export const episodesApi = {
   // Delete an episode
   async deleteEpisode(id: string): Promise<void> {
     return apiRequest(`/episodes/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -582,11 +655,11 @@ export const bromidesApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: Bromide[]; pagination: any }> {
-    return apiRequest('/bromides', {
-      method: 'GET',
-      params: params
+    return apiRequest("/bromides", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -596,9 +669,11 @@ export const bromidesApi = {
   },
 
   // Create a new bromide
-  async createBromide(bromide: Omit<Bromide, 'id' | 'created_at' | 'updated_at'>): Promise<Bromide> {
-    return apiRequest('/bromides', {
-      method: 'POST',
+  async createBromide(
+    bromide: Omit<Bromide, "id" | "created_at" | "updated_at">,
+  ): Promise<Bromide> {
+    return apiRequest("/bromides", {
+      method: "POST",
       data: bromide,
     });
   },
@@ -606,7 +681,7 @@ export const bromidesApi = {
   // Update an existing bromide
   async updateBromide(id: string, updates: Partial<Bromide>): Promise<Bromide> {
     return apiRequest(`/bromides/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -614,7 +689,7 @@ export const bromidesApi = {
   // Delete a bromide
   async deleteBromide(id: string): Promise<void> {
     return apiRequest(`/bromides/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -631,11 +706,11 @@ export const shopApi = {
     item_category?: string;
     available_only?: boolean;
     sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
+    sortDirection?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/shop-listings', {
-      method: 'GET',
-      params: params
+    return apiRequest("/shop-listings", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -649,35 +724,38 @@ export const shopApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
+    sortDirection?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/shop-listings/active', {
-      method: 'GET',
-      params: params
+    return apiRequest("/shop-listings/active", {
+      method: "GET",
+      params: params,
     });
   },
 
   // Get shop listings by type
-  async getShopListingsByType(shopType: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
+  async getShopListingsByType(
+    shopType: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortDirection?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
     return apiRequest(`/shop-listings/type/${shopType}`, {
-      method: 'GET',
-      params: params
+      method: "GET",
+      params: params,
     });
   },
 
   // Get shop statistics
   async getShopStatistics(): Promise<any> {
-    return apiRequest('/shop-listings/statistics');
+    return apiRequest("/shop-listings/statistics");
   },
 
   // Get shop summary
   async getShopSummary(): Promise<any> {
-    return apiRequest('/shop-listings/summary');
+    return apiRequest("/shop-listings/summary");
   },
 };
 
@@ -688,11 +766,11 @@ export const gachasApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/gachas', {
-      method: 'GET',
-      params: params
+    return apiRequest("/gachas", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -701,11 +779,11 @@ export const gachasApi = {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/gachas/active', {
-      method: 'GET',
-      params: params
+    return apiRequest("/gachas/active", {
+      method: "GET",
+      params: params,
     });
   },
 
@@ -720,54 +798,66 @@ export const gachasApi = {
   },
 
   // Get gachas by subtype
-  async getGachasBySubtype(subtype: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
+  async getGachasBySubtype(
+    subtype: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
     return apiRequest(`/gachas/subtype/${subtype}`, {
-      method: 'GET',
-      params: params
+      method: "GET",
+      params: params,
     });
   },
 
   // Get gacha pool
-  async getGachaPool(id: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
+  async getGachaPool(
+    id: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
     return apiRequest(`/gachas/${id}/pool`, {
-      method: 'GET',
-      params: params
+      method: "GET",
+      params: params,
     });
   },
 
   // Get featured items
-  async getFeaturedItems(id: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
+  async getFeaturedItems(
+    id: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
     return apiRequest(`/gachas/${id}/featured`, {
-      method: 'GET',
-      params: params
+      method: "GET",
+      params: params,
     });
   },
 
   // Search gachas
-  async searchGachas(query: string, params?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/gachas/search', {
-      method: 'GET',
-      params: { q: query, ...params }
+  async searchGachas(
+    query: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    },
+  ): Promise<{ data: any[]; pagination: any }> {
+    return apiRequest("/gachas/search", {
+      method: "GET",
+      params: { q: query, ...params },
     });
   },
 
@@ -778,8 +868,8 @@ export const gachasApi = {
 
   // Create a new gacha
   async createGacha(gacha: any): Promise<any> {
-    return apiRequest('/gachas', {
-      method: 'POST',
+    return apiRequest("/gachas", {
+      method: "POST",
       data: gacha,
     });
   },
@@ -787,7 +877,7 @@ export const gachasApi = {
   // Update an existing gacha
   async updateGacha(id: string, updates: any): Promise<any> {
     return apiRequest(`/gachas/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       data: updates,
     });
   },
@@ -795,14 +885,14 @@ export const gachasApi = {
   // Delete a gacha
   async deleteGacha(id: string): Promise<void> {
     return apiRequest(`/gachas/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
   // Add pool item
   async addPoolItem(id: string, poolItem: any): Promise<any> {
     return apiRequest(`/gachas/${id}/pool`, {
-      method: 'POST',
+      method: "POST",
       data: poolItem,
     });
   },
@@ -810,7 +900,7 @@ export const gachasApi = {
   // Bulk add pool items
   async bulkAddPoolItems(id: string, items: any[]): Promise<any> {
     return apiRequest(`/gachas/${id}/pool/bulk`, {
-      method: 'POST',
+      method: "POST",
       data: { items },
     });
   },
@@ -818,7 +908,7 @@ export const gachasApi = {
   // Remove pool item
   async removePoolItem(id: string, poolId: string): Promise<void> {
     return apiRequest(`/gachas/${id}/pool/${poolId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -827,12 +917,12 @@ export const gachasApi = {
 export const dashboardApi = {
   // Get dashboard overview
   async getOverview(): Promise<DashboardOverviewResponse> {
-    return apiRequest('/dashboard/overview');
+    return apiRequest("/dashboard/overview");
   },
 
   // Get character statistics
   async getCharacterStats(): Promise<DashboardCharacterStatsResponse> {
-    return apiRequest('/dashboard/character-stats');
+    return apiRequest("/dashboard/character-stats");
   },
 };
 
@@ -840,7 +930,7 @@ export const dashboardApi = {
 export const systemApi = {
   // Get system stats
   async getSystemStats(): Promise<any> {
-    return apiRequest('/health/stats');
+    return apiRequest("/health/stats");
   },
 };
 
@@ -849,13 +939,13 @@ export const uploadApi = {
   // Upload screenshot
   async uploadScreenshot(file: File): Promise<any> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
-    return apiRequest('/upload/screenshot', {
-      method: 'POST',
+    return apiRequest("/upload/screenshot", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
@@ -863,16 +953,16 @@ export const uploadApi = {
   // Upload file
   async uploadFile(file: File, category?: string): Promise<any> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     if (category) {
-      formData.append('category', category);
+      formData.append("category", category);
     }
 
-    return apiRequest('/upload', {
-      method: 'POST',
+    return apiRequest("/upload", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
@@ -880,18 +970,18 @@ export const uploadApi = {
   // Upload multiple files
   async uploadMultipleFiles(files: File[], category?: string): Promise<any> {
     const formData = new FormData();
-    files.forEach(file => {
-      formData.append('files', file);
+    files.forEach((file) => {
+      formData.append("files", file);
     });
     if (category) {
-      formData.append('category', category);
+      formData.append("category", category);
     }
 
-    return apiRequest('/upload/multiple', {
-      method: 'POST',
+    return apiRequest("/upload/multiple", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
@@ -899,49 +989,52 @@ export const uploadApi = {
   // Upload CSV
   async uploadCSV(file: File, entity: string): Promise<any> {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('entity', entity);
+    formData.append("file", file);
+    formData.append("entity", entity);
 
-    return apiRequest('/upload/csv', {
-      method: 'POST',
+    return apiRequest("/upload/csv", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
 
   // Upload PDF file
-  async uploadPdf(file: File, options?: { compress?: boolean; quality?: 'low' | 'medium' | 'high' }): Promise<any> {
+  async uploadPdf(
+    file: File,
+    options?: { compress?: boolean; quality?: "low" | "medium" | "high" },
+  ): Promise<any> {
     const formData = new FormData();
-    formData.append('pdf', file);
-    
+    formData.append("pdf", file);
+
     if (options?.compress) {
-      formData.append('compress', 'true');
+      formData.append("compress", "true");
       if (options.quality) {
-        formData.append('quality', options.quality);
+        formData.append("quality", options.quality);
       }
     }
 
-    return apiRequest('/upload/pdf', {
-      method: 'POST',
+    return apiRequest("/upload/pdf", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
-  
+
   // Analyze PDF for compression recommendations
   async analyzePdf(file: File): Promise<any> {
     const formData = new FormData();
-    formData.append('pdf', file);
+    formData.append("pdf", file);
 
-    return apiRequest('/upload/pdf/analyze', {
-      method: 'POST',
+    return apiRequest("/upload/pdf/analyze", {
+      method: "POST",
       data: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   },
@@ -952,18 +1045,18 @@ export const uploadApi = {
     limit?: number;
     category?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{ data: any[]; pagination: any }> {
-    return apiRequest('/upload/history', {
-      method: 'GET',
-      params: params
+    return apiRequest("/upload/history", {
+      method: "GET",
+      params: params,
     });
   },
 
   // Delete file
   async deleteFile(filename: string): Promise<void> {
     return apiRequest(`/upload/${filename}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
