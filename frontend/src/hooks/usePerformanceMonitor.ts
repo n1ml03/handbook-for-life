@@ -29,7 +29,7 @@ export function usePerformanceMonitor() {
       const startTime = performance.now();
       activeOperations.current.set(operationId, startTime);
 
-      if (process.env.NODE_ENV === "development") {
+      if (import.meta.env.DEV) {
         console.log(
           `🚀 Started operation: ${operationName} (ID: ${operationId})`,
         );
@@ -78,7 +78,7 @@ export function usePerformanceMonitor() {
       activeOperations.current.delete(operationId);
 
       // Log performance in development
-      if (process.env.NODE_ENV === "development") {
+      if (import.meta.env.DEV) {
         const emoji = success ? "✅" : "❌";
         const durationFormatted = duration.toFixed(2);
         console.log(
@@ -371,7 +371,7 @@ export function useRenderPerformance(componentName: string) {
     if (lastRenderTime.current > 0) {
       const timeSinceLastRender = now - lastRenderTime.current;
 
-      if (process.env.NODE_ENV === "development") {
+      if (import.meta.env.DEV) {
         console.log(
           `🔄 ${componentName} render #${renderCount.current} (${timeSinceLastRender.toFixed(2)}ms since last render)`,
         );

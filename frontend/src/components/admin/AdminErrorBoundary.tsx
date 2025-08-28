@@ -51,7 +51,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
     }
 
     // In production, you might want to log this to an error reporting service
-    if (process.env.NODE_ENV === "production") {
+    if (import.meta.env.PROD) {
       // Example: logErrorToService(error, errorInfo);
     }
   }
@@ -100,7 +100,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
               </p>
 
               {/* Error Details (Development Only) */}
-              {process.env.NODE_ENV === "development" && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <details className="mb-6 text-left">
                   <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground mb-2">
                     <Bug className="w-4 h-4 inline mr-2" />
@@ -198,7 +198,7 @@ export function useErrorHandler() {
     console.error(`Error in ${context || "Admin Panel"}:`, error);
 
     // In production, send to error reporting service
-    if (process.env.NODE_ENV === "production") {
+    if (import.meta.env.PROD) {
       // Example: errorReportingService.captureException(error, { context });
     }
   };

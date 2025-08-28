@@ -689,7 +689,7 @@ const AdminPage = () => {
                 )}
 
                 {/* Performance Stats (Development Only) */}
-                {process.env.NODE_ENV === "development" &&
+                {import.meta.env.DEV &&
                   stats.totalOperations > 0 && (
                     <div className="text-xs text-muted-foreground">
                       <span>Ops: {stats.totalOperations}</span>

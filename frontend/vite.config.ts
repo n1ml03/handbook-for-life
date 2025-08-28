@@ -48,9 +48,10 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: process.env.NODE_ENV !== 'production',
+    sourcemap: mode !== 'production',
     copyPublicDir: true,
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: {
           // Vendor chunks for better caching
@@ -88,7 +89,8 @@ export default defineConfig(({ mode }) => {
     force: true, // Force re-optimization to ensure React 19 compatibility
   },
   define: {
-    'process.env': {},
+    // Let Vite handle process.env automatically
+    // 'process.env': {},
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' }
