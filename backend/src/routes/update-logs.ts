@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { validate, validateQuery } from '../middleware/validation';
+import { validate, validateQuery, asyncHandler } from '../middleware/middleware';
 import { schemas } from '../utils/ValidationSchemas';
-import { asyncHandler } from '../middleware/errorHandler';
-import { UpdateLogService } from '../services/UpdateLogService';
+import { UpdateLogModel } from '../models/UpdateLogModel';
 import logger from '../config/logger';
 
 const router = Router();
-const updateLogService = new UpdateLogService();
+const updateLogModel = new UpdateLogModel();
 
 // GET /api/update-logs - Get all update logs with optional pagination and filtering
 router.get('/', 
@@ -23,10 +22,10 @@ router.get('/',
       page: parseInt(page as string),
       limit: parseInt(limit as string),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     };
 
-    const result = await updateLogService.getUpdateLogs(options);
+    const result = await updateLogModel.findAll(options);
 
     logger.info(`Retrieved ${result.data.length} update logs for page ${page}`);
 
@@ -37,11 +36,11 @@ router.get('/',
 
 
 // GET /api/update-logs/:id - Get a specific update log
-router.get('/:id', 
+router.get('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updateLog = await updateLogService.getUpdateLogById(id);
-    
+    const updateLog = await updateLogModel.findById(parseInt(id));
+
     logger.info(`Retrieved update log: ${updateLog.title}`);
 
     res.success(updateLog);
@@ -90,8 +89,8 @@ router.post('/',
       }
     };
 
-    const updateLog = await updateLogService.createUpdateLog(newUpdateLog);
-    
+    const updateLog = await updateLogModel.create(newUpdateLog);
+
     logger.info(`Created update log: ${updateLog.title}`);
 
     res.status(201).json({
@@ -139,8 +138,8 @@ router.put('/:id',
       updates.date = new Date(updates.date);
     }
 
-    const updateLog = await updateLogService.updateUpdateLog(id, updates);
-    
+    const updateLog = await updateLogModel.update(parseInt(id), updates);
+
     logger.info(`Updated update log: ${updateLog.title}`);
 
     res.updated(updateLog, 'Update log updated successfully');
@@ -168,7 +167,7 @@ router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    await updateLogService.deleteUpdateLog(id);
+    await updateLogModel.delete(parseInt(id));
 
     logger.info(`Deleted update log with ID: ${id}`);
 

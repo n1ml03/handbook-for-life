@@ -292,48 +292,18 @@ export default function SwimsuitPage() {
       ...swimsuit,
       id: String(swimsuit.id),
       name: swimsuit.name_en || `Swimsuit ${swimsuit.id}`,
-      description: swimsuit.description_en,
+      description: "", // description_en field removed in denormalized schema
       // Use existing character data from API response
       character: swimsuit.character || {
-        name_en: `Character ${swimsuit.character_id}`,
+        name_en: `Character ${swimsuit.character_key}`, // Changed from character_id to character_key
       },
-      // Add stats based on suit_type and total_stats_awakened
-      stats: (() => {
-        const total = swimsuit.total_stats_awakened || 0;
-        const base = Math.floor(total / 4);
-        switch (swimsuit.suit_type) {
-          case "POW":
-            return {
-              pow: Math.floor(total * 0.4),
-              tec: base,
-              stm: base,
-              apl: base,
-            };
-          case "TEC":
-            return {
-              pow: base,
-              tec: Math.floor(total * 0.4),
-              stm: base,
-              apl: base,
-            };
-          case "STM":
-            return {
-              pow: base,
-              tec: base,
-              stm: Math.floor(total * 0.4),
-              apl: base,
-            };
-          case "APL":
-            return {
-              pow: base,
-              tec: base,
-              stm: base,
-              apl: Math.floor(total * 0.4),
-            };
-          default:
-            return { pow: base, tec: base, stm: base, apl: base };
-        }
-      })(),
+      // Use actual stat fields from denormalized schema
+      stats: {
+        pow: swimsuit.max_pow || swimsuit.base_pow || 0,
+        tec: swimsuit.max_tec || swimsuit.base_tec || 0,
+        stm: swimsuit.max_stm || swimsuit.base_stm || 0,
+        apl: swimsuit.max_apl || swimsuit.base_apl || 0,
+      },
       // Add empty skills array
       skills: [],
     }));

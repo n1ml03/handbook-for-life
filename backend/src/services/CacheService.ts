@@ -1,107 +1,88 @@
+/**
+ * Simple in-memory cache service
+ * For local development - not needed for production with proper caching layers
+ */
+
 import logger from '../config/logger';
 
-/**
- * Simple in-memory cache service for development
- * In production, this should be replaced with Redis or similar
- */
-export class CacheService {
-  private static cache = new Map<string, { data: any; expiry: number }>();
-  private static readonly DEFAULT_TTL = 300; // 5 minutes in seconds
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+class CacheServiceClass {
+  private cache: Map<string, CacheEntry<any>>;
+  private defaultTTL: number;
+  private cleanupInterval: NodeJS.Timeout | null;
+
+  constructor() {
+    this.cache = new Map();
+    this.defaultTTL = 5 * 60 * 1000; // 5 minutes default
+    this.cleanupInterval = null;
+  }
 
   /**
-   * Get cached data by key
+   * Initialize the cache service
    */
-  static async get<T>(key: string): Promise<T | null> {
-    try {
-      const cached = this.cache.get(key);
-      
-      if (!cached) {
-        return null;
-      }
+  initialize(): void {
+    logger.info('Cache service initialized (in-memory)');
+    
+    // Start cleanup interval to remove expired entries
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 60 * 1000); // Run cleanup every minute
+  }
 
-      // Check if cache has expired
-      if (Date.now() > cached.expiry) {
-        this.cache.delete(key);
-        logger.debug('Cache expired and removed', { key });
-        return null;
-      }
-
-      logger.debug('Cache hit', { key });
-      return cached.data as T;
-    } catch (error) {
-      logger.error('Cache get error:', { key, error });
+  /**
+   * Get a value from cache
+   */
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    
+    if (!entry) {
       return null;
     }
+
+    // Check if entry has expired
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return entry.data as T;
   }
 
   /**
-   * Set cached data with TTL
+   * Set a value in cache
    */
-  static async set<T>(key: string, data: T, ttlSeconds: number = this.DEFAULT_TTL): Promise<void> {
-    try {
-      const expiry = Date.now() + (ttlSeconds * 1000);
-      this.cache.set(key, { data, expiry });
-      
-      logger.debug('Cache set', { key, ttlSeconds, expiry: new Date(expiry).toISOString() });
-    } catch (error) {
-      logger.error('Cache set error:', { key, error });
-    }
+  set<T>(key: string, data: T, ttl?: number): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl: ttl || this.defaultTTL
+    });
   }
 
   /**
-   * Delete cached data by key
+   * Delete a value from cache
    */
-  static async delete(key: string): Promise<void> {
-    try {
-      const deleted = this.cache.delete(key);
-      if (deleted) {
-        logger.debug('Cache deleted', { key });
-      }
-    } catch (error) {
-      logger.error('Cache delete error:', { key, error });
-    }
+  delete(key: string): boolean {
+    return this.cache.delete(key);
   }
 
   /**
-   * Clear all cached data matching pattern
+   * Clear all cache entries
    */
-  static async invalidate(pattern: string): Promise<void> {
-    try {
-      const keysToDelete: string[] = [];
-      
-      for (const key of this.cache.keys()) {
-        if (key.includes(pattern)) {
-          keysToDelete.push(key);
-        }
-      }
-
-      for (const key of keysToDelete) {
-        this.cache.delete(key);
-      }
-
-      logger.debug('Cache invalidated', { pattern, deletedKeys: keysToDelete.length });
-    } catch (error) {
-      logger.error('Cache invalidation error:', { pattern, error });
-    }
-  }
-
-  /**
-   * Clear all cached data
-   */
-  static async clear(): Promise<void> {
-    try {
-      const size = this.cache.size;
-      this.cache.clear();
-      logger.debug('Cache cleared', { previousSize: size });
-    } catch (error) {
-      logger.error('Cache clear error:', error);
-    }
+  clear(): void {
+    this.cache.clear();
+    logger.info('Cache cleared');
   }
 
   /**
    * Get cache statistics
    */
-  static getStats(): { size: number; keys: string[] } {
+  getStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
       keys: Array.from(this.cache.keys())
@@ -111,79 +92,35 @@ export class CacheService {
   /**
    * Clean up expired entries
    */
-  static cleanup(): void {
-    try {
-      const now = Date.now();
-      const expiredKeys: string[] = [];
+  private cleanup(): void {
+    const now = Date.now();
+    let removed = 0;
 
-      for (const [key, value] of this.cache.entries()) {
-        if (now > value.expiry) {
-          expiredKeys.push(key);
-        }
-      }
-
-      for (const key of expiredKeys) {
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
         this.cache.delete(key);
+        removed++;
       }
+    }
 
-      if (expiredKeys.length > 0) {
-        logger.debug('Cache cleanup completed', { expiredKeys: expiredKeys.length });
-      }
-    } catch (error) {
-      logger.error('Cache cleanup error:', error);
+    if (removed > 0) {
+      logger.debug(`Cache cleanup: removed ${removed} expired entries`);
     }
   }
 
   /**
-   * Initialize cache service with periodic cleanup
+   * Shutdown the cache service
    */
-  static initialize(): void {
-    logger.info('Cache service initialized (in-memory)');
-    
-    // Run cleanup every 5 minutes
-    setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+  shutdown(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.clear();
+    logger.info('Cache service shutdown');
   }
 }
 
-/**
- * Cache key generators for consistent naming
- */
-export const CacheKeys = {
-  dashboard: {
-    overview: () => 'dashboard:overview',
-    characterStats: () => 'dashboard:character-stats',
-  },
-  characters: {
-    list: (page: number, limit: number) => `characters:list:${page}:${limit}`,
-    detail: (id: string) => `characters:detail:${id}`,
-  },
-  swimsuits: {
-    list: (page: number, limit: number) => `swimsuits:list:${page}:${limit}`,
-    detail: (id: string) => `swimsuits:detail:${id}`,
-  },
-  skills: {
-    list: (page: number, limit: number) => `skills:list:${page}:${limit}`,
-    detail: (id: string) => `skills:detail:${id}`,
-  },
-  items: {
-    list: (page: number, limit: number, category?: string) => 
-      `items:list:${page}:${limit}${category ? `:${category}` : ''}`,
-    detail: (id: string) => `items:detail:${id}`,
-  },
-  bromides: {
-    list: (page: number, limit: number) => `bromides:list:${page}:${limit}`,
-    detail: (id: string) => `bromides:detail:${id}`,
-  },
-};
+// Export singleton instance
+export const CacheService = new CacheServiceClass();
 
-/**
- * Cache TTL constants (in seconds)
- */
-export const CacheTTL = {
-  SHORT: 60,        // 1 minute
-  MEDIUM: 300,      // 5 minutes
-  LONG: 1800,       // 30 minutes
-  VERY_LONG: 3600,  // 1 hour
-};

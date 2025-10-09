@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AppError } from '../middleware/errorHandler';
+import { AppError } from '../middleware/middleware';
 
 /**
  * Optimized validation system using Zod for better type safety and performance
@@ -389,11 +389,22 @@ export const shopListingSchemas = {
 // ============================================================================
 
 // Export individual schemas for legacy support
+// Common parameter schemas
+const idParam = z.object({
+  id: z.coerce.number().int().positive('ID must be a positive integer')
+});
+
+const uniqueKeyParam = z.object({
+  unique_key: uniqueKeyPattern
+});
+
 export const schemas = {
   pagination: paginationSchema,
   search: searchSchema,
   dateRange: dateRangeSchema,
-  
+  idParam,
+  uniqueKeyParam,
+
   // Entity schemas
   characterSchemas,
   swimsuitSchemas,
@@ -406,16 +417,28 @@ export const schemas = {
   episodeSchemas,
   updateLogSchemas,
   shopListingSchemas,
-  
+
   // Legacy individual schemas (deprecated - use entitySchemas instead)
   createCharacter: characterSchemas.create,
   updateCharacter: characterSchemas.update,
   queryCharacter: characterSchemas.query,
-  
+
+  createSkill: skillSchemas.create,
+  updateSkill: skillSchemas.update,
+  querySkill: skillSchemas.query,
+
+  createBromide: bromideSchemas.create,
+  updateBromide: bromideSchemas.update,
+  queryBromide: bromideSchemas.query,
+
+  createGacha: gachaSchemas.create,
+  updateGacha: gachaSchemas.update,
+  queryGacha: gachaSchemas.query,
+
   createDocument: documentSchemas.create,
   updateDocument: documentSchemas.update,
   queryDocument: documentSchemas.query,
-  
+
   createEvent: eventSchemas.create,
   updateEvent: eventSchemas.update,
   queryEvent: eventSchemas.query,

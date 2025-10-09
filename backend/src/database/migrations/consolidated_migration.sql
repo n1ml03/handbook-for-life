@@ -28,44 +28,126 @@ CREATE TABLE characters (
     name_cn VARCHAR(100) NOT NULL COMMENT 'Character name (Simplified Chinese)',
     name_tw VARCHAR(100) NOT NULL COMMENT 'Character name (Traditional Chinese)',
     name_kr VARCHAR(100) NOT NULL COMMENT 'Character name (Korean)',
-    birthday DATE COMMENT 'Character''s date of birth',
-    height SMALLINT UNSIGNED COMMENT 'Height (cm)',
-    measurements VARCHAR(20) COMMENT 'Three sizes (B/W/H)',
-    blood_type VARCHAR(5) COMMENT 'Blood type',
-    voice_actor_jp VARCHAR(100) COMMENT 'Voice actor name (Japanese)',
-    profile_image_data LONGBLOB COMMENT 'Binary data of the character''s profile image',
-    profile_image_mime_type VARCHAR(50) COMMENT 'MIME type of the profile image (e.g., image/jpeg, image/png)',
-    is_active BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether the character is still active in the game',
-    game_version VARCHAR(30) NULL COMMENT 'Game version when the character was added',
-    INDEX idx_birthday (birthday) COMMENT 'Index for finding upcoming birthdays',
-    INDEX idx_game_version (game_version)
+    age_jp VARCHAR(50) COMMENT 'Age (Japanese)',
+    age_en VARCHAR(50) COMMENT 'Age (English)',
+    age_cn VARCHAR(50) COMMENT 'Age (Simplified Chinese)',
+    age_tw VARCHAR(50) COMMENT 'Age (Traditional Chinese)',
+    age_kr VARCHAR(50) COMMENT 'Age (Korean)',
+    birthday_jp VARCHAR(100) COMMENT 'Birthday (Japanese)',
+    birthday_en VARCHAR(100) COMMENT 'Birthday (English)',
+    birthday_cn VARCHAR(100) COMMENT 'Birthday (Simplified Chinese)',
+    birthday_tw VARCHAR(100) COMMENT 'Birthday (Traditional Chinese)',
+    birthday_kr VARCHAR(100) COMMENT 'Birthday (Korean)',
+    height_jp VARCHAR(50) COMMENT 'Height (Japanese)',
+    height_en VARCHAR(50) COMMENT 'Height (English)',
+    height_cn VARCHAR(50) COMMENT 'Height (Simplified Chinese)',
+    height_tw VARCHAR(50) COMMENT 'Height (Traditional Chinese)',
+    height_kr VARCHAR(50) COMMENT 'Height (Korean)',
+    measurements_jp VARCHAR(50) COMMENT 'Measurements (Japanese)',
+    measurements_en VARCHAR(50) COMMENT 'Measurements (English)',
+    measurements_cn VARCHAR(50) COMMENT 'Measurements (Simplified Chinese)',
+    measurements_tw VARCHAR(50) COMMENT 'Measurements (Traditional Chinese)',
+    measurements_kr VARCHAR(50) COMMENT 'Measurements (Korean)',
+    blood_jp VARCHAR(20) COMMENT 'Blood type (Japanese)',
+    blood_en VARCHAR(20) COMMENT 'Blood type (English)',
+    blood_cn VARCHAR(20) COMMENT 'Blood type (Simplified Chinese)',
+    blood_tw VARCHAR(20) COMMENT 'Blood type (Traditional Chinese)',
+    blood_kr VARCHAR(20) COMMENT 'Blood type (Korean)',
+    job_jp VARCHAR(150) COMMENT 'Job/Occupation (Japanese)',
+    job_en VARCHAR(150) COMMENT 'Job/Occupation (English)',
+    job_cn VARCHAR(150) COMMENT 'Job/Occupation (Simplified Chinese)',
+    job_tw VARCHAR(150) COMMENT 'Job/Occupation (Traditional Chinese)',
+    job_kr VARCHAR(150) COMMENT 'Job/Occupation (Korean)',
+    hobby_jp VARCHAR(255) COMMENT 'Hobby (Japanese)',
+    hobby_en VARCHAR(255) COMMENT 'Hobby (English)',
+    hobby_cn VARCHAR(255) COMMENT 'Hobby (Simplified Chinese)',
+    hobby_tw VARCHAR(255) COMMENT 'Hobby (Traditional Chinese)',
+    hobby_kr VARCHAR(255) COMMENT 'Hobby (Korean)',
+    food_jp VARCHAR(255) COMMENT 'Favorite food (Japanese)',
+    food_en VARCHAR(255) COMMENT 'Favorite food (English)',
+    food_cn VARCHAR(255) COMMENT 'Favorite food (Simplified Chinese)',
+    food_tw VARCHAR(255) COMMENT 'Favorite food (Traditional Chinese)',
+    food_kr VARCHAR(255) COMMENT 'Favorite food (Korean)',
+    color_jp VARCHAR(100) COMMENT 'Favorite color (Japanese)',
+    color_en VARCHAR(100) COMMENT 'Favorite color (English)',
+    color_cn VARCHAR(100) COMMENT 'Favorite color (Simplified Chinese)',
+    color_tw VARCHAR(100) COMMENT 'Favorite color (Traditional Chinese)',
+    color_kr VARCHAR(100) COMMENT 'Favorite color (Korean)',
+    cast_jp VARCHAR(150) COMMENT 'Voice actor/Cast (Japanese)',
+    cast_en VARCHAR(150) COMMENT 'Voice actor/Cast (English)',
+    cast_cn VARCHAR(150) COMMENT 'Voice actor/Cast (Simplified Chinese)',
+    cast_tw VARCHAR(150) COMMENT 'Voice actor/Cast (Traditional Chinese)',
+    cast_kr VARCHAR(150) COMMENT 'Voice actor/Cast (Korean)'
 ) ENGINE=InnoDB COMMENT='Stores basic information about the characters.';
 
 CREATE TABLE swimsuits (
     id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, the primary key for the swimsuit',
-    character_id SMALLINT UNSIGNED NOT NULL COMMENT 'Foreign key, links to the owning character',
     unique_key VARCHAR(150) NOT NULL UNIQUE COMMENT 'Text-based unique identifier, immutable',
+    unique_msg_key VARCHAR(150) COMMENT 'Unique message key',
     name_jp VARCHAR(255) NOT NULL COMMENT 'Swimsuit name (Japanese)',
     name_en VARCHAR(255) NOT NULL COMMENT 'Swimsuit name (English)',
     name_cn VARCHAR(255) NOT NULL COMMENT 'Swimsuit name (Simplified Chinese)',
     name_tw VARCHAR(255) NOT NULL COMMENT 'Swimsuit name (Traditional Chinese)',
     name_kr VARCHAR(255) NOT NULL COMMENT 'Swimsuit name (Korean)',
-    description_en TEXT COMMENT 'Swimsuit description (English)',
-    rarity ENUM('N','R','SR','SSR', 'SSR+') NOT NULL COMMENT 'Rarity',
-    suit_type ENUM('POW', 'TEC', 'STM', 'APL', 'N/A') NOT NULL COMMENT 'Main stat type',
-    total_stats_awakened SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Total stats after being fully awakened',
-    has_malfunction BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether it has a Malfunction effect',
-    is_limited BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether it is a time-limited swimsuit',
-    release_date_gl DATE COMMENT 'Release date on the Global server',
-    game_version VARCHAR(30) NULL COMMENT 'Game version when the swimsuit was released',
-    image_before_data LONGBLOB COMMENT 'Binary data of the before malfunction image',
-    image_before_mime_type VARCHAR(50) COMMENT 'MIME type of the before malfunction image',
-    image_after_data LONGBLOB COMMENT 'Binary data of the after malfunction image',
-    image_after_mime_type VARCHAR(50) COMMENT 'MIME type of the after malfunction image',
-    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-    INDEX idx_char_rarity_type (character_id, rarity, suit_type) COMMENT 'Composite index for powerful filtering',
-    INDEX idx_stats_awakened (total_stats_awakened DESC) COMMENT 'Optimized for sorting by stats',
-    INDEX idx_game_version (game_version)
+    character_key VARCHAR(100) COMMENT 'Character unique key reference',
+    rarity VARCHAR(20) COMMENT 'Rarity level',
+    attribute VARCHAR(50) COMMENT 'Swimsuit attribute',
+    max_level SMALLINT UNSIGNED COMMENT 'Maximum level',
+    base_pow SMALLINT UNSIGNED COMMENT 'Base POW stat',
+    max_pow SMALLINT UNSIGNED COMMENT 'Maximum POW stat',
+    pow_growth DECIMAL(10,2) COMMENT 'POW growth rate',
+    base_tec SMALLINT UNSIGNED COMMENT 'Base TEC stat',
+    max_tex SMALLINT UNSIGNED COMMENT 'Maximum TEC stat',
+    tec_growth DECIMAL(10,2) COMMENT 'TEC growth rate',
+    base_stm SMALLINT UNSIGNED COMMENT 'Base STM stat',
+    max_stm SMALLINT UNSIGNED COMMENT 'Maximum STM stat',
+    stm_growth DECIMAL(10,2) COMMENT 'STM growth rate',
+    base_apl SMALLINT UNSIGNED COMMENT 'Base APL stat',
+    max_apl SMALLINT UNSIGNED COMMENT 'Maximum APL stat',
+    apl_growth DECIMAL(10,2) COMMENT 'APL growth rate',
+    skill_id_1 INT UNSIGNED COMMENT 'Skill 1 ID',
+    skill_key_1 VARCHAR(120) COMMENT 'Skill 1 unique key',
+    skill_name_jp_1 VARCHAR(150) COMMENT 'Skill 1 name (Japanese)',
+    skill_name_en_1 VARCHAR(150) COMMENT 'Skill 1 name (English)',
+    skill_name_cn_1 VARCHAR(150) COMMENT 'Skill 1 name (Simplified Chinese)',
+    skill_name_tw_1 VARCHAR(150) COMMENT 'Skill 1 name (Traditional Chinese)',
+    skill_name_kr_1 VARCHAR(150) COMMENT 'Skill 1 name (Korean)',
+    skill_des_1 TEXT COMMENT 'Skill 1 description',
+    skill_des_jp_1 TEXT COMMENT 'Skill 1 description (Japanese)',
+    skill_des_en_1 TEXT COMMENT 'Skill 1 description (English)',
+    skill_des_cn_1 TEXT COMMENT 'Skill 1 description (Simplified Chinese)',
+    skill_des_tw_1 TEXT COMMENT 'Skill 1 description (Traditional Chinese)',
+    skill_des_kr_1 TEXT COMMENT 'Skill 1 description (Korean)',
+    skill_id_2 INT UNSIGNED COMMENT 'Skill 2 ID',
+    skill_key_2 VARCHAR(120) COMMENT 'Skill 2 unique key',
+    skill_name_jp_2 VARCHAR(150) COMMENT 'Skill 2 name (Japanese)',
+    skill_name_en_2 VARCHAR(150) COMMENT 'Skill 2 name (English)',
+    skill_name_cn_2 VARCHAR(150) COMMENT 'Skill 2 name (Simplified Chinese)',
+    skill_name_tw_2 VARCHAR(150) COMMENT 'Skill 2 name (Traditional Chinese)',
+    skill_name_kr_2 VARCHAR(150) COMMENT 'Skill 2 name (Korean)',
+    skill_des_2 TEXT COMMENT 'Skill 2 description',
+    skill_des_jp_2 TEXT COMMENT 'Skill 2 description (Japanese)',
+    skill_des_en_2 TEXT COMMENT 'Skill 2 description (English)',
+    skill_des_cn_2 TEXT COMMENT 'Skill 2 description (Simplified Chinese)',
+    skill_des_tw_2 TEXT COMMENT 'Skill 2 description (Traditional Chinese)',
+    skill_des_kr_2 TEXT COMMENT 'Skill 2 description (Korean)',
+    skill_id_3 INT UNSIGNED COMMENT 'Skill 3 ID',
+    skill_key_3 VARCHAR(120) COMMENT 'Skill 3 unique key',
+    skill_name_jp_3 VARCHAR(150) COMMENT 'Skill 3 name (Japanese)',
+    skill_name_en_3 VARCHAR(150) COMMENT 'Skill 3 name (English)',
+    skill_name_cn_3 VARCHAR(150) COMMENT 'Skill 3 name (Simplified Chinese)',
+    skill_name_tw_3 VARCHAR(150) COMMENT 'Skill 3 name (Traditional Chinese)',
+    skill_name_kr_3 VARCHAR(150) COMMENT 'Skill 3 name (Korean)',
+    skill_des_3 TEXT COMMENT 'Skill 3 description',
+    skill_des_jp_3 TEXT COMMENT 'Skill 3 description (Japanese)',
+    skill_des_en_3 TEXT COMMENT 'Skill 3 description (English)',
+    skill_des_cn_3 TEXT COMMENT 'Skill 3 description (Simplified Chinese)',
+    skill_des_tw_3 TEXT COMMENT 'Skill 3 description (Traditional Chinese)',
+    skill_des_kr_3 TEXT COMMENT 'Skill 3 description (Korean)',
+    bromide VARCHAR(255) COMMENT 'Bromide reference',
+    cossbreak_bromide VARCHAR(255) COMMENT 'Cossbreak bromide reference',
+    INDEX idx_character_key (character_key) COMMENT 'Index for character key lookups',
+    INDEX idx_rarity (rarity) COMMENT 'Index for rarity filtering'
 ) ENGINE=InnoDB COMMENT='Library of swimsuits, used for the SwimsuitPage.';
 
 CREATE TABLE skills (
@@ -87,20 +169,16 @@ CREATE TABLE skills (
 CREATE TABLE items (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, the primary key for the item',
     unique_key VARCHAR(120) NOT NULL UNIQUE COMMENT 'Text-based unique identifier, immutable',
+    type VARCHAR(100) COMMENT 'Item type/category',
     name_jp VARCHAR(150) NOT NULL COMMENT 'Item name (Japanese)',
     name_en VARCHAR(150) NOT NULL COMMENT 'Item name (English)',
     name_cn VARCHAR(150) NOT NULL COMMENT 'Item name (Simplified Chinese)',
     name_tw VARCHAR(150) NOT NULL COMMENT 'Item name (Traditional Chinese)',
     name_kr VARCHAR(150) NOT NULL COMMENT 'Item name (Korean)',
-    description_en TEXT COMMENT 'Item description (English)',
-    source_description_en TEXT COMMENT 'Description of the item''s source (English)',
-    item_category ENUM('CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL') NOT NULL COMMENT 'Main item category classification',
-    rarity ENUM('N','R','SR','SSR') NOT NULL COMMENT 'Rarity',
-    icon_data LONGBLOB COMMENT 'Binary data of the item icon image',
-    icon_mime_type VARCHAR(50) COMMENT 'MIME type of the icon image',
-    game_version VARCHAR(30) NULL COMMENT 'Game version when the item was introduced',
-    INDEX idx_item_category (item_category) COMMENT 'Optimized for filtering items',
-    INDEX idx_game_version (game_version)
+    description TEXT COMMENT 'Item description',
+    icon_small VARCHAR(255) COMMENT 'Small icon path or URL',
+    icon_large VARCHAR(255) COMMENT 'Large icon path or URL',
+    INDEX idx_type (type) COMMENT 'Optimized for filtering items by type'
 ) ENGINE=InnoDB COMMENT='A comprehensive table of all items, used across multiple pages.';
 
 CREATE TABLE bromides (
@@ -124,19 +202,17 @@ CREATE TABLE bromides (
 
 CREATE TABLE episodes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, the primary key for the episode',
+    name_jp VARCHAR(255) NOT NULL COMMENT 'Episode name (Japanese)',
+    name_en VARCHAR(255) NOT NULL COMMENT 'Episode name (English)',
+    name_cn VARCHAR(255) NOT NULL COMMENT 'Episode name (Simplified Chinese)',
+    name_tw VARCHAR(255) NOT NULL COMMENT 'Episode name (Traditional Chinese)',
+    name_kr VARCHAR(255) NOT NULL COMMENT 'Episode name (Korean)',
+    type VARCHAR(100) COMMENT 'Episode type',
     unique_key VARCHAR(200) NOT NULL UNIQUE COMMENT 'Text-based unique identifier, immutable',
-    title_jp VARCHAR(255) NOT NULL COMMENT 'Episode title (Japanese)',
-    title_en VARCHAR(255) NOT NULL COMMENT 'Episode title (English)',
-    title_cn VARCHAR(255) NOT NULL COMMENT 'Episode title (Simplified Chinese)',
-    title_tw VARCHAR(255) NOT NULL COMMENT 'Episode title (Traditional Chinese)',
-    title_kr VARCHAR(255) NOT NULL COMMENT 'Episode title (Korean)',
-    unlock_condition_en TEXT COMMENT 'Unlock condition (English)',
-    episode_type ENUM('MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM') NOT NULL COMMENT 'Story type',
-    related_entity_type VARCHAR(64) COMMENT 'Table name of the related entity',
-    related_entity_id INT UNSIGNED COMMENT 'ID of the related entity',
-    game_version VARCHAR(30) NULL COMMENT 'Game version when the episode was released',
-    INDEX idx_episode_type_entity (episode_type, related_entity_type, related_entity_id) COMMENT 'Optimized for filtering stories',
-    INDEX idx_game_version (game_version)
+    release_data DATE COMMENT 'Release date',
+    release_version VARCHAR(50) COMMENT 'Release version',
+    INDEX idx_type (type) COMMENT 'Index for episode type filtering',
+    INDEX idx_release_data (release_data) COMMENT 'Index for release date sorting'
 ) ENGINE=InnoDB COMMENT='Data for story episodes, used for the MemoriesPage.';
 
 -- ============================================================================
@@ -178,18 +254,9 @@ CREATE TABLE gachas (
     INDEX idx_game_version (game_version)
 ) ENGINE=InnoDB COMMENT='Data for Gacha banners, used for the GachaPage.';
 
-CREATE TABLE shop_listings (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, primary key',
-    shop_type ENUM('EVENT', 'VIP', 'GENERAL', 'CURRENCY') NOT NULL COMMENT 'Shop type',
-    item_id INT UNSIGNED NOT NULL COMMENT 'Item being sold',
-    cost_currency_item_id INT UNSIGNED NOT NULL COMMENT 'Currency type used for purchase',
-    cost_amount INT UNSIGNED NOT NULL COMMENT 'Amount required for purchase',
-    start_date DATETIME COMMENT 'Sale start date',
-    end_date DATETIME COMMENT 'Sale end date',
-    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
-    FOREIGN KEY (cost_currency_item_id) REFERENCES items(id) ON DELETE CASCADE,
-    INDEX idx_shop_type_dates (shop_type, start_date, end_date) COMMENT 'Optimized for filtering shops by type and time'
-) ENGINE=InnoDB COMMENT='Data for items in the in-game shop, used for the ShopPage.';
+-- ============================================================================
+-- 3. DOCUMENT MANAGEMENT TABLES (with PDF Support)
+-- ============================================================================
 
 CREATE TABLE documents (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, the primary key for the document',
@@ -222,30 +289,6 @@ CREATE TABLE update_logs (
     INDEX idx_date (date DESC) COMMENT 'Optimized for fetching updates by date',
     INDEX idx_version (version) COMMENT 'Index for version lookups'
 ) ENGINE=InnoDB COMMENT='Stores update logs and changelogs.';
-
--- ============================================================================
--- 3. LINKING TABLES
--- ============================================================================
-
-CREATE TABLE swimsuit_skills (
-    swimsuit_id MEDIUMINT UNSIGNED NOT NULL COMMENT 'Foreign key, links to a swimsuit',
-    skill_id INT UNSIGNED NOT NULL COMMENT 'Foreign key, links to a skill',
-    skill_slot ENUM('ACTIVE', 'PASSIVE_1', 'PASSIVE_2', 'POTENTIAL_1', 'POTENTIAL_2', 'POTENTIAL_3', 'POTENTIAL_4') NOT NULL COMMENT 'The position of the skill on the swimsuit',
-    PRIMARY KEY (swimsuit_id, skill_slot),
-    FOREIGN KEY (swimsuit_id) REFERENCES swimsuits(id) ON DELETE CASCADE,
-    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
-) ENGINE=InnoDB COMMENT='Links Swimsuits and Skills.';
-
-CREATE TABLE gacha_pools (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Auto-incrementing ID, primary key',
-    gacha_id INT UNSIGNED NOT NULL COMMENT 'Foreign key, indicates which gacha this item belongs to',
-    pool_item_type ENUM('SWIMSUIT', 'BROMIDE', 'ITEM') NOT NULL COMMENT 'Type of item in the pool',
-    item_id INT UNSIGNED NOT NULL COMMENT 'ID of the corresponding item (ID from the swimsuits, bromides, or items table)',
-    drop_rate DECIMAL(6,4) NOT NULL COMMENT 'Drop rate',
-    is_featured BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether the item is featured (rate-up)',
-    FOREIGN KEY (gacha_id) REFERENCES gachas(id) ON DELETE CASCADE,
-    INDEX idx_gacha_id (gacha_id) COMMENT 'Optimized for fetching the entire pool of a gacha'
-) ENGINE=InnoDB COMMENT='Item pool for each Gacha.';
 
 -- ============================================================================
 -- 4. VIEWS - Optimized for HomePage Queries

@@ -1,16 +1,15 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
-import { Item, NewItem, ItemCategory, ItemRarity } from '../types/database';
+import { Item } from '../types/database';
+import { RowDataPacket } from 'mysql2';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
 
-export class ItemModel extends BaseModel<Item, NewItem> {
+export class ItemModel extends BaseModel<Item> {
   constructor() {
     super('items');
   }
 
-  // Implementation of abstract methods
-  protected mapRow(row: any): Item {
+  // Implementation of abstract mapRow method
+  protected mapRow(row: RowDataPacket): Item {
     return {
       id: row.id,
       unique_key: row.unique_key,
@@ -19,224 +18,124 @@ export class ItemModel extends BaseModel<Item, NewItem> {
       name_cn: row.name_cn,
       name_tw: row.name_tw,
       name_kr: row.name_kr,
-      description_en: row.description_en,
-      source_description_en: row.source_description_en,
-      item_category: row.item_category,
-      rarity: row.rarity,
-      icon_data: row.icon_data,
-      icon_mime_type: row.icon_mime_type,
-      game_version: row.game_version,
+      type: row.type,
+      description: row.description,
+      icon_small: row.icon_small,
+      icon_large: row.icon_large,
     };
   }
 
-  protected getCreateFields(): (keyof NewItem)[] {
-    return [
-      'unique_key',
-      'name_jp',
-      'name_en',
-      'name_cn',
-      'name_tw',
-      'name_kr',
-      'description_en',
-      'source_description_en',
-      'item_category',
-      'rarity',
-      'icon_data',
-      'icon_mime_type',
-      'game_version'
-    ];
-  }
+  /**
+   * Search items across multi-language name fields
+   */
+  async searchMultiLanguage(
+    searchTerm: string,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Item>> {
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
 
-  protected getUpdateFields(): (keyof NewItem)[] {
-    return this.getCreateFields(); // Same fields can be updated
-  }
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
 
-  // Mapper function to convert database row to Item object
-  private mapItemRow(row: any): Item {
-    return this.mapRow(row);
-  }
+    const searchPattern = `%${searchTerm}%`;
 
-  async create(item: NewItem): Promise<Item> {
-    try {
-      const [result] = await executeQuery(
-        `INSERT INTO items (unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, source_description_en, item_category, rarity, icon_data, icon_mime_type, game_version)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          item.unique_key,
-          item.name_jp,
-          item.name_en,
-          item.name_cn,
-          item.name_tw,
-          item.name_kr,
-          item.description_en,
-          item.source_description_en,
-          item.item_category,
-          item.rarity,
-          item.icon_data,
-          item.icon_mime_type,
-          item.game_version,
-        ]
-      ) as [any, any];
-
-      return this.findById(result.insertId);
-    } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError('Item with this unique_key already exists', 409);
-      }
-      throw new AppError('Failed to create item', 500);
-    }
-  }
-
-  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM items',
-      'SELECT COUNT(*) FROM items',
-      options,
-      this.mapItemRow.bind(this)
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
     );
-  }
+    const total = (countResult as RowDataPacket[])[0].total;
 
-  // Override findById to use proper typing
-  async findById(id: number): Promise<Item> {
-    return super.findById(id);
-  }
-
-  async findByUniqueKey(unique_key: string): Promise<Item> {
-    const [rows] = await executeQuery('SELECT * FROM items WHERE unique_key = ?', [unique_key]) as [any[], any];
-    if (rows.length === 0) {
-      throw new AppError('Item not found', 404);
-    }
-    return this.mapItemRow(rows[0]);
-  }
-
-  async findByCategory(category: ItemCategory, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM items WHERE item_category = ?',
-      'SELECT COUNT(*) FROM items WHERE item_category = ?',
-      options,
-      this.mapItemRow.bind(this),
-      [category]
-    );
-  }
-
-  async findByRarity(rarity: ItemRarity, options: PaginationOptions = {}): Promise<PaginatedResult<Item>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM items WHERE rarity = ?',
-      'SELECT COUNT(*) FROM items WHERE rarity = ?',
-      options,
-      this.mapItemRow.bind(this),
-      [rarity]
-    );
-  }
-
-  async update(id: number, updates: Partial<NewItem>): Promise<Item> {
-    const setClause: string[] = [];
-    const params: any[] = [];
-
-    if (updates.unique_key !== undefined) {
-      setClause.push(`unique_key = ?`);
-      params.push(updates.unique_key);
-    }
-    if (updates.name_jp !== undefined) {
-      setClause.push(`name_jp = ?`);
-      params.push(updates.name_jp);
-    }
-    if (updates.name_en !== undefined) {
-      setClause.push(`name_en = ?`);
-      params.push(updates.name_en);
-    }
-    if (updates.name_cn !== undefined) {
-      setClause.push(`name_cn = ?`);
-      params.push(updates.name_cn);
-    }
-    if (updates.name_tw !== undefined) {
-      setClause.push(`name_tw = ?`);
-      params.push(updates.name_tw);
-    }
-    if (updates.name_kr !== undefined) {
-      setClause.push(`name_kr = ?`);
-      params.push(updates.name_kr);
-    }
-    if (updates.description_en !== undefined) {
-      setClause.push(`description_en = ?`);
-      params.push(updates.description_en);
-    }
-    if (updates.source_description_en !== undefined) {
-      setClause.push(`source_description_en = ?`);
-      params.push(updates.source_description_en);
-    }
-    if (updates.item_category !== undefined) {
-      setClause.push(`item_category = ?`);
-      params.push(updates.item_category);
-    }
-    if (updates.rarity !== undefined) {
-      setClause.push(`rarity = ?`);
-      params.push(updates.rarity);
-    }
-    if (updates.icon_data !== undefined) {
-      setClause.push(`icon_data = ?`);
-      params.push(updates.icon_data);
-    }
-    if (updates.icon_mime_type !== undefined) {
-      setClause.push(`icon_mime_type = ?`);
-      params.push(updates.icon_mime_type);
-    }
-    if (updates.game_version !== undefined) {
-      setClause.push(`game_version = ?`);
-      params.push(updates.game_version);
-    }
-
-    if (setClause.length === 0) {
-      return this.findById(id);
-    }
-
-    params.push(id);
-
-    const [result] = await executeQuery(
-      `UPDATE items SET ${setClause.join(', ')} WHERE id = ?`,
-      params
-    ) as [any, any];
-
-    if (result.affectedRows === 0) {
-      throw new AppError('Item not found', 404);
-    }
-
-    return this.findById(id);
-  }
-
-  async delete(id: number): Promise<void> {
-    return super.delete(id);
-  }
-
-  async findByKey(key: string): Promise<Item> {
-    return this.findByUniqueKey(key);
-  }
-
-  async getCurrencyItems(): Promise<Item[]> {
+    // Get paginated data - use direct values for LIMIT/OFFSET
     const [rows] = await executeQuery(
-      'SELECT * FROM items WHERE item_category = ? ORDER BY name_en',
-      ['CURRENCY']
-    ) as [any[], any];
-    
-    return rows.map(this.mapItemRow);
-  }
+      `SELECT * FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?
+       ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
+    );
 
-  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
-    const errors: string[] = [];
-
-    try {
-      await executeQuery('SELECT 1');
-      await executeQuery('SELECT COUNT(*) FROM items LIMIT 1');
-    } catch (error) {
-      const errorMsg = `ItemModel health check failed: ${error instanceof Error ? error.message : error}`;
-      errors.push(errorMsg);
-    }
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
 
     return {
-      isHealthy: errors.length === 0,
-      tableName: 'items',
-      errors
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
     };
+  }
+
+  /**
+   * Find items by type
+   */
+  async findByType(
+    type: string,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Item>> {
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
+
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
+
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName} WHERE type = ?`,
+      [type]
+    );
+    const total = (countResult as RowDataPacket[])[0].total;
+
+    // Get paginated data - use direct values for LIMIT/OFFSET
+    const [rows] = await executeQuery(
+      `SELECT * FROM ${this.tableName} WHERE type = ? ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      [type]
+    );
+
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  }
+
+  /**
+   * Find items by category (alias for findByType for backward compatibility)
+   */
+  async findByCategory(
+    category: string,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Item>> {
+    return this.findByType(category, options);
+  }
+
+  /**
+   * Count items by category
+   */
+  async countByCategory(category: string): Promise<number> {
+    const [rows] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName} WHERE type = ?`,
+      [category]
+    );
+    return (rows as RowDataPacket[])[0].total;
   }
 }

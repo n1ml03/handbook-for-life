@@ -39,18 +39,18 @@ import { isValid } from "date-fns/isValid";
 // Helper function to convert Episode to Memory
 const episodeToMemory = (episode: Episode): Memory => ({
   id: episode.id.toString(),
-  name: episode.title_en || episode.title_jp || "Untitled Memory",
-  // Store multi-language titles for MultiLanguageCard
-  name_jp: episode.title_jp || "",
-  name_en: episode.title_en || "",
-  name_cn: episode.title_cn || "",
-  name_tw: episode.title_tw || "",
-  name_kr: episode.title_kr || "",
-  description: episode.unlock_condition_en || "",
+  name: episode.name_en || episode.name_jp || "Untitled Memory", // Changed from title_* to name_*
+  // Store multi-language names for MultiLanguageCard
+  name_jp: episode.name_jp || "", // Changed from title_jp to name_jp
+  name_en: episode.name_en || "", // Changed from title_en to name_en
+  name_cn: episode.name_cn || "", // Changed from title_cn to name_cn
+  name_tw: episode.name_tw || "", // Changed from title_tw to name_tw
+  name_kr: episode.name_kr || "", // Changed from title_kr to name_kr
+  description: episode.type || "", // Changed from unlock_condition_en to type
   date: new Date().toISOString(),
   thumbnail: "📖",
   characters: [],
-  tags: [episode.episode_type],
+  tags: episode.type ? [episode.type] : [], // Changed from episode_type to type
   favorite: false,
 });
 

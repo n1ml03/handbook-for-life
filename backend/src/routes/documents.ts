@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import { validate, validateQuery } from '../middleware/validation';
+import { validate, validateQuery, asyncHandler, AppError } from '../middleware/middleware';
 import { schemas } from '../utils/ValidationSchemas';
-import { asyncHandler, AppError } from '../middleware/errorHandler';
-import { DocumentService } from '../services/DocumentService';
+import { DocumentService } from '../services/services';
 import logger from '../config/logger';
 import appConfig from '../config/app';
 
@@ -23,21 +22,21 @@ router.get('/',
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (category) {
       result = await documentService.getDocumentsByCategory(category as string, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else {
       result = await documentService.getDocuments({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     }
 
@@ -90,7 +89,7 @@ router.get('/categories/:category',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Retrieved ${result.data.length} documents for category: ${category}`, {
@@ -117,7 +116,7 @@ router.get('/types/:document_type',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Retrieved ${result.data.length} documents for type: ${document_type}`, {
@@ -169,7 +168,7 @@ router.get('/search',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${sanitizedQuery}" returned ${result.data.length} documents`, {

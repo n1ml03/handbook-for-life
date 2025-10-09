@@ -1,9 +1,76 @@
+/**
+ * Consolidated Utilities Module
+ * Combines ID generation and image utilities
+ */
+
+import { customAlphabet } from 'nanoid';
 import { ImageMimeType, ImageData, ImageUpload, ScreenshotData } from '../types/database';
 import logger from '../config/logger';
 
+// ============================================================================
+// ID GENERATION UTILITIES
+// ============================================================================
+
+// Default alphabet: URL-safe characters (no special chars that need escaping)
+const DEFAULT_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+// Default ID length
+const DEFAULT_LENGTH = 12;
+
 /**
- * Utility functions for handling image data conversion between different formats
+ * Generate a unique ID with default settings
+ * @returns A 12-character unique ID
  */
+export function generateId(): string {
+  const nanoid = customAlphabet(DEFAULT_ALPHABET, DEFAULT_LENGTH);
+  return nanoid();
+}
+
+/**
+ * Generate a unique ID with custom length
+ * @param length - The desired length of the ID
+ * @returns A unique ID of the specified length
+ */
+export function generateIdWithLength(length: number): string {
+  const nanoid = customAlphabet(DEFAULT_ALPHABET, length);
+  return nanoid();
+}
+
+/**
+ * Generate a unique ID with custom alphabet and length
+ * @param alphabet - The character set to use
+ * @param length - The desired length of the ID
+ * @returns A unique ID using the specified alphabet and length
+ */
+export function generateCustomId(alphabet: string, length: number): string {
+  const nanoid = customAlphabet(alphabet, length);
+  return nanoid();
+}
+
+/**
+ * Generate a numeric-only ID
+ * @param length - The desired length (default: 10)
+ * @returns A numeric ID
+ */
+export function generateNumericId(length: number = 10): string {
+  const nanoid = customAlphabet('0123456789', length);
+  return nanoid();
+}
+
+/**
+ * Generate a prefixed ID (useful for different entity types)
+ * @param prefix - The prefix to add (e.g., 'user', 'order', 'item')
+ * @param length - The length of the random part (default: 12)
+ * @returns A prefixed unique ID (e.g., 'user_abc123xyz')
+ */
+export function generatePrefixedId(prefix: string, length: number = 12): string {
+  const nanoid = customAlphabet(DEFAULT_ALPHABET, length);
+  return `${prefix}_${nanoid()}`;
+}
+
+// ============================================================================
+// IMAGE UTILITIES
+// ============================================================================
 
 /**
  * Convert Buffer to base64 string
@@ -173,7 +240,6 @@ export function prepareScreenshotsForResponse(screenshotsJson: string | null): S
  */
 export function generateImageFilename(originalName?: string, mimeType?: ImageMimeType): string {
   const timestamp = Date.now();
-  const { generateIdWithLength } = require('./id');
   const random = generateIdWithLength(8); // Use nanoid instead of Math.random()
   const extension = mimeType ? getFileExtensionFromMimeType(mimeType) : 'jpg';
 
@@ -212,3 +278,4 @@ export function compressImageIfNeeded(buffer: Buffer, maxSizeBytes: number = 102
   logger.warn(`Image size ${buffer.length} bytes exceeds recommended size ${maxSizeBytes} bytes. Consider implementing image compression.`);
   return buffer;
 }
+

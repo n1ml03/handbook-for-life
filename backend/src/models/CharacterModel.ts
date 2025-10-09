@@ -1,15 +1,20 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
-import { Character, NewCharacter } from '../types/database';
+import { Character } from '../types/database';
+import { RowDataPacket } from 'mysql2';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
 
-export class CharacterModel extends BaseModel<Character, NewCharacter> {
+export class CharacterModel extends BaseModel<Character> {
   constructor() {
     super('characters');
   }
 
-  // Implementation of abstract methods
-  protected mapRow(row: any): Character {
+  // Override to provide valid sort columns
+  protected getValidSortColumns(): string[] {
+    return ['id', 'unique_key', 'name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr'];
+  }
+
+  // Implementation of abstract mapRow method
+  protected mapRow(row: RowDataPacket): Character {
     return {
       id: row.id,
       unique_key: row.unique_key,
@@ -18,257 +23,187 @@ export class CharacterModel extends BaseModel<Character, NewCharacter> {
       name_cn: row.name_cn,
       name_tw: row.name_tw,
       name_kr: row.name_kr,
-      birthday: row.birthday,
-      height: row.height,
-      measurements: row.measurements,
-      blood_type: row.blood_type,
-      voice_actor_jp: row.voice_actor_jp,
-      profile_image_data: row.profile_image_data,
-      profile_image_mime_type: row.profile_image_mime_type,
-      is_active: Boolean(row.is_active),
-      game_version: row.game_version,
+      // Multi-language age fields
+      age_jp: row.age_jp,
+      age_en: row.age_en,
+      age_cn: row.age_cn,
+      age_tw: row.age_tw,
+      age_kr: row.age_kr,
+      // Multi-language birthday fields
+      birthday_jp: row.birthday_jp,
+      birthday_en: row.birthday_en,
+      birthday_cn: row.birthday_cn,
+      birthday_tw: row.birthday_tw,
+      birthday_kr: row.birthday_kr,
+      // Multi-language height fields
+      height_jp: row.height_jp,
+      height_en: row.height_en,
+      height_cn: row.height_cn,
+      height_tw: row.height_tw,
+      height_kr: row.height_kr,
+      // Multi-language measurements fields
+      measurements_jp: row.measurements_jp,
+      measurements_en: row.measurements_en,
+      measurements_cn: row.measurements_cn,
+      measurements_tw: row.measurements_tw,
+      measurements_kr: row.measurements_kr,
+      // Multi-language blood type fields
+      blood_jp: row.blood_jp,
+      blood_en: row.blood_en,
+      blood_cn: row.blood_cn,
+      blood_tw: row.blood_tw,
+      blood_kr: row.blood_kr,
+      // Multi-language job fields
+      job_jp: row.job_jp,
+      job_en: row.job_en,
+      job_cn: row.job_cn,
+      job_tw: row.job_tw,
+      job_kr: row.job_kr,
+      // Multi-language hobby fields
+      hobby_jp: row.hobby_jp,
+      hobby_en: row.hobby_en,
+      hobby_cn: row.hobby_cn,
+      hobby_tw: row.hobby_tw,
+      hobby_kr: row.hobby_kr,
+      // Multi-language food fields
+      food_jp: row.food_jp,
+      food_en: row.food_en,
+      food_cn: row.food_cn,
+      food_tw: row.food_tw,
+      food_kr: row.food_kr,
+      // Multi-language color fields
+      color_jp: row.color_jp,
+      color_en: row.color_en,
+      color_cn: row.color_cn,
+      color_tw: row.color_tw,
+      color_kr: row.color_kr,
+      // Multi-language cast/voice actor fields
+      cast_jp: row.cast_jp,
+      cast_en: row.cast_en,
+      cast_cn: row.cast_cn,
+      cast_tw: row.cast_tw,
+      cast_kr: row.cast_kr,
     };
   }
 
-  protected getCreateFields(): (keyof NewCharacter)[] {
-    return [
-      'unique_key',
-      'name_jp',
-      'name_en',
-      'name_cn',
-      'name_tw',
-      'name_kr',
-      'birthday',
-      'height',
-      'measurements',
-      'blood_type',
-      'voice_actor_jp',
-      'profile_image_data',
-      'profile_image_mime_type',
-      'is_active',
-      'game_version'
-    ];
-  }
-
-  protected getUpdateFields(): (keyof NewCharacter)[] {
-    return this.getCreateFields(); // Same fields can be updated
-  }
-
-  // Override mapSortColumn to handle specific sorting requirements
-  protected mapSortColumn(sortBy: string): string | null {
-    const columnMapping: { [key: string]: string } = {
-      // Character fields
-      'name': 'name_en',
-      'name_en': 'name_en',
-      'name_jp': 'name_jp',
-      'birthday': 'birthday',
-      'height': 'height',
-      'unique_key': 'unique_key',
-      'is_active': 'is_active',
-      
-      // Swimsuit fields
-      'rarity': 'rarity',
-      'suit_type': 'suit_type',
-      'total_stats_awakened': 'total_stats_awakened',
-      'has_malfunction': 'has_malfunction',
-      'is_limited': 'is_limited',
-      'release_date_gl': 'release_date_gl',
-      
-      // Skill fields
-      'skill_category': 'skill_category',
-      'effect_type': 'effect_type',
-      'game_version': 'game_version',
-      'skill_slot': 'skill_slot',
-      
-      // Default ID sorting
-      'id': 'id'
-    };
-
-    return columnMapping[sortBy] || 'id';
-  }
-
-  // Override base methods to add character-specific logic
-  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Character>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM characters WHERE is_active = TRUE',
-      'SELECT COUNT(*) FROM characters WHERE is_active = TRUE',
-      options
-    );
-  }
-
-  async findByUniqueKey(unique_key: string): Promise<Character> {
-    const [rows] = await executeQuery('SELECT * FROM characters WHERE unique_key = ?', [unique_key]) as [any[], any];
-    if (rows.length === 0) {
-      throw new AppError('Character not found', 404);
-    }
-    return this.mapRow(rows[0]);
-  }
-
-  // Character-specific search with active filter
-  async search(
-    searchFields: string[],
-    query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+  /**
+   * Search characters across multi-language name fields
+   */
+  async searchMultiLanguage(
+    searchTerm: string,
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Character>> {
-    const activeFilter = additionalWhere ? `is_active = TRUE AND (${additionalWhere})` : 'is_active = TRUE';
-    return super.search(searchFields, query, options, activeFilter);
-  }
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
 
-  // Convenience search method for characters
-  async searchCharacters(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Character>> {
-    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
-    return this.search(searchFields, query, options);
-  }
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
 
-  async findUpcomingBirthdays(days: number = 7): Promise<Character[]> {
+    const searchPattern = `%${searchTerm}%`;
+
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
+    );
+    const total = (countResult as RowDataPacket[])[0].total;
+
+    // Get paginated data - use direct values for LIMIT/OFFSET
     const [rows] = await executeQuery(
-      `SELECT * FROM characters
-       WHERE is_active = TRUE AND birthday IS NOT NULL
-       AND DAYOFYEAR(birthday) BETWEEN DAYOFYEAR(NOW()) AND DAYOFYEAR(DATE_ADD(NOW(), INTERVAL ? DAY))
-       ORDER BY DAYOFYEAR(birthday)`,
-      [days]
-    ) as [any[], any];
-
-    return rows.map(row => this.mapRow(row));
-  }
-
-  async getCharacterSwimsuits(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    // Set default sorting for swimsuits if not specified
-    const defaultOptions = {
-      ...options,
-      sortBy: options.sortBy || 'rarity',
-      sortOrder: options.sortOrder || 'desc' as 'desc'
-    };
-
-    const query = `
-      SELECT DISTINCT
-        s.id,
-        s.character_id,
-        s.unique_key,
-        s.name_jp,
-        s.name_en,
-        s.name_cn,
-        s.name_tw,
-        s.name_kr,
-        s.rarity,
-        s.suit_type,
-        s.total_stats_awakened,
-        s.has_malfunction,
-        s.is_limited,
-        s.release_date_gl
-      FROM swimsuits s
-      WHERE s.character_id = ?`;
-
-    const countQuery = `
-      SELECT COUNT(DISTINCT s.id) as count
-      FROM swimsuits s
-      WHERE s.character_id = ?`;
-
-    return this.getPaginatedResults(
-      query,
-      countQuery,
-      defaultOptions,
-      (row: any) => ({
-        id: row.id,
-        character_id: row.character_id,
-        unique_key: row.unique_key,
-        name_jp: row.name_jp,
-        name_en: row.name_en,
-        name_cn: row.name_cn,
-        name_tw: row.name_tw,
-        name_kr: row.name_kr,
-        rarity: row.rarity,
-        suit_type: row.suit_type,
-        total_stats_awakened: row.total_stats_awakened,
-        has_malfunction: Boolean(row.has_malfunction),
-        is_limited: Boolean(row.is_limited),
-        release_date_gl: row.release_date_gl,
-      }),
-      [characterId]
+      `SELECT * FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?
+       ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
     );
-  }
 
-  async getCharacterSkills(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    // Set default sorting for skills if not specified
-    const defaultOptions = {
-      ...options,
-      sortBy: options.sortBy || 'skill_category',
-      sortOrder: options.sortOrder || 'asc' as 'asc'
-    };
-
-    const query = `
-      SELECT DISTINCT
-        sk.id,
-        sk.unique_key,
-        sk.name_jp,
-        sk.name_en,
-        sk.name_cn,
-        sk.name_tw,
-        sk.name_kr,
-        sk.description_en,
-        sk.skill_category,
-        sk.effect_type,
-        sk.game_version,
-        ss.skill_slot,
-        s.unique_key as swimsuit_key,
-        s.name_en as swimsuit_name
-      FROM skills sk
-      JOIN swimsuit_skills ss ON sk.id = ss.skill_id
-      JOIN swimsuits s ON ss.swimsuit_id = s.id
-      WHERE s.character_id = ?`;
-
-    const countQuery = `
-      SELECT COUNT(DISTINCT sk.id) as count
-      FROM skills sk
-      JOIN swimsuit_skills ss ON sk.id = ss.skill_id
-      JOIN swimsuits s ON ss.swimsuit_id = s.id
-      WHERE s.character_id = ?`;
-
-    return this.getPaginatedResults(
-      query,
-      countQuery,
-      defaultOptions,
-      (row: any) => ({
-        id: row.id,
-        unique_key: row.unique_key,
-        name_jp: row.name_jp,
-        name_en: row.name_en,
-        name_cn: row.name_cn,
-        name_tw: row.name_tw,
-        name_kr: row.name_kr,
-        description_en: row.description_en,
-        skill_category: row.skill_category,
-        effect_type: row.effect_type,
-        game_version: row.game_version,
-        skill_slot: row.skill_slot,
-        swimsuit_key: row.swimsuit_key,
-        swimsuit_name: row.swimsuit_name,
-      }),
-      [characterId]
-    );
-  }
-
-  // Convenience method for compatibility
-  async findByKey(key: string): Promise<Character> {
-    return this.findByUniqueKey(key);
-  }
-
-  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
-    const errors: string[] = [];
-
-    try {
-      await executeQuery('SELECT 1');
-      await executeQuery('SELECT COUNT(*) FROM characters LIMIT 1');
-    } catch (error) {
-      const errorMsg = `CharacterModel health check failed: ${error instanceof Error ? error.message : error}`;
-      errors.push(errorMsg);
-    }
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
 
     return {
-      isHealthy: errors.length === 0,
-      tableName: 'characters',
-      errors
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  }
+
+  /**
+   * Find characters by birthday month and/or day
+   */
+  async findByBirthday(
+    month?: number,
+    day?: number,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Character>> {
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
+
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
+
+    let whereClause = '';
+    const params: any[] = [];
+
+    if (month && day) {
+      // Search for specific date (e.g., "6月6日", "June 6", "6月6日")
+      const patterns = [
+        `%${month}月${day}日%`,  // Japanese/Chinese: "6月6日"
+        `%${month}/${day}%`,      // Numeric: "6/6"
+        `%-${month}-${day}%`,     // ISO-like: "2000-06-06"
+      ];
+      whereClause = `WHERE (${patterns.map(() => 'birthday_jp LIKE ? OR birthday_en LIKE ? OR birthday_cn LIKE ? OR birthday_tw LIKE ? OR birthday_kr LIKE ?').join(' OR ')})`;
+      patterns.forEach(pattern => {
+        params.push(pattern, pattern, pattern, pattern, pattern);
+      });
+    } else if (month) {
+      // Search for month only (e.g., "6月", "June")
+      const patterns = [
+        `%${month}月%`,           // Japanese/Chinese: "6月"
+        `%/${month}/%`,           // Numeric: "/6/"
+        `%-${String(month).padStart(2, '0')}-%`, // ISO-like: "-06-"
+      ];
+      whereClause = `WHERE (${patterns.map(() => 'birthday_jp LIKE ? OR birthday_en LIKE ? OR birthday_cn LIKE ? OR birthday_tw LIKE ? OR birthday_kr LIKE ?').join(' OR ')})`;
+      patterns.forEach(pattern => {
+        params.push(pattern, pattern, pattern, pattern, pattern);
+      });
+    }
+
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName} ${whereClause}`,
+      params
+    );
+    const total = (countResult as RowDataPacket[])[0].total;
+
+    // Get paginated data - use direct values for LIMIT/OFFSET
+    const [rows] = await executeQuery(
+      `SELECT * FROM ${this.tableName} ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      params
+    );
+
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
     };
   }
 }

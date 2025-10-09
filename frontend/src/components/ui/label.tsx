@@ -11,7 +11,7 @@ const Label = React.forwardRef<
     className={cn(
       "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       // Light mode enhancements for better contrast
-      "light:text-foreground light:peer-disabled:opacity-60",
+      " :opacity-60",
       className,
     )}
     {...props}

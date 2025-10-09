@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { validate, validateQuery, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
 import { EventModel } from '../models/EventModel';
 import logger from '../config/logger';
 
@@ -14,34 +14,34 @@ router.get('/',
     const { page = 1, limit = 10, sortBy, sortOrder, type, active, upcoming } = req.query;
     
     let result;
-    
+
     if (type) {
       result = await eventModel.findByType(type as any, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (active === 'true') {
       result = await eventModel.findActiveEvents({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (upcoming === 'true') {
       result = await eventModel.findUpcomingEvents({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else {
       result = await eventModel.findAll({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     }
 
@@ -69,12 +69,12 @@ router.get('/active',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     const result = await eventModel.findActiveEvents({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Retrieved ${result.data.length} active events`);
@@ -88,12 +88,12 @@ router.get('/upcoming',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     const result = await eventModel.findUpcomingEvents({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Retrieved ${result.data.length} upcoming events`);
@@ -141,7 +141,7 @@ router.get('/search',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} events`);

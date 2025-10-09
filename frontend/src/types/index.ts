@@ -14,6 +14,7 @@ export interface MultiLanguageNames {
 }
 
 // Character entity matching database schema exactly
+// Updated for denormalized schema with multi-language fields
 export interface Character {
   id: number;
   unique_key: string;
@@ -22,11 +23,73 @@ export interface Character {
   name_cn: string;
   name_tw: string;
   name_kr: string;
-  birthday?: string; // ISO date string
-  height?: number;
-  measurements?: string;
+  // Multi-language age fields
+  age_jp?: string;
+  age_en?: string;
+  age_cn?: string;
+  age_tw?: string;
+  age_kr?: string;
+  // Multi-language birthday fields
+  birthday_jp?: string;
+  birthday_en?: string;
+  birthday_cn?: string;
+  birthday_tw?: string;
+  birthday_kr?: string;
+  // Multi-language height fields
+  height_jp?: string;
+  height_en?: string;
+  height_cn?: string;
+  height_tw?: string;
+  height_kr?: string;
+  // Multi-language measurements fields
+  measurements_jp?: string;
+  measurements_en?: string;
+  measurements_cn?: string;
+  measurements_tw?: string;
+  measurements_kr?: string;
+  // Multi-language blood type fields
+  blood_jp?: string;
+  blood_en?: string;
+  blood_cn?: string;
+  blood_tw?: string;
+  blood_kr?: string;
+  // Multi-language job fields
+  job_jp?: string;
+  job_en?: string;
+  job_cn?: string;
+  job_tw?: string;
+  job_kr?: string;
+  // Multi-language hobby fields
+  hobby_jp?: string;
+  hobby_en?: string;
+  hobby_cn?: string;
+  hobby_tw?: string;
+  hobby_kr?: string;
+  // Multi-language food fields
+  food_jp?: string;
+  food_en?: string;
+  food_cn?: string;
+  food_tw?: string;
+  food_kr?: string;
+  // Multi-language color fields
+  color_jp?: string;
+  color_en?: string;
+  color_cn?: string;
+  color_tw?: string;
+  color_kr?: string;
+  // Multi-language cast/voice actor fields
+  cast_jp?: string;
+  cast_en?: string;
+  cast_cn?: string;
+  cast_tw?: string;
+  cast_kr?: string;
+  // Legacy single-language fields (for backward compatibility)
+  birthday?: string;
+  height?: string;
   blood_type?: string;
   voice_actor_jp?: string;
+  measurements?: string;
+  // Other fields
   profile_image_data?: string; // Base64 encoded image data
   profile_image_mime_type?: string;
   is_active: boolean;
@@ -34,46 +97,93 @@ export interface Character {
 }
 
 // Swimsuit types and enums
+// Updated for denormalized schema - removed obsolete types
 export type SwimsuitRarity = "N" | "R" | "SR" | "SSR" | "SSR+";
-export type SuitType = "POW" | "TEC" | "STM" | "APL" | "N/A";
 
 export interface Swimsuit {
   id: number;
-  character_id: number;
+  character_key: string; // Changed from character_id (number) to character_key (string)
   unique_key: string;
   name_jp: string;
   name_en: string;
   name_cn: string;
   name_tw: string;
   name_kr: string;
+  rarity: string;
+  attribute: string;
+  // Stat fields - base, max, and growth for each stat
+  base_pow?: number;
+  max_pow?: number;
+  pow_growth?: number;
+  base_tec?: number;
+  max_tec?: number;
+  tec_growth?: number;
+  base_stm?: number;
+  max_stm?: number;
+  stm_growth?: number;
+  base_apl?: number;
+  max_apl?: number;
+  apl_growth?: number;
+  // Embedded Skill 1
+  skill_id_1?: number;
+  skill_key_1?: string;
+  skill_name_jp_1?: string;
+  skill_name_en_1?: string;
+  skill_name_cn_1?: string;
+  skill_name_tw_1?: string;
+  skill_name_kr_1?: string;
+  skill_des_1?: string;
+  skill_des_jp_1?: string;
+  skill_des_en_1?: string;
+  skill_des_cn_1?: string;
+  skill_des_tw_1?: string;
+  skill_des_kr_1?: string;
+  // Embedded Skill 2
+  skill_id_2?: number;
+  skill_key_2?: string;
+  skill_name_jp_2?: string;
+  skill_name_en_2?: string;
+  skill_name_cn_2?: string;
+  skill_name_tw_2?: string;
+  skill_name_kr_2?: string;
+  skill_des_2?: string;
+  skill_des_jp_2?: string;
+  skill_des_en_2?: string;
+  skill_des_cn_2?: string;
+  skill_des_tw_2?: string;
+  skill_des_kr_2?: string;
+  // Embedded Skill 3
+  skill_id_3?: number;
+  skill_key_3?: string;
+  skill_name_jp_3?: string;
+  skill_name_en_3?: string;
+  skill_name_cn_3?: string;
+  skill_name_tw_3?: string;
+  skill_name_kr_3?: string;
+  skill_des_3?: string;
+  skill_des_jp_3?: string;
+  skill_des_en_3?: string;
+  skill_des_cn_3?: string;
+  skill_des_tw_3?: string;
+  skill_des_kr_3?: string;
+  // Bromide references
+  bromide?: string;
+  cossbreak_bromide?: string;
+  // Legacy fields (for backward compatibility)
+  is_limited?: boolean;
+  suit_type?: string;
   description_en?: string;
-  rarity: SwimsuitRarity;
-  suit_type: SuitType;
-  total_stats_awakened: number;
-  has_malfunction: boolean;
-  is_limited: boolean;
-  release_date_gl?: string; // ISO date string
-  game_version?: string;
-  // Binary image data fields (matching backend schema)
-  image_before_data?: string; // Base64 encoded image data
-  image_before_mime_type?: string;
-  image_after_data?: string; // Base64 encoded image data
-  image_after_mime_type?: string;
-  // Populated fields from joins
+  total_stats_awakened?: number;
+  has_malfunction?: boolean;
+  release_date_gl?: string;
+  // Optional: populated character data (not from join, but can be fetched separately)
   character?: Character;
-  skills?: SwimsuitSkill[];
 }
 
 // Skill types and enums
+// NOTE: Skills are now embedded in Swimsuit records, not separate entities
+// These types are kept for backward compatibility but may not be used
 export type SkillCategory = "ACTIVE" | "PASSIVE" | "POTENTIAL";
-export type SkillSlot =
-  | "ACTIVE"
-  | "PASSIVE_1"
-  | "PASSIVE_2"
-  | "POTENTIAL_1"
-  | "POTENTIAL_2"
-  | "POTENTIAL_3"
-  | "POTENTIAL_4";
 
 export interface Skill {
   id: number;
@@ -89,24 +199,10 @@ export interface Skill {
   game_version?: string;
 }
 
-export interface SwimsuitSkill {
-  swimsuit_id: number;
-  skill_id: number;
-  skill_slot: SkillSlot;
-  skill?: Skill; // Populated from join
-}
+// REMOVED: SwimsuitSkill junction table interface (skills now embedded in Swimsuit)
 
 // Item types and enums
-export type ItemCategory =
-  | "CURRENCY"
-  | "UPGRADE_MATERIAL"
-  | "CONSUMABLE"
-  | "GIFT"
-  | "ACCESSORY"
-  | "FURNITURE"
-  | "SPECIAL";
-export type ItemRarity = "N" | "R" | "SR" | "SSR";
-
+// Updated for denormalized schema - removed obsolete types
 export interface Item {
   id: number;
   unique_key: string;
@@ -115,14 +211,12 @@ export interface Item {
   name_cn: string;
   name_tw: string;
   name_kr: string;
-  description_en?: string;
-  source_description_en?: string;
-  item_category: ItemCategory;
-  rarity: ItemRarity;
-  game_version?: string;
-  // Binary image data fields (matching backend schema)
-  icon_data?: string; // Base64 encoded image data
-  icon_mime_type?: string;
+  type: string; // Replaces item_category
+  description?: string; // Replaces description_en and source_description_en
+  description_en?: string; // Legacy field (for backward compatibility)
+  rarity?: string; // Legacy field (for backward compatibility)
+  icon_small?: string; // New field
+  icon_large?: string; // New field
 }
 
 // Bromide types and enums
@@ -154,16 +248,14 @@ export type EpisodeType = "MAIN" | "CHARACTER" | "EVENT" | "SWIMSUIT" | "ITEM";
 export interface Episode {
   id: number;
   unique_key: string;
-  title_jp: string;
-  title_en: string;
-  title_cn: string;
-  title_tw: string;
-  title_kr: string;
-  unlock_condition_en?: string;
-  episode_type: EpisodeType;
-  related_entity_type?: string;
-  related_entity_id?: number;
-  game_version?: string;
+  name_jp: string; // Changed from title_jp
+  name_en: string; // Changed from title_en
+  name_cn: string; // Changed from title_cn
+  name_tw: string; // Changed from title_tw
+  name_kr: string; // Changed from title_kr
+  type?: string; // New field
+  release_data?: string; // New field
+  release_version?: string; // New field
 }
 
 // Event types and enums
@@ -200,7 +292,6 @@ export type GachaSubtype =
   | "PAID"
   | "FREE"
   | "ETC";
-export type PoolItemType = "SWIMSUIT" | "BROMIDE" | "ITEM";
 
 export interface Gacha {
   id: number;
@@ -214,32 +305,22 @@ export interface Gacha {
   start_date: string; // ISO datetime string
   end_date: string; // ISO datetime string
   game_version?: string;
-  pools?: GachaPool[];
 }
 
-export interface GachaPool {
-  id: number;
-  gacha_id: number;
-  pool_item_type: PoolItemType;
-  item_id: number;
-  drop_rate: number;
-  is_featured: boolean;
-}
+// REMOVED: GachaPool junction table interface (denormalized schema)
 
-// Shop types and enums
-export type ShopType = "EVENT" | "VIP" | "GENERAL" | "CURRENCY";
-
+// ShopListing interface (for backward compatibility)
 export interface ShopListing {
   id: number;
-  shop_type: ShopType;
   item_id: number;
-  cost_currency_item_id: number;
-  cost_amount: number;
-  start_date?: string; // ISO datetime string
-  end_date?: string; // ISO datetime string
-  // Populated fields from joins
-  item?: Item;
+  shop_type: string;
+  cost: number;
+  currency: string;
+  cost_amount?: number;
   cost_currency_item?: Item;
+  start_date?: string;
+  end_date?: string;
+  item?: Item;
 }
 
 // Document types - matching backend ExtendedDocument schema exactly
@@ -397,13 +478,9 @@ export interface CharacterQueryParams extends PaginationQuery, SearchQuery {
 }
 
 export interface SwimsuitQueryParams extends PaginationQuery, SearchQuery {
-  character_id?: string;
+  character_key?: string; // Changed from character_id
   rarity?: string;
-  suit_type?: string;
-  has_malfunction?: string;
-  is_limited?: string;
-  min_stats?: string;
-  max_stats?: string;
+  // Removed: suit_type, has_malfunction, is_limited (fields no longer exist)
 }
 
 export interface SkillQueryParams extends PaginationQuery, SearchQuery {
@@ -412,8 +489,8 @@ export interface SkillQueryParams extends PaginationQuery, SearchQuery {
 }
 
 export interface ItemQueryParams extends PaginationQuery, SearchQuery {
-  category?: string;
-  rarity?: string;
+  type?: string; // Changed from category
+  // Removed: rarity (field no longer exists)
 }
 
 export interface BromideQueryParams extends PaginationQuery, SearchQuery {
@@ -430,9 +507,8 @@ export interface EventQueryParams
 }
 
 export interface EpisodeQueryParams extends PaginationQuery, SearchQuery {
-  episode_type?: string;
-  related_entity_type?: string;
-  related_entity_id?: string;
+  type?: string; // Changed from episode_type
+  // Removed: related_entity_type, related_entity_id (fields no longer exist)
 }
 
 export interface DocumentQueryParams extends PaginationQuery, SearchQuery {

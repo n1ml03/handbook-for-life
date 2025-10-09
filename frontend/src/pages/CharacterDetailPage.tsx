@@ -704,12 +704,14 @@ export default function CharacterDetailPage() {
                             <Award className="w-3 h-3 mr-1" />
                             {swimsuit.rarity}
                           </Badge>
-                          <Badge
-                            className={`text-xs font-bold ${getSuitTypeColor(swimsuit.suit_type)} border-current bg-transparent`}
-                          >
-                            {getSuitTypeIcon(swimsuit.suit_type)}
-                            {swimsuit.suit_type}
-                          </Badge>
+                          {swimsuit.suit_type && (
+                            <Badge
+                              className={`text-xs font-bold ${getSuitTypeColor(swimsuit.suit_type)} border-current bg-transparent`}
+                            >
+                              {getSuitTypeIcon(swimsuit.suit_type)}
+                              {swimsuit.suit_type}
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xs text-gray-400">
                           #{swimsuit.id}
@@ -727,16 +729,18 @@ export default function CharacterDetailPage() {
                       )}
 
                       <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs sm:text-sm text-gray-400">
-                            Type
-                          </span>
-                          <span
-                            className={`text-xs sm:text-sm font-medium ${getSuitTypeColor(swimsuit.suit_type)}`}
-                          >
-                            {swimsuit.suit_type}
-                          </span>
-                        </div>
+                        {swimsuit.suit_type && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm text-gray-400">
+                              Type
+                            </span>
+                            <span
+                              className={`text-xs sm:text-sm font-medium ${getSuitTypeColor(swimsuit.suit_type)}`}
+                            >
+                              {swimsuit.suit_type}
+                            </span>
+                          </div>
+                        )}
 
                         <div className="flex items-center justify-between">
                           <span className="text-xs sm:text-sm text-gray-400">

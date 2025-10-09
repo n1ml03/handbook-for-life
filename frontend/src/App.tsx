@@ -1,11 +1,10 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { useTheme } from "@/hooks/useTheme";
 import { QueryProvider } from "@/contexts/QueryProvider";
 
 // Layout Components - Optimized with performance improvements
@@ -56,8 +55,10 @@ function EnhancedLoadingFallback() {
 }
 
 function App() {
-  // Use theme hook to handle theme application
-  useTheme();
+  // Apply dark mode class to document root on mount
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
 
   return (
     <QueryProvider>

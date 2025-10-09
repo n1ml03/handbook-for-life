@@ -432,13 +432,16 @@ export const UpdateLogEditor: React.FC<UpdateLogEditorProps> = ({
                       )}
                       onFilesChange={(files) => {
                         // Convert files to screenshots_data format
-                        const screenshotsData = files.map((file, index) => ({
-                          data: file.split(",")[1] || file, // Remove data URL prefix
-                          mimeType: file.startsWith("data:")
-                            ? file.split(";")[0].split(":")[1]
-                            : "image/jpeg",
-                          filename: `screenshot-${index + 1}.jpg`,
-                        }));
+                        const screenshotsData = files.map((file, index) => {
+                          const fileStr = typeof file === 'string' ? file : file.url;
+                          return {
+                            data: fileStr.split(",")[1] || fileStr, // Remove data URL prefix
+                            mimeType: fileStr.startsWith("data:")
+                              ? fileStr.split(";")[0].split(":")[1]
+                              : "image/jpeg",
+                            filename: `screenshot-${index + 1}.jpg`,
+                          };
+                        });
                         onUpdateLogChange({
                           ...updateLog,
                           screenshots_data: screenshotsData,

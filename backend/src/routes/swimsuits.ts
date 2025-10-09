@@ -1,65 +1,27 @@
 import { Router } from 'express';
-import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { validate, validateQuery, validateParams, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
 import { SwimsuitModel } from '../models/SwimsuitModel';
-import { SwimsuitSkillService } from '../services/SwimsuitSkillService';
 import logger from '../config/logger';
 
 const router = Router();
 const swimsuitModel = new SwimsuitModel();
-const swimsuitSkillService = new SwimsuitSkillService();
 
-// GET /api/swimsuits - Get all swimsuits with pagination and filters
-router.get('/', 
+// GET /api/swimsuits - Get all swimsuits with pagination
+// Note: Filters removed (characterId, rarity, suitType, limited, malfunction not yet implemented)
+// Note: Skills are now embedded in swimsuit records (skill_id_1/2/3, skill_key_1/2/3, skill_name_*_1/2/3, skill_des_*_1/2/3)
+// Note: character_id changed to character_key (string reference)
+router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder, characterId, rarity, suitType, limited, malfunction } = req.query;
-    
-    let result;
-    
-    if (characterId) {
-      result = await swimsuitModel.findByCharacterId(Number(characterId), {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (rarity) {
-      result = await swimsuitModel.findByRarity(rarity as any, {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (suitType) {
-      result = await swimsuitModel.findBySuitType(suitType as any, {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (limited === 'true') {
-      result = await swimsuitModel.findLimitedSwimsuits({
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (malfunction === 'true') {
-      result = await swimsuitModel.findWithMalfunction({
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else {
-      result = await swimsuitModel.findAllWithCharacters({
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    }
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    const result = await swimsuitModel.findAll({
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
+    });
 
     logger.info(`Retrieved ${result.data.length} swimsuits for page ${page}`);
 
@@ -73,7 +35,7 @@ router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
 
-    const swimsuit = await swimsuitModel.findByUniqueKey(unique_key);
+    const swimsuit = await swimsuitModel.findByKey(unique_key);
 
     logger.info(`Retrieved swimsuit: ${swimsuit.name_en}`);
 
@@ -83,14 +45,20 @@ router.get('/key/:unique_key',
 
 // GET /api/swimsuits/top-stats - Get top swimsuits by stats
 router.get('/top-stats',
+  validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const { limit = 10 } = req.query;
-    
-    const swimsuits = await swimsuitModel.getTopStatsSwimsuits(Number(limit));
-    
-    logger.info(`Retrieved top ${swimsuits.length} swimsuits by stats`);
+    const { stat = 'total', page = 1, limit = 10 } = req.query;
 
-    res.success(swimsuits);
+    const result = await swimsuitModel.getTopByStats(
+      stat as 'pow' | 'tec' | 'stm' | 'apl' | 'total',
+      {
+        page: Number(page),
+        limit: Number(limit)
+      }
+    );
+
+    logger.info(`Found ${result.data.length} top swimsuits sorted by ${stat}`);
+    res.paginated(result);
   })
 );
 
@@ -119,7 +87,7 @@ router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!q) {
       res.error('Search query is required', 400, {
         field: 'q',
@@ -129,12 +97,11 @@ router.get('/search',
       return;
     }
 
-    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
-    const result = await swimsuitModel.search(searchFields, q as string, {
+    const result = await swimsuitModel.searchMultiLanguage(q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} swimsuits`);
@@ -259,118 +226,13 @@ router.delete('/:id',
 );
 
 // ============================================================================
-// SWIMSUIT SKILL ROUTES
+// SWIMSUIT SKILL ROUTES - REMOVED
 // ============================================================================
-
-// GET /api/swimsuits/:id/skills - Get skills for a swimsuit
-router.get('/:id/skills',
-  validateParams(schemas.idParam),
-  validateQuery(schemas.pagination),
-  asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-
-    const result = await swimsuitSkillService.getSkillsBySwimsuitId(id, {
-      page: Number(page),
-      limit: Number(limit),
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
-    });
-
-    logger.info(`Retrieved ${result.data.length} skills for swimsuit ${id}`);
-
-    res.paginated(result);
-  })
-);
-
-// GET /api/swimsuits/:id/skills/summary - Get skill summary for a swimsuit
-router.get('/:id/skills/summary',
-  validateParams(schemas.idParam),
-  asyncHandler(async (req, res) => {
-    const id = Number(req.params.id);
-
-    const summary = await swimsuitSkillService.getSwimsuitSkillSummary(id);
-
-    logger.info(`Retrieved skill summary for swimsuit ${id}`);
-
-    res.success(summary);
-  })
-);
-
-// POST /api/swimsuits/:id/skills - Add skill to swimsuit
-router.post('/:id/skills',
-  validateParams(schemas.idParam),
-  validate(schemas.addSwimsuitSkill),
-  asyncHandler(async (req, res) => {
-    const swimsuitId = Number(req.params.id);
-
-    const skillData = { ...req.body, swimsuit_id: swimsuitId };
-    const swimsuitSkill = await swimsuitSkillService.addSkillToSwimsuit(skillData);
-
-    logger.info(`Added skill to swimsuit ${swimsuitId}`);
-
-    res.status(201).json({
-      success: true,
-      data: swimsuitSkill,
-      message: 'Skill added to swimsuit successfully'
-    });
-  })
-);
-
-// PUT /api/swimsuits/:id/skills - Set all skills for swimsuit
-router.put('/:id/skills',
-  validateParams(schemas.idParam),
-  validate(schemas.setSwimsuitSkills),
-  asyncHandler(async (req, res) => {
-    const swimsuitId = Number(req.params.id);
-
-    const { skills } = req.body;
-    if (!Array.isArray(skills)) {
-      res.status(400).json({
-        success: false,
-        message: 'Skills must be an array'
-      });
-      return;
-    }
-
-    const result = await swimsuitSkillService.setSwimsuitSkills(swimsuitId, skills);
-
-    logger.info(`Set ${result.length} skills for swimsuit ${swimsuitId}`);
-
-    res.updated(result, 'Swimsuit skills updated successfully');
-  })
-);
-
-// PUT /api/swimsuits/:id/skills/:slot - Update specific skill slot
-router.put('/:id/skills/:slot',
-  validateParams(schemas.skillSlotParam),
-  validate(schemas.updateSwimsuitSkill),
-  asyncHandler(async (req, res) => {
-    const swimsuitId = Number(req.params.id);
-    const skillSlot = req.params.slot as any;
-
-    const { skill_id } = req.body;
-    const swimsuitSkill = await swimsuitSkillService.updateSwimsuitSkill(swimsuitId, skillSlot, skill_id);
-
-    logger.info(`Updated skill slot ${skillSlot} for swimsuit ${swimsuitId}`);
-
-    res.updated(swimsuitSkill, 'Swimsuit skill updated successfully');
-  })
-);
-
-// DELETE /api/swimsuits/:id/skills/:slot - Remove skill from specific slot
-router.delete('/:id/skills/:slot',
-  validateParams(schemas.skillSlotParam),
-  asyncHandler(async (req, res) => {
-    const swimsuitId = Number(req.params.id);
-    const skillSlot = req.params.slot as any;
-
-    await swimsuitSkillService.removeSkillFromSwimsuit(swimsuitId, skillSlot);
-
-    logger.info(`Removed skill from slot ${skillSlot} for swimsuit ${swimsuitId}`);
-
-    res.deleted('Skill removed from swimsuit successfully');
-  })
-);
+// Note: Skills are now embedded directly in swimsuit records as:
+// - skill_id_1/2/3, skill_key_1/2/3
+// - skill_name_jp/en/cn/tw/kr_1/2/3
+// - skill_des_1/2/3, skill_des_jp/en/cn/tw/kr_1/2/3
+//
+// To update skills, use PUT /api/swimsuits/:id with the embedded skill fields
 
 export default router;

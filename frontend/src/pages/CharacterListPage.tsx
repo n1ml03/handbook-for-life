@@ -296,13 +296,13 @@ export default function CharacterListPage() {
       if (
         filterValuesWithDebouncedSearch.height_min &&
         originalChar.height &&
-        originalChar.height < Number(filterValuesWithDebouncedSearch.height_min)
+        Number(originalChar.height) < Number(filterValuesWithDebouncedSearch.height_min)
       )
         return false;
       if (
         filterValuesWithDebouncedSearch.height_max &&
         originalChar.height &&
-        originalChar.height > Number(filterValuesWithDebouncedSearch.height_max)
+        Number(originalChar.height) > Number(filterValuesWithDebouncedSearch.height_max)
       )
         return false;
       return true;

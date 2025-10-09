@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Event, NewEvent, EventType } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
+import { AppError } from '../middleware/middleware';
 import { logger } from '../config';
 
 export class EventModel extends BaseModel<Event, NewEvent> {
@@ -103,14 +103,8 @@ export class EventModel extends BaseModel<Event, NewEvent> {
     );
   }
 
-  async findById(id: number): Promise<Event>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = Event>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Event> {
-    if (mapFunction) {
-      return super.findById(id) as Promise<T>;
-    }
-    return super.findById(id as number);
+  async findById(id: number): Promise<Event> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Event> {
@@ -216,10 +210,9 @@ export class EventModel extends BaseModel<Event, NewEvent> {
   async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Event>> {
-    return super.search(searchFields, query, options, additionalWhere);
+    return super.search(searchFields, query, options);
   }
 
   async findByKey(key: string): Promise<Event> {
@@ -261,15 +254,14 @@ export class EventModel extends BaseModel<Event, NewEvent> {
     const [countRows] = await executeQuery(countSql, values);
     const total = (countRows as any[])[0].total;
 
-    // Fetch paginated data
+    // Fetch paginated data - use direct values for LIMIT/OFFSET
     const dataSql = `
-      SELECT * FROM events 
+      SELECT * FROM events
       ${whereClause}
       ORDER BY ${sortBy} ${sortOrder}
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `;
-    const dataValues = [...values, limit, offset];
-    const [dataRows] = await executeQuery(dataSql, dataValues);
+    const [dataRows] = await executeQuery(dataSql, values);
 
     return this.buildPaginatedResult(dataRows as Event[], total, options);
   }
@@ -339,8 +331,10 @@ export class EventModel extends BaseModel<Event, NewEvent> {
     const page = Math.max(1, options.page || 1);
     const limit = Math.min(100, Math.max(1, options.limit || 10));
     const offset = (page - 1) * limit;
-    const sortBy = options.sortBy || 'id';
-    const sortOrder = (options.sortOrder || 'asc').toUpperCase();
+
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder?.toUpperCase() === 'DESC') ? 'DESC' : 'ASC';
 
     return { offset, limit, sortBy, sortOrder };
   }

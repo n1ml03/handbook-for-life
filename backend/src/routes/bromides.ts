@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { validate, validateQuery, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
 import { BromideModel } from '../models/BromideModel';
 import logger from '../config/logger';
 
@@ -20,21 +20,21 @@ router.get('/',
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (rarity) {
       result = await bromideModel.findByRarity(rarity as any, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else {
       result = await bromideModel.findAll({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     }
 
@@ -96,7 +96,7 @@ router.get('/search',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} bromides`);

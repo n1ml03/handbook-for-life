@@ -206,12 +206,9 @@ export default function AccessoryPage() {
             id: item.id.toString(),
             name: item.name_en || item.name_jp,
             name_en: item.name_en,
-            type: item.item_category || "Other",
-            rarity: (item.rarity === "N" ? "R" : item.rarity) as
-              | "SSR"
-              | "SR"
-              | "R",
-            skill: item.source_description_en,
+            type: item.type || "Other", // Changed from item_category to type
+            rarity: "R" as "SSR" | "SR" | "R", // rarity field removed, default to R
+            skill: item.description, // Changed from source_description_en to description
             description: item.description_en,
           }),
         );

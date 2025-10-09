@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { validate, validateQuery, validateParams, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
 import { SkillModel } from '../models/SkillModel';
 import logger from '../config/logger';
 
@@ -20,21 +20,21 @@ router.get('/',
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (effectType) {
       result = await skillModel.findByEffectType(effectType as string, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else {
       result = await skillModel.findAll({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     }
 
@@ -97,7 +97,7 @@ router.get('/search',
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} skills`);

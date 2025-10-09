@@ -1,42 +1,25 @@
 import { Router } from 'express';
-import { validate, validateQuery, schemas } from '../middleware/validation';
-import { asyncHandler } from '../middleware/errorHandler';
+import { validate, validateQuery, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
 import { ItemModel } from '../models/ItemModel';
 import logger from '../config/logger';
 
 const router = Router();
 const itemModel = new ItemModel();
 
-// GET /api/items - Get all items with pagination and filters
-router.get('/', 
+// GET /api/items - Get all items with pagination
+// Note: category and rarity filters removed (fields no longer exist in denormalized schema)
+router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder, category, rarity } = req.query;
-    
-    let result;
-    
-    if (category) {
-      result = await itemModel.findByCategory(category as any, {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else if (rarity) {
-      result = await itemModel.findByRarity(rarity as any, {
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    } else {
-      result = await itemModel.findAll({
-        page: Number(page),
-        limit: Number(limit),
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      });
-    }
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    const result = await itemModel.findAll({
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
+    });
 
     logger.info(`Retrieved ${result.data.length} items for page ${page}`);
 
@@ -48,9 +31,9 @@ router.get('/',
 router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
-    
-    const item = await itemModel.findByUniqueKey(unique_key);
-    
+
+    const item = await itemModel.findByKey(unique_key);
+
     logger.info(`Retrieved item: ${item.name_en}`);
 
     res.success(item);
@@ -59,12 +42,19 @@ router.get('/key/:unique_key',
 
 // GET /api/items/currency - Get currency items
 router.get('/currency',
-  asyncHandler(async (_req, res) => {
-    const items = await itemModel.getCurrencyItems();
-    
-    logger.info(`Retrieved ${items.length} currency items`);
+  validateQuery(schemas.pagination),
+  asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
 
-    res.success(items);
+    const result = await itemModel.findByType('CURRENCY', {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy as string,
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
+    });
+
+    logger.info(`Found ${result.data.length} currency items`);
+    res.paginated(result);
   })
 );
 
@@ -93,7 +83,7 @@ router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!q) {
       res.status(400).json({
         success: false,
@@ -102,12 +92,11 @@ router.get('/search',
       return;
     }
 
-    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
-    const result = await itemModel.search(searchFields, q as string, {
+    const result = await itemModel.searchMultiLanguage(q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} items`);

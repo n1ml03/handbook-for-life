@@ -3,7 +3,7 @@
 // ============================================================================
 
 // Database configuration
-export { 
+export {
   default as databaseConfig,
   pool as databasePool,
   initializePool,
@@ -18,30 +18,6 @@ export {
   type ConnectionPoolStats,
   type DatabaseHealthCheck
 } from './database';
-
-// Database utilities with proper typing
-export {
-  selectQuery,
-  insertQuery,
-  updateQuery,
-  deleteQuery,
-  countQuery,
-  selectOne,
-  existsQuery,
-  findById,
-  findByUniqueKey,
-  deleteById,
-  existsById,
-  getTableCount,
-  paginatedQuery,
-  bulkInsert,
-  upsert,
-  buildMultiLanguageSearch,
-  buildDateRangeFilter,
-  checkTableHealth,
-  type PaginationParams,
-  type PaginatedResult
-} from './database-utils';
 
 // Logger configuration
 export {

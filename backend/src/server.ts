@@ -10,12 +10,10 @@ config();
 
 import logger  from './config/logger';
 import { testConnection, closeDatabase } from './config/database';
-import { errorHandler, notFound } from './middleware/errorHandler';
-import { responseFormatter } from './middleware/responseFormatter';
-import { responseValidator } from './middleware/responseValidator';
+import { errorHandler, notFound, responseFormatter, responseValidator } from './middleware/middleware';
 import { swaggerUi, specs } from './config/swagger';
 import { CacheService } from './services/CacheService';
-import { generateId } from './utils/id';
+import { generateId } from './utils/utils';
 import {
   rateLimits,
   sanitizeInput,

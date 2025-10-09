@@ -106,13 +106,13 @@ const ShopListingCard = React.memo(function ShopListingCard({
         </div>
       </div>
 
-      {/* Item Category */}
-      {listing.item?.item_category && (
+      {/* Item Type */}
+      {listing.item?.type && (
         <div className="flex items-center gap-2 p-2 bg-dark-primary/20 rounded-lg border border-white/10">
           <Tag className="w-3 h-3 text-accent-purple" />
-          <span className="text-xs font-medium text-gray-400">Category:</span>
+          <span className="text-xs font-medium text-gray-400">Type:</span>
           <span className="text-xs font-bold text-white">
-            {listing.item.item_category}
+            {listing.item.type}
           </span>
         </div>
       )}
@@ -165,14 +165,12 @@ export default function ShopPage() {
   const [filterValues, setFilterValues] = useState<{
     search: string;
     shop_type: string;
-    rarity: string;
-    item_category: string;
+    item_type: string; // Changed from item_category to item_type
     available_only: boolean;
   }>({
     search: "",
     shop_type: "",
-    rarity: "",
-    item_category: "",
+    item_type: "", // Changed from item_category to item_type
     available_only: false,
   });
 
@@ -207,9 +205,8 @@ export default function ShopPage() {
       // Add filters
       if (debouncedSearch) params.search = debouncedSearch;
       if (filterValues.shop_type) params.shop_type = filterValues.shop_type;
-      if (filterValues.rarity) params.rarity = filterValues.rarity;
-      if (filterValues.item_category)
-        params.item_category = filterValues.item_category;
+      if (filterValues.item_type)
+        params.item_type = filterValues.item_type; // Changed from item_category to item_type
       if (filterValues.available_only)
         params.available_only = filterValues.available_only;
 
@@ -245,8 +242,7 @@ export default function ShopPage() {
     sortDirection,
     debouncedSearch,
     filterValues.shop_type,
-    filterValues.rarity,
-    filterValues.item_category,
+    filterValues.item_type, // Changed from item_category to item_type
     filterValues.available_only,
   ]);
 
@@ -277,11 +273,11 @@ export default function ShopPage() {
         ],
       },
       {
-        key: "item_category",
-        label: "Item Category",
+        key: "item_type",
+        label: "Item Type",
         type: "select",
         options: [
-          { value: "", label: "All Categories" },
+          { value: "", label: "All Types" },
           { value: "ACCESSORY", label: "Accessories" },
           { value: "CURRENCY", label: "Currency" },
           { value: "CONSUMABLE", label: "Consumables" },
@@ -348,8 +344,7 @@ export default function ShopPage() {
     setFilterValues({
       search: "",
       shop_type: "",
-      rarity: "",
-      item_category: "",
+      item_type: "", // Changed from item_category to item_type
       available_only: false,
     });
     setCurrentPage(1);
@@ -497,8 +492,7 @@ export default function ShopPage() {
                     setFilterValues({
                       search: "",
                       shop_type: "",
-                      rarity: "",
-                      item_category: "",
+                      item_type: "", // Changed from item_category to item_type
                       available_only: false,
                     });
                     setCurrentPage(1);

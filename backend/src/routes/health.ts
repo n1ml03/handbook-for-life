@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
+import { asyncHandler } from '../middleware/middleware';
 import { serviceRegistry } from '../services/index';
 import { testConnection } from '../config/database';
 import logger from '../config/logger';

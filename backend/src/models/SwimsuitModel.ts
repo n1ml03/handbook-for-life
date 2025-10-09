@@ -1,356 +1,228 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
-import { Swimsuit, NewSwimsuit, SwimsuitRarity, SuitType } from '../types/database';
+import { Swimsuit } from '../types/database';
+import { RowDataPacket } from 'mysql2';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
 
-export class SwimsuitModel extends BaseModel<Swimsuit, NewSwimsuit> {
+export class SwimsuitModel extends BaseModel<Swimsuit> {
   constructor() {
     super('swimsuits');
   }
 
-  // Implementation of abstract methods
-  protected mapRow(row: any): Swimsuit {
+  // Override to provide valid sort columns
+  protected getValidSortColumns(): string[] {
+    return ['id', 'unique_key', 'name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'character_key', 'rarity', 'attribute', 'max_level', 'max_pow', 'max_tec', 'max_stm', 'max_apl'];
+  }
+
+  // Implementation of abstract mapRow method with embedded skills
+  protected mapRow(row: RowDataPacket): Swimsuit {
     return {
       id: row.id,
-      character_id: row.character_id,
       unique_key: row.unique_key,
+      unique_msg_key: row.unique_msg_key,
       name_jp: row.name_jp,
       name_en: row.name_en,
       name_cn: row.name_cn,
       name_tw: row.name_tw,
       name_kr: row.name_kr,
-      description_en: row.description_en,
-      rarity: row.rarity as SwimsuitRarity,
-      suit_type: row.suit_type as SuitType,
-      total_stats_awakened: row.total_stats_awakened,
-      has_malfunction: Boolean(row.has_malfunction),
-      is_limited: Boolean(row.is_limited),
-      release_date_gl: row.release_date_gl,
-      game_version: row.game_version,
-      image_before_data: row.image_before_data,
-      image_before_mime_type: row.image_before_mime_type,
-      image_after_data: row.image_after_data,
-      image_after_mime_type: row.image_after_mime_type,
+      character_key: row.character_key,
+      rarity: row.rarity,
+      attribute: row.attribute,
+      max_level: row.max_level,
+      // Base stats
+      base_pow: row.base_pow,
+      max_pow: row.max_pow,
+      pow_growth: row.pow_growth,
+      base_tec: row.base_tec,
+      max_tex: row.max_tex,
+      tec_growth: row.tec_growth,
+      base_stm: row.base_stm,
+      max_stm: row.max_stm,
+      stm_growth: row.stm_growth,
+      base_apl: row.base_apl,
+      max_apl: row.max_apl,
+      apl_growth: row.apl_growth,
+      // Embedded Skill 1
+      skill_id_1: row.skill_id_1,
+      skill_key_1: row.skill_key_1,
+      skill_name_jp_1: row.skill_name_jp_1,
+      skill_name_en_1: row.skill_name_en_1,
+      skill_name_cn_1: row.skill_name_cn_1,
+      skill_name_tw_1: row.skill_name_tw_1,
+      skill_name_kr_1: row.skill_name_kr_1,
+      skill_des_1: row.skill_des_1,
+      skill_des_jp_1: row.skill_des_jp_1,
+      skill_des_en_1: row.skill_des_en_1,
+      skill_des_cn_1: row.skill_des_cn_1,
+      skill_des_tw_1: row.skill_des_tw_1,
+      skill_des_kr_1: row.skill_des_kr_1,
+      // Embedded Skill 2
+      skill_id_2: row.skill_id_2,
+      skill_key_2: row.skill_key_2,
+      skill_name_jp_2: row.skill_name_jp_2,
+      skill_name_en_2: row.skill_name_en_2,
+      skill_name_cn_2: row.skill_name_cn_2,
+      skill_name_tw_2: row.skill_name_tw_2,
+      skill_name_kr_2: row.skill_name_kr_2,
+      skill_des_2: row.skill_des_2,
+      skill_des_jp_2: row.skill_des_jp_2,
+      skill_des_en_2: row.skill_des_en_2,
+      skill_des_cn_2: row.skill_des_cn_2,
+      skill_des_tw_2: row.skill_des_tw_2,
+      skill_des_kr_2: row.skill_des_kr_2,
+      // Embedded Skill 3
+      skill_id_3: row.skill_id_3,
+      skill_key_3: row.skill_key_3,
+      skill_name_jp_3: row.skill_name_jp_3,
+      skill_name_en_3: row.skill_name_en_3,
+      skill_name_cn_3: row.skill_name_cn_3,
+      skill_name_tw_3: row.skill_name_tw_3,
+      skill_name_kr_3: row.skill_name_kr_3,
+      skill_des_3: row.skill_des_3,
+      skill_des_jp_3: row.skill_des_jp_3,
+      skill_des_en_3: row.skill_des_en_3,
+      skill_des_cn_3: row.skill_des_cn_3,
+      skill_des_tw_3: row.skill_des_tw_3,
+      skill_des_kr_3: row.skill_des_kr_3,
+      // Bromide references
+      bromide: row.bromide,
+      cossbreak_bromide: row.cossbreak_bromide,
     };
   }
 
-  protected getCreateFields(): (keyof NewSwimsuit)[] {
-    return [
-      'character_id',
-      'unique_key',
-      'name_jp',
-      'name_en',
-      'name_cn',
-      'name_tw',
-      'name_kr',
-      'description_en',
-      'rarity',
-      'suit_type',
-      'total_stats_awakened',
-      'has_malfunction',
-      'is_limited',
-      'release_date_gl',
-      'game_version',
-      'image_before_data',
-      'image_before_mime_type',
-      'image_after_data',
-      'image_after_mime_type',
-    ];
-  }
-
-  protected getUpdateFields(): (keyof NewSwimsuit)[] {
-    return this.getCreateFields();
-  }
-
-  async create(swimsuit: NewSwimsuit): Promise<Swimsuit> {
-    try {
-      const [result] = await executeQuery(
-        `INSERT INTO swimsuits (character_id, unique_key, name_jp, name_en, name_cn, name_tw, name_kr,
-         description_en, rarity, suit_type, total_stats_awakened, has_malfunction, is_limited, release_date_gl, game_version,
-         image_before_data, image_before_mime_type, image_after_data, image_after_mime_type)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          swimsuit.character_id,
-          swimsuit.unique_key,
-          swimsuit.name_jp,
-          swimsuit.name_en,
-          swimsuit.name_cn,
-          swimsuit.name_tw,
-          swimsuit.name_kr,
-          swimsuit.description_en,
-          swimsuit.rarity,
-          swimsuit.suit_type,
-          swimsuit.total_stats_awakened ?? 0,
-          swimsuit.has_malfunction ?? false,
-          swimsuit.is_limited ?? true,
-          swimsuit.release_date_gl,
-          swimsuit.game_version,
-          swimsuit.image_before_data,
-          swimsuit.image_before_mime_type,
-          swimsuit.image_after_data,
-          swimsuit.image_after_mime_type,
-        ]
-      ) as [any, any];
-
-      return this.findById(result.insertId);
-    } catch (error: any) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError('Swimsuit with this unique_key already exists', 409);
-      }
-      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-        throw new AppError('Character not found', 400);
-      }
-      throw new AppError('Failed to create swimsuit', 500);
-    }
-  }
-
-  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits',
-      'SELECT COUNT(*) FROM swimsuits',
-      options
-    );
-  }
-
-  // New method to get swimsuits with character information
-  async findAllWithCharacters(options: PaginationOptions = {}): Promise<PaginatedResult<any>> {
-    const query = `
-      SELECT 
-        s.*,
-        c.name_en as character_name_en,
-        c.name_jp as character_name_jp,
-        c.unique_key as character_unique_key
-      FROM swimsuits s
-      LEFT JOIN characters c ON s.character_id = c.id
-    `;
-    
-    const countQuery = 'SELECT COUNT(*) FROM swimsuits s LEFT JOIN characters c ON s.character_id = c.id';
-    
-    return this.getPaginatedResults(query, countQuery, options, this.mapRowWithCharacter.bind(this));
-  }
-
-  // Map row with character data
-  protected mapRowWithCharacter(row: any): any {
-    return {
-      ...this.mapRow(row),
-      character: {
-        name_en: row.character_name_en || 'Unknown Character',
-        name_jp: row.character_name_jp || '',
-        unique_key: row.character_unique_key || ''
-      }
-    };
-  }
-
-  // Override findById to use proper typing
-  async findById(id: number): Promise<Swimsuit> {
-    return super.findById(id);
-  }
-
-  async findByUniqueKey(unique_key: string): Promise<Swimsuit> {
-    const [rows] = await executeQuery('SELECT * FROM swimsuits WHERE unique_key = ?', [unique_key]) as [any[], any];
-    if (rows.length === 0) {
-      throw new AppError('Swimsuit not found', 404);
-    }
-    return this.mapRow(rows[0]);
-  }
-
-  async findByCharacterId(character_id: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits WHERE character_id = ?',
-      'SELECT COUNT(*) FROM swimsuits WHERE character_id = ?',
-      options,
-      undefined,
-      [character_id]
-    );
-  }
-
-  async findByRarity(rarity: SwimsuitRarity, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits WHERE rarity = ?',
-      'SELECT COUNT(*) FROM swimsuits WHERE rarity = ?',
-      options,
-      undefined,
-      [rarity]
-    );
-  }
-
-  async findBySuitType(suit_type: SuitType, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits WHERE suit_type = ?',
-      'SELECT COUNT(*) FROM swimsuits WHERE suit_type = ?',
-      options,
-      undefined,
-      [suit_type]
-    );
-  }
-
-  async findLimitedSwimsuits(options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits WHERE is_limited = TRUE',
-      'SELECT COUNT(*) FROM swimsuits WHERE is_limited = TRUE',
-      options
-    );
-  }
-
-  async findWithMalfunction(options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.getPaginatedResults(
-      'SELECT * FROM swimsuits WHERE has_malfunction = TRUE',
-      'SELECT COUNT(*) FROM swimsuits WHERE has_malfunction = TRUE',
-      options
-    );
-  }
-
-  async update(id: number, updates: Partial<NewSwimsuit>): Promise<Swimsuit> {
-    const setClause: string[] = [];
-    const params: any[] = [];
-
-    if (updates.character_id !== undefined) {
-      setClause.push(`character_id = ?`);
-      params.push(updates.character_id);
-    }
-    if (updates.unique_key !== undefined) {
-      setClause.push(`unique_key = ?`);
-      params.push(updates.unique_key);
-    }
-    if (updates.name_jp !== undefined) {
-      setClause.push(`name_jp = ?`);
-      params.push(updates.name_jp);
-    }
-    if (updates.name_en !== undefined) {
-      setClause.push(`name_en = ?`);
-      params.push(updates.name_en);
-    }
-    if (updates.name_cn !== undefined) {
-      setClause.push(`name_cn = ?`);
-      params.push(updates.name_cn);
-    }
-    if (updates.name_tw !== undefined) {
-      setClause.push(`name_tw = ?`);
-      params.push(updates.name_tw);
-    }
-    if (updates.name_kr !== undefined) {
-      setClause.push(`name_kr = ?`);
-      params.push(updates.name_kr);
-    }
-    if (updates.description_en !== undefined) {
-      setClause.push(`description_en = ?`);
-      params.push(updates.description_en);
-    }
-    if (updates.rarity !== undefined) {
-      setClause.push(`rarity = ?`);
-      params.push(updates.rarity);
-    }
-    if (updates.suit_type !== undefined) {
-      setClause.push(`suit_type = ?`);
-      params.push(updates.suit_type);
-    }
-    if (updates.total_stats_awakened !== undefined) {
-      setClause.push(`total_stats_awakened = ?`);
-      params.push(updates.total_stats_awakened);
-    }
-    if (updates.has_malfunction !== undefined) {
-      setClause.push(`has_malfunction = ?`);
-      params.push(updates.has_malfunction);
-    }
-    if (updates.is_limited !== undefined) {
-      setClause.push(`is_limited = ?`);
-      params.push(updates.is_limited);
-    }
-    if (updates.release_date_gl !== undefined) {
-      setClause.push(`release_date_gl = ?`);
-      params.push(updates.release_date_gl);
-    }
-    if (updates.game_version !== undefined) {
-      setClause.push(`game_version = ?`);
-      params.push(updates.game_version);
-    }
-    if (updates.image_before_data !== undefined) {
-      setClause.push(`image_before_data = ?`);
-      params.push(updates.image_before_data);
-    }
-    if (updates.image_before_mime_type !== undefined) {
-      setClause.push(`image_before_mime_type = ?`);
-      params.push(updates.image_before_mime_type);
-    }
-    if (updates.image_after_data !== undefined) {
-      setClause.push(`image_after_data = ?`);
-      params.push(updates.image_after_data);
-    }
-    if (updates.image_after_mime_type !== undefined) {
-      setClause.push(`image_after_mime_type = ?`);
-      params.push(updates.image_after_mime_type);
-    }
-
-    if (setClause.length === 0) {
-      return this.findById(id);
-    }
-
-    params.push(id);
-
-    await executeQuery(
-      `UPDATE swimsuits SET ${setClause.join(', ')} WHERE id = ?`,
-      params
-    );
-
-    return this.findById(id);
-  }
-
-  async delete(id: number): Promise<void> {
-    return super.delete(id);
-  }
-
-  // Override search method to match BaseModel signature
-  async search(
-    searchFields: string[],
-    query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+  /**
+   * Search swimsuits across multi-language name fields
+   */
+  async searchMultiLanguage(
+    searchTerm: string,
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Swimsuit>> {
-    return super.search(searchFields, query, options, additionalWhere);
-  }
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
 
-  // Convenience search method for swimsuits
-  async searchSwimsuits(query: string, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    const searchFields = ['name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'unique_key'];
-    return this.search(searchFields, query, options);
-  }
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
 
-  async getTopStatsSwimsuits(limit: number = 10): Promise<Swimsuit[]> {
+    const searchPattern = `%${searchTerm}%`;
+
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
+    );
+    const total = (countResult as RowDataPacket[])[0].total;
+
+    // Get paginated data - use direct values for LIMIT/OFFSET
     const [rows] = await executeQuery(
-      'SELECT * FROM swimsuits ORDER BY total_stats_awakened DESC LIMIT ?',
-      [limit]
-    ) as [any[], any];
-    
-    return rows.map(row => this.mapRow(row));
-  }
+      `SELECT * FROM ${this.tableName}
+       WHERE name_jp LIKE ? OR name_en LIKE ? OR name_cn LIKE ? OR name_tw LIKE ? OR name_kr LIKE ?
+       ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]
+    );
 
-  async findByCharacter(characterId: number, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.findByCharacterId(characterId, options);
-  }
-
-  async findByType(suitType: SuitType, options: PaginationOptions = {}): Promise<PaginatedResult<Swimsuit>> {
-    return this.findBySuitType(suitType, options);
-  }
-
-  async findByKey(key: string): Promise<Swimsuit> {
-    return this.findByUniqueKey(key);
-  }
-
-  async healthCheck(): Promise<{ isHealthy: boolean; tableName: string; errors: string[] }> {
-    const errors: string[] = [];
-
-    try {
-      await executeQuery('SELECT 1');
-      await executeQuery('SELECT COUNT(*) FROM swimsuits LIMIT 1');
-    } catch (error) {
-      const errorMsg = `SwimsuitModel health check failed: ${error instanceof Error ? error.message : error}`;
-      errors.push(errorMsg);
-    }
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
 
     return {
-      isHealthy: errors.length === 0,
-      tableName: 'swimsuits',
-      errors
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
     };
   }
-} 
+
+  /**
+   * Find swimsuits by character key
+   */
+  async findByCharacterKey(
+    characterKey: string,
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Swimsuit>> {
+    // NOTE: The swimsuits table does not have a character_key column in the current database schema
+    // This method returns an empty result until the schema is updated
+    // TODO: Add character_key column to swimsuits table or implement JOIN with characters table
+
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+
+    return {
+      data: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      }
+    };
+  }
+
+  /**
+   * Get top swimsuits sorted by maximum stats
+   */
+  async getTopByStats(
+    statType: 'pow' | 'tec' | 'stm' | 'apl' | 'total' = 'total',
+    options: PaginationOptions = {}
+  ): Promise<PaginatedResult<Swimsuit>> {
+    const page = options.page || 1;
+    const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
+
+    let orderByClause: string;
+    if (statType === 'total') {
+      orderByClause = '(COALESCE(max_pow, 0) + COALESCE(max_tec, 0) + COALESCE(max_stm, 0) + COALESCE(max_apl, 0)) DESC';
+    } else {
+      orderByClause = `max_${statType} DESC`;
+    }
+
+    // Get total count
+    const [countResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName}`
+    );
+    const total = (countResult as RowDataPacket[])[0].total;
+
+    // Get paginated data - use direct values for LIMIT/OFFSET
+    const [rows] = await executeQuery(
+      `SELECT * FROM ${this.tableName} ORDER BY ${orderByClause} LIMIT ${limit} OFFSET ${offset}`
+    );
+
+    const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  }
+
+  /**
+   * Count swimsuits by rarity
+   */
+  async countByRarity(): Promise<Record<string, number>> {
+    const [rows] = await executeQuery(
+      `SELECT rarity, COUNT(*) as count FROM ${this.tableName} WHERE rarity IS NOT NULL GROUP BY rarity`
+    );
+
+    const result: Record<string, number> = {};
+    (rows as RowDataPacket[]).forEach(row => {
+      result[row.rarity] = row.count;
+    });
+
+    return result;
+  }
+}

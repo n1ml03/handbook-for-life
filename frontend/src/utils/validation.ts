@@ -160,7 +160,7 @@ export function validateData<T>(
   const errors: Record<string, string> = {};
   const fieldErrors: string[] = [];
 
-  result.error.errors.forEach((error) => {
+  result.error.issues.forEach((error: any) => {
     const path = error.path.join(".");
     if (path) {
       errors[path] = error.message;
@@ -183,7 +183,7 @@ export function createAsyncValidator<T>(schema: z.ZodType<T>) {
     const result = await schema.safeParseAsync(data);
     if (!result.success) {
       throw new Error(
-        `Validation failed: ${result.error.errors.map((e) => e.message).join(", ")}`,
+        `Validation failed: ${result.error.issues.map((e: any) => e.message).join(", ")}`,
       );
     }
     return result.data;

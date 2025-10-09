@@ -3,42 +3,42 @@ import { Card } from "./card";
 import { cn } from "@/services/utils";
 import { type ImageData } from "@/utils/imageUtils";
 
-// Language configuration with white backgrounds for light mode
+// Language configuration for dark mode
 const LANGUAGES = {
   jp: {
     flag: "🇯🇵",
     name: "JP",
-    color: "text-rose-400 light:text-rose-700",
-    bg: "bg-gradient-to-r from-rose-500/10 to-pink-500/10 light:bg-white",
-    border: "border-rose-500/20 light:border-rose-300",
+    color: "text-rose-400",
+    bg: "bg-gradient-to-r from-rose-500/10 to-pink-500/10",
+    border: "border-rose-500/20",
   },
   en: {
     flag: "🇺🇸",
     name: "EN",
-    color: "text-blue-400 light:text-blue-700",
-    bg: "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 light:bg-white",
-    border: "border-blue-500/20 light:border-blue-300",
+    color: "text-blue-400",
+    bg: "bg-gradient-to-r from-blue-500/10 to-indigo-500/10",
+    border: "border-blue-500/20",
   },
   cn: {
     flag: "🇨🇳",
     name: "CN",
-    color: "text-amber-400 light:text-amber-700",
-    bg: "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 light:bg-white",
-    border: "border-amber-500/20 light:border-amber-300",
+    color: "text-amber-400",
+    bg: "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
+    border: "border-amber-500/20",
   },
   tw: {
     flag: "🇹🇼",
     name: "TW",
-    color: "text-emerald-400 light:text-emerald-700",
-    bg: "bg-gradient-to-r from-emerald-500/10 to-green-500/10 light:bg-white",
-    border: "border-emerald-500/20 light:border-emerald-300",
+    color: "text-emerald-400",
+    bg: "bg-gradient-to-r from-emerald-500/10 to-green-500/10",
+    border: "border-emerald-500/20",
   },
   kr: {
     flag: "🇰🇷",
     name: "KR",
-    color: "text-purple-400 light:text-purple-700",
-    bg: "bg-gradient-to-r from-purple-500/10 to-violet-500/10 light:bg-white",
-    border: "border-purple-500/20 light:border-purple-300",
+    color: "text-purple-400",
+    bg: "bg-gradient-to-r from-purple-500/10 to-violet-500/10",
+    border: "border-purple-500/20",
   },
 } as const;
 
@@ -106,9 +106,9 @@ const OptimizedCardImage = React.memo<{
   }, [config.src, config.imageData]);
 
   const containerClasses = cn(
-    "relative overflow-hidden rounded-xl border border-white/10 light:border-border/40",
+    "relative overflow-hidden rounded-xl border border-white/10 ",
     "bg-gradient-to-br from-slate-900/40 via-slate-800/20 to-slate-900/40",
-    "light:bg-white light:shadow-sm",
+    " ",
     "optimized-image scroll-optimized", // Add our new CSS classes
     config.size
       ? sizeClasses[config.size]
@@ -210,11 +210,11 @@ const LanguageBadge = React.memo<{
           langConfig.border,
           "border backdrop-blur-sm",
           // Light mode enhancements
-          "light:shadow-sm light:bg-opacity-80",
+          " ",
         )}
       >
         {/* <span className="text-base">{langConfig.flag}</span> */}
-        <span className="light:font-semibold truncate">{name}</span>
+        <span className=" truncate">{name}</span>
       </div>
     );
   }
@@ -227,7 +227,7 @@ const LanguageBadge = React.memo<{
           langConfig.bg,
           langConfig.border,
           // Light mode enhancements
-          "light:shadow-md light:bg-opacity-80",
+          " ",
         )}
       >
         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -239,7 +239,7 @@ const LanguageBadge = React.memo<{
             )}>
               {langConfig.name}
             </div> */}
-            <div className="text-white/90 light:text-foreground font-medium leading-tight text-sm sm:text-base mt-0.5">
+            <div className="text-white/90  font-medium leading-tight text-sm sm:text-base mt-0.5">
               <span className="line-clamp-2">{name}</span>
             </div>
           </div>
@@ -260,7 +260,7 @@ const LanguageBadge = React.memo<{
           langConfig.border,
           "border backdrop-blur-sm",
           // Light mode enhancements
-          "light:shadow-sm light:bg-opacity-80 light:font-bold",
+          "  ",
         )}
       >
         <span className="text-base sm:text-lg">{langConfig.flag}</span>
@@ -273,7 +273,7 @@ const LanguageBadge = React.memo<{
     <div
       className={cn(
         "flex items-center gap-2.5 sm:gap-3 p-2 sm:p-3 rounded-lg transition-colors duration-200",
-        "hover:bg-white/5 light:hover:bg-black/5",
+        "hover:bg-white/5 :bg-black/5",
       )}
     >
       <div
@@ -284,7 +284,7 @@ const LanguageBadge = React.memo<{
           langConfig.border,
           "border",
           // Light mode enhancements
-          "light:shadow-sm",
+          "",
         )}
       >
         {langConfig.flag}
@@ -296,7 +296,7 @@ const LanguageBadge = React.memo<{
         )}>
           {langConfig.name}
         </div> */}
-        <div className="text-white/90 light:text-foreground font-medium leading-tight text-sm mt-0.5">
+        <div className="text-white/90  font-medium leading-tight text-sm mt-0.5">
           <span className="line-clamp-2">{name}</span>
         </div>
       </div>
@@ -341,7 +341,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
       return (
         <div className="space-y-3 sm:space-y-4">
           <div className="relative">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white light:text-foreground leading-tight tracking-tight pr-6">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white  leading-tight tracking-tight pr-6">
               {primaryName}
             </h3>
             <div className="absolute top-0 right-0 text-lg sm:text-xl opacity-80">
@@ -371,10 +371,10 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
               // Dark mode styling
               "border-white/10 bg-gradient-to-r from-white/5 to-white/2",
               // Light mode styling - pure white background
-              "light:border-border/40 light:bg-white light:shadow-md",
+              "  ",
             )}
           >
-            <h3 className="text-md sm:text-xl md:text-xl font-bold text-white light:text-foreground leading-tight tracking-tight pr-8">
+            <h3 className="text-md sm:text-xl md:text-xl font-bold text-white  leading-tight tracking-tight pr-8">
               {primaryName}
             </h3>
             <div
@@ -385,7 +385,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
             >
               {LANGUAGES[primaryLanguage].flag}
             </div>
-            {/* <div className="mt-1.5 text-xs sm:text-sm text-white/60 light:text-muted-foreground font-medium">
+            {/* <div className="mt-1.5 text-xs sm:text-sm text-white/60  font-medium">
             Primary ({LANGUAGES[primaryLanguage].name})
           </div> */}
           </div>
@@ -410,7 +410,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
         {/* Primary name with elegant styling */}
         <div className="relative">
           <div className="flex items-start justify-between gap-3 sm:gap-4">
-            <h3 className="text-md sm:text-xl md:text-xl font-bold text-white light:text-foreground leading-tight tracking-tight flex-1">
+            <h3 className="text-md sm:text-xl md:text-xl font-bold text-white  leading-tight tracking-tight flex-1">
               {primaryName}
             </h3>
             <LanguageBadge
@@ -430,7 +430,7 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
               // Dark mode styling
               "bg-gradient-to-br from-slate-900/40 via-slate-800/20 to-slate-900/40 border-white/10 backdrop-blur-sm",
               // Light mode styling - pure white background
-              "light:bg-white light:border-border/40 light:shadow-sm light:backdrop-blur-none",
+              "   ",
             )}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
@@ -518,7 +518,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
           // Dark mode styling
           "border-2 border-white/10 bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md shadow-xl",
           // Light mode styling - pure white background
-          "light:border-2 light:border-border/40 light:bg-white light:shadow-lg light:backdrop-blur-none",
+          "    ",
           className,
         ),
         clickable: cn(
@@ -527,9 +527,9 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
           // Dark mode styling
           "border-2 border-white/10 hover:border-white/20 bg-gradient-to-br from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md shadow-2xl",
           // Light mode styling - pure white background
-          "light:border-2 light:border-border/40 light:hover:border-border/60 light:bg-white light:shadow-lg light:backdrop-blur-none",
+          "  :border-border/60   ",
           hover
-            ? "hover:shadow-3xl hover:bg-gradient-to-br hover:from-slate-900/80 hover:via-slate-800/60 hover:to-slate-900/80 light:hover:shadow-xl light:hover:bg-white"
+            ? "hover:shadow-3xl hover:bg-gradient-to-br hover:from-slate-900/80 hover:via-slate-800/60 hover:to-slate-900/80 :shadow-xl :bg-white"
             : "",
         ),
       }),
@@ -578,7 +578,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
                       className={cn(
                         "p-4 rounded-xl border",
                         "bg-gradient-to-br from-white/5 to-white/2 border-white/10",
-                        "light:bg-white light:border-border/40 light:shadow-sm",
+                        "  ",
                       )}
                     >
                       {sideContent}
@@ -636,7 +636,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
                       className={cn(
                         "p-4 rounded-xl border",
                         "bg-gradient-to-br from-white/5 to-white/2 border-white/10",
-                        "light:bg-white light:border-border/40 light:shadow-sm",
+                        "  ",
                       )}
                     >
                       {sideContent}
@@ -678,7 +678,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
                   className={cn(
                     "p-4 rounded-xl border",
                     "bg-gradient-to-br from-white/5 to-white/2 border-white/10",
-                    "light:bg-white light:border-border/40 light:shadow-sm",
+                    "  ",
                     densityConfig.spacing,
                   )}
                 >
@@ -705,7 +705,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
           {header && (
             <div
               className={cn(
-                "mb-3 pb-2 border-b border-white/20 light:border-border/40",
+                "mb-3 pb-2 border-b border-white/20 ",
                 densityConfig.spacing,
               )}
             >
@@ -720,7 +720,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
           {children && (
             <div
               className={cn(
-                "mt-3 pt-2 border-t border-white/20 light:border-border/40",
+                "mt-3 pt-2 border-t border-white/20 ",
                 densityConfig.spacing,
               )}
             >
@@ -732,7 +732,7 @@ export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
           {footer && (
             <div
               className={cn(
-                "mt-3 pt-2 border-t border-white/20 light:border-border/40",
+                "mt-3 pt-2 border-t border-white/20 ",
                 densityConfig.spacing,
               )}
             >

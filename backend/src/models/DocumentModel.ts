@@ -1,8 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Document, NewDocument } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
-import { QueryOptimizer } from '../services/QueryOptimizer';
+import { AppError } from '../middleware/middleware';
 
 export interface UpdateDocument {
   unique_key?: string;
@@ -201,7 +200,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     return [...new Set(tags)]; // Remove duplicates
   }
 
-  async create(document: NewDocument): Promise<ExtendedDocument> {
+  async create(document: Partial<ExtendedDocument>): Promise<ExtendedDocument> {
     try {
       // Convert base64 PDF data to Buffer for database storage
       let pdfDataBuffer = null;
@@ -214,7 +213,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
           pdfDataBuffer = document.pdf_data;
         }
       }
-      
+
       const [result] = await executeQuery(
         `INSERT INTO documents (unique_key, title_en, summary_en, document_type, content_json_en, screenshots_data, pdf_data, pdf_filename, pdf_mime_type, pdf_size, has_pdf_file, pdf_metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -252,14 +251,8 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     );
   }
 
-  async findById(id: number): Promise<ExtendedDocument>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = ExtendedDocument>(id: string | number, mapFunction?: (row: any) => T): Promise<T | ExtendedDocument> {
-    if (mapFunction) {
-      return super.findById(id) as Promise<T>;
-    }
-    return super.findById(id as number);
+  async findById(id: number): Promise<ExtendedDocument> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<ExtendedDocument> {
@@ -284,7 +277,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
     );
   }
 
-  async update(id: number, updates: Partial<NewDocument>): Promise<ExtendedDocument> {
+  async update(id: number, updates: Partial<ExtendedDocument>): Promise<ExtendedDocument> {
     const setClause: string[] = [];
     const params: any[] = [];
 
@@ -351,10 +344,9 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
   async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<ExtendedDocument>> {
-    return super.search(searchFields, query, options, additionalWhere);
+    return super.search(searchFields, query, options);
   }
 
   /**
@@ -446,4 +438,28 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       errors,
     };
   }
-} 
+
+  /**
+   * Get document statistics
+   */
+  async getStats(): Promise<any> {
+    const [totalResult] = await executeQuery(
+      `SELECT COUNT(*) as total FROM ${this.tableName}`
+    );
+    const total = (totalResult as any[])[0].total;
+
+    const [typeResult] = await executeQuery(
+      `SELECT document_type, COUNT(*) as count FROM ${this.tableName} GROUP BY document_type`
+    );
+
+    const byType: Record<string, number> = {};
+    (typeResult as any[]).forEach((row: any) => {
+      byType[row.document_type || 'unknown'] = row.count;
+    });
+
+    return {
+      total,
+      byType
+    };
+  }
+}

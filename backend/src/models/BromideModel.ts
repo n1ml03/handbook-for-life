@@ -1,12 +1,17 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Bromide, NewBromide, BromideType, BromideRarity } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
+import { AppError } from '../middleware/middleware';
 import { logger } from '../config';
 
 export class BromideModel extends BaseModel<Bromide, NewBromide> {
   constructor() {
     super('bromides');
+  }
+
+  // Override to provide valid sort columns
+  protected getValidSortColumns(): string[] {
+    return ['id', 'unique_key', 'name_jp', 'name_en', 'name_cn', 'name_tw', 'name_kr', 'bromide_type', 'rarity', 'skill_id', 'game_version'];
   }
 
   // Implementation of abstract methods
@@ -132,14 +137,8 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
     );
   }
 
-  async findById(id: number): Promise<Bromide>;
-  async findById<T>(id: string | number, mapFunction: (row: any) => T): Promise<T>;
-  
-  async findById<T = Bromide>(id: string | number, mapFunction?: (row: any) => T): Promise<T | Bromide> {
-    if (mapFunction) {
-      return super.findById(id) as Promise<T>;
-    }
-    return super.findById(id as number);
+  async findById(id: number): Promise<Bromide> {
+    return super.findById(id);
   }
 
   async findByUniqueKey(unique_key: string): Promise<Bromide> {
@@ -251,10 +250,9 @@ export class BromideModel extends BaseModel<Bromide, NewBromide> {
   async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Bromide>> {
-    return super.search(searchFields, query, options, additionalWhere);
+    return super.search(searchFields, query, options);
   }
 
   // Convenience search method for bromides

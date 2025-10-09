@@ -20,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/services/utils";
-import ThemeToggle from "./ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -725,7 +724,6 @@ export const Header = memo(function Header({ className }: HeaderProps) {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
             <MobileMenuToggle
               isOpen={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

@@ -1,7 +1,6 @@
 import * as mysql from 'mysql2/promise';
 import { RowDataPacket, ResultSetHeader, FieldPacket, QueryResult } from 'mysql2';
 import logger from './logger';
-import { QueryOptimizer } from '../services/QueryOptimizer';
 
 // ============================================================================
 // DATABASE CONFIGURATION INTERFACES
@@ -401,9 +400,6 @@ export async function executeQuery(
     ]);
 
     const executionTime = Date.now() - startTime;
-
-    // Track query performance
-    QueryOptimizer.trackQueryPerformance(query, executionTime, 'executeQuery');
 
     // Development query logging
     if (process.env.DB_ENABLE_QUERY_LOGGING === 'true' && process.env.NODE_ENV === 'development') {

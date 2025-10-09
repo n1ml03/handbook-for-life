@@ -1,9 +1,12 @@
 import { Router } from 'express';
-import { validate, validateQuery, validateParams, schemas } from '../middleware/validation';
-import { characterSchemas } from '../utils/ValidationSchemas';
-import { asyncHandler } from '../middleware/errorHandler';
-import { characterService } from '../services';
+import { validate, validateQuery, validateParams, asyncHandler } from '../middleware/middleware';
+import { schemas } from '../utils/ValidationSchemas';
+import { CharacterModel } from '../models/CharacterModel';
+import { SwimsuitModel } from '../models/SwimsuitModel';
 import logger from '../config/logger';
+
+const characterModel = new CharacterModel();
+const swimsuitModel = new SwimsuitModel();
 
 const router = Router();
 
@@ -42,12 +45,12 @@ router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
-    const result = await characterService.getCharacters({
+
+    const result = await characterModel.findAll({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Retrieved ${result.data.length} characters for page ${page}`);
@@ -85,9 +88,9 @@ router.get('/key/:unique_key',
   validateParams(schemas.uniqueKeyParam),
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
-    
-    const character = await characterService.getCharacterByKey(unique_key);
-    
+
+    const character = await characterModel.findByKey(unique_key);
+
     logger.info(`Retrieved character: ${character.name_en}`);
     res.success(character);
   })
@@ -156,12 +159,21 @@ router.get('/key/:unique_key',
  */
 router.get('/birthdays',
   asyncHandler(async (req, res) => {
-    const { days = 7 } = req.query;
-    
-    const characters = await characterService.getUpcomingBirthdays(Number(days));
-    
-    logger.info(`Retrieved ${characters.length} characters with upcoming birthdays`);
-    res.success(characters);
+    const { month, day, page = 1, limit = 10, sortBy, sortOrder } = req.query;
+
+    const result = await characterModel.findByBirthday(
+      month ? Number(month) : undefined,
+      day ? Number(day) : undefined,
+      {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
+      }
+    );
+
+    logger.info(`Found ${result.data.length} characters with birthdays matching criteria`);
+    res.paginated(result);
   })
 );
 
@@ -201,17 +213,17 @@ router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!q) {
       res.error('Search query is required', 400);
       return;
     }
 
-    const result = await characterService.searchCharacters(q as string, {
+    const result = await characterModel.searchMultiLanguage(q as string, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
     logger.info(`Search for "${q}" returned ${result.data.length} characters`);
@@ -248,8 +260,8 @@ router.get('/search',
 router.get('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
-    const character = await characterService.getCharacterById(req.params.id);
-    
+    const character = await characterModel.findById(Number(req.params.id));
+
     logger.info(`Retrieved character: ${character.name_en}`);
     res.success(character);
   })
@@ -331,8 +343,8 @@ router.get('/:id',
 router.post('/',
   validate(schemas.createCharacter),
   asyncHandler(async (req, res) => {
-    const character = await characterService.createCharacter(req.body);
-    
+    const character = await characterModel.create(req.body);
+
     logger.info(`Created character: ${character.name_en}`);
     res.created(character, 'Character created successfully', `/api/characters/${character.id}`);
   })
@@ -446,13 +458,12 @@ router.post('/',
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
+// TODO: Implement batch create
 router.post('/batch',
-  validate(characterSchemas.batchCreate),
   asyncHandler(async (req, res) => {
-    await characterService.createMultipleCharacters(req.body);
-    
-    logger.info(`Created ${req.body.length} characters in batch`);
-    res.status(201).success({ created: req.body.length }, 'Characters created successfully');
+    // Batch create not yet implemented in simplified BaseModel
+    logger.info(`Batch create not yet implemented`);
+    res.status(501).error('Batch create not yet implemented', 501);
   })
 );
 
@@ -461,8 +472,8 @@ router.put('/:id',
   validateParams(schemas.idParam),
   validate(schemas.updateCharacter),
   asyncHandler(async (req, res) => {
-    const character = await characterService.updateCharacter(req.params.id, req.body);
-    
+    const character = await characterModel.update(Number(req.params.id), req.body);
+
     logger.info(`Updated character: ${character.name_en}`);
     res.success(character, 'Character updated successfully');
   })
@@ -472,8 +483,8 @@ router.put('/:id',
 router.delete('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
-    await characterService.deleteCharacter(req.params.id);
-    
+    await characterModel.delete(Number(req.params.id));
+
     logger.info(`Deleted character with ID: ${req.params.id}`);
     res.success({ deleted: true }, 'Character deleted successfully');
   })
@@ -516,68 +527,33 @@ router.get('/:id/swimsuits',
   validateParams(schemas.idParam),
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
 
-    const result = await characterService.getCharacterSwimsuits(req.params.id, {
+    // First get the character to retrieve their unique_key
+    const character = await characterModel.findById(Number(id));
+
+    // Query swimsuits by character_key
+    const result = await swimsuitModel.findByCharacterKey(character.unique_key, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
+      sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
     });
 
-    logger.info(`Retrieved ${result.data.length} swimsuits for character ${req.params.id}`);
+    logger.info(`Found ${result.data.length} swimsuits for character ${character.name_en || character.name_jp}`);
     res.paginated(result);
   })
 );
 
-/**
- * @swagger
- * /api/characters/{id}/skills:
- *   get:
- *     tags: [Characters]
- *     summary: Get character skills
- *     description: Retrieve a paginated list of skills for a specific character
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *       - $ref: '#/components/parameters/PageParam'
- *       - $ref: '#/components/parameters/LimitParam'
- *       - $ref: '#/components/parameters/SortByParam'
- *       - $ref: '#/components/parameters/SortOrderParam'
- *     responses:
- *       200:
- *         description: Character skills retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/PaginatedResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Skill'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
+// TODO: Skills are now embedded in swimsuits - this endpoint may not be needed
 // GET /api/characters/:id/skills - Get character skills
 router.get('/:id/skills',
   validateParams(schemas.idParam),
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
-
-    const result = await characterService.getCharacterSkills(req.params.id, {
-      page: Number(page),
-      limit: Number(limit),
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as 'asc' | 'desc'
-    });
-
-    logger.info(`Retrieved ${result.data.length} skills for character ${req.params.id}`);
-    res.paginated(result);
+    logger.info(`Character skills endpoint not yet implemented (skills are now embedded in swimsuits)`);
+    res.status(501).error('Character skills endpoint not yet implemented', 501);
   })
 );
 

@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Gacha, NewGacha, GachaSubtype } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
+import { AppError } from '../middleware/middleware';
 import logger from '../config/logger';
 
 export class GachaModel extends BaseModel<Gacha, NewGacha> {
@@ -200,10 +200,9 @@ export class GachaModel extends BaseModel<Gacha, NewGacha> {
   async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Gacha>> {
-    return super.search(searchFields, query, options, additionalWhere);
+    return super.search(searchFields, query, options);
   }
 
   // Convenience search method for gachas

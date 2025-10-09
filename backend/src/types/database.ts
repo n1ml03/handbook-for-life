@@ -12,15 +12,66 @@ export interface Character {
   name_cn: string; // VARCHAR(100)
   name_tw: string; // VARCHAR(100)
   name_kr: string; // VARCHAR(100)
-  birthday?: Date; // DATE
-  height?: number; // SMALLINT UNSIGNED
-  measurements?: string; // VARCHAR(20)
-  blood_type?: string; // VARCHAR(5)
-  voice_actor_jp?: string; // VARCHAR(100)
-  profile_image_data?: Buffer; // LONGBLOB
-  profile_image_mime_type?: string; // VARCHAR(50)
-  is_active: boolean; // BOOLEAN DEFAULT TRUE
-  game_version?: string; // VARCHAR(30)
+  // Multi-language age fields
+  age_jp?: string; // VARCHAR(50)
+  age_en?: string; // VARCHAR(50)
+  age_cn?: string; // VARCHAR(50)
+  age_tw?: string; // VARCHAR(50)
+  age_kr?: string; // VARCHAR(50)
+  // Multi-language birthday fields
+  birthday_jp?: string; // VARCHAR(100)
+  birthday_en?: string; // VARCHAR(100)
+  birthday_cn?: string; // VARCHAR(100)
+  birthday_tw?: string; // VARCHAR(100)
+  birthday_kr?: string; // VARCHAR(100)
+  // Multi-language height fields
+  height_jp?: string; // VARCHAR(50)
+  height_en?: string; // VARCHAR(50)
+  height_cn?: string; // VARCHAR(50)
+  height_tw?: string; // VARCHAR(50)
+  height_kr?: string; // VARCHAR(50)
+  // Multi-language measurements fields
+  measurements_jp?: string; // VARCHAR(50)
+  measurements_en?: string; // VARCHAR(50)
+  measurements_cn?: string; // VARCHAR(50)
+  measurements_tw?: string; // VARCHAR(50)
+  measurements_kr?: string; // VARCHAR(50)
+  // Multi-language blood type fields
+  blood_jp?: string; // VARCHAR(20)
+  blood_en?: string; // VARCHAR(20)
+  blood_cn?: string; // VARCHAR(20)
+  blood_tw?: string; // VARCHAR(20)
+  blood_kr?: string; // VARCHAR(20)
+  // Multi-language job fields
+  job_jp?: string; // VARCHAR(150)
+  job_en?: string; // VARCHAR(150)
+  job_cn?: string; // VARCHAR(150)
+  job_tw?: string; // VARCHAR(150)
+  job_kr?: string; // VARCHAR(150)
+  // Multi-language hobby fields
+  hobby_jp?: string; // VARCHAR(255)
+  hobby_en?: string; // VARCHAR(255)
+  hobby_cn?: string; // VARCHAR(255)
+  hobby_tw?: string; // VARCHAR(255)
+  hobby_kr?: string; // VARCHAR(255)
+  // Multi-language food fields
+  food_jp?: string; // VARCHAR(255)
+  food_en?: string; // VARCHAR(255)
+  food_cn?: string; // VARCHAR(255)
+  food_tw?: string; // VARCHAR(255)
+  food_kr?: string; // VARCHAR(255)
+  // Multi-language color fields
+  color_jp?: string; // VARCHAR(100)
+  color_en?: string; // VARCHAR(100)
+  color_cn?: string; // VARCHAR(100)
+  color_tw?: string; // VARCHAR(100)
+  color_kr?: string; // VARCHAR(100)
+  // Multi-language cast/voice actor fields
+  cast_jp?: string; // VARCHAR(150)
+  cast_en?: string; // VARCHAR(150)
+  cast_cn?: string; // VARCHAR(150)
+  cast_tw?: string; // VARCHAR(150)
+  cast_kr?: string; // VARCHAR(150)
 }
 
 export interface NewCharacter {
@@ -30,82 +81,224 @@ export interface NewCharacter {
   name_cn: string;
   name_tw: string;
   name_kr: string;
-  birthday?: Date;
-  height?: number;
-  measurements?: string;
-  blood_type?: string;
-  voice_actor_jp?: string;
-  profile_image_data?: Buffer;
-  profile_image_mime_type?: string;
-  is_active?: boolean;
-  game_version?: string;
+  // Multi-language age fields
+  age_jp?: string;
+  age_en?: string;
+  age_cn?: string;
+  age_tw?: string;
+  age_kr?: string;
+  // Multi-language birthday fields
+  birthday_jp?: string;
+  birthday_en?: string;
+  birthday_cn?: string;
+  birthday_tw?: string;
+  birthday_kr?: string;
+  // Multi-language height fields
+  height_jp?: string;
+  height_en?: string;
+  height_cn?: string;
+  height_tw?: string;
+  height_kr?: string;
+  // Multi-language measurements fields
+  measurements_jp?: string;
+  measurements_en?: string;
+  measurements_cn?: string;
+  measurements_tw?: string;
+  measurements_kr?: string;
+  // Multi-language blood type fields
+  blood_jp?: string;
+  blood_en?: string;
+  blood_cn?: string;
+  blood_tw?: string;
+  blood_kr?: string;
+  // Multi-language job fields
+  job_jp?: string;
+  job_en?: string;
+  job_cn?: string;
+  job_tw?: string;
+  job_kr?: string;
+  // Multi-language hobby fields
+  hobby_jp?: string;
+  hobby_en?: string;
+  hobby_cn?: string;
+  hobby_tw?: string;
+  hobby_kr?: string;
+  // Multi-language food fields
+  food_jp?: string;
+  food_en?: string;
+  food_cn?: string;
+  food_tw?: string;
+  food_kr?: string;
+  // Multi-language color fields
+  color_jp?: string;
+  color_en?: string;
+  color_cn?: string;
+  color_tw?: string;
+  color_kr?: string;
+  // Multi-language cast/voice actor fields
+  cast_jp?: string;
+  cast_en?: string;
+  cast_cn?: string;
+  cast_tw?: string;
+  cast_kr?: string;
 }
 
 // Utility types for character operations
 export interface CharacterSearchParams {
   name?: string;
-  birthday_month?: number;
-  birthday_day?: number;
-  is_active?: boolean;
+  unique_key?: string;
 }
-
-export type SwimsuitRarity = 'N' | 'R' | 'SR' | 'SSR' | 'SSR+';
-export type SuitType = 'POW' | 'TEC' | 'STM' | 'APL' | 'N/A';
 
 export interface Swimsuit {
   id: number; // MEDIUMINT UNSIGNED
-  character_id: number; // SMALLINT UNSIGNED
   unique_key: string; // VARCHAR(150) UNIQUE
+  unique_msg_key?: string; // VARCHAR(150)
   name_jp: string; // VARCHAR(255)
   name_en: string; // VARCHAR(255)
   name_cn: string; // VARCHAR(255)
   name_tw: string; // VARCHAR(255)
   name_kr: string; // VARCHAR(255)
-  description_en?: string; // TEXT
-  rarity: SwimsuitRarity; // ENUM
-  suit_type: SuitType; // ENUM
-  total_stats_awakened: number; // SMALLINT UNSIGNED DEFAULT 0
-  has_malfunction: boolean; // BOOLEAN DEFAULT FALSE
-  is_limited: boolean; // BOOLEAN DEFAULT TRUE
-  release_date_gl?: Date; // DATE
-  game_version?: string; // VARCHAR(30)
-  image_before_data?: Buffer; // LONGBLOB
-  image_before_mime_type?: string; // VARCHAR(50)
-  image_after_data?: Buffer; // LONGBLOB
-  image_after_mime_type?: string; // VARCHAR(50)
+  character_key?: string; // VARCHAR(100) - String reference instead of FK
+  rarity?: string; // VARCHAR(20)
+  attribute?: string; // VARCHAR(50)
+  max_level?: number; // SMALLINT UNSIGNED
+  // Base stats
+  base_pow?: number; // SMALLINT UNSIGNED
+  max_pow?: number; // SMALLINT UNSIGNED
+  pow_growth?: number; // DECIMAL(10,2)
+  base_tec?: number; // SMALLINT UNSIGNED
+  max_tex?: number; // SMALLINT UNSIGNED
+  tec_growth?: number; // DECIMAL(10,2)
+  base_stm?: number; // SMALLINT UNSIGNED
+  max_stm?: number; // SMALLINT UNSIGNED
+  stm_growth?: number; // DECIMAL(10,2)
+  base_apl?: number; // SMALLINT UNSIGNED
+  max_apl?: number; // SMALLINT UNSIGNED
+  apl_growth?: number; // DECIMAL(10,2)
+  // Embedded Skill 1
+  skill_id_1?: number; // INT UNSIGNED
+  skill_key_1?: string; // VARCHAR(120)
+  skill_name_jp_1?: string; // VARCHAR(150)
+  skill_name_en_1?: string; // VARCHAR(150)
+  skill_name_cn_1?: string; // VARCHAR(150)
+  skill_name_tw_1?: string; // VARCHAR(150)
+  skill_name_kr_1?: string; // VARCHAR(150)
+  skill_des_1?: string; // TEXT
+  skill_des_jp_1?: string; // TEXT
+  skill_des_en_1?: string; // TEXT
+  skill_des_cn_1?: string; // TEXT
+  skill_des_tw_1?: string; // TEXT
+  skill_des_kr_1?: string; // TEXT
+  // Embedded Skill 2
+  skill_id_2?: number; // INT UNSIGNED
+  skill_key_2?: string; // VARCHAR(120)
+  skill_name_jp_2?: string; // VARCHAR(150)
+  skill_name_en_2?: string; // VARCHAR(150)
+  skill_name_cn_2?: string; // VARCHAR(150)
+  skill_name_tw_2?: string; // VARCHAR(150)
+  skill_name_kr_2?: string; // VARCHAR(150)
+  skill_des_2?: string; // TEXT
+  skill_des_jp_2?: string; // TEXT
+  skill_des_en_2?: string; // TEXT
+  skill_des_cn_2?: string; // TEXT
+  skill_des_tw_2?: string; // TEXT
+  skill_des_kr_2?: string; // TEXT
+  // Embedded Skill 3
+  skill_id_3?: number; // INT UNSIGNED
+  skill_key_3?: string; // VARCHAR(120)
+  skill_name_jp_3?: string; // VARCHAR(150)
+  skill_name_en_3?: string; // VARCHAR(150)
+  skill_name_cn_3?: string; // VARCHAR(150)
+  skill_name_tw_3?: string; // VARCHAR(150)
+  skill_name_kr_3?: string; // VARCHAR(150)
+  skill_des_3?: string; // TEXT
+  skill_des_jp_3?: string; // TEXT
+  skill_des_en_3?: string; // TEXT
+  skill_des_cn_3?: string; // TEXT
+  skill_des_tw_3?: string; // TEXT
+  skill_des_kr_3?: string; // TEXT
+  // Bromide references
+  bromide?: string; // VARCHAR(255)
+  cossbreak_bromide?: string; // VARCHAR(255)
 }
 
 export interface NewSwimsuit {
-  character_id: number;
   unique_key: string;
+  unique_msg_key?: string;
   name_jp: string;
   name_en: string;
   name_cn: string;
   name_tw: string;
   name_kr: string;
-  description_en?: string;
-  rarity: SwimsuitRarity;
-  suit_type: SuitType;
-  total_stats_awakened?: number;
-  has_malfunction?: boolean;
-  is_limited?: boolean;
-  release_date_gl?: Date;
-  game_version?: string;
-  image_before_data?: Buffer;
-  image_before_mime_type?: string;
-  image_after_data?: Buffer;
-  image_after_mime_type?: string;
+  character_key?: string;
+  rarity?: string;
+  attribute?: string;
+  max_level?: number;
+  // Base stats
+  base_pow?: number;
+  max_pow?: number;
+  pow_growth?: number;
+  base_tec?: number;
+  max_tex?: number;
+  tec_growth?: number;
+  base_stm?: number;
+  max_stm?: number;
+  stm_growth?: number;
+  base_apl?: number;
+  max_apl?: number;
+  apl_growth?: number;
+  // Embedded Skill 1
+  skill_id_1?: number;
+  skill_key_1?: string;
+  skill_name_jp_1?: string;
+  skill_name_en_1?: string;
+  skill_name_cn_1?: string;
+  skill_name_tw_1?: string;
+  skill_name_kr_1?: string;
+  skill_des_1?: string;
+  skill_des_jp_1?: string;
+  skill_des_en_1?: string;
+  skill_des_cn_1?: string;
+  skill_des_tw_1?: string;
+  skill_des_kr_1?: string;
+  // Embedded Skill 2
+  skill_id_2?: number;
+  skill_key_2?: string;
+  skill_name_jp_2?: string;
+  skill_name_en_2?: string;
+  skill_name_cn_2?: string;
+  skill_name_tw_2?: string;
+  skill_name_kr_2?: string;
+  skill_des_2?: string;
+  skill_des_jp_2?: string;
+  skill_des_en_2?: string;
+  skill_des_cn_2?: string;
+  skill_des_tw_2?: string;
+  skill_des_kr_2?: string;
+  // Embedded Skill 3
+  skill_id_3?: number;
+  skill_key_3?: string;
+  skill_name_jp_3?: string;
+  skill_name_en_3?: string;
+  skill_name_cn_3?: string;
+  skill_name_tw_3?: string;
+  skill_name_kr_3?: string;
+  skill_des_3?: string;
+  skill_des_jp_3?: string;
+  skill_des_en_3?: string;
+  skill_des_cn_3?: string;
+  skill_des_tw_3?: string;
+  skill_des_kr_3?: string;
+  // Bromide references
+  bromide?: string;
+  cossbreak_bromide?: string;
 }
 
 // Utility types for swimsuit filtering
 export interface SwimsuitFilterParams {
-  character_id?: number;
-  rarity?: SwimsuitRarity | SwimsuitRarity[];
-  suit_type?: SuitType | SuitType[];
-  has_malfunction?: boolean;
-  is_limited?: boolean;
-  min_stats?: number;
-  max_stats?: number;
+  character_key?: string;
+  rarity?: string;
+  attribute?: string;
 }
 
 export type SkillCategory = 'ACTIVE' | 'PASSIVE' | 'POTENTIAL';
@@ -137,40 +330,31 @@ export interface NewSkill {
   game_version?: string;
 }
 
-export type ItemCategory = 'CURRENCY' | 'UPGRADE_MATERIAL' | 'CONSUMABLE' | 'GIFT' | 'ACCESSORY' | 'FURNITURE' | 'SPECIAL';
-export type ItemRarity = 'N' | 'R' | 'SR' | 'SSR';
-
 export interface Item {
   id: number; // INT UNSIGNED
   unique_key: string; // VARCHAR(120) UNIQUE
+  type?: string; // VARCHAR(100) - Item type/category
   name_jp: string; // VARCHAR(150)
   name_en: string; // VARCHAR(150)
   name_cn: string; // VARCHAR(150)
   name_tw: string; // VARCHAR(150)
   name_kr: string; // VARCHAR(150)
-  description_en?: string; // TEXT
-  source_description_en?: string; // TEXT
-  item_category: ItemCategory; // ENUM
-  rarity: ItemRarity; // ENUM
-  icon_data?: Buffer; // LONGBLOB
-  icon_mime_type?: string; // VARCHAR(50)
-  game_version?: string; // VARCHAR(30)
+  description?: string; // TEXT - Item description
+  icon_small?: string; // VARCHAR(255) - Small icon path or URL
+  icon_large?: string; // VARCHAR(255) - Large icon path or URL
 }
 
 export interface NewItem {
   unique_key: string;
+  type?: string;
   name_jp: string;
   name_en: string;
   name_cn: string;
   name_tw: string;
   name_kr: string;
-  description_en?: string;
-  source_description_en?: string;
-  item_category: ItemCategory;
-  rarity: ItemRarity;
-  icon_data?: Buffer;
-  icon_mime_type?: string;
-  game_version?: string;
+  description?: string;
+  icon_small?: string;
+  icon_large?: string;
 }
 
 export type BromideType = 'DECO' | 'OWNER';
@@ -207,35 +391,29 @@ export interface NewBromide {
   game_version?: string;
 }
 
-export type EpisodeType = 'MAIN' | 'CHARACTER' | 'EVENT' | 'SWIMSUIT' | 'ITEM';
-
 export interface Episode {
   id: number; // INT UNSIGNED
+  name_jp: string; // VARCHAR(255) - Renamed from title_jp
+  name_en: string; // VARCHAR(255) - Renamed from title_en
+  name_cn: string; // VARCHAR(255) - Renamed from title_cn
+  name_tw: string; // VARCHAR(255) - Renamed from title_tw
+  name_kr: string; // VARCHAR(255) - Renamed from title_kr
+  type?: string; // VARCHAR(100) - Episode type
   unique_key: string; // VARCHAR(200) UNIQUE
-  title_jp: string; // VARCHAR(255)
-  title_en: string; // VARCHAR(255)
-  title_cn: string; // VARCHAR(255)
-  title_tw: string; // VARCHAR(255)
-  title_kr: string; // VARCHAR(255)
-  unlock_condition_en?: string; // TEXT
-  episode_type: EpisodeType; // ENUM
-  related_entity_type?: string; // VARCHAR(64)
-  related_entity_id?: number; // INT UNSIGNED
-  game_version?: string; // VARCHAR(30)
+  release_data?: Date; // DATE - Release date
+  release_version?: string; // VARCHAR(50) - Release version
 }
 
 export interface NewEpisode {
+  name_jp: string;
+  name_en: string;
+  name_cn: string;
+  name_tw: string;
+  name_kr: string;
+  type?: string;
   unique_key: string;
-  title_jp: string;
-  title_en: string;
-  title_cn: string;
-  title_tw: string;
-  title_kr: string;
-  unlock_condition_en?: string;
-  episode_type: EpisodeType;
-  related_entity_type?: string;
-  related_entity_id?: number;
-  game_version?: string;
+  release_data?: Date;
+  release_version?: string;
 }
 
 // ============================================================================
@@ -313,27 +491,6 @@ export interface NewGacha {
   game_version?: string;
   banner_image_data?: Buffer;
   banner_image_mime_type?: string;
-}
-
-export type ShopType = 'EVENT' | 'VIP' | 'GENERAL' | 'CURRENCY';
-
-export interface ShopListing {
-  id: number; // INT UNSIGNED
-  shop_type: ShopType; // ENUM
-  item_id: number; // INT UNSIGNED
-  cost_currency_item_id: number; // INT UNSIGNED
-  cost_amount: number; // INT UNSIGNED
-  start_date?: Date; // DATETIME
-  end_date?: Date; // DATETIME
-}
-
-export interface NewShopListing {
-  shop_type: ShopType;
-  item_id: number;
-  cost_currency_item_id: number;
-  cost_amount: number;
-  start_date?: Date;
-  end_date?: Date;
 }
 
 export type DocumentType = 'checklist' | 'guide' | 'tutorial';
@@ -427,44 +584,6 @@ export interface NewUpdateLog {
 }
 
 // ============================================================================
-// LINKING TABLES (Bảng liên kết)
-// ============================================================================
-
-export type SkillSlot = 'ACTIVE' | 'PASSIVE_1' | 'PASSIVE_2' | 'POTENTIAL_1' | 'POTENTIAL_2' | 'POTENTIAL_3' | 'POTENTIAL_4';
-
-export interface SwimsuitSkill {
-  id: number; // Composite ID for consistency with BaseEntity
-  swimsuit_id: number; // MEDIUMINT UNSIGNED
-  skill_id: number; // INT UNSIGNED
-  skill_slot: SkillSlot; // ENUM
-}
-
-export interface NewSwimsuitSkill {
-  swimsuit_id: number;
-  skill_id: number;
-  skill_slot: SkillSlot;
-}
-
-export type PoolItemType = 'SWIMSUIT' | 'BROMIDE' | 'ITEM';
-
-export interface GachaPool {
-  id: number; // INT UNSIGNED
-  gacha_id: number; // INT UNSIGNED
-  pool_item_type: PoolItemType; // ENUM
-  item_id: number; // INT UNSIGNED
-  drop_rate: number; // DECIMAL(6,4)
-  is_featured: boolean; // BOOLEAN DEFAULT FALSE
-}
-
-export interface NewGachaPool {
-  gacha_id: number;
-  pool_item_type: PoolItemType;
-  item_id: number;
-  drop_rate: number;
-  is_featured?: boolean;
-}
-
-// ============================================================================
 // VIEWS & UTILITY TYPES (Views và types tiện ích)
 // ============================================================================
 
@@ -515,8 +634,8 @@ export interface DateRangeParams {
   end_date?: Date;
 }
 
-// Common rarity filter
-export type AllRarityTypes = ItemRarity | SwimsuitRarity | BromideRarity;
+// Common rarity filter (now using string types for denormalized schema)
+export type AllRarityTypes = BromideRarity;
 
 // Health check response type
 export interface HealthCheckResponse {
@@ -591,7 +710,7 @@ export function isCharacter(obj: any): obj is Character {
 }
 
 export function isSwimsuit(obj: any): obj is Swimsuit {
-  return obj && typeof obj.id === 'number' && typeof obj.character_id === 'number' && typeof obj.unique_key === 'string';
+  return obj && typeof obj.id === 'number' && typeof obj.unique_key === 'string';
 }
 
 export function isSkill(obj: any): obj is Skill {
@@ -599,7 +718,7 @@ export function isSkill(obj: any): obj is Skill {
 }
 
 export function isItem(obj: any): obj is Item {
-  return obj && typeof obj.id === 'number' && typeof obj.unique_key === 'string' && typeof obj.item_category === 'string';
+  return obj && typeof obj.id === 'number' && typeof obj.unique_key === 'string';
 }
 
 export function isBromide(obj: any): obj is Bromide {
@@ -611,7 +730,7 @@ export function isEvent(obj: any): obj is Event {
 }
 
 export function isEpisode(obj: any): obj is Episode {
-  return obj && typeof obj.id === 'number' && typeof obj.unique_key === 'string' && typeof obj.episode_type === 'string';
+  return obj && typeof obj.id === 'number' && typeof obj.unique_key === 'string';
 }
 
 export function isDocument(obj: any): obj is Document {
@@ -619,40 +738,20 @@ export function isDocument(obj: any): obj is Document {
 }
 
 // Constants for enum values validation
-export const SWIMSUIT_RARITIES: SwimsuitRarity[] = ['N', 'R', 'SR', 'SSR', 'SSR+'];
-export const SUIT_TYPES: SuitType[] = ['POW', 'TEC', 'STM', 'APL', 'N/A'];
 export const SKILL_CATEGORIES: SkillCategory[] = ['ACTIVE', 'PASSIVE', 'POTENTIAL'];
-export const ITEM_CATEGORIES: ItemCategory[] = ['CURRENCY', 'UPGRADE_MATERIAL', 'CONSUMABLE', 'GIFT', 'ACCESSORY', 'FURNITURE', 'SPECIAL'];
-export const ITEM_RARITIES: ItemRarity[] = ['N', 'R', 'SR', 'SSR'];
 export const BROMIDE_TYPES: BromideType[] = ['DECO', 'OWNER'];
 export const BROMIDE_RARITIES: BromideRarity[] = ['R', 'SR', 'SSR'];
-export const EPISODE_TYPES: EpisodeType[] = ['MAIN', 'CHARACTER', 'EVENT', 'SWIMSUIT', 'ITEM'];
 export const EVENT_TYPES: EventType[] = ['FESTIVAL_RANKING', 'FESTIVAL_CUMULATIVE', 'TOWER', 'ROCK_CLIMBING', 'BUTT_BATTLE', 'LOGIN_BONUS', 'STORY'];
 export const GACHA_SUBTYPES: GachaSubtype[] = ['TRENDY', 'NOSTALGIC', 'BIRTHDAY', 'ANNIVERSARY', 'PAID', 'FREE', 'ETC'];
-export const SHOP_TYPES: ShopType[] = ['EVENT', 'VIP', 'GENERAL', 'CURRENCY'];
-export const SKILL_SLOTS: SkillSlot[] = ['ACTIVE', 'PASSIVE_1', 'PASSIVE_2', 'POTENTIAL_1', 'POTENTIAL_2', 'POTENTIAL_3', 'POTENTIAL_4'];
-export const POOL_ITEM_TYPES: PoolItemType[] = ['SWIMSUIT', 'BROMIDE', 'ITEM'];
 export const DOCUMENT_TYPES: DocumentType[] = ['checklist', 'guide'];
 
 // Validation helper functions
-export function isValidSwimsuitRarity(rarity: string): rarity is SwimsuitRarity {
-  return SWIMSUIT_RARITIES.includes(rarity as SwimsuitRarity);
-}
-
 export function isValidDocumentType(type: string): type is DocumentType {
   return DOCUMENT_TYPES.includes(type as DocumentType);
 }
 
-export function isValidSuitType(type: string): type is SuitType {
-  return SUIT_TYPES.includes(type as SuitType);
-}
-
 export function isValidSkillCategory(category: string): category is SkillCategory {
   return SKILL_CATEGORIES.includes(category as SkillCategory);
-}
-
-export function isValidItemCategory(category: string): category is ItemCategory {
-  return ITEM_CATEGORIES.includes(category as ItemCategory);
 }
 
 export function isValidEventType(type: string): type is EventType {

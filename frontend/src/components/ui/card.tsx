@@ -9,7 +9,7 @@ const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
       className={cn(
         "rounded-responsive border bg-card text-card-foreground modern-shadow glass-effect theme-sync performance-card text-optimized",
         // Light mode enhancements - Improved contrast and visibility
-        "light:bg-card light:border-border/80 light:shadow-md",
+        "  ",
         // Touch-friendly improvements
         "touch-friendly focus-mobile",
         className,
@@ -55,7 +55,7 @@ const CardDescription = forwardRef<
     className={cn(
       "text-xs text-muted-foreground leading-relaxed",
       // Light mode enhancements for better contrast
-      "light:text-muted-foreground light-medium-contrast-text",
+      " light-medium-contrast-text",
       className,
     )}
     {...props}

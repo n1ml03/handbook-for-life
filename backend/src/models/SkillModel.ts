@@ -1,8 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Skill, NewSkill, SkillCategory } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
-import { logger } from '../config';
+import { AppError } from '../middleware/middleware';
 
 export class SkillModel extends BaseModel<Skill, NewSkill> {
   constructor() {
@@ -187,10 +186,9 @@ export class SkillModel extends BaseModel<Skill, NewSkill> {
   async search(
     searchFields: string[],
     query: string,
-    options: PaginationOptions = {},
-    additionalWhere?: string
+    options: PaginationOptions = {}
   ): Promise<PaginatedResult<Skill>> {
-    return super.search(searchFields, query, options, additionalWhere);
+    return super.search(searchFields, query, options);
   }
 
   // Convenience search method for skills

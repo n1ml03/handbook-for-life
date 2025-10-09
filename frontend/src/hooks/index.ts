@@ -2,7 +2,6 @@
 export { useAccessibility } from "./useAccessibility";
 export { useDocuments } from "./useDocuments";
 export { useUpdateLogs } from "./useUpdateLogs";
-export { useTheme } from "./useTheme";
 export * from "./useLocalStorage";
 export * from "./useDebounce";
 export * from "./useLoadingState";
