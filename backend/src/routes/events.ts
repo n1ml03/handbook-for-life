@@ -102,27 +102,6 @@ router.get('/upcoming',
   })
 );
 
-/**
- * @swagger
- * /api/events/search:
- *   get:
- *     tags: [Events]
- *     summary: Search events
- *     description: Search events by name or other criteria
- *     parameters:
- *       - $ref: '#/components/parameters/SearchParam'
- *       - $ref: '#/components/parameters/PageParam'
- *       - $ref: '#/components/parameters/LimitParam'
- *       - $ref: '#/components/parameters/SortByParam'
- *       - $ref: '#/components/parameters/SortOrderParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/PaginatedSuccess'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -150,23 +129,6 @@ router.get('/search',
   })
 );
 
-/**
- * @swagger
- * /api/events/{id}:
- *   get:
- *     tags: [Events]
- *     summary: Get event by ID
- *     description: Retrieve a specific event by their ID
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
@@ -203,31 +165,6 @@ router.post('/',
   })
 );
 
-/**
- * @swagger
- * /api/events/{id}:
- *   put:
- *     tags: [Events]
- *     summary: Update event
- *     description: Update an existing event
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.put('/:id',
   validate(schemas.updateEvent),
   asyncHandler(async (req, res) => {
@@ -249,23 +186,6 @@ router.put('/:id',
   })
 );
 
-/**
- * @swagger
- * /api/events/{id}:
- *   delete:
- *     tags: [Events]
- *     summary: Delete event
- *     description: Delete an existing event
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);

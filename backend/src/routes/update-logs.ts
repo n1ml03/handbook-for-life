@@ -102,31 +102,6 @@ router.post('/',
   })
 );
 
-/**
- * @swagger
- * /api/update-logs/{id}:
- *   put:
- *     tags: [Update Logs]
- *     summary: Update update log
- *     description: Update an existing update log
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.put('/:id',
   validate(schemas.updateLogSchemas.update),
   asyncHandler(async (req, res) => {
@@ -146,23 +121,6 @@ router.put('/:id',
   })
 );
 
-/**
- * @swagger
- * /api/update-logs/{id}:
- *   delete:
- *     tags: [Update Logs]
- *     summary: Delete update log
- *     description: Delete an existing update log
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;

@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/services/utils";
 import { Document } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { documentsApi } from "@/services/api";
 
 // Responsive breakpoints utility
 const useResponsive = () => {
@@ -111,6 +112,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // State management
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [zoom, setZoom] = useState(1.0);
@@ -119,6 +121,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [readingTime, setReadingTime] = useState(0);
   const [tableOfContents, setTableOfContents] = useState<TOCItem[]>([]);
   const [showTOC, setShowTOC] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   // Annotation state
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -138,26 +141,49 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // Check if document has PDF data
   const hasPDF = document.has_pdf_file && document.pdf_data;
 
-  // Create PDF blob URL for iframe
-  const pdfBlobUrl = React.useMemo(() => {
-    if (!document.pdf_data) {
-      return null;
+  // Load PDF from binary endpoint (optimized - no base64 encoding)
+  useEffect(() => {
+    if (!document.has_pdf_file) {
+      setIsLoading(false);
+      return;
     }
-    try {
-      const byteCharacters = atob(document.pdf_data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+
+    let isMounted = true;
+
+    const loadPdf = async () => {
+      setIsLoading(true);
+      setHasError(false);
+      setErrorMessage("");
+
+      try {
+        // Fetch PDF as binary blob from dedicated endpoint
+        const blob = await documentsApi.getDocumentPdf(document.id.toString());
+
+        if (isMounted) {
+          const url = URL.createObjectURL(blob);
+          setPdfBlobUrl(url);
+          setIsLoading(false);
+        }
+      } catch (error: any) {
+        console.error("Error loading PDF:", error);
+        if (isMounted) {
+          setHasError(true);
+          setErrorMessage(error?.message || "Failed to load PDF");
+          setIsLoading(false);
+        }
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], {
-        type: document.pdf_mime_type || "application/pdf",
-      });
-      return URL.createObjectURL(blob);
-    } catch {
-      return null;
-    }
-  }, [document.pdf_data, document.pdf_mime_type]);
+    };
+
+    loadPdf();
+
+    // Cleanup: revoke blob URL when component unmounts or document changes
+    return () => {
+      isMounted = false;
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+    };
+  }, [document.id, document.has_pdf_file]);
 
   // Reading time tracking
   useEffect(() => {
@@ -241,7 +267,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   }, [currentPage, totalPages, onPageChange]);
 
   const handleIframeLoad = useCallback(() => {
-    setIsLoading(false);
     setHasError(false);
 
     // Try to extract page information from PDF
@@ -251,8 +276,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   }, [document.pdf_metadata]);
 
   const handleIframeError = useCallback(() => {
-    setIsLoading(false);
     setHasError(true);
+    setErrorMessage("Failed to render PDF in browser");
   }, []);
 
   // Format reading time
@@ -812,15 +837,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10"
                 >
-                  <div className="flex flex-col items-center space-y-3 text-center">
+                  <div className="flex flex-col items-center space-y-3 text-center max-w-md px-4">
                     <AlertCircle className="w-12 h-12 text-red-500" />
                     <div>
                       <h3 className="font-semibold text-foreground mb-1">
                         PDF Loading Error
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Unable to display the PDF file. Please refresh the page or
-                        contact support.
+                        {errorMessage || "Unable to display the PDF file. Please refresh the page or contact support."}
                       </p>
                     </div>
                   </div>

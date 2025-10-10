@@ -55,13 +55,13 @@ router.get('/',
 router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
-    
+
     if (!unique_key?.trim()) {
       throw new AppError('Unique key is required', 400);
     }
-    
+
     const document = await documentService.getDocumentByKey(unique_key);
-    
+
     logger.info(`Retrieved document: ${document.title_en}`, {
       uniqueKey: unique_key,
       documentId: document.id,
@@ -69,6 +69,40 @@ router.get('/key/:unique_key',
     });
 
     res.success(document);
+  })
+);
+
+// GET /api/documents/:id/pdf - Get PDF binary data
+router.get('/:id/pdf',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const numericId = parseInt(id, 10);
+
+    if (isNaN(numericId) || numericId <= 0) {
+      throw new AppError('Invalid document ID', 400);
+    }
+
+    const document = await documentService.getDocumentById(numericId);
+
+    if (!document.has_pdf_file || !document.pdf_data_binary) {
+      throw new AppError('PDF not found for this document', 404);
+    }
+
+    logger.info(`Serving PDF for document: ${document.title_en}`, {
+      documentId: document.id,
+      pdfSize: document.pdf_size,
+      requestId: (req as any).id
+    });
+
+    // Set proper headers for PDF binary response
+    res.setHeader('Content-Type', document.pdf_mime_type || 'application/pdf');
+    res.setHeader('Content-Length', document.pdf_size || document.pdf_data_binary.length);
+    res.setHeader('Content-Disposition', `inline; filename="${document.pdf_filename || `document-${document.id}.pdf`}"`);
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.setHeader('Accept-Ranges', 'bytes'); // Enable range requests for streaming
+
+    // Send binary data directly
+    res.send(document.pdf_data_binary);
   })
 );
 
@@ -128,27 +162,6 @@ router.get('/types/:document_type',
   })
 );
 
-/**
- * @swagger
- * /api/documents/search:
- *   get:
- *     tags: [Documents]
- *     summary: Search documents
- *     description: Search documents by name or other criteria
- *     parameters:
- *       - $ref: '#/components/parameters/SearchParam'
- *       - $ref: '#/components/parameters/PageParam'
- *       - $ref: '#/components/parameters/LimitParam'
- *       - $ref: '#/components/parameters/SortByParam'
- *       - $ref: '#/components/parameters/SortOrderParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/PaginatedSuccess'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/search',
   validateQuery(schemas.documentSchemas.query),
   asyncHandler(async (req, res) => {
@@ -196,23 +209,6 @@ router.get('/stats/summary',
   })
 );
 
-/**
- * @swagger
- * /api/documents/{id}:
- *   get:
- *     tags: [Documents]
- *     summary: Get document by ID
- *     description: Retrieve a specific document by their ID
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -258,31 +254,6 @@ router.post('/',
   })
 );
 
-/**
- * @swagger
- * /api/documents/{id}:
- *   put:
- *     tags: [Documents]
- *     summary: Update document
- *     description: Update an existing document
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.put('/:id',
   validate(schemas.documentSchemas.update),
   asyncHandler(async (req, res) => {
@@ -310,23 +281,6 @@ router.put('/:id',
 
 
 
-/**
- * @swagger
- * /api/documents/{id}:
- *   delete:
- *     tags: [Documents]
- *     summary: Delete document
- *     description: Delete an existing document
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;

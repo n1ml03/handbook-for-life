@@ -11,7 +11,6 @@ config();
 import logger  from './config/logger';
 import { testConnection, closeDatabase } from './config/database';
 import { errorHandler, notFound, responseFormatter, responseValidator } from './middleware/middleware';
-import { swaggerUi, specs } from './config/swagger';
 import { CacheService } from './services/CacheService';
 import { generateId } from './utils/utils';
 import {
@@ -106,32 +105,6 @@ app.use((req: any, res, next) => {
   next();
 });
 
-// Swagger UI documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'DOAXVV Handbook API Documentation',
-  swaggerOptions: {
-    persistAuthorization: true,
-    displayRequestDuration: true,
-    docExpansion: 'none',
-    filter: true,
-    showExtensions: true,
-    showCommonExtensions: true,
-    defaultModelsExpandDepth: 1,
-    defaultModelExpandDepth: 1,
-    defaultModelRendering: 'example',
-    displayOperationId: false,
-    tryItOutEnabled: true
-  }
-}));
-
-// OpenAPI spec endpoint
-app.get('/api-docs.json', (_req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.json(specs);
-});
-
 // Authentication routes removed for local development
 
 // API routes with appropriate rate limiting
@@ -156,7 +129,6 @@ app.get('/', (_req, res) => {
   res.success({
     message: 'DOAXVV Handbook API Server',
     version: '2.0.0',
-    documentation: '/api-docs',
     endpoints: {
       health: '/api/health',
       characters: '/api/characters',
@@ -236,7 +208,6 @@ const startServer = async () => {
       logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       logger.info(`Server running on: http://${HOST}:${PORT}`);
       logger.info(`Health check: http://${HOST}:${PORT}/api/health`);
-      logger.info(`API Documentation: http://${HOST}:${PORT}/api-docs`);
       logger.info(`Database: Connected to MySQL`);
       logger.info(`Network Note: Configure CORS_ORIGINS for network clients`);
       logger.info(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);

@@ -71,27 +71,6 @@ router.get('/character/:id',
   })
 );
 
-/**
- * @swagger
- * /api/episodes/search:
- *   get:
- *     tags: [Episodes]
- *     summary: Search episodes
- *     description: Search episodes by name or other criteria
- *     parameters:
- *       - $ref: '#/components/parameters/SearchParam'
- *       - $ref: '#/components/parameters/PageParam'
- *       - $ref: '#/components/parameters/LimitParam'
- *       - $ref: '#/components/parameters/SortByParam'
- *       - $ref: '#/components/parameters/SortOrderParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/PaginatedSuccess'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
@@ -120,23 +99,6 @@ router.get('/search',
 
 
 
-/**
- * @swagger
- * /api/episodes/{id}:
- *   get:
- *     tags: [Episodes]
- *     summary: Get episode by ID
- *     description: Retrieve a specific episode by their ID
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {
@@ -166,31 +128,6 @@ router.post('/',
   })
 );
 
-/**
- * @swagger
- * /api/episodes/{id}:
- *   put:
- *     tags: [Episodes]
- *     summary: Update episode
- *     description: Update an existing episode
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.put('/:id',
   validateParams(schemas.idParam),
   validate(schemas.updateEpisode),
@@ -205,23 +142,6 @@ router.put('/:id',
   })
 );
 
-/**
- * @swagger
- * /api/episodes/{id}:
- *   delete:
- *     tags: [Episodes]
- *     summary: Delete episode
- *     description: Delete an existing episode
- *     parameters:
- *       - $ref: '#/components/parameters/IdParam'
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.delete('/:id',
   validateParams(schemas.idParam),
   asyncHandler(async (req, res) => {

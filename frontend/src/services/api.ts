@@ -171,6 +171,26 @@ export const documentsApi = {
   ): Promise<{ data: Document[]; pagination: any }> {
     return this.getDocuments({ ...params, category });
   },
+
+  // Get PDF binary data for a document
+  async getDocumentPdf(id: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/documents/${id}/pdf`, {
+      method: "GET",
+      headers: {
+        Accept: "application/pdf",
+      },
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 404) {
+        throw new ApiError("PDF not found for this document", 404);
+      }
+      throw new ApiError("Failed to fetch PDF", status);
+    }
+
+    return response.blob();
+  },
 };
 
 // Update Logs API

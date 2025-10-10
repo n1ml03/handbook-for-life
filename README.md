@@ -69,4 +69,3 @@ bun run dev:verbose
 
 - **Backend API**: [backend/README.md](./backend/README.md)
 - **Frontend App**: [frontend/README.md](./frontend/README.md)
-- **API Docs (Swagger)**: http://localhost:3001/api-docs (when backend is running)

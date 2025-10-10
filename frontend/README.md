@@ -725,9 +725,9 @@ bun run dev
 - **[Zustand](https://zustand-demo.pmnd.rs/)**: Lightweight state management
 
 ### **🔗 Related Projects**
-- **Backend API**: Node.js/Express backend with Swagger docs
+- **Backend API**: Node.js/Express backend with RESTful API
 - **Database**: MySQL with comprehensive game data
-- **Documentation**: Interactive API documentation
+- **Documentation**: Comprehensive API and database documentation
 
 ### **📝 Development Guidelines**
 - **Code Style**: ESLint + Prettier configuration

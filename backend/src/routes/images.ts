@@ -9,42 +9,6 @@ import logger from '../config/logger';
 
 const router = Router();
 
-/**
- * @swagger
- * /api/images/{type}/{id}:
- *   get:
- *     tags: [Images]
- *     summary: Get image by type and ID
- *     description: Retrieve an image from the database
- *     parameters:
- *       - name: type
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *           enum: [character, swimsuit, item, bromide, skill]
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Image retrieved successfully
- *         content:
- *           image/jpeg:
- *             schema:
- *               type: string
- *               format: binary
- *           image/png:
- *             schema:
- *               type: string
- *               format: binary
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/:type/:id',
   asyncHandler(async (req, res) => {
     const { type, id } = req.params;
@@ -61,49 +25,6 @@ router.get('/:type/:id',
   })
 );
 
-/**
- * @swagger
- * /api/images/base64/{type}/{id}:
- *   get:
- *     tags: [Images]
- *     summary: Get image as base64
- *     description: Retrieve an image from the database as base64 encoded string
- *     parameters:
- *       - name: type
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *           enum: [character, swimsuit, item, bromide, skill]
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Image retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     data:
- *                       type: string
- *                       description: Base64 encoded image data
- *                     mimeType:
- *                       type: string
- *                       example: image/jpeg
- *       404:
- *         $ref: '#/components/responses/NotFound'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/base64/:type/:id',
   asyncHandler(async (req, res) => {
     const { type, id } = req.params;

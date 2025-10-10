@@ -99,6 +99,7 @@ export const useDocumentPage = (props: UseDocumentPageProps = {}) => {
   const handleDocumentClick = useCallback((document: Document) => {
     setSelectedDocument(document);
     setEditedContent(document.content);
+    setEditedJsonContent(document.content_json_en || null); // Initialize JSON content
     setViewMode("document");
     setIsEditMode(false);
   }, []);
@@ -113,10 +114,12 @@ export const useDocumentPage = (props: UseDocumentPageProps = {}) => {
 
   const handleEditToggle = useCallback(() => {
     if (isEditMode) {
+      // Exiting edit mode - reset to original content
       setIsEditMode(false);
       setEditedContent(selectedDocument?.content || "");
       setEditedJsonContent(selectedDocument?.content_json_en || null);
     } else {
+      // Entering edit mode - initialize with current content
       setIsEditMode(true);
       setEditedContent(selectedDocument?.content || "");
       setEditedJsonContent(selectedDocument?.content_json_en || null);
@@ -146,50 +149,41 @@ export const useDocumentPage = (props: UseDocumentPageProps = {}) => {
     setIsSaving(true);
     try {
       // Validate content before saving
-      const contentToSave = editedJsonContent || editedContent;
-      if (!contentToSave) {
-        throw new Error("Document content cannot be empty");
+      // Always use JSON content as source of truth
+      const jsonContentToSave = editedJsonContent || selectedDocument?.content_json_en;
+
+      if (!jsonContentToSave) {
+        throw new Error(
+          "Cannot save: No valid document content available. Please ensure the editor has loaded properly."
+        );
       }
 
-      // If we have JSON content, validate it as TipTap format
-      if (editedJsonContent) {
-        if (!editedJsonContent.type || editedJsonContent.type !== "doc") {
-          throw new Error(
-            'Invalid document format: TipTap document must have type "doc"',
-          );
-        }
-        if (!Array.isArray(editedJsonContent.content)) {
-          throw new Error(
-            "Invalid document format: TipTap document content must be an array",
-          );
-        }
-      } else {
-        // Fallback to HTML content validation
-        const trimmedContent = editedContent.trim();
-        if (trimmedContent.length === 0) {
-          throw new Error("Document content cannot be empty");
-        }
-        if (trimmedContent.length > 50000) {
-          throw new Error(
-            "Document content is too long (maximum 50,000 characters)",
-          );
-        }
+      // Validate TipTap JSON format
+      if (!jsonContentToSave.type || jsonContentToSave.type !== "doc") {
+        throw new Error(
+          'Invalid document format: TipTap document must have type "doc"',
+        );
+      }
+      if (!Array.isArray(jsonContentToSave.content)) {
+        throw new Error(
+          "Invalid document format: TipTap document content must be an array",
+        );
       }
 
-      // Update the document with JSON content (preferred) or HTML content (fallback)
-      const updateData = editedJsonContent
-        ? { content_json_en: editedJsonContent }
-        : { content_json_en: editedContent };
+      // Update the document with validated JSON content only
+      const updateData = {
+        content_json_en: jsonContentToSave
+      };
 
       await updateDocument(selectedDocument.id.toString(), updateData);
 
-      // Update selected document
+      // Update selected document with the saved JSON content
       setSelectedDocument((prev) =>
         prev
           ? {
               ...prev,
-              content_json_en: editedJsonContent || prev.content_json_en,
-              content: editedContent,
+              content_json_en: jsonContentToSave,
+              content: editedContent, // Keep HTML for display
             }
           : null,
       );

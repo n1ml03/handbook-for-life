@@ -6,37 +6,6 @@ import logger from '../config/logger';
 
 const router = Router();
 
-/**
- * @swagger
- * /api/health:
- *   get:
- *     tags: [Health]
- *     summary: Get system health status
- *     description: Returns the current health status of the API server, database, and services
- *     responses:
- *       200:
- *         description: Health check successful
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/ApiSuccess'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/HealthCheck'
- *       503:
- *         description: System is unhealthy
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/ApiError'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/HealthCheck'
- */
 router.get('/',
   asyncHandler(async (req, res, next) => {
     const startTime = Date.now();
@@ -84,23 +53,6 @@ router.get('/',
   })
 );
 
-/**
- * @swagger
- * /api/health/stats:
- *   get:
- *     tags: [Health]
- *     summary: Get system statistics
- *     description: Returns detailed statistics about all entities in the system
- *     responses:
- *       200:
- *         description: Statistics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/responses/Success'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
 router.get('/stats',
   asyncHandler(async (req, res) => {
     try {

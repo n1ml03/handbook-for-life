@@ -67,15 +67,12 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
   private mapDocumentRow = (row: any): ExtendedDocument => {
     // Convert TipTap JSON to HTML for content field
     const content = this.convertTipTapToHtml(row.content_json_en);
-    
+
     // Generate category based on unique_key or content analysis
     const category = this.generateCategory(row.unique_key, content);
-    
+
     // Generate tags from category and content
     const tags = this.generateTags(category, content);
-
-    // Convert PDF binary data to base64 for frontend
-    const pdf_data_base64 = row.pdf_data ? row.pdf_data.toString('base64') : undefined;
 
     return {
       id: row.id,
@@ -85,8 +82,9 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       document_type: row.document_type,
       content_json_en: row.content_json_en,
       screenshots_data: row.screenshots_data || [],
-      // PDF fields - return base64 string for frontend compatibility
-      pdf_data: pdf_data_base64, // Return base64 string instead of Buffer
+      // PDF fields - DO NOT include binary data in regular responses
+      // Frontend will fetch PDF separately via /api/documents/:id/pdf endpoint
+      pdf_data: undefined, // Removed base64 encoding to reduce response size by ~33%
       pdf_filename: row.pdf_filename,
       pdf_mime_type: row.pdf_mime_type || 'application/pdf',
       pdf_size: row.pdf_size,
@@ -103,7 +101,7 @@ export class DocumentModel extends BaseModel<ExtendedDocument, NewDocument> {
       author: 'System Admin', // Default author
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
-      // Keep original binary data for backend operations
+      // Keep original binary data for backend operations (used by PDF endpoint)
       pdf_data_binary: row.pdf_data,
     };
   };

@@ -6,11 +6,10 @@
 ![Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
-![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
 **A modern, high-performance backend API for the DOAXVV Handbook**
 
-*Built with Bun, TypeScript, Express, MySQL, and comprehensive Swagger documentation*
+*Built with Bun, TypeScript, Express, and MySQL*
 
 </div>
 
@@ -119,10 +118,7 @@ curl http://localhost:3001/api/health
 
 ## 📚 API Documentation
 
-### **🌍 Interactive Swagger UI**
-- **Development**: http://localhost:3001/api-docs
-- **Features**: Test endpoints, view schemas, copy curl commands
-- **OpenAPI Spec**: http://localhost:3001/api-docs.json
+The API provides RESTful endpoints for managing game data. All endpoints return JSON responses with consistent formatting.
 
 ### **📊 API Statistics**
 - ✅ **31 documented endpoints** across 13 resource types
@@ -138,17 +134,9 @@ curl http://localhost:3001/api/health
 - **Real-time Data**: Active gachas, upcoming birthdays
 - **Search Functionality**: Multi-language search support
 
-### **📖 Quick Documentation Commands**
-```bash
-# Open Swagger UI in browser
-bun run docs:open
+### **📖 API Endpoints**
 
-# Generate docs for new routes
-bun run docs:generate
-
-# Export OpenAPI specification
-bun run docs:spec
-```
+All endpoints are prefixed with `/api` and return JSON responses. See the route files in `src/routes/` for detailed endpoint information.
 
 ---
 
@@ -160,8 +148,7 @@ backend/
 │   ├── 🔧 config/              # Configuration
 │   │   ├── app.ts              # App configuration
 │   │   ├── database.ts         # Database connection
-│   │   ├── logger.ts           # Logging setup
-│   │   └── swagger.ts          # 📝 Swagger/OpenAPI config
+│   │   └── logger.ts           # Logging setup
 │   │
 │   ├── 🗄️ database/            # Database management
 │   │   ├── database-setup.ts   # Database initialization
@@ -206,7 +193,6 @@ backend/
 │   └── 🌐 server.ts            # Main server file
 │
 ├── 📜 scripts/                 # Utility scripts
-│   └── add-swagger-docs.js     # Auto-generate Swagger docs
 │
 ├── 📦 package.json             # Dependencies & scripts
 ├── 🔧 tsconfig.json           # TypeScript config
@@ -411,7 +397,6 @@ All endpoints follow a consistent response format:
 bun run dev
 
 # Server runs on: http://localhost:3001
-# Swagger UI: http://localhost:3001/api-docs
 # Auto-restarts on file changes
 ```
 
@@ -422,9 +407,6 @@ curl http://localhost:3001/api/health
 
 # Test specific endpoint
 curl "http://localhost:3001/api/characters?page=1&limit=5"
-
-# Interactive testing via Swagger UI
-open http://localhost:3001/api-docs
 ```
 
 ### **📝 Adding New Endpoints**
@@ -432,29 +414,21 @@ open http://localhost:3001/api-docs
 1. **Create Route Handler**:
 ```typescript
 // src/routes/new-resource.ts
-/**
- * @swagger
- * /api/new-resource:
- *   get:
- *     tags: [NewResource]
- *     summary: Get all new resources
- *     responses:
- *       200:
- *         $ref: '#/components/responses/Success'
- */
 router.get('/', asyncHandler(async (req, res) => {
   // Implementation
+  res.success(data);
 }));
 ```
 
-2. **Auto-generate Documentation**:
-```bash
-bun run docs:generate
+2. **Register Route in server.ts**:
+```typescript
+import newResourceRoutes from '@routes/new-resource';
+app.use('/api/new-resource', rateLimits.general, newResourceRoutes);
 ```
 
-3. **Test in Swagger UI**:
+3. **Test the Endpoint**:
 ```bash
-bun run docs:open
+curl http://localhost:3001/api/new-resource
 ```
 
 ### **🏗️ Build Process**
@@ -490,13 +464,6 @@ bun run network-discovery  # Discover network IPs
 bun run network-setup      # Auto-configure network access
 ```
 
-### **📚 Documentation**
-```bash
-bun run docs:open     # Open Swagger UI
-bun run docs:generate # Auto-generate docs
-bun run docs:spec     # Export OpenAPI spec
-```
-
 ### **🔧 Utility Commands**
 ```bash
 # Database utilities
@@ -519,9 +486,6 @@ bun run type-check    # TypeScript check
 | `setup` | Initial setup | First-time installation |
 | `reset` | Database reset | Clean slate development |
 | `health-check` | API health test | Verify server status |
-| `docs:open` | Open Swagger UI | API documentation |
-| `docs:generate` | Generate docs | After adding routes |
-| `import-csv` | Import CSV data | Data population |
 
 ---
 
@@ -716,16 +680,14 @@ bun run db:status
 ## 📖 Resources
 
 ### **📚 Documentation**
-- **API Documentation**: [Interactive Swagger UI](http://localhost:3001/api-docs)
-- **OpenAPI Specification**: [JSON Format](http://localhost:3001/api-docs.json)
 - **Database Schema**: [`src/database/README.md`](src/database/README.md)
+- **API Endpoints**: See route files in `src/routes/`
 
 ### **🛠️ Tools & Technologies**
 - **[Bun](https://bun.sh/)**: JavaScript runtime and package manager
 - **[Express](https://expressjs.com/)**: Web framework
 - **[TypeScript](https://www.typescriptlang.org/)**: Type-safe JavaScript
 - **[MySQL](https://www.mysql.com/)**: Database system
-- **[Swagger](https://swagger.io/)**: API documentation
 
 ### **🔗 Related Projects**
 - **Frontend**: React application for DOAXVV Handbook
@@ -736,5 +698,4 @@ bun run db:status
 - **Code Style**: TypeScript strict mode, ESLint rules
 - **Database**: MySQL 8+ with UTF8MB4, strict foreign keys
 - **API**: RESTful design, consistent response format
-- **Documentation**: OpenAPI 3.0 specification
 - **Security**: Input validation, file upload restrictions
