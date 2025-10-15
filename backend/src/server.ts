@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import path from 'path';
 import { config } from 'dotenv';
 import { Server } from 'http';
 
@@ -10,10 +9,11 @@ config();
 
 import logger  from './config/logger';
 import { testConnection, closeDatabase } from './config/database';
-import { errorHandler, notFound, responseFormatter, responseValidator } from './middleware/middleware';
-import { CacheService } from './services/CacheService';
-import { generateId } from './utils/utils';
 import {
+  errorHandler,
+  notFound,
+  responseFormatter,
+  responseValidator,
   rateLimits,
   sanitizeInput,
   securityHeaders,
@@ -21,7 +21,9 @@ import {
   securityLogger,
   corsOptions,
   getRateLimitingStatus
-} from './middleware/security';
+} from './middleware';
+import { CacheService } from './services/CacheService';
+import { generateId } from './utils/utils';
 
 // Import routes
 import healthRoutes from '@routes/health';
@@ -35,9 +37,7 @@ import updateLogsRoutes from '@routes/update-logs';
 import eventsRoutes from '@routes/events';
 import bromidesRoutes from '@routes/bromides';
 import gachasRoutes from '@routes/gachas';
-import shopListingsRoutes from '@routes/shop-listings';
 import uploadRoutes from '@routes/upload';
-import imageRoutes from '@routes/images';
 import dashboardRoutes from '@routes/dashboard';
 
 const app = express();
@@ -117,11 +117,9 @@ app.use('/api/episodes', rateLimits.general, episodesRoutes);
 app.use('/api/events', rateLimits.general, eventsRoutes);
 app.use('/api/bromides', rateLimits.general, bromidesRoutes);
 app.use('/api/gachas', rateLimits.general, gachasRoutes);
-app.use('/api/shop-listings', rateLimits.general, shopListingsRoutes);
 app.use('/api/documents', rateLimits.mutations, documentsRoutes);
 app.use('/api/update-logs', rateLimits.general, updateLogsRoutes);
 app.use('/api/upload', rateLimits.uploads, uploadRoutes);
-app.use('/api/images', rateLimits.general, imageRoutes);
 app.use('/api/dashboard', rateLimits.general, dashboardRoutes);
 
 // Root endpoint
@@ -141,9 +139,7 @@ app.get('/', (_req, res) => {
       events: '/api/events',
       bromides: '/api/bromides',
       gachas: '/api/gachas',
-      shopListings: '/api/shop-listings',
       upload: '/api/upload',
-      images: '/api/images',
       dashboard: '/api/dashboard'
     }
   });

@@ -108,6 +108,28 @@ async function apiRequest<T>(
   }
 }
 
+// Helper function to sanitize document data for API requests
+// Removes frontend-only extended fields that are not part of the backend schema
+const sanitizeDocumentForApi = (
+  document: Partial<Document>,
+): Partial<Document> => {
+  const {
+    // Remove frontend-only extended fields
+    id,
+    created_at,
+    updated_at,
+    title, // Extended field (maps to title_en)
+    content, // Extended field (maps to content_json_en)
+    category, // Extended field (generated)
+    tags, // Extended field (generated)
+    author, // Extended field (default)
+    // Keep only backend schema fields
+    ...backendFields
+  } = document;
+
+  return backendFields;
+};
+
 // Documents API
 export const documentsApi = {
   // Get all documents with optional filtering
@@ -137,7 +159,7 @@ export const documentsApi = {
   ): Promise<Document> {
     return apiRequest("/documents", {
       method: "POST",
-      data: document,
+      data: sanitizeDocumentForApi(document),
     });
   },
 
@@ -148,7 +170,7 @@ export const documentsApi = {
   ): Promise<Document> {
     return apiRequest(`/documents/${id}`, {
       method: "PUT",
-      data: updates,
+      data: sanitizeDocumentForApi(updates),
     });
   },
 

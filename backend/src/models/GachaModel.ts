@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Gacha, NewGacha, GachaSubtype } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 import logger from '../config/logger';
 
 export class GachaModel extends BaseModel<Gacha, NewGacha> {

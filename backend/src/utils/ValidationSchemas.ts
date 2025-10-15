@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 
 /**
  * Optimized validation system using Zod for better type safety and performance
@@ -88,7 +88,7 @@ const swimsuitBase = z.object({
   unique_key: uniqueKeyPattern,
   ...multiLanguageNames.shape,
   description_en: z.string().max(1000).optional(),
-  rarity: z.enum(['N', 'R', 'SR', 'SSR', 'SSR+']),
+  rarity: z.enum(['N', 'R', 'SR', 'SSR']),
   suit_type: z.enum(['POW', 'TEC', 'STM', 'APL', 'N/A']),
   total_stats_awakened: z.number().int().min(0).default(0),
   has_malfunction: z.boolean().default(false),
@@ -102,7 +102,7 @@ export const swimsuitSchemas = {
   update: swimsuitBase.partial(),
   query: paginationSchema.merge(searchSchema).merge(z.object({
     character_id: z.coerce.number().int().positive().optional(),
-    rarity: z.enum(['N', 'R', 'SR', 'SSR', 'SSR+']).optional(),
+    rarity: z.enum(['N', 'R', 'SR', 'SSR']).optional(),
     suit_type: z.enum(['POW', 'TEC', 'STM', 'APL', 'N/A']).optional(),
     has_malfunction: z.coerce.boolean().optional(),
     is_limited: z.coerce.boolean().optional(),
@@ -191,20 +191,20 @@ function validateTipTapStructure(doc: any): boolean {
 const documentBase = z.object({
   unique_key: uniqueKeyPattern,
   title_en: z.string().min(1, 'Title is required').max(255, 'Title too long').trim(),
-  summary_en: z.string().max(1000, 'Summary too long').optional(),
+  summary_en: z.string().max(1000, 'Summary too long').optional().nullable(),
   document_type: z.enum(['checklist', 'guide', 'tutorial']).default('checklist'),
-  content_json_en: tiptapContentSchema.optional(),
+  content_json_en: tiptapContentSchema.optional().nullable(),
   screenshots_data: z.array(z.object({
     data: z.string().min(1, 'Image data is required'),
     mimeType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']),
     filename: z.string().min(1, 'Filename is required')
   })).max(20, 'Cannot have more than 20 screenshots').optional(),
   // PDF file fields
-  pdf_data: z.string().optional(), // Base64 encoded PDF data
-  pdf_filename: z.string().max(255, 'PDF filename too long').optional(),
-  pdf_mime_type: z.enum(['application/pdf']).optional(),
-  pdf_size: z.number().int().positive('PDF size must be positive').max(50 * 1024 * 1024, 'PDF too large (max 50MB)').optional(), // 50MB limit
-  has_pdf_file: z.boolean().optional(),
+  pdf_data: z.string().optional().nullable(), // Base64 encoded PDF data
+  pdf_filename: z.string().max(255, 'PDF filename too long').optional().nullable(),
+  pdf_mime_type: z.enum(['application/pdf']).optional().nullable(),
+  pdf_size: z.number().int().positive('PDF size must be positive').max(50 * 1024 * 1024, 'PDF too large (max 50MB)').optional().nullable(), // 50MB limit
+  has_pdf_file: z.boolean().optional().nullable(),
   pdf_metadata: z.object({
     pages: z.number().int().positive('Pages must be positive').optional(),
     hasText: z.boolean().optional(),
@@ -226,7 +226,7 @@ const documentBase = z.object({
 
 export const documentSchemas = {
   create: documentBase,
-  update: documentBase.partial(),
+  update: documentBase.partial().strip(), // Strip unknown fields to allow frontend extended fields
   query: paginationSchema.merge(searchSchema).merge(z.object({
     category: z.string().max(50).optional(),
     document_type: z.enum(['checklist', 'guide', 'tutorial']).optional(),
@@ -442,6 +442,18 @@ export const schemas = {
   createEvent: eventSchemas.create,
   updateEvent: eventSchemas.update,
   queryEvent: eventSchemas.query,
+
+  createEpisode: episodeSchemas.create,
+  updateEpisode: episodeSchemas.update,
+  queryEpisode: episodeSchemas.query,
+
+  createItem: itemSchemas.create,
+  updateItem: itemSchemas.update,
+  queryItem: itemSchemas.query,
+
+  createSwimsuit: swimsuitSchemas.create,
+  updateSwimsuit: swimsuitSchemas.update,
+  querySwimsuit: swimsuitSchemas.query,
 };
 
 // ============================================================================

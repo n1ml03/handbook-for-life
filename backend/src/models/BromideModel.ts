@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Bromide, NewBromide, BromideType, BromideRarity } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 import { logger } from '../config';
 
 export class BromideModel extends BaseModel<Bromide, NewBromide> {

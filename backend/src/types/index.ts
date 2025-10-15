@@ -406,7 +406,7 @@ export interface CharacterApiResponse {
 // SWIMSUIT API TYPES
 // ============================================================================
 
-export type SwimsuitRarity = 'N' | 'R' | 'SR' | 'SSR' | 'SSR+';
+export type SwimsuitRarity = 'N' | 'R' | 'SR' | 'SSR';
 export type SuitType = 'POW' | 'TEC' | 'STM' | 'APL' | 'N/A';
 
 export interface SwimsuitApiResponse {

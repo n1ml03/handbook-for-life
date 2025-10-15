@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { UpdateLog, NewUpdateLog } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 import logger from '../config/logger';
 
 export class UpdateLogModel extends BaseModel<UpdateLog, NewUpdateLog> {

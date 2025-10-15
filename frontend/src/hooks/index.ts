@@ -1,13 +1,12 @@
 // Core hooks from this directory
-export { useAccessibility } from "./useAccessibility";
-export { useDocuments } from "./useDocuments";
-export { useUpdateLogs } from "./useUpdateLogs";
-export * from "./useLocalStorage";
-export * from "./useDebounce";
+export * from "./utilities"; // Consolidated utility hooks (useDebounce, useLocalStorage)
 export * from "./useLoadingState";
 export * from "./usePerformanceMonitor";
 export * from "./useNotifications";
 export * from "./useDocumentPage";
+
+// Store hooks (re-exported from stores for convenience)
+export { useAccessibility, useDocuments, useUpdateLogs } from "@/stores";
 
 // Complex search hooks remain in services
 export {

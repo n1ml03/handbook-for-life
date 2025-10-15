@@ -1,18 +1,18 @@
 import { Router } from 'express';
-import { validate, validateQuery, asyncHandler } from '../middleware/middleware';
+import { validate, validateQuery, asyncHandler } from '../middleware';
 import { schemas } from '../utils/ValidationSchemas';
-import { GachaService } from '../services/services';
+import { GachaModel } from '../models/GachaModel';
 import logger from '../config/logger';
 
 const router = Router();
-const gachaService = new GachaService();
+const gachaModel = new GachaModel();
 
 router.get('/',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
 
-    const result = await gachaService.getGachas({
+    const result = await gachaModel.findAll({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -30,7 +30,7 @@ router.get('/active',
   asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy, sortOrder } = req.query;
 
-    const result = await gachaService.getActiveGachas({
+    const result = await gachaModel.findActive({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -50,7 +50,7 @@ router.get('/key/:unique_key',
   asyncHandler(async (req, res) => {
     const { unique_key } = req.params;
 
-    const gacha = await gachaService.getGachaByKey(unique_key);
+    const gacha = await gachaModel.findByKey(unique_key);
 
     logger.info(`Retrieved gacha: ${gacha.name_en}`);
 
@@ -62,7 +62,7 @@ router.get('/search',
   validateQuery(schemas.pagination),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = 10, sortBy, sortOrder } = req.query;
-    
+
     if (!q) {
       res.status(400).json({
         success: false,
@@ -72,7 +72,7 @@ router.get('/search',
     }
 
     // Search not implemented in service yet - return all gachas for now
-    const result = await gachaService.getGachas({
+    const result = await gachaModel.findAll({
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -97,7 +97,7 @@ router.get('/:id',
       return;
     }
 
-    const gacha = await gachaService.getGachaById(id);
+    const gacha = await gachaModel.findById(id);
 
     logger.info(`Retrieved gacha: ${gacha.name_en}`);
 
@@ -111,8 +111,8 @@ router.get('/:id',
 router.post('/',
   validate(schemas.createGacha),
   asyncHandler(async (req, res) => {
-    const gacha = await gachaService.createGacha(req.body);
-    
+    const gacha = await gachaModel.create(req.body);
+
     logger.info(`Created gacha: ${gacha.name_en}`);
 
     res.status(201).json({
@@ -138,7 +138,7 @@ router.put('/:id',
       return;
     }
 
-    const gacha = await gachaService.updateGacha(id, req.body);
+    const gacha = await gachaModel.update(id, req.body);
 
     logger.info(`Updated gacha: ${gacha.name_en}`);
 
@@ -160,7 +160,7 @@ router.delete('/:id',
       return;
     }
 
-    await gachaService.deleteGacha(id);
+    await gachaModel.delete(id);
 
     logger.info(`Deleted gacha with ID: ${id}`);
 

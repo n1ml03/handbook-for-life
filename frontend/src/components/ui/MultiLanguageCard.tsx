@@ -6,35 +6,30 @@ import { type ImageData } from "@/utils/imageUtils";
 // Language configuration for dark mode
 const LANGUAGES = {
   jp: {
-    flag: "🇯🇵",
     name: "JP",
     color: "text-rose-400",
     bg: "bg-gradient-to-r from-rose-500/10 to-pink-500/10",
     border: "border-rose-500/20",
   },
   en: {
-    flag: "🇺🇸",
     name: "EN",
     color: "text-blue-400",
     bg: "bg-gradient-to-r from-blue-500/10 to-indigo-500/10",
     border: "border-blue-500/20",
   },
   cn: {
-    flag: "🇨🇳",
     name: "CN",
     color: "text-amber-400",
     bg: "bg-gradient-to-r from-amber-500/10 to-yellow-500/10",
     border: "border-amber-500/20",
   },
   tw: {
-    flag: "🇹🇼",
     name: "TW",
     color: "text-emerald-400",
     bg: "bg-gradient-to-r from-emerald-500/10 to-green-500/10",
     border: "border-emerald-500/20",
   },
   kr: {
-    flag: "🇰🇷",
     name: "KR",
     color: "text-purple-400",
     bg: "bg-gradient-to-r from-purple-500/10 to-violet-500/10",
@@ -231,7 +226,6 @@ const LanguageBadge = React.memo<{
         )}
       >
         <div className="flex items-center gap-2.5 sm:gap-3">
-          <span className="text-xl sm:text-2xl">{langConfig.flag}</span>
           <div className="flex-1 min-w-0">
             {/* <div className={cn(
               'text-xs sm:text-sm font-semibold leading-tight',
@@ -263,8 +257,6 @@ const LanguageBadge = React.memo<{
           "  ",
         )}
       >
-        <span className="text-base sm:text-lg">{langConfig.flag}</span>
-        {/* <span className="truncate">{langConfig.name}</span> */}
       </div>
     );
   }
@@ -287,7 +279,6 @@ const LanguageBadge = React.memo<{
           "",
         )}
       >
-        {langConfig.flag}
       </div>
       <div className="flex-1 min-w-0">
         {/* <div className={cn(
@@ -307,7 +298,7 @@ const LanguageBadge = React.memo<{
 LanguageBadge.displayName = "LanguageBadge";
 
 const LanguageDisplay = React.memo<LanguageDisplayProps>(
-  ({ names, primaryLanguage = "en", variant = "compact" }) => {
+  ({ names, primaryLanguage = "jp", variant = "compact" }) => {
     // Memoize expensive calculations
     const { primaryName, otherLanguagesData } = useMemo(() => {
       const getNameForLanguage = (lang: LanguageCode): string => {
@@ -344,9 +335,6 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
             <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white  leading-tight tracking-tight pr-6">
               {primaryName}
             </h3>
-            <div className="absolute top-0 right-0 text-lg sm:text-xl opacity-80">
-              {LANGUAGES[primaryLanguage].flag}
-            </div>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {otherLanguagesData.map(({ lang, name }) => (
@@ -377,14 +365,6 @@ const LanguageDisplay = React.memo<LanguageDisplayProps>(
             <h3 className="text-md sm:text-xl md:text-xl font-bold text-white  leading-tight tracking-tight pr-8">
               {primaryName}
             </h3>
-            <div
-              className={cn(
-                "absolute top-3 sm:top-4 right-3 sm:right-4 text-lg sm:text-xl",
-                LANGUAGES[primaryLanguage].color,
-              )}
-            >
-              {LANGUAGES[primaryLanguage].flag}
-            </div>
             {/* <div className="mt-1.5 text-xs sm:text-sm text-white/60  font-medium">
             Primary ({LANGUAGES[primaryLanguage].name})
           </div> */}
@@ -474,7 +454,7 @@ interface MultiLanguageCardProps {
 export const MultiLanguageCard = React.memo<MultiLanguageCardProps>(
   ({
     names,
-    primaryLanguage = "en",
+    primaryLanguage = "jp",
     languageVariant = "compact",
     children,
     className,

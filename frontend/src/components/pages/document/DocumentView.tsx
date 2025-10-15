@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import {
   ArrowLeft,
   Edit3,
@@ -23,7 +23,9 @@ import {
   type Document,
   type DocumentSectionInfo,
 } from "@/types";
-import TiptapEditor from "@/components/features/TiptapEditor";
+
+// Lazy load TiptapEditor to reduce initial bundle size
+const TiptapEditor = lazy(() => import("@/components/features/TiptapEditor"));
 
 interface DocumentViewProps {
   selectedDocument: Document;
@@ -190,28 +192,32 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                 </Inline>
               </Inline>
 
-              <TiptapEditor
-                content={editedContent}
-                onChange={onContentChange}
-                onJsonChange={onJsonContentChange}
-                editable={true}
-                placeholder="Start writing your document content..."
-                showToolbar={true}
-                showCharacterCount={true}
-                showWordCount={true}
-                mode="full"
-                className="min-h-[500px] border border-border/30 rounded-lg"
-              />
+              <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading editor...</div>}>
+                <TiptapEditor
+                  content={editedContent}
+                  onChange={onContentChange}
+                  onJsonChange={onJsonContentChange}
+                  editable={true}
+                  placeholder="Start writing your document content..."
+                  showToolbar={true}
+                  showCharacterCount={true}
+                  showWordCount={true}
+                  mode="full"
+                  className="min-h-[500px] border border-border/30 rounded-lg"
+                />
+              </Suspense>
             </Stack>
           ) : (
             <div className="prose prose-xl max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-accent-pink hover:prose-a:text-accent-purple">
-              <TiptapEditor
-                content={selectedDocument.content || ""}
-                onChange={() => {}}
-                editable={false}
-                showToolbar={false}
-                className="border-0 p-0 bg-transparent min-h-[300px]"
-              />
+              <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading editor...</div>}>
+                <TiptapEditor
+                  content={selectedDocument.content || ""}
+                  onChange={() => {}}
+                  editable={false}
+                  showToolbar={false}
+                  className="border-0 p-0 bg-transparent min-h-[300px]"
+                />
+              </Suspense>
             </div>
           )}
         </CardContent>

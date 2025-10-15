@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Event, NewEvent, EventType } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 import { logger } from '../config';
 
 export class EventModel extends BaseModel<Event, NewEvent> {

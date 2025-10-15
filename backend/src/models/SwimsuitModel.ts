@@ -2,6 +2,8 @@ import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Swimsuit } from '../types/database';
 import { RowDataPacket } from 'mysql2';
 import { executeQuery } from '../config/database';
+import logger from '../config/logger';
+import { DatabaseError } from '../middleware';
 
 export class SwimsuitModel extends BaseModel<Swimsuit> {
   constructor() {
@@ -145,24 +147,47 @@ export class SwimsuitModel extends BaseModel<Swimsuit> {
     characterKey: string,
     options: PaginationOptions = {}
   ): Promise<PaginatedResult<Swimsuit>> {
-    // NOTE: The swimsuits table does not have a character_key column in the current database schema
-    // This method returns an empty result until the schema is updated
-    // TODO: Add character_key column to swimsuits table or implement JOIN with characters table
-
     const page = options.page || 1;
     const limit = options.limit || 50;
+    const offset = (page - 1) * limit;
 
-    return {
-      data: [],
-      pagination: {
-        page,
-        limit,
-        total: 0,
-        totalPages: 0,
-        hasNext: false,
-        hasPrev: false
-      }
-    };
+    // Sanitize sortBy to prevent SQL injection
+    const sortBy = (options.sortBy || 'id').replace(/[^a-zA-Z0-9_]/g, '');
+    const sortOrder = (options.sortOrder === 'DESC') ? 'DESC' : 'ASC';
+
+    try {
+      // Get total count
+      const [countResult] = await executeQuery(
+        `SELECT COUNT(*) as total FROM ${this.tableName} WHERE character_key = ?`,
+        [characterKey]
+      );
+      const total = (countResult as RowDataPacket[])[0].total;
+
+      // Get paginated data - use direct values for LIMIT/OFFSET
+      const [rows] = await executeQuery(
+        `SELECT * FROM ${this.tableName} WHERE character_key = ? ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+        [characterKey]
+      );
+
+      // Map rows using mapRow() for consistent data structure
+      const data = (rows as RowDataPacket[]).map(row => this.mapRow(row));
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      };
+    } catch (error) {
+      logger.error(`Error finding swimsuits by character key ${characterKey}:`, error);
+      throw new DatabaseError('Failed to find swimsuits by character key', error);
+    }
   }
 
   /**

@@ -147,7 +147,7 @@ function FestivalCard({ festival }: { festival: any }) {
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
     >

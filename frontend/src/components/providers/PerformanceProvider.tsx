@@ -14,13 +14,14 @@ export const PerformanceProvider: React.FC<PerformanceProviderProps> = ({
     // Check if fonts are loaded
     const checkFontsLoaded = async () => {
       try {
-        // Check for Inter font
+        // Check for Inter font (only weights we're loading: 400, 500, 600)
         await document.fonts.load("400 16px Inter");
         await document.fonts.load("500 16px Inter");
         await document.fonts.load("600 16px Inter");
 
-        // Check for JetBrains Mono font (if needed)
+        // Check for JetBrains Mono font (only weights we're loading: 400, 500)
         await document.fonts.load('400 14px "JetBrains Mono"');
+        await document.fonts.load('500 14px "JetBrains Mono"');
 
         // Small delay to ensure everything is ready
         setTimeout(() => setIsReady(true), 100);

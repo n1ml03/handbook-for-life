@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Document, NewDocument } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 
 export interface UpdateDocument {
   unique_key?: string;

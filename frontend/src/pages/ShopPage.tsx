@@ -28,7 +28,7 @@ import {
   safeExtractArrayData,
   safeExtractPaginationData,
 } from "@/services/utils";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 import React from "react";
 
 // Shop Listing Card Component
@@ -144,7 +144,7 @@ const ShopListingCard = React.memo(function ShopListingCard({
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="compact"
       header={header}
     >

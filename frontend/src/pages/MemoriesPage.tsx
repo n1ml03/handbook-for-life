@@ -8,6 +8,9 @@ import {
   Loader2,
   Book,
   Users,
+  Tag,
+  Package,
+  Hash,
 } from "lucide-react";
 import {
   type Memory,
@@ -31,13 +34,13 @@ import {
   memoriesSortOptions,
 } from "@/components/features/FilterConfigs";
 import React from "react";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 import { format } from "date-fns/format";
 import { parseISO } from "date-fns/parseISO";
 import { isValid } from "date-fns/isValid";
 
 // Helper function to convert Episode to Memory
-const episodeToMemory = (episode: Episode): Memory => ({
+const episodeToMemory = (episode: Episode): Memory & { release_version?: string; release_data?: string; episode_type?: string } => ({
   id: episode.id.toString(),
   name: episode.name_en || episode.name_jp || "Untitled Memory", // Changed from title_* to name_*
   // Store multi-language names for MultiLanguageCard
@@ -47,11 +50,15 @@ const episodeToMemory = (episode: Episode): Memory => ({
   name_tw: episode.name_tw || "", // Changed from title_tw to name_tw
   name_kr: episode.name_kr || "", // Changed from title_kr to name_kr
   description: episode.type || "", // Changed from unlock_condition_en to type
-  date: new Date().toISOString(),
+  date: episode.release_data || new Date().toISOString(), // Use release_data if available
   thumbnail: "📖",
   characters: [],
   tags: episode.type ? [episode.type] : [], // Changed from episode_type to type
   favorite: false,
+  // Preserve additional Episode data
+  release_version: episode.release_version,
+  release_data: episode.release_data,
+  episode_type: episode.type,
 });
 
 const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
@@ -96,14 +103,76 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
     </div>
   );
 
+  // Cast memory to include extended Episode fields
+  const extendedMemory = memory as Memory & { release_version?: string; release_data?: string; episode_type?: string };
+
   const memoryDetails = (
-    <div className="space-y-3">
-      {/* Description */}
-      {memory.description && (
-        <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
-          <p className="text-xs text-gray-300 leading-relaxed">
-            {memory.description}
-          </p>
+    <div className="space-y-3 mt-2">
+      {/* Episode ID */}
+      <div className="flex items-center gap-2">
+        <Hash className="w-3 h-3 text-gray-400" />
+        <span className="text-xs text-muted-foreground">Episode ID:</span>
+        <span className="text-sm font-medium text-white font-mono">
+          {memory.id}
+        </span>
+      </div>
+
+      {/* Episode Type */}
+      {extendedMemory.episode_type && (
+        <div className="flex items-center gap-2">
+          <Tag className="w-3 h-3 text-blue-400" />
+          <span className="text-xs text-muted-foreground">Type:</span>
+          <span className="text-sm font-medium text-blue-400">
+            {extendedMemory.episode_type}
+          </span>
+        </div>
+      )}
+
+      {/* Release Version */}
+      {extendedMemory.release_version && (
+        <div className="flex items-center gap-2">
+          <Package className="w-3 h-3 text-green-400" />
+          <span className="text-xs text-muted-foreground">Version:</span>
+          <span className="text-sm font-medium text-green-400">
+            {extendedMemory.release_version}
+          </span>
+        </div>
+      )}
+
+      {/* Release Date */}
+      {extendedMemory.release_data && (
+        <div className="p-3 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-lg border border-accent-cyan/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-3 h-3 text-accent-cyan" />
+            <span className="text-xs font-medium text-accent-cyan">
+              Release Date
+            </span>
+          </div>
+          <span className="text-sm font-bold text-white">
+            {formatDate(extendedMemory.release_data)}
+          </span>
+        </div>
+      )}
+
+      {/* Tags */}
+      {memory.tags && memory.tags.length > 0 && (
+        <div className="bg-gradient-to-r from-accent-pink/10 to-accent-purple/10 rounded-lg p-3 border border-accent-pink/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Tag className="w-3 h-3 text-accent-pink" />
+            <span className="text-xs font-bold text-accent-pink">
+              Tags ({memory.tags.length})
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {memory.tags.map((tag: string, index: number) => (
+              <span
+                key={index}
+                className="text-xs bg-dark-primary/50 px-2 py-1 rounded border border-accent-pink/30 text-accent-pink"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -128,13 +197,25 @@ const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
           </div>
         </div>
       )}
+
+      {/* Description */}
+      {memory.description && (
+        <div className="p-3 bg-dark-primary/30 rounded-lg border border-white/10">
+          <div className="text-xs font-medium text-gray-400 mb-1">
+            Description
+          </div>
+          <p className="text-xs text-gray-300 leading-relaxed">
+            {memory.description}
+          </p>
+        </div>
+      )}
     </div>
   );
 
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
     >

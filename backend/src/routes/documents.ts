@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { validate, validateQuery, asyncHandler, AppError } from '../middleware/middleware';
+import { validate, validateQuery, asyncHandler, AppError } from '../middleware';
 import { schemas } from '../utils/ValidationSchemas';
-import { DocumentService } from '../services/services';
+import { DocumentModel } from '../models/DocumentModel';
 import logger from '../config/logger';
 import appConfig from '../config/app';
 
 const router = Router();
-const documentService = new DocumentService();
+const documentModel = new DocumentModel();
 
 // GET /api/documents - Get all documents with pagination and filters
 router.get('/',
@@ -18,21 +18,21 @@ router.get('/',
 
     // Handle different query types with optimized queries
     if (document_type) {
-      result = await documentService.getDocumentsByType(document_type as string, {
+      result = await documentModel.findByType(document_type as string, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
         sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else if (category) {
-      result = await documentService.getDocumentsByCategory(category as string, {
+      result = await documentModel.findByType(category as string, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
         sortOrder: (sortOrder as string)?.toUpperCase() as 'ASC' | 'DESC'
       });
     } else {
-      result = await documentService.getDocuments({
+      result = await documentModel.findAll({
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
@@ -60,7 +60,7 @@ router.get('/key/:unique_key',
       throw new AppError('Unique key is required', 400);
     }
 
-    const document = await documentService.getDocumentByKey(unique_key);
+    const document = await documentModel.findByKey(unique_key);
 
     logger.info(`Retrieved document: ${document.title_en}`, {
       uniqueKey: unique_key,
@@ -82,7 +82,7 @@ router.get('/:id/pdf',
       throw new AppError('Invalid document ID', 400);
     }
 
-    const document = await documentService.getDocumentById(numericId);
+    const document = await documentModel.findById(numericId);
 
     if (!document.has_pdf_file || !document.pdf_data_binary) {
       throw new AppError('PDF not found for this document', 404);
@@ -119,7 +119,7 @@ router.get('/categories/:category',
       throw new AppError('Category is required', 400);
     }
 
-    const result = await documentService.getDocumentsByCategory(category, {
+    const result = await documentModel.findByType(category, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -146,7 +146,7 @@ router.get('/types/:document_type',
       throw new AppError('Document type is required', 400);
     }
 
-    const result = await documentService.getDocumentsByType(document_type, {
+    const result = await documentModel.findByType(document_type, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -166,18 +166,19 @@ router.get('/search',
   validateQuery(schemas.documentSchemas.query),
   asyncHandler(async (req, res) => {
     const { q, page = 1, limit = appConfig.pagination.defaultLimit, sortBy, sortOrder } = req.query;
-    
+
     if (!q || typeof q !== 'string' || !q.trim()) {
       throw new AppError('Search query is required', 400);
     }
 
     const sanitizedQuery = q.trim();
-    
+
     if (sanitizedQuery.length < 2) {
       throw new AppError('Search query must be at least 2 characters long', 400);
     }
 
-    const result = await documentService.searchDocuments(sanitizedQuery, {
+    const searchFields = ['title_en', 'summary_en', 'unique_key'];
+    const result = await documentModel.search(searchFields, sanitizedQuery, {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy as string,
@@ -197,7 +198,7 @@ router.get('/search',
 // GET /api/documents/stats/summary - Get document statistics
 router.get('/stats/summary',
   asyncHandler(async (req, res) => {
-    const stats = await documentService.getDocumentStats();
+    const stats = await documentModel.getStats();
 
     logger.info('Retrieved document statistics', {
       total: stats.total,
@@ -212,14 +213,14 @@ router.get('/stats/summary',
 router.get('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    
+
     // Validate ID format
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || numericId <= 0) {
       throw new AppError('Invalid document ID', 400);
     }
-    
-    const document = await documentService.getDocumentById(numericId);
+
+    const document = await documentModel.findById(numericId);
     
     logger.info(`Retrieved document: ${document.title_en}`, {
       documentId: document.id,
@@ -235,9 +236,9 @@ router.post('/',
   validate(schemas.documentSchemas.create),
   asyncHandler(async (req, res) => {
     const documentData = req.body;
-    
-    const document = await documentService.createDocument(documentData);
-    
+
+    const document = await documentModel.create(documentData);
+
     logger.info('Created new document', {
       documentId: document.id,
       uniqueKey: document.unique_key,
@@ -259,14 +260,14 @@ router.put('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
-    
+
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || numericId <= 0) {
       throw new AppError('Invalid document ID', 400);
     }
-    
-    const document = await documentService.updateDocument(numericId, updates);
-    
+
+    const document = await documentModel.update(numericId, updates);
+
     logger.info('Updated document', {
       documentId: document.id,
       uniqueKey: document.unique_key,
@@ -284,35 +285,20 @@ router.put('/:id',
 router.delete('/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    
+
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || numericId <= 0) {
       throw new AppError('Invalid document ID', 400);
     }
-    
-    await documentService.deleteDocument(numericId);
-    
+
+    await documentModel.delete(numericId);
+
     logger.info('Deleted document', {
       documentId: numericId,
       requestId: (req as any).id
     });
 
     res.deleted('Document deleted successfully');
-  })
-);
-
-// GET /api/documents/health - Service health check
-router.get('/health',
-  asyncHandler(async (req, res) => {
-    const health = await documentService.healthCheck();
-    
-    const statusCode = health.isHealthy ? 200 : 503;
-    
-    res.status(statusCode).json({
-      success: health.isHealthy,
-      data: health,
-      timestamp: new Date().toISOString()
-    });
   })
 );
 

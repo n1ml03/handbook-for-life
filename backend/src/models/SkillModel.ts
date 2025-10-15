@@ -1,7 +1,7 @@
 import { BaseModel, PaginationOptions, PaginatedResult } from './BaseModel';
 import { Skill, NewSkill, SkillCategory } from '../types/database';
 import { executeQuery } from '../config/database';
-import { AppError } from '../middleware/middleware';
+import { AppError } from '../middleware';
 
 export class SkillModel extends BaseModel<Skill, NewSkill> {
   constructor() {

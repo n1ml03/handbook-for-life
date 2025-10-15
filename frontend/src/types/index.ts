@@ -98,7 +98,7 @@ export interface Character {
 
 // Swimsuit types and enums
 // Updated for denormalized schema - removed obsolete types
-export type SwimsuitRarity = "N" | "R" | "SR" | "SSR" | "SSR+";
+export type SwimsuitRarity = "N" | "R" | "SR" | "SSR";
 
 export interface Swimsuit {
   id: number;

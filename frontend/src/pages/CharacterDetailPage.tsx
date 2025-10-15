@@ -81,7 +81,7 @@ export default function CharacterDetailPage() {
     if (!character) return null;
 
     const ssrSwimsuits = swimsuits.filter(
-      (s) => s.rarity === "SSR" || s.rarity === "SSR+",
+      (s) => s.rarity === "SSR"
     ).length;
     const limitedSwimsuits = swimsuits.filter((s) => s.is_limited).length;
     const skillCategories = Array.from(
@@ -119,8 +119,6 @@ export default function CharacterDetailPage() {
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case "SSR+":
-        return "from-pink-400 to-purple-600";
       case "SSR":
         return "from-yellow-400 to-orange-500";
       case "SR":
@@ -301,9 +299,6 @@ export default function CharacterDetailPage() {
                   <div className="text-center p-2 sm:p-3 bg-dark-primary/30 rounded-lg sm:rounded-xl border border-dark-border/30">
                     <div className="text-lg sm:text-xl lg:text-2xl font-bold text-accent-gold">
                       {characterStats?.ssrSwimsuits || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-400">
-                      SSR+ Suits
                     </div>
                   </div>
                 </div>
@@ -876,9 +871,6 @@ export default function CharacterDetailPage() {
                       </span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4 bg-dark-primary/30 rounded-lg border border-dark-border/30 gap-1 sm:gap-0">
-                      <span className="text-gray-400 font-medium text-sm sm:text-base">
-                        SSR+ Swimsuits
-                      </span>
                       <span className="text-accent-gold font-bold text-lg sm:text-xl">
                         {characterStats?.ssrSwimsuits || 0}
                       </span>
@@ -903,7 +895,7 @@ export default function CharacterDetailPage() {
                     Swimsuit Rarity Distribution
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
-                    {["SSR+", "SSR", "SR", "R", "N"].map((rarity) => {
+                    {["SSR", "SR", "R", "N"].map((rarity) => {
                       const count = swimsuits.filter(
                         (s) => s.rarity === rarity,
                       ).length;

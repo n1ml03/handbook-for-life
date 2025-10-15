@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { asyncHandler } from '../middleware/middleware';
+import { asyncHandler } from '../middleware';
 import { serviceRegistry } from '../services/index';
 import { testConnection } from '../config/database';
 import logger from '../config/logger';
@@ -68,7 +68,6 @@ router.get('/stats',
         swimsuits: {
           total: 450,
           byRarity: {
-            'SSR+': 25,
             'SSR': 80,
             'SR': 150,
             'R': 120,

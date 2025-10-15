@@ -23,7 +23,7 @@ import {
   MultiLanguageCard,
   type MultiLanguageNames,
 } from "@/components/ui";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 import React from "react";
 import { format } from "date-fns/format";
 import { parseISO } from "date-fns/parseISO";
@@ -125,7 +125,7 @@ const CharacterCard = React.memo(function CharacterCard({
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       onClick={onClick}
       header={header}

@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { asyncHandler } from '../middleware/middleware';
+import { asyncHandler } from '../middleware';
 import logger from '../config/logger';
 
 const router = Router();

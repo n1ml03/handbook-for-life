@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery, validateParams, asyncHandler } from '../middleware/middleware';
+import { validate, validateQuery, validateParams, asyncHandler } from '../middleware';
 import { schemas } from '../utils/ValidationSchemas';
 import { SwimsuitModel } from '../models/SwimsuitModel';
 import logger from '../config/logger';

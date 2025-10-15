@@ -120,5 +120,3 @@ export const serviceRegistry = new ServiceRegistry();
 
 // Export individual services for convenience
 export { CacheService } from './CacheService';
-export { UpdateLogService, DocumentService, GachaService } from './services';
-

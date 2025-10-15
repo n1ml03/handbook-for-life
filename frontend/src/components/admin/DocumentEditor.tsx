@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, lazy, Suspense } from "react";
 import {
   Eye,
   Save,
@@ -27,7 +27,8 @@ import { Document, DocumentCategory } from "@/types";
 import { validateData, documentValidationSchema } from "@/utils/validation";
 import { nanoid } from "nanoid";
 
-import TiptapEditor from "@/components/features/TiptapEditor";
+// Lazy load TiptapEditor to reduce initial bundle size
+const TiptapEditor = lazy(() => import("@/components/features/TiptapEditor"));
 
 export interface DocumentEditorProps {
   document: Document;
@@ -226,12 +227,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               "bg-background",
             )}
           >
-            <TiptapEditor
-              content={document.content}
-              onChange={handleContentChange}
-              onJsonChange={handleJsonContentChange}
-              editable={!isPreviewMode}
-              placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
+            <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading editor...</div>}>
+              <TiptapEditor
+                content={document.content}
+                onChange={handleContentChange}
+                onJsonChange={handleJsonContentChange}
+                editable={!isPreviewMode}
+                placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
               showToolbar={!isPreviewMode}
               showCharacterCount={true}
               showWordCount={true}
@@ -242,6 +244,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 "min-h-[calc(100vh-200px)]",
               )}
             />
+            </Suspense>
           </div>
         </div>
 
@@ -611,22 +614,24 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     "bg-background",
                   )}
                 >
-                  <TiptapEditor
-                    content={document.content || ""}
-                    onChange={handleContentChange}
-                    onJsonChange={handleJsonContentChange}
-                    editable={!isPreviewMode}
-                    placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
-                    showToolbar={!isPreviewMode}
-                    showCharacterCount={true}
-                    showWordCount={true}
-                    mode="full"
-                    stickyToolbar={true}
-                    className={cn(
-                      "border-0 bg-transparent",
-                      "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]",
-                    )}
-                  />
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading editor...</div>}>
+                    <TiptapEditor
+                      content={document.content || ""}
+                      onChange={handleContentChange}
+                      onJsonChange={handleJsonContentChange}
+                      editable={!isPreviewMode}
+                      placeholder="Start writing your document content... Use the rich text editor to format your content with headings, lists, links, and more."
+                      showToolbar={!isPreviewMode}
+                      showCharacterCount={true}
+                      showWordCount={true}
+                      mode="full"
+                      stickyToolbar={true}
+                      className={cn(
+                        "border-0 bg-transparent",
+                        "min-h-[450px] sm:min-h-[550px] lg:min-h-[650px] xl:min-h-[750px] 2xl:min-h-[850px]",
+                      )}
+                    />
+                  </Suspense>
                 </div>
               </div>
             )}

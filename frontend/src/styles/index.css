@@ -211,10 +211,10 @@ samp {
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-100%);
+    background-position: -200% 0;
   }
   100% {
-    transform: translateX(100%);
+    background-position: 200% 0;
   }
 }
 
@@ -270,30 +270,7 @@ samp {
     /* Account for fixed header */
   }
 
-  /* Optimize body for better scrolling performance */
-  body {
-    /* Ensure consistent background to prevent white flashing */
-    background-color: hsl(var(--color-background));
-    /* Optimize for GPU acceleration */
-    transform: translateZ(0);
-    /* Prevent layout shifts during scrolling */
-    overflow-x: hidden;
-    /* Smooth scrolling on iOS */
-    -webkit-overflow-scrolling: touch;
-    /* Optimize paint performance */
-    will-change: scroll-position;
-  }
-
-  /* Optimize main content container for scrolling */
-  main {
-    /* Ensure consistent background */
-    background-color: hsl(var(--color-background));
-    /* Optimize for compositing */
-    contain: layout style paint;
-    /* Prevent unnecessary repaints */
-    isolation: isolate;
-  }
-
+  /* Consolidated body styling - optimized for performance */
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings:
@@ -302,16 +279,24 @@ samp {
     line-height: var(--optimal-line-height);
     font-size: var(--min-font-size);
     min-height: 100vh;
+    /* Optimize for GPU acceleration */
     transform: translateZ(0);
+    /* Prevent layout shifts during scrolling */
+    overflow-x: hidden;
+    /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Optimize paint performance */
     contain: layout style paint;
     overscroll-behavior: contain;
     position: relative;
     z-index: 0;
   }
 
-  /* Consolidated body styling */
-  body {
-    @apply bg-background text-foreground;
+  /* Optimize main content container for scrolling */
+  main {
+    background-color: hsl(var(--color-background));
+    contain: layout style paint;
+    isolation: isolate;
   }
 
   *:focus-visible {
@@ -392,15 +377,6 @@ samp {
     opacity: 0;
     transition: opacity var(--hover-transition-duration);
     pointer-events: none;
-  }
-
-  /* Hover effects disabled for flat design */
-  .modern-card:hover {
-    /* No hover effects for flat design */
-  }
-
-  .modern-card:hover::before {
-    /* No hover effects for flat design */
   }
 
   /* Legacy card support */
@@ -524,41 +500,6 @@ samp {
     }
   }
 
-  /* Modern Button Variants - Enhanced for light mode */
-  .btn-modern {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-    @apply bg-accent/10 border;
-    color: hsl(var(--color-accent-pink));
-    border-color: hsl(var(--color-accent-pink) / 0.2);
-  }
-
-  .btn-modern:hover {
-    background-color: hsl(var(--color-accent-pink) / 0.1);
-    border-color: hsl(var(--color-accent-pink) / 0.4);
-    transform: scale(1.05);
-  }
-
-  .btn-modern:focus {
-    @apply outline-none ring-2 ring-offset-1;
-    --tw-ring-color: hsl(var(--color-accent-pink) / 0.3);
-  }
-
-  .btn-modern-primary {
-    @apply btn-modern text-white;
-    background-color: hsl(var(--color-accent-pink));
-    border-color: hsl(var(--color-accent-pink));
-  }
-
-  .btn-modern-primary:hover {
-    background-color: hsl(var(--color-accent-pink) / 0.9);
-    border-color: hsl(var(--color-accent-pink));
-  }
-
-  .btn-modern-ghost {
-    @apply btn-modern bg-transparent border-transparent;
-    @apply hover:bg-accent/10 hover:border-accent/20;
-  }
-
 }
 
 @layer components {
@@ -567,27 +508,9 @@ samp {
     min-height: var(--min-touch-target);
   }
 
-  .doax-nav-item:hover {
-    /* No hover effects for flat design */
-  }
-
   .doax-nav-item:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: hsl(var(--color-accent-pink) / 0.3);
-  }
-
-  .gaming-card {
-    @apply doax-card;
-    background: linear-gradient(
-      135deg,
-      hsl(var(--color-card) / 0.8) 0%,
-      hsl(var(--color-card) / 0.6) 100%
-    );
-    border-color: hsl(var(--color-accent-pink) / 0.2);
-  }
-
-  .gaming-card:hover {
-    /* No hover effects for flat design */
   }
 
   .interactive-element {
@@ -928,15 +851,7 @@ samp {
     contain: layout style paint;
   }
 
-  /* Optimized shimmer animation for better performance */
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
+
 
   /* Scroll performance optimizations */
   .scroll-optimized {
@@ -985,28 +900,6 @@ samp {
     }
   }
 
-  /* Bounce animation for interactive feedback */
-  .bounce-in {
-    animation: bounceIn 0.3s ease-out;
-  }
-
-  @keyframes bounceIn {
-    0% {
-      transform: scale(0.3);
-      opacity: 0;
-    }
-    50% {
-      transform: scale(1.05);
-    }
-    70% {
-      transform: scale(0.9);
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
   /* Slide animations for mobile menu */
   .slide-down {
     animation: slideDown 0.3s ease-out;
@@ -1032,70 +925,6 @@ samp {
     100% {
       opacity: 0;
     }
-  }
-
-  /* Scale animations for buttons */
-  .scale-in {
-    animation: scaleIn 0.2s ease-out;
-  }
-
-  @keyframes scaleIn {
-    0% {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
-  /* Ripple effect for touch feedback */
-  .ripple-effect {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple-effect::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: hsl(var(--color-accent-pink) / 0.3);
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.6s,
-      height 0.6s;
-  }
-
-  .ripple-effect:active::after {
-    width: 300px;
-    height: 300px;
-  }
-
-  /* Enhanced focus indicators */
-  .focus-ring {
-    position: relative;
-  }
-
-  .focus-ring::before {
-    content: "";
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border: 2px solid hsl(var(--color-accent-pink));
-    border-radius: inherit;
-    opacity: 0;
-    transition: opacity 0.2s ease-out;
-  }
-
-  .focus-ring:focus-visible::before {
-    opacity: 1;
   }
 
   /* Smooth transitions for theme changes */
@@ -1334,21 +1163,18 @@ samp {
     @apply min-h-screen;
     padding-top: calc(var(--header-height-mobile) + 0.5rem);
     padding-bottom: var(--responsive-padding-mobile);
-    space-y: var(--responsive-gap-mobile);
   }
 
   @media (min-width: 768px) {
     .modern-page {
       padding-top: calc(var(--header-height) + 0.5rem);
       padding-bottom: var(--responsive-padding-tablet);
-      space-y: var(--responsive-gap-tablet);
     }
   }
 
   @media (min-width: 1024px) {
     .modern-page {
       padding-bottom: var(--responsive-padding-desktop);
-      space-y: var(--responsive-gap-desktop);
     }
   }
 
@@ -2161,12 +1987,6 @@ samp {
   .grid-responsive-cards.single-row > * {
     flex: 1;
     min-width: 200px;
-  }
-
-  /* Override transform for single-row cards to prevent clipping */
-  .grid-responsive-cards.single-row .doax-card:hover,
-  .grid-responsive-cards.single-row .modern-card:hover {
-    /* No hover effects for flat design */
   }
 
   @media (min-width: 640px) {

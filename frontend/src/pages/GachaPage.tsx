@@ -25,7 +25,7 @@ import {
   MultiLanguageCard,
   type MultiLanguageNames,
 } from "@/components/ui";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 
 // Define reward interface for gacha rewards
 interface GachaReward {
@@ -214,7 +214,7 @@ function GachaCard({ gacha }: { gacha: GachaEvent }) {
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
     >

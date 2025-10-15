@@ -22,27 +22,16 @@ export interface MultiLanguageItem {
 export const generateItemTranslations = (
   item: any,
 ): { [key in Language]: Translation } => {
-  const languagePrefixes = {
-    EN: "",
-    CN: "中文_",
-    TW: "繁體_",
-    KO: "한국_",
-    JP: "日本_",
-  };
-
   const translations: { [key in Language]: Translation } = {} as {
     [key in Language]: Translation;
   };
 
-  Object.keys(languagePrefixes).forEach((lang) => {
-    const prefix = languagePrefixes[lang as Language];
-    translations[lang as Language] = {
-      name: prefix ? `${prefix}${item.name}` : item.name,
-      description: item.description
-        ? prefix
-          ? `${prefix}${item.description}`
-          : item.description
-        : undefined,
+  // Generate translations without prefixes
+  const languages: Language[] = ["EN", "CN", "TW", "KO", "JP"];
+  languages.forEach((lang) => {
+    translations[lang] = {
+      name: item.name,
+      description: item.description || undefined,
     };
   });
 
@@ -118,7 +107,7 @@ export const useMultiLanguageFilter = <T extends MultiLanguageItem>(
 // Get display name in specific language
 export const getDisplayName = (
   item: MultiLanguageItem,
-  language: Language = "EN",
+  language: Language = "JP",
 ): string => {
   return item.translations?.[language]?.name || item.name;
 };
@@ -126,7 +115,7 @@ export const getDisplayName = (
 // Get display description in specific language
 export const getDisplayDescription = (
   item: MultiLanguageItem,
-  language: Language = "EN",
+  language: Language = "JP",
 ): string | undefined => {
   return item.translations?.[language]?.description || item.description;
 };

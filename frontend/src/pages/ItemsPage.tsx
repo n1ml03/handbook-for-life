@@ -30,7 +30,7 @@ import {
   type SortDirection,
   type UnifiedItem,
 } from "@/types";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 // Import multi-language search functionality
 import {
   addTranslationsToItems,
@@ -222,13 +222,104 @@ const ItemCard = React.memo(function ItemCard({
     </div>
   );
 
+  // Item details content
+  const itemDetails = (
+    <div className="space-y-3 mt-2">
+      {/* Rarity */}
+      {item.rarity && (
+        <div className="flex items-center gap-2">
+          <Star className="w-3 h-3 text-yellow-400" />
+          <span className="text-xs text-muted-foreground">Rarity:</span>
+          <span className="text-sm font-medium text-yellow-400">
+            {item.rarity}
+          </span>
+        </div>
+      )}
+
+      {/* Category */}
+      {item.category && (
+        <div className="flex items-center gap-2">
+          <Tag className="w-3 h-3 text-blue-400" />
+          <span className="text-xs text-muted-foreground">Category:</span>
+          <span className="text-sm font-medium text-blue-400">
+            {item.category}
+          </span>
+        </div>
+      )}
+
+      {/* Character (for swimsuits) */}
+      {item.character && (
+        <div className="flex items-center gap-2">
+          <User className="w-3 h-3 text-pink-400" />
+          <span className="text-xs text-muted-foreground">Character:</span>
+          <span className="text-sm font-medium text-pink-400">
+            {item.character}
+          </span>
+        </div>
+      )}
+
+      {/* Stats */}
+      {item.stats &&
+        Object.keys(item.stats).some((key) => item.stats?.[key as keyof typeof item.stats] != null) && (
+          <div className="p-3 bg-gradient-to-r from-accent-cyan/10 to-accent-purple/10 rounded-lg border border-accent-cyan/20">
+            <div className="text-xs font-medium text-accent-cyan mb-2">
+              Stats
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {item.stats.pow != null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">POW</span>
+                  <span className="text-sm font-bold text-white">
+                    {item.stats.pow}
+                  </span>
+                </div>
+              )}
+              {item.stats.tec != null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">TEC</span>
+                  <span className="text-sm font-bold text-white">
+                    {item.stats.tec}
+                  </span>
+                </div>
+              )}
+              {item.stats.stm != null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">STM</span>
+                  <span className="text-sm font-bold text-white">
+                    {item.stats.stm}
+                  </span>
+                </div>
+              )}
+              {item.stats.apl != null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">APL</span>
+                  <span className="text-sm font-bold text-white">
+                    {item.stats.apl}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      {/* Description */}
+      {item.description && (
+        <div className="text-sm text-muted-foreground border-t border-border/30 pt-3">
+          {item.description}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
-    ></MultiLanguageCard>
+    >
+      {itemDetails}
+    </MultiLanguageCard>
   );
 });
 

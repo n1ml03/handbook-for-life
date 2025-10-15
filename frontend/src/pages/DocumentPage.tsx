@@ -3,7 +3,7 @@ import { CheckSquare, FileText, BookOpen, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container, StatusBadge } from "@/components/ui/spacing";
 import { DocumentSectionInfo } from "@/types";
-import { useAccessibility } from "@/hooks/useAccessibility";
+import { useAccessibility } from "@/hooks";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useDocumentPage } from "@/hooks/useDocumentPage";
 import { NotificationToast } from "@/components/admin/NotificationToast";

@@ -522,8 +522,6 @@ export function compareEntityIds(id1: any, id2: any): boolean {
  */
 export function getRarityColorClass(rarity: string): string {
   switch (rarity.toUpperCase()) {
-    case "SSR+":
-      return "text-rainbow bg-gradient-to-r from-purple-400 via-pink-400 to-red-400";
     case "SSR":
       return "text-yellow-400";
     case "SR":

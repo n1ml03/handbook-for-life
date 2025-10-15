@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, Camera } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Camera, Tag, Package } from "lucide-react";
 import { bromidesApi } from "@/services/api";
 import { getBromideArtUrl } from "@/services/utils";
 import { type SortDirection } from "@/types";
@@ -104,13 +104,54 @@ function BromideCard({ bromide }: { bromide: any }) {
     </div>
   );
 
+  // Bromide details content
+  const bromideDetails = (
+    <div className="space-y-3 mt-2">
+      {/* Bromide Type */}
+      {bromide.bromide_type && (
+        <div className="flex items-center gap-2">
+          <Tag className="w-3 h-3 text-blue-400" />
+          <span className="text-xs text-muted-foreground">Type:</span>
+          <span className="text-sm font-medium text-blue-400">
+            {bromide.bromide_type}
+          </span>
+        </div>
+      )}
+
+      {/* Associated Skill */}
+      {bromide.skill && (
+        <div className="p-3 bg-gradient-to-r from-accent-purple/10 to-accent-pink/10 rounded-lg border border-accent-purple/20">
+          <div className="text-xs font-medium text-accent-purple mb-2">
+            Associated Skill
+          </div>
+          <div className="text-sm font-bold text-white">
+            {bromide.skill.name_en || bromide.skill.name_jp}
+          </div>
+        </div>
+      )}
+
+      {/* Game Version */}
+      {bromide.game_version && (
+        <div className="flex items-center gap-2">
+          <Package className="w-3 h-3 text-green-400" />
+          <span className="text-xs text-muted-foreground">Version:</span>
+          <span className="text-sm font-medium text-green-400">
+            {bromide.game_version}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
-    />
+    >
+      {bromideDetails}
+    </MultiLanguageCard>
   );
 }
 

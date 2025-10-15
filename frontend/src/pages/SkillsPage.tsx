@@ -22,7 +22,7 @@ import {
   type MultiLanguageNames,
 } from "@/components/ui";
 import { PageSection } from "@/components/ui/spacing";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 import React from "react";
 
 const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
@@ -115,7 +115,7 @@ const SkillCard = React.memo(function SkillCard({ skill }: { skill: Skill }) {
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
     >

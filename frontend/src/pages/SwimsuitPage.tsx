@@ -32,7 +32,7 @@ import {
   createSwimsuitFilterConfig,
   swimsuitSortOptions,
 } from "@/components/features/FilterConfigs";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks";
 import React from "react";
 
 // Updated SwimsuitCard Component to match DecorateBromide design
@@ -56,8 +56,6 @@ const SwimsuitCard = React.memo(function SwimsuitCard({
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case "SSR+":
-        return "from-red-400 to-pink-600";
       case "SSR":
         return "from-yellow-400 to-orange-500";
       case "SR":
@@ -215,7 +213,7 @@ const SwimsuitCard = React.memo(function SwimsuitCard({
   return (
     <MultiLanguageCard
       names={names}
-      primaryLanguage="en"
+      primaryLanguage="jp"
       languageVariant="expanded"
       header={header}
     >
@@ -368,7 +366,7 @@ export default function SwimsuitPage() {
           bValue = (b.character?.name_en || "").toLowerCase();
           break;
         case "rarity": {
-          const rarityOrder = { "SSR+": 4, SSR: 3, SR: 2, R: 1, N: 0 };
+          const rarityOrder = { SSR: 3, SR: 2, R: 1, N: 0 };
           aValue = rarityOrder[a.rarity as keyof typeof rarityOrder] || 0;
           bValue = rarityOrder[b.rarity as keyof typeof rarityOrder] || 0;
           break;
@@ -445,7 +443,7 @@ export default function SwimsuitPage() {
       ].sort(),
     [swimsuits],
   );
-  const rarities = useMemo(() => ["SSR+", "SSR", "SR", "R", "N"], []);
+  const rarities = useMemo(() => ["SSR", "SR", "R", "N"], []);
   const releaseYears = useMemo(
     () =>
       [

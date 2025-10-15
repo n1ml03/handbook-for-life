@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery, validateParams, asyncHandler } from '../middleware/middleware';
+import { validate, validateQuery, validateParams, asyncHandler } from '../middleware';
 import { schemas } from '../utils/ValidationSchemas';
 import { EpisodeModel } from '../models/EpisodeModel';
 import logger from '../config/logger';
@@ -57,17 +57,6 @@ router.get('/main-story',
 
     logger.info(`Found ${result.data.length} main story episodes`);
     res.paginated(result);
-  })
-);
-
-// TODO: Character episodes filter not yet implemented (related_entity fields removed)
-// GET /api/episodes/character/:id - Get episodes for specific character
-router.get('/character/:id',
-  validateParams(schemas.idParam),
-  validateQuery(schemas.pagination),
-  asyncHandler(async (req, res) => {
-    logger.info(`Character episodes endpoint not yet implemented`);
-    res.status(501).error('Character episodes endpoint not yet implemented', 501);
   })
 );
 

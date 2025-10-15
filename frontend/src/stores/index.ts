@@ -1,13 +1,28 @@
-// Zustand stores index file
-// Export all stores for easy importing
+/**
+ * Consolidated Application Store Exports
+ *
+ * All stores have been consolidated into a single appStore using Zustand's slice pattern.
+ * This provides better organization and reduces file fragmentation.
+ */
 
-export { useDocumentsStore } from "./documentsStore";
-export { useLoadingStore } from "./loadingStore";
-export { useUpdateLogsStore } from "./updateLogsStore";
-export { useAccessibilityStore } from "./accessibilityStore";
+export {
+  useAppStore,
+  useAccessibility,
+  useLoading,
+  useUpdateLogs,
+  useDocuments,
+  // Legacy exports for backward compatibility
+  useAccessibilityStore,
+  useLoadingStore,
+  useUpdateLogsStore,
+  useDocumentsStore,
+} from "./appStore";
 
 // Re-export types for convenience
-export type { DocumentsStore } from "./documentsStore";
-export type { LoadingStore } from "./loadingStore";
-export type { UpdateLogsStore } from "./updateLogsStore";
-export type { AccessibilityStore } from "./accessibilityStore";
+export type {
+  AppStore,
+  AccessibilitySlice,
+  LoadingSlice,
+  UpdateLogsSlice,
+  DocumentsSlice,
+} from "./appStore";
